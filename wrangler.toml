@@ -1,0 +1,23 @@
+name = "pikachu-online"
+main = "worker/index.js"
+compatibility_date = "2026-07-03"
+# Chi vao qua custom domain, giong chia-keo.
+workers_dev = false
+routes = [{ pattern = "pikachu.huyab.click", custom_domain = true }]
+
+# public/ la file tinh; Worker chi chay cho /api/* (WebSocket phong choi).
+[assets]
+directory = "./public"
+run_worker_first = ["/api/*"]
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+# SQLite-backed DO: dung duoc o goi free.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
+
+[observability]
+enabled = true

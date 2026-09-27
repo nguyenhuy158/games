@@ -1,0 +1,123 @@
+:root {
+  --bg: #0b1b2b;
+  --panel: #13283d;
+  --line: #23405c;
+  --text: #e8f1fa;
+  --muted: #8aa4bd;
+  --accent: #ffd23f;
+  --good: #3ddc84;
+  --bad: #ff5d5d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: radial-gradient(circle at 50% 0%, #17385a, var(--bg) 70%) fixed;
+  color: var(--text);
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+[hidden] { display: none !important; }
+button, input { font: inherit; color: inherit; }
+button {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+button:hover { border-color: var(--muted); }
+button:disabled { opacity: .4; cursor: default; }
+button.primary { background: var(--accent); color: #1b1300; border-color: var(--accent); font-weight: 600; }
+input {
+  background: #0a1724;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  width: min(360px, calc(100vw - 32px));
+  display: grid;
+  gap: 12px;
+  text-align: center;
+  box-shadow: 0 12px 40px #0008;
+}
+.card h1, .card h2 { margin: 0; }
+.card label { display: grid; gap: 4px; text-align: left; color: var(--muted); }
+.sub, .muted { margin: 0; color: var(--muted); }
+.muted { font-size: 13px; }
+.join { display: flex; gap: 8px; }
+#code { text-transform: uppercase; letter-spacing: 3px; text-align: center; }
+
+#home { height: 100%; display: grid; place-items: center; padding: 16px; }
+
+#room { height: 100%; display: flex; flex-direction: column; }
+header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  padding-top: max(8px, env(safe-area-inset-top));
+  overflow-x: auto;
+}
+header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; min-width: 48px; text-align: right; }
+@media (max-width: 480px) {
+  header { gap: 4px; padding-inline: 8px; }
+  header button { padding: 6px 8px; }
+  header .lbl { display: none; }
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); flex: none; }
+.dot.on { background: var(--good); }
+#timeTrack { height: 6px; margin: 0 12px; background: #0a1724; border-radius: 3px; overflow: hidden; }
+#timebar { height: 100%; width: 0; background: var(--good); transition: width .25s linear; }
+#players { list-style: none; margin: 8px 12px 0; padding: 0; display: flex; gap: 6px; overflow-x: auto; }
+#players li {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+#players li.me { border-color: var(--accent); }
+#players li.off { opacity: .45; }
+#players b { color: var(--accent); }
+
+#boardWrap { position: relative; flex: 1; min-height: 0; margin: 8px; }
+#board { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.cell {
+  position: absolute;
+  background-image: url("images/pieces-sprite.png");
+  background-repeat: no-repeat;
+  border-radius: 4px;
+  outline: 1px solid #0003;
+  cursor: pointer;
+  transition: transform .08s;
+}
+.cell.sel { outline: 3px solid var(--accent); transform: scale(.92); z-index: 1; }
+.cell.hint { animation: hint .5s ease-in-out 3; }
+@keyframes hint { 50% { outline: 3px solid var(--good); transform: scale(1.1); } }
+#board svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 2; }
+#board polyline { fill: none; stroke: var(--bad); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+#board.shake { animation: shake .25s; }
+@keyframes shake { 25% { margin-left: -6px; } 75% { margin-left: 6px; } }
+
+#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #0b1b2bb0; z-index: 5; }
+
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  background: #000c;
+  padding: 8px 16px;
+  border-radius: 20px;
+  z-index: 10;
+}
