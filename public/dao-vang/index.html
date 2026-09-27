@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1a1008">
+  <title>Đào Vàng</title>
+  <link rel="icon" href="../pwa-192.png">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="hud" hidden>
+    <a href="/" class="btn" title="Các game khác"><i data-icon="arrow-left"></i></a>
+    <span class="stat"><small>Tiền</small> <b id="hMoney">$0</b></span>
+    <span class="stat"><small>Mục tiêu</small><small class="short">/</small> <b id="hTarget">$650</b></span>
+    <span class="stat"><small>Màn</small><small class="short">M</small> <b id="hLevel">1</b></span>
+    <span class="stat"><small>Giờ</small><small class="short">⏱</small> <b id="hTime">60</b></span>
+    <button id="btnDyn" title="Thuốc nổ (↑)">🧨 <span id="dynCount">0</span></button>
+    <button id="btnMenu" title="Tạm dừng">❚❚</button>
+    <button id="btnSound" title="Âm thanh"></button>
+  </header>
+  <main id="stage">
+    <canvas id="game"></canvas>
+    <div id="overlay" hidden></div>
+  </main>
+  <script type="module" src="game.js"></script>
+</body>
+</html>

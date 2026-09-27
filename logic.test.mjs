@@ -1,6 +1,6 @@
 // node logic.test.mjs
 import assert from 'node:assert/strict';
-import { SIZES, TYPES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, countLeft, reshuffle } from './public/logic.js';
+import { SIZES, TYPES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, countLeft, reshuffle } from './public/pikachu/logic.js';
 
 const [COLS, ROWS] = SIZES[0];
 
@@ -104,3 +104,5 @@ for (const dir of SLIDES) {
 }
 
 console.log('logic ok');
+
+await import('./dao-vang.test.mjs');

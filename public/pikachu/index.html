@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0b1b2b">
+  <title>Pikachu Online</title>
+  <link rel="icon" href="../pwa-192.png">
+  <link rel="apple-touch-icon" href="../pwa-192.png">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="home">
+    <div class="card">
+      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> Pikachu Online</h1>
+      <p class="sub">Nối thú cổ điển, chơi cùng bạn bè — không cần đăng ký.</p>
+      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <div class="join">
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
+        <button id="btnJoin">Vào phòng</button>
+      </div>
+      <p class="muted">Chơi một mình: tạo phòng rồi bấm Bắt đầu.</p>
+    </div>
+
+    <div class="card" id="top">
+      <h2><i data-icon="trophy"></i> Bảng xếp hạng</h2>
+      <div id="topMode" class="seg seg3"></div>
+      <div id="topSize" class="seg seg4"></div>
+      <ol id="topList"></ol>
+    </div>
+    <p class="credit">Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Icon: Lucide</p>
+  </section>
+
+  <section id="room" hidden>
+    <header>
+      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Sao chép link mời"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="link"></i></button>
+      <span id="conn" class="dot" title="Kết nối"></span>
+      <span id="modeTag" hidden></span>
+      <span id="levelTag" hidden></span>
+      <span id="clock">--:--</span>
+      <button id="btnHint" title="Gợi ý"><i data-icon="lightbulb"></i> <span id="hintLeft">3</span></button>
+      <button id="btnShuffle" title="Đổi vị trí"><i data-icon="shuffle"></i> <span id="shuffleLeft">5</span></button>
+      <button id="btnSound" title="Âm thanh"></button>
+    </header>
+    <div id="timeTrack"><div id="timebar"></div></div>
+    <ul id="players"></ul>
+    <div id="specBar" hidden></div>
+    <main id="boardWrap">
+      <div id="board"><div id="cells"></div><div id="fx"></div></div>
+      <div id="overlay" hidden>
+        <div class="card">
+          <h2 id="ovTitle"></h2>
+          <p id="ovScore" hidden></p>
+          <div id="modePick" class="seg seg3" hidden>
+            <button data-mode="coop"><i data-icon="users"></i> Chung</button>
+            <button data-mode="race"><i data-icon="swords"></i> Đua</button>
+            <button data-mode="team"><i data-icon="flag"></i> Đội 2v2</button>
+          </div>
+          <div id="sizePick" class="seg seg4" hidden></div>
+          <div id="tilesPick" class="seg" hidden>
+            <button data-tiles="poke"><i data-icon="zap"></i> Pokémon</button>
+            <button data-tiles="animal"><i data-icon="paw-print"></i> Động vật</button>
+          </div>
+          <div id="teamPick" class="teams" hidden></div>
+          <p id="ovText"></p>
+          <button id="btnStart" class="primary" hidden>Bắt đầu</button>
+        </div>
+      </div>
+    </main>
+    <footer id="emoBar"></footer>
+  </section>
+
+  <div id="toast" hidden></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import { SIZES, LEVELS, SLIDES, SLIDE_ICON, slide, findPath, findPair } from './logic.js';
-import { icon, hydrateIcons } from './icons.js';
+import { icon, hydrateIcons } from '../icons.js';
 
 hydrateIcons();
 
@@ -182,7 +182,7 @@ $('#sizePick').replaceChildren(...SIZES.map(([c, r], i) => el('button', {
   textContent: `${c}×${r}`, title: `${(c * r) / 2} cặp`, onclick: () => send({ t: 'config', size: i }),
 })));
 $('#btnCopy').onclick = async () => {
-  const link = `${location.origin}/?r=${code}`;
+  const link = `${location.origin}/pikachu/?r=${code}`;
   try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời'); } catch { toast(link); }
 };
 $('#btnShuffle').onclick = () => send({ t: 'shuffle' });

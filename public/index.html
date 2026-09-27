@@ -2,78 +2,60 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b1b2b">
-  <title>Pikachu Online</title>
+  <title>Game Cổ Điển</title>
   <link rel="icon" href="pwa-192.png">
   <link rel="apple-touch-icon" href="pwa-192.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css">
+  <script>
+    // Link mời cũ của Pikachu (/?r=CODE) -> trang game mới.
+    const r = new URLSearchParams(location.search).get('r');
+    if (r) location.replace(`/pikachu/?r=${encodeURIComponent(r)}`);
+  </script>
+  <style>
+    :root { --bg: #0b1b2b; --panel: #13283d; --line: #23405c; --text: #e8f1fa; --muted: #8aa4bd; --accent: #ffd23f; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 24px 16px; display: grid; align-content: safe center; justify-items: center; gap: 20px;
+      background: radial-gradient(circle at 50% 0%, #17385a, var(--bg) 70%) fixed; color: var(--text);
+      font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    h1 { margin: 0; font-size: 26px; }
+    .sub { margin: -12px 0 0; color: var(--muted); }
+    .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; width: min(760px, 100%); }
+    .game {
+      display: grid; gap: 8px; padding: 14px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line);
+      color: inherit; text-decoration: none; transition: transform .12s, border-color .12s;
+    }
+    .game:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .thumb { height: 120px; border-radius: 10px; background: #0a1724 center / contain no-repeat; }
+    .game b { font-size: 18px; }
+    .game span { color: var(--muted); font-size: 13px; }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tags i { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--accent); }
+    footer { color: var(--muted); font-size: 11px; text-align: center; }
+    footer a { color: inherit; }
+  </style>
 </head>
 <body>
-  <section id="home">
-    <div class="card">
-      <h1><i data-icon="zap"></i> Pikachu Online</h1>
-      <p class="sub">Nối thú cổ điển, chơi cùng bạn bè — không cần đăng ký.</p>
-      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
-      <button id="btnCreate" class="primary">Tạo phòng mới</button>
-      <div class="join">
-        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
-        <button id="btnJoin">Vào phòng</button>
-      </div>
-      <p class="muted">Chơi một mình: tạo phòng rồi bấm Bắt đầu.</p>
-    </div>
-
-    <div class="card" id="top">
-      <h2><i data-icon="trophy"></i> Bảng xếp hạng</h2>
-      <div id="topMode" class="seg seg3"></div>
-      <div id="topSize" class="seg seg4"></div>
-      <ol id="topList"></ol>
-    </div>
-    <p class="credit">Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Icon: Lucide</p>
-  </section>
-
-  <section id="room" hidden>
-    <header>
-      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
-      <button id="btnCopy" title="Sao chép link mời"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="link"></i></button>
-      <span id="conn" class="dot" title="Kết nối"></span>
-      <span id="modeTag" hidden></span>
-      <span id="levelTag" hidden></span>
-      <span id="clock">--:--</span>
-      <button id="btnHint" title="Gợi ý"><i data-icon="lightbulb"></i> <span id="hintLeft">3</span></button>
-      <button id="btnShuffle" title="Đổi vị trí"><i data-icon="shuffle"></i> <span id="shuffleLeft">5</span></button>
-      <button id="btnSound" title="Âm thanh"></button>
-    </header>
-    <div id="timeTrack"><div id="timebar"></div></div>
-    <ul id="players"></ul>
-    <div id="specBar" hidden></div>
-    <main id="boardWrap">
-      <div id="board"><div id="cells"></div><div id="fx"></div></div>
-      <div id="overlay" hidden>
-        <div class="card">
-          <h2 id="ovTitle"></h2>
-          <p id="ovScore" hidden></p>
-          <div id="modePick" class="seg seg3" hidden>
-            <button data-mode="coop"><i data-icon="users"></i> Chung</button>
-            <button data-mode="race"><i data-icon="swords"></i> Đua</button>
-            <button data-mode="team"><i data-icon="flag"></i> Đội 2v2</button>
-          </div>
-          <div id="sizePick" class="seg seg4" hidden></div>
-          <div id="tilesPick" class="seg" hidden>
-            <button data-tiles="poke"><i data-icon="zap"></i> Pokémon</button>
-            <button data-tiles="animal"><i data-icon="paw-print"></i> Động vật</button>
-          </div>
-          <div id="teamPick" class="teams" hidden></div>
-          <p id="ovText"></p>
-          <button id="btnStart" class="primary" hidden>Bắt đầu</button>
-        </div>
-      </div>
-    </main>
-    <footer id="emoBar"></footer>
-  </section>
-
-  <div id="toast" hidden></div>
-  <script type="module" src="app.js"></script>
+  <h1>⚡ Game Cổ Điển</h1>
+  <p class="sub">Chơi ngay trên trình duyệt, không cần đăng ký.</p>
+  <div class="games">
+    <a class="game" href="/pikachu/">
+      <div class="thumb" style="background-image:url(pikachu/images/pieces-sprite.png);background-size:auto 60%;background-repeat:repeat-x;background-position:left center"></div>
+      <b>Pikachu nối thú</b>
+      <span>Nối 2 hình giống nhau, tối đa 3 đoạn thẳng. 5 màn có ô trượt.</span>
+      <div class="tags"><i>Nhiều người</i><i>Chơi chung</i><i>Đua</i><i>Đội 2v2</i></div>
+    </a>
+    <a class="game" href="/dao-vang/">
+      <div class="thumb" style="background-image:url(dao-vang/assets/bg2.jpg);background-size:cover"></div>
+      <b>Đào Vàng</b>
+      <span>Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span>
+      <div class="tags"><i>1 người</i><i>Nhiều màn</i><i>Tiệm đồ</i></div>
+    </a>
+  </div>
+  <footer>Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Icon: Lucide · Dự án học tập</footer>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
 </body>
 </html>

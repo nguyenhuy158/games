@@ -1,10 +1,14 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'pk-v1';
+const CACHE = 'games-v2';
 const CORE = [
-  '/', '/index.html', '/style.css', '/app.js', '/logic.js', '/icons.js', '/manifest.webmanifest',
-  '/images/pieces-sprite.png', '/images/animals-sprite.png',
-  '/sound/sound1.mp3', '/sound/sound2.mp3', '/sound/sound4.mp3', '/sound/sound5.mp3',
+  '/', '/index.html', '/icons.js', '/manifest.webmanifest', '/pwa-192.png',
+  '/pikachu/', '/pikachu/index.html', '/pikachu/style.css', '/pikachu/app.js', '/pikachu/logic.js',
+  '/pikachu/images/pieces-sprite.png', '/pikachu/images/animals-sprite.png',
+  '/pikachu/sound/sound1.mp3', '/pikachu/sound/sound2.mp3', '/pikachu/sound/sound4.mp3', '/pikachu/sound/sound5.mp3',
+  '/dao-vang/', '/dao-vang/index.html', '/dao-vang/style.css', '/dao-vang/game.js', '/dao-vang/logic.js',
+  '/dao-vang/assets/atlas.png', '/dao-vang/assets/atlas.json',
+  '/dao-vang/assets/bg1.jpg', '/dao-vang/assets/bg2.jpg', '/dao-vang/assets/bg3.jpg', '/dao-vang/assets/bg4.jpg',
 ];
 
 self.addEventListener('install', (e) => {

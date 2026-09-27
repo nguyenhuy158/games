@@ -57,6 +57,8 @@ input {
 .sub, .muted { margin: 0; color: var(--muted); }
 .muted { font-size: 13px; }
 .join { display: flex; gap: 8px; }
+h1 .back { color: var(--muted); display: inline-flex; vertical-align: middle; }
+h1 .back:hover { color: var(--text); }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .seg4 { grid-template-columns: repeat(4, 1fr); }

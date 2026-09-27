@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/logic.js';
+import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
 
 const MAX_PLAYERS = 4;
 const MAX_ONLINE = 8; // người chơi + khán giả

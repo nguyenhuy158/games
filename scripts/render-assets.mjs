@@ -1,5 +1,5 @@
 // Sinh ảnh tĩnh bằng Chrome headless (chạy tay khi cần đổi, rồi commit PNG):
-//   - public/images/animals-sprite.png: 36 con vật Twemoji (CC-BY 4.0), cùng bố cục
+//   - public/pikachu/images/animals-sprite.png: 36 con vật Twemoji (CC-BY 4.0), cùng bố cục
 //     với pieces-sprite.png (36 ô ngang, tỉ lệ 40x50) nên client chỉ cần đổi URL.
 //   - public/pwa-192.png, public/pwa-512.png: icon cài app.
 // Chạy: node scripts/render-assets.mjs   (cần Google Chrome; đổi CHROME nếu nằm chỗ khác)
@@ -42,7 +42,7 @@ shot(`<!doctype html><style>
        background: linear-gradient(160deg, #fff6ea, #f3c9a4); border: 3px solid #e2a77c; border-radius: 10px; }
   .t svg { width: 60px; height: 60px; }
 </style><body>${svgs.map((s) => `<div class="t">${s}</div>`).join('')}</body>`,
-'public/images/animals-sprite.png', W * ANIMALS.length, H);
+'public/pikachu/images/animals-sprite.png', W * ANIMALS.length, H);
 
 // Icon app: tia sét lucide trên nền vàng, chừa lề cho maskable.
 const zap = '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>';
