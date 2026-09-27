@@ -14,14 +14,16 @@ export default {
   },
 };
 
-const fresh = () => ({ status: 'lobby', order: [], players: {}, endAt: 0, winner: null });
+// mode 'race': mỗi người một bàn cùng đề, ai dọn xong trước thắng.
+// mode 'coop': cả phòng chung một bàn (s.board), cùng dọn trước khi hết giờ.
+const fresh = () => ({ status: 'lobby', mode: 'race', board: null, order: [], players: {}, endAt: 0, winner: null });
 const isCell = (p) =>
   Array.isArray(p) && Number.isInteger(p[0]) && Number.isInteger(p[1]) &&
   p[0] >= 1 && p[0] <= ROWS && p[1] >= 1 && p[1] <= COLS;
 
 // Một phòng = một Durable Object. Người chơi ẩn danh, định danh bằng deviceId
 // (UUID lưu localStorage phía client). Mỗi người chơi trên bàn riêng nhưng cùng
-// một đề; server giữ bàn thật và kiểm lại mọi nước đi.
+// một đề (hoặc chung một bàn ở mode coop); server giữ bàn thật và kiểm lại mọi nước đi.
 export class Room extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -61,7 +63,7 @@ export class Room extends DurableObject {
     server.serializeAttachment({ id });
 
     await this.save();
-    if (s.status !== 'lobby' && p.board) this.sendBoard(server, p);
+    if (s.status !== 'lobby' && this.boardOf(p)) this.sendBoard(server, p);
     this.broadcast();
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -73,22 +75,36 @@ export class Room extends DurableObject {
     const p = s.players[ws.deserializeAttachment()?.id];
     if (!p) return;
 
+    const coop = s.mode === 'coop';
     if (m.t === 'start') {
       if (this.hostId() === p.id && s.status !== 'playing') await this.start();
+    } else if (m.t === 'mode') {
+      if (this.hostId() !== p.id || s.status === 'playing' || !['race', 'coop'].includes(m.mode)) return;
+      s.mode = m.mode;
+      await this.save();
+      this.broadcast();
+    } else if (m.t === 'sel') {
+      // Chỉ để đồng đội thấy mình đang chọn ô nào, không lưu.
+      if (!coop || s.status !== 'playing' || (m.a !== null && !isCell(m.a))) return;
+      this.relay(ws, { t: 'sel', id: p.id, a: m.a });
     } else if (m.t === 'pick') {
       if (s.status !== 'playing' || !isCell(m.a) || !isCell(m.b)) return;
-      if (!findPath(p.board, m.a, m.b)) return this.sendBoard(ws, p); // client lệch -> đồng bộ lại
-      p.board[m.a[0]][m.a[1]] = p.board[m.b[0]][m.b[1]] = 0;
+      const board = this.boardOf(p);
+      const path = findPath(board, m.a, m.b);
+      // Client lệch (hoặc đồng đội vừa ăn mất ô đó) -> đồng bộ lại.
+      if (!path) return this.sendBoard(ws, p);
+      board[m.a[0]][m.a[1]] = board[m.b[0]][m.b[1]] = 0;
       p.score += PAIR_SCORE;
-      if (!countLeft(p.board)) return this.finish(p.id);
-      if (!findPair(p.board)) { reshuffle(p.board); this.sendBoard(ws, p); }
+      if (coop) this.relay(ws, { t: 'match', id: p.id, a: m.a, b: m.b, path });
+      if (!countLeft(board)) return this.finish(p.id);
+      if (!findPair(board)) { reshuffle(board); this.sendBoards(coop ? null : ws); }
       await this.save();
       this.broadcast();
     } else if (m.t === 'shuffle') {
       if (s.status !== 'playing' || p.shuffles <= 0) return;
       p.shuffles--;
-      reshuffle(p.board);
-      this.sendBoard(ws, p);
+      reshuffle(this.boardOf(p));
+      this.sendBoards(coop ? null : ws);
       await this.save();
       this.broadcast();
     }
@@ -125,9 +141,11 @@ export class Room extends DurableObject {
     const online = this.onlineIds();
     s.order = s.order.filter((i) => online.has(i));
     const board = newBoard();
+    const coop = s.mode === 'coop';
+    s.board = coop ? board : null;
     const players = {};
     for (const id of s.order) {
-      players[id] = { ...s.players[id], score: 0, board: board.map((r) => r.slice()), shuffles: SHUFFLES };
+      players[id] = { ...s.players[id], score: 0, board: coop ? null : board.map((r) => r.slice()), shuffles: SHUFFLES };
     }
     s.players = players;
     s.status = 'playing';
@@ -135,17 +153,15 @@ export class Room extends DurableObject {
     s.winner = null;
     await this.ctx.storage.setAlarm(s.endAt);
     await this.save();
-    for (const ws of this.sockets()) {
-      const p = s.players[ws.deserializeAttachment()?.id];
-      if (p) this.sendBoard(ws, p, true);
-    }
+    this.sendBoards(null, true);
     this.broadcast();
   }
 
   async finish(winnerId) {
     const s = this.s;
     s.status = 'ended';
-    s.winner = winnerId ?? s.order.reduce((best, id) => (s.players[id].score > (s.players[best]?.score ?? -1) ? id : best), null);
+    // coop: winner = người ăn cặp cuối (cả đội thắng); hết giờ thì không ai thắng.
+    s.winner = winnerId ?? (s.mode === 'coop' ? null : s.order.reduce((best, id) => (s.players[id].score > (s.players[best]?.score ?? -1) ? id : best), null));
     await this.ctx.storage.deleteAlarm();
     await this.save();
     this.broadcast();
@@ -168,8 +184,27 @@ export class Room extends DurableObject {
     return this.s.order.find((id) => online.has(id)) ?? null;
   }
 
+  boardOf(p) {
+    return this.s.mode === 'coop' ? this.s.board : p.board;
+  }
+
   sendBoard(ws, p, isNew = false) {
-    ws.send(JSON.stringify({ t: 'board', board: p.board, shuffles: p.shuffles, isNew }));
+    ws.send(JSON.stringify({ t: 'board', board: this.boardOf(p), shuffles: p.shuffles, isNew }));
+  }
+
+  // only = một socket (race) hoặc null = gửi cho mọi người (coop / lúc bắt đầu).
+  sendBoards(only, isNew = false) {
+    for (const ws of only ? [only] : this.sockets()) {
+      const p = this.s.players[ws.deserializeAttachment()?.id];
+      if (p) this.sendBoard(ws, p, isNew);
+    }
+  }
+
+  relay(from, msg) {
+    const data = JSON.stringify(msg);
+    for (const ws of this.sockets(from)) {
+      try { ws.send(data); } catch {}
+    }
   }
 
   broadcast(except) {
@@ -178,6 +213,7 @@ export class Room extends DurableObject {
     const msg = JSON.stringify({
       t: 'state',
       status: s.status,
+      mode: s.mode,
       endAt: s.endAt,
       duration: DURATION,
       now: Date.now(),
@@ -185,7 +221,7 @@ export class Room extends DurableObject {
       host: this.hostId(except),
       players: s.order.map((id) => {
         const p = s.players[id];
-        return { id, name: p.name, score: p.score, left: p.board ? countLeft(p.board) / 2 : 0, shuffles: p.shuffles, online: online.has(id) };
+        return { id, name: p.name, score: p.score, left: this.boardOf(p) ? countLeft(this.boardOf(p)) / 2 : 0, shuffles: p.shuffles, online: online.has(id) };
       }),
     });
     for (const ws of this.sockets(except)) {

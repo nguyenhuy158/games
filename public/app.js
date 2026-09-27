@@ -1,4 +1,7 @@
 import { ROWS, COLS, findPath, findPair } from './logic.js';
+import { icon, hydrateIcons } from './icons.js';
+
+hydrateIcons();
 
 const $ = (s) => document.querySelector(s);
 const store = {
@@ -15,6 +18,7 @@ const myName = () => $('#name').value.trim() || 'Pika';
 const HINTS = 3;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 let ws, code = null, room = null, board = null, sel = null, hints = HINTS, clockOffset = 0;
+let peers = {}; // coop: id đồng đội -> ô họ đang chọn
 
 // ---------- âm thanh ----------
 let soundOn = store.get('pk.sound') !== '0';
@@ -25,7 +29,7 @@ function play(k) {
   audio[k].currentTime = 0;
   audio[k].play().catch(() => {});
 }
-function renderSound() { $('#btnSound').textContent = soundOn ? '🔊' : '🔇'; }
+function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('pk.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
 
@@ -46,6 +50,7 @@ function enter(c) {
   $('#home').hidden = true;
   $('#room').hidden = false;
   room = board = sel = null;
+  peers = {};
   render();
   connect();
 }
@@ -79,10 +84,23 @@ function onMsg(m) {
     const wasPlaying = room?.status === 'playing';
     room = m;
     clockOffset = m.now - Date.now();
-    if (wasPlaying && m.status === 'ended') play(m.winner === deviceId ? 'match' : 'miss');
+    if (wasPlaying && m.status === 'ended') play(m.winner && (m.mode === 'coop' || m.winner === deviceId) ? 'match' : 'miss');
+  } else if (m.t === 'match') {
+    // coop: đồng đội vừa ăn một cặp trên bàn chung.
+    if (!board) return;
+    board[m.a[0]][m.a[1]] = board[m.b[0]][m.b[1]] = 0;
+    if (sel && !board[sel[0]][sel[1]]) sel = null;
+    delete peers[m.id];
+    play('match');
+    render();
+    drawPath(m.path);
+    return;
+  } else if (m.t === 'sel') {
+    if (m.a) peers[m.id] = m.a; else delete peers[m.id];
   } else if (m.t === 'board') {
     board = m.board;
     sel = null;
+    peers = {};
     $('#shuffleLeft').textContent = m.shuffles;
     if (m.isNew) { hints = HINTS; play('start'); }
   }
@@ -97,6 +115,7 @@ $('#btnJoin').onclick = () => {
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
 $('#btnStart').onclick = () => send({ t: 'start' });
+for (const b of document.querySelectorAll('#modePick button')) b.onclick = () => send({ t: 'mode', mode: b.dataset.mode });
 $('#btnCopy').onclick = async () => {
   const link = `${location.origin}/?r=${code}`;
   try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời'); } catch { toast(link); }
@@ -146,6 +165,7 @@ function renderBoard() {
       d.style.cssText = `left:${x * w}px;top:${y * h}px;width:${w - 1}px;height:${h - 1}px;` +
         `background-size:${36 * w}px ${h}px;background-position:${-(t - 1) * w}px 0`;
       if (sel && sel[0] === r && sel[1] === c) d.classList.add('sel');
+      else if (Object.values(peers).some((p) => p[0] === r && p[1] === c)) d.classList.add('peer');
       b.append(d);
     }
   }
@@ -161,15 +181,20 @@ function drawPath(path) {
   setTimeout(() => svg.remove(), 300);
 }
 
+function setSel(v) {
+  sel = v;
+  if (room?.mode === 'coop') send({ t: 'sel', a: v });
+}
+
 $('#board').onpointerdown = (e) => {
   const k = e.target.dataset?.k;
   if (!k || !playing()) return;
   const [r, c] = k.split('-').map(Number);
-  if (!sel) { sel = [r, c]; play('select'); return renderBoard(); }
-  if (sel[0] === r && sel[1] === c) { sel = null; return renderBoard(); }
+  if (!sel) { setSel([r, c]); play('select'); return renderBoard(); }
+  if (sel[0] === r && sel[1] === c) { setSel(null); return renderBoard(); }
   const a = sel;
-  if (board[a[0]][a[1]] !== board[r][c]) { sel = [r, c]; play('select'); return renderBoard(); }
-  sel = null;
+  if (board[a[0]][a[1]] !== board[r][c]) { setSel([r, c]); play('select'); return renderBoard(); }
+  setSel(null);
   const path = findPath(board, a, [r, c]);
   if (!path) {
     play('miss');
@@ -199,20 +224,27 @@ function render() {
   const players = [...(room?.players ?? [])].sort((a, b) => b.score - a.score);
   $('#players').replaceChildren(...players.map((p) => {
     const li = document.createElement('li');
-    li.className = `${p.id === deviceId ? 'me' : ''} ${p.online ? '' : 'off'}`;
-    const tag = `${p.id === room.host ? '👑 ' : ''}${p.name}${p.id === deviceId ? ' (bạn)' : ''}`;
-    li.textContent = `${tag} · `;
+    li.className = `${p.id === deviceId ? 'me' : ''} ${p.online ? '' : 'off'} ${peers[p.id] ? 'peer-on' : ''}`;
+    if (p.id === room.host) li.innerHTML = icon('crown');
+    li.append(`${p.name}${p.id === deviceId ? ' (bạn)' : ''} · `);
     const b = document.createElement('b');
     b.textContent = p.score;
-    li.append(b, room.status === 'lobby' ? '' : ` · còn ${p.left} cặp`);
+    li.append(b, room.status === 'lobby' || room.mode === 'coop' ? '' : ` · còn ${p.left} cặp`);
     return li;
   }));
 
   const isHost = room?.host === deviceId;
+  const coop = room?.mode === 'coop';
   const ov = $('#overlay');
+  const setTitle = (ic, text) => { $('#ovTitle').innerHTML = ic ? icon(ic) : ''; $('#ovTitle').append(text); };
+  $('#modePick').hidden = !room || room.status === 'playing';
+  for (const b of document.querySelectorAll('#modePick button')) {
+    b.classList.toggle('on', b.dataset.mode === room?.mode);
+    b.disabled = !isHost;
+  }
   if (!room) {
     ov.hidden = false;
-    $('#ovTitle').textContent = 'Đang kết nối…';
+    setTitle(null, 'Đang kết nối…');
     $('#ovText').textContent = '';
     $('#btnStart').hidden = true;
   } else if (room.status === 'playing') {
@@ -220,9 +252,12 @@ function render() {
   } else {
     ov.hidden = false;
     const winner = room.players.find((p) => p.id === room.winner);
-    $('#ovTitle').textContent = room.status === 'lobby' ? `Phòng ${code}` : winner?.id === deviceId ? '🏆 Bạn thắng!' : `🏆 ${winner?.name ?? '—'} thắng`;
-    $('#ovText').textContent = (room.status === 'lobby' ? `${room.players.length}/4 người. Gửi mã hoặc link cho bạn bè để vào cùng. ` : 'Ván mới? ') +
-      (isHost ? '' : 'Chờ chủ phòng 👑 bắt đầu.');
+    if (room.status === 'lobby') setTitle(null, `Phòng ${code}`);
+    else if (coop) setTitle(room.winner ? 'trophy' : null, room.winner ? 'Cả đội dọn sạch bàn!' : 'Hết giờ mất rồi…');
+    else setTitle('trophy', winner?.id === deviceId ? 'Bạn thắng!' : `${winner?.name ?? '—'} thắng`);
+    $('#ovText').textContent = (room.status === 'lobby'
+      ? `${room.players.length}/4 người. ${coop ? 'Cả phòng chung một bàn, cùng dọn trước khi hết giờ.' : 'Mỗi người một bàn cùng đề, ai dọn xong trước thắng.'} `
+      : 'Ván mới? ') + (isHost ? '' : 'Chờ chủ phòng bắt đầu.');
     $('#btnStart').hidden = !isHost;
     $('#btnStart').textContent = room.status === 'lobby' ? 'Bắt đầu' : 'Chơi ván mới';
   }

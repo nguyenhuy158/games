@@ -11,7 +11,7 @@
 <body>
   <section id="home">
     <div class="card">
-      <h1>⚡ Pikachu Online</h1>
+      <h1><i data-icon="zap"></i> Pikachu Online</h1>
       <p class="sub">Nối thú cổ điển, chơi cùng bạn bè — không cần đăng ký.</p>
       <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
       <button id="btnCreate" class="primary">Tạo phòng mới</button>
@@ -25,13 +25,13 @@
 
   <section id="room" hidden>
     <header>
-      <button id="btnLeave" title="Rời phòng">←</button>
-      <button id="btnCopy" title="Sao chép link mời"><span class="lbl">Phòng </span><b id="roomCode"></b> 🔗</button>
+      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Sao chép link mời"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="link"></i></button>
       <span id="conn" class="dot" title="Kết nối"></span>
       <span id="clock">--:--</span>
-      <button id="btnHint" title="Gợi ý">💡 <span id="hintLeft">3</span></button>
-      <button id="btnShuffle" title="Đổi vị trí">🔀 <span id="shuffleLeft">5</span></button>
-      <button id="btnSound" title="Âm thanh">🔊</button>
+      <button id="btnHint" title="Gợi ý"><i data-icon="lightbulb"></i> <span id="hintLeft">3</span></button>
+      <button id="btnShuffle" title="Đổi vị trí"><i data-icon="shuffle"></i> <span id="shuffleLeft">5</span></button>
+      <button id="btnSound" title="Âm thanh"></button>
     </header>
     <div id="timeTrack"><div id="timebar"></div></div>
     <ul id="players"></ul>
@@ -40,6 +40,10 @@
       <div id="overlay" hidden>
         <div class="card">
           <h2 id="ovTitle"></h2>
+          <div id="modePick" class="seg" hidden>
+            <button data-mode="race"><i data-icon="swords"></i> Đua nhau</button>
+            <button data-mode="coop"><i data-icon="users"></i> Chơi chung</button>
+          </div>
           <p id="ovText"></p>
           <button id="btnStart" class="primary" hidden>Bắt đầu</button>
         </div>

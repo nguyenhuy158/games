@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "wrangler dev",
     "test": "node logic.test.mjs",
-    "deploy": "node logic.test.mjs && wrangler deploy"
+    "deploy": "node logic.test.mjs && wrangler deploy",
+    "icons": "node scripts/icons.mjs"
   },
   "devDependencies": {
+    "lucide": "0.468.0",
     "wrangler": "^4.106.0"
   }
 }

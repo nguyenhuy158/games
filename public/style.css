@@ -7,6 +7,7 @@
   --accent: #ffd23f;
   --good: #3ddc84;
   --bad: #ff5d5d;
+  --peer: #5cc8ff;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -19,6 +20,8 @@ body {
   user-select: none;
 }
 [hidden] { display: none !important; }
+.ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
+header button { display: inline-flex; align-items: center; gap: 4px; }
 button, input { font: inherit; color: inherit; }
 button {
   background: var(--panel);
@@ -54,6 +57,11 @@ input {
 .sub, .muted { margin: 0; color: var(--muted); }
 .muted { font-size: 13px; }
 .join { display: flex; gap: 8px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.seg button.on { border-color: var(--accent); color: var(--accent); }
+.seg button:disabled { opacity: 1; }
+#ovTitle { display: flex; align-items: center; justify-content: center; gap: 8px; }
 #code { text-transform: uppercase; letter-spacing: 3px; text-align: center; }
 
 #home { height: 100%; display: grid; place-items: center; padding: 16px; }
@@ -89,6 +97,9 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 #players li.me { border-color: var(--accent); }
 #players li.off { opacity: .45; }
 #players b { color: var(--accent); }
+#players li { display: inline-flex; align-items: center; gap: 4px; }
+#players .ic { color: var(--accent); }
+#players li.peer-on { border-color: var(--peer); }
 
 #boardWrap { position: relative; flex: 1; min-height: 0; margin: 8px; }
 #board { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
@@ -102,6 +113,7 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
   transition: transform .08s;
 }
 .cell.sel { outline: 3px solid var(--accent); transform: scale(.92); z-index: 1; }
+.cell.peer { outline: 3px dashed var(--peer); z-index: 1; }
 .cell.hint { animation: hint .5s ease-in-out 3; }
 @keyframes hint { 50% { outline: 3px solid var(--good); transform: scale(1.1); } }
 #board svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 2; }
