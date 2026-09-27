@@ -1,6 +1,6 @@
 // node logic.test.mjs
 import assert from 'node:assert/strict';
-import { SIZES, TYPES, durationOf, newBoard, findPath, findPair, countLeft, reshuffle } from './public/logic.js';
+import { SIZES, TYPES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, countLeft, reshuffle } from './public/logic.js';
 
 const [COLS, ROWS] = SIZES[0];
 
@@ -72,6 +72,33 @@ for (const [cols, rows] of SIZES) {
   for (let p; (p = findPair(g)) || countLeft(g); ) {
     if (!p) { reshuffle(g); continue; }
     g[p[0][0]][p[0][1]] = g[p[1][0]][p[1][1]] = 0;
+  }
+  assert.equal(countLeft(g), 0);
+}
+
+// Ô trượt: dồn đúng hướng, giữ thứ tự, không mất quân.
+const mini = () => [
+  [0, 0, 0, 0, 0],
+  [0, 1, 0, 2, 0],
+  [0, 0, 3, 0, 0],
+  [0, 4, 0, 5, 0],
+  [0, 0, 0, 0, 0],
+];
+assert.deepEqual(slide(mini(), 'down').map((r) => r.slice(1, 4)).slice(1, 4), [[0, 0, 0], [1, 0, 2], [4, 3, 5]]);
+assert.deepEqual(slide(mini(), 'up').map((r) => r.slice(1, 4)).slice(1, 4), [[1, 3, 2], [4, 0, 5], [0, 0, 0]]);
+assert.deepEqual(slide(mini(), 'left').map((r) => r.slice(1, 4)).slice(1, 4), [[1, 2, 0], [3, 0, 0], [4, 5, 0]]);
+assert.deepEqual(slide(mini(), 'right').map((r) => r.slice(1, 4)).slice(1, 4), [[0, 1, 2], [0, 0, 3], [0, 4, 5]]);
+assert.deepEqual(slide(mini(), null), mini());
+assert.equal(LEVELS, SLIDES.length);
+
+// Chơi hết mọi màn có trượt vẫn về 0 quân, viền luôn trống.
+for (const dir of SLIDES) {
+  g = newBoard(SIZES[3]);
+  for (let p; (p = findPair(g)) || countLeft(g); ) {
+    if (!p) { reshuffle(g); continue; }
+    g[p[0][0]][p[0][1]] = g[p[1][0]][p[1][1]] = 0;
+    slide(g, dir);
+    assert.ok(g[0].every((t) => !t) && g.at(-1).every((t) => !t) && g.every((r) => !r[0] && !r.at(-1)));
   }
   assert.equal(countLeft(g), 0);
 }

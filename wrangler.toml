@@ -14,10 +14,19 @@ run_worker_first = ["/api/*"]
 name = "ROOM"
 class_name = "Room"
 
+[[durable_objects.bindings]]
+name = "TOP"
+class_name = "Top"
+
 # SQLite-backed DO: dung duoc o goi free.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room"]
+
+# Bang xep hang (DO SQLite thay cho D1 vi goi free da het quota D1).
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Top"]
 
 [observability]
 enabled = true

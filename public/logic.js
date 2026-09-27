@@ -9,8 +9,34 @@ export const TYPES = 36;
 // client tự xoay bàn nên không cần bản đứng riêng.
 export const SIZES = [[16, 9], [12, 9], [10, 8], [8, 6]];
 
-// 2.5 giây mỗi ô: 16x9 = 6 phút.
+// Thời gian MỖI MÀN, 2.5 giây mỗi ô: 16x9 = 6 phút.
 export const durationOf = ([cols, rows]) => cols * rows * 2500;
+
+// Các màn như bản gốc: màn 1 đứng yên, từ màn 2 ô dồn về một hướng sau mỗi lần ăn.
+export const SLIDES = [null, 'down', 'left', 'up', 'right'];
+export const LEVELS = SLIDES.length;
+export const SLIDE_ICON = { down: '↓', left: '←', up: '↑', right: '→' };
+
+// Dồn các ô còn lại về hướng dir (tại chỗ). Client và server gọi cùng hàm này
+// sau mỗi lần ăn nên bàn hai bên luôn giống nhau.
+export function slide(g, dir) {
+  if (!dir) return g;
+  const R = g.length - 2, C = g[0].length - 2;
+  const vertical = dir === 'down' || dir === 'up';
+  const toEnd = dir === 'down' || dir === 'right';
+  const lines = vertical ? C : R, len = vertical ? R : C;
+  for (let i = 1; i <= lines; i++) {
+    const at = (j) => (vertical ? [j, i] : [i, j]);
+    const vals = [];
+    for (let j = 1; j <= len; j++) { const [r, c] = at(j); if (g[r][c]) vals.push(g[r][c]); }
+    for (let j = 1; j <= len; j++) {
+      const [r, c] = at(j);
+      const k = toEnd ? j - (len - vals.length) - 1 : j - 1;
+      g[r][c] = k >= 0 && k < vals.length ? vals[k] : 0;
+    }
+  }
+  return g;
+}
 
 function shuffleArr(a, rand) {
   for (let i = a.length - 1; i > 0; i--) {
