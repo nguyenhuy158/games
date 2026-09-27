@@ -81,6 +81,7 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
   header button { padding: 6px 8px; }
   header .lbl { display: none; }
 }
+#modeTag { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); flex: none; }
 .dot.on { background: var(--good); }
 #timeTrack { height: 6px; margin: 0 12px; background: #0a1724; border-radius: 3px; overflow: hidden; }

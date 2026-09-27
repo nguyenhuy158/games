@@ -28,6 +28,7 @@
       <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
       <button id="btnCopy" title="Sao chép link mời"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="link"></i></button>
       <span id="conn" class="dot" title="Kết nối"></span>
+      <span id="modeTag" hidden></span>
       <span id="clock">--:--</span>
       <button id="btnHint" title="Gợi ý"><i data-icon="lightbulb"></i> <span id="hintLeft">3</span></button>
       <button id="btnShuffle" title="Đổi vị trí"><i data-icon="shuffle"></i> <span id="shuffleLeft">5</span></button>
@@ -41,8 +42,8 @@
         <div class="card">
           <h2 id="ovTitle"></h2>
           <div id="modePick" class="seg" hidden>
-            <button data-mode="race"><i data-icon="swords"></i> Đua nhau</button>
             <button data-mode="coop"><i data-icon="users"></i> Chơi chung</button>
+            <button data-mode="race"><i data-icon="swords"></i> Đua nhau</button>
           </div>
           <p id="ovText"></p>
           <button id="btnStart" class="primary" hidden>Bắt đầu</button>

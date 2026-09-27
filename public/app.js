@@ -235,6 +235,8 @@ function render() {
 
   const isHost = room?.host === deviceId;
   const coop = room?.mode === 'coop';
+  $('#modeTag').hidden = !room;
+  if (room) $('#modeTag').innerHTML = icon(coop ? 'users' : 'swords') + (coop ? 'Chơi chung' : 'Đua nhau');
   const ov = $('#overlay');
   const setTitle = (ic, text) => { $('#ovTitle').innerHTML = ic ? icon(ic) : ''; $('#ovTitle').append(text); };
   $('#modePick').hidden = !room || room.status === 'playing';

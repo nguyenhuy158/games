@@ -16,7 +16,7 @@ export default {
 
 // mode 'race': mỗi người một bàn cùng đề, ai dọn xong trước thắng.
 // mode 'coop': cả phòng chung một bàn (s.board), cùng dọn trước khi hết giờ.
-const fresh = () => ({ status: 'lobby', mode: 'race', board: null, order: [], players: {}, endAt: 0, winner: null });
+const fresh = () => ({ status: 'lobby', mode: 'coop', board: null, order: [], players: {}, endAt: 0, winner: null });
 const isCell = (p) =>
   Array.isArray(p) && Number.isInteger(p[0]) && Number.isInteger(p[1]) &&
   p[0] >= 1 && p[0] <= ROWS && p[1] >= 1 && p[1] <= COLS;
