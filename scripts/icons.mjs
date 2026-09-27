@@ -2,7 +2,7 @@
 // Thêm icon: thêm tên vào NAMES rồi chạy `pnpm icons`.
 import { writeFileSync } from 'node:fs';
 
-const NAMES = ['arrow-left', 'link', 'lightbulb', 'shuffle', 'volume-2', 'volume-x', 'crown', 'trophy', 'users', 'swords', 'zap', 'play', 'rotate-ccw'];
+const NAMES = ['arrow-left', 'link', 'lightbulb', 'shuffle', 'volume-2', 'volume-x', 'crown', 'trophy', 'users', 'swords', 'zap', 'play', 'rotate-ccw', 'mouse-pointer-2', 'grid-3x3'];
 
 const attrs = (o) => Object.entries(o).map(([k, v]) => `${k}="${v}"`).join(' ');
 const out = {};

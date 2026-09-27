@@ -1,6 +1,8 @@
 // node logic.test.mjs
 import assert from 'node:assert/strict';
-import { ROWS, COLS, TYPES, newBoard, findPath, findPair, countLeft, reshuffle } from './public/logic.js';
+import { SIZES, TYPES, durationOf, newBoard, findPath, findPair, countLeft, reshuffle } from './public/logic.js';
+
+const [COLS, ROWS] = SIZES[0];
 
 const empty = () => Array.from({ length: ROWS + 2 }, () => Array(COLS + 2).fill(0));
 
@@ -56,12 +58,22 @@ reshuffle(g);
 assert.equal(g[1][1], 0);
 assert.equal(countLeft(g), before - 1);
 
-// Chơi hết bàn bằng findPair phải về 0 quân.
-g = newBoard();
-for (let p; (p = findPair(g)) || countLeft(g); ) {
-  if (!p) { reshuffle(g); continue; }
-  g[p[0][0]][p[0][1]] = g[p[1][0]][p[1][1]] = 0;
+// Mọi cỡ bàn: hợp lệ, mỗi loại đúng 4 ô, chơi hết bằng findPair phải về 0 quân.
+assert.equal(durationOf(SIZES[0]), 6 * 60 * 1000);
+for (const [cols, rows] of SIZES) {
+  assert.equal((cols * rows) % 4, 0);
+  assert.ok(cols * rows / 4 <= TYPES);
+  g = newBoard([cols, rows]);
+  assert.equal(g.length, rows + 2);
+  assert.equal(g[0].length, cols + 2);
+  const n = {};
+  for (const row of g) for (const t of row) if (t) n[t] = (n[t] ?? 0) + 1;
+  assert.ok(Object.values(n).every((v) => v === 4), `${cols}x${rows} mỗi loại 4 ô`);
+  for (let p; (p = findPair(g)) || countLeft(g); ) {
+    if (!p) { reshuffle(g); continue; }
+    g[p[0][0]][p[0][1]] = g[p[1][0]][p[1][1]] = 0;
+  }
+  assert.equal(countLeft(g), 0);
 }
-assert.equal(countLeft(g), 0);
 
 console.log('logic ok');

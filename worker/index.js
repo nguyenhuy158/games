@@ -1,8 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
-import { ROWS, COLS, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/logic.js';
+import { SIZES, durationOf, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/logic.js';
 
 const MAX_PLAYERS = 4;
-const DURATION = 6 * 60 * 1000;
 const SHUFFLES = 5;
 const PAIR_SCORE = 10;
 
@@ -16,10 +15,15 @@ export default {
 
 // mode 'race': mỗi người một bàn cùng đề, ai dọn xong trước thắng.
 // mode 'coop': cả phòng chung một bàn (s.board), cùng dọn trước khi hết giờ.
-const fresh = () => ({ status: 'lobby', mode: 'coop', board: null, order: [], players: {}, endAt: 0, winner: null });
-const isCell = (p) =>
+// size = chỉ số trong SIZES.
+const fresh = () => ({ status: 'lobby', mode: 'coop', size: 0, board: null, order: [], players: {}, endAt: 0, winner: null });
+const isCell = (p, g) =>
   Array.isArray(p) && Number.isInteger(p[0]) && Number.isInteger(p[1]) &&
-  p[0] >= 1 && p[0] <= ROWS && p[1] >= 1 && p[1] <= COLS;
+  p[0] >= 1 && p[0] <= g.length - 2 && p[1] >= 1 && p[1] <= g[0].length - 2;
+// Toạ độ chuột theo đơn vị ô (số thực), cho phép lấn ra viền 1 ô.
+const isPos = (p, g) =>
+  Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]) &&
+  p[0] >= 0 && p[0] <= g.length && p[1] >= 0 && p[1] <= g[0].length;
 
 // Một phòng = một Durable Object. Người chơi ẩn danh, định danh bằng deviceId
 // (UUID lưu localStorage phía client). Mỗi người chơi trên bàn riêng nhưng cùng
@@ -28,7 +32,8 @@ export class Room extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
     ctx.blockConcurrencyWhile(async () => {
-      this.s = (await ctx.storage.get('s')) ?? fresh();
+      // Gộp với mặc định: phòng lưu từ bản cũ có thể thiếu field mới (vd size).
+      this.s = { ...fresh(), ...(await ctx.storage.get('s')) };
     });
   }
 
@@ -83,13 +88,21 @@ export class Room extends DurableObject {
       s.mode = m.mode;
       await this.save();
       this.broadcast();
-    } else if (m.t === 'sel') {
-      // Chỉ để đồng đội thấy mình đang chọn ô nào, không lưu.
-      if (!coop || s.status !== 'playing' || (m.a !== null && !isCell(m.a))) return;
-      this.relay(ws, { t: 'sel', id: p.id, a: m.a });
+    } else if (m.t === 'size') {
+      if (this.hostId() !== p.id || s.status === 'playing' || !Number.isInteger(m.size) || !SIZES[m.size]) return;
+      s.size = m.size;
+      await this.save();
+      this.broadcast();
+    } else if (m.t === 'sel' || m.t === 'cur') {
+      // Ô đang chọn / vị trí chuột: chỉ để đồng đội thấy, không lưu.
+      const v = m.t === 'sel' ? m.a : m.p;
+      const ok = m.t === 'sel' ? isCell : isPos;
+      if (!coop || s.status !== 'playing' || (v !== null && !ok(v, s.board))) return;
+      this.relay(ws, m.t === 'sel' ? { t: 'sel', id: p.id, a: v } : { t: 'cur', id: p.id, p: v });
     } else if (m.t === 'pick') {
-      if (s.status !== 'playing' || !isCell(m.a) || !isCell(m.b)) return;
+      if (s.status !== 'playing') return;
       const board = this.boardOf(p);
+      if (!isCell(m.a, board) || !isCell(m.b, board)) return;
       const path = findPath(board, m.a, m.b);
       // Client lệch (hoặc đồng đội vừa ăn mất ô đó) -> đồng bộ lại.
       if (!path) return this.sendBoard(ws, p);
@@ -140,7 +153,7 @@ export class Room extends DurableObject {
     const s = this.s;
     const online = this.onlineIds();
     s.order = s.order.filter((i) => online.has(i));
-    const board = newBoard();
+    const board = newBoard(SIZES[s.size]);
     const coop = s.mode === 'coop';
     s.board = coop ? board : null;
     const players = {};
@@ -149,7 +162,7 @@ export class Room extends DurableObject {
     }
     s.players = players;
     s.status = 'playing';
-    s.endAt = Date.now() + DURATION;
+    s.endAt = Date.now() + durationOf(SIZES[s.size]);
     s.winner = null;
     await this.ctx.storage.setAlarm(s.endAt);
     await this.save();
@@ -214,8 +227,9 @@ export class Room extends DurableObject {
       t: 'state',
       status: s.status,
       mode: s.mode,
+      size: s.size,
       endAt: s.endAt,
-      duration: DURATION,
+      duration: durationOf(SIZES[s.size]),
       now: Date.now(),
       winner: s.winner,
       host: this.hostId(except),

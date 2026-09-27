@@ -1,4 +1,4 @@
-import { ROWS, COLS, findPath, findPair } from './logic.js';
+import { SIZES, findPath, findPair } from './logic.js';
 import { icon, hydrateIcons } from './icons.js';
 
 hydrateIcons();
@@ -19,6 +19,9 @@ const HINTS = 3;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 let ws, code = null, room = null, board = null, sel = null, hints = HINTS, clockOffset = 0;
 let peers = {}; // coop: id đồng đội -> ô họ đang chọn
+let cursors = {}; // coop: id đồng đội -> [r, c] chuột (đơn vị ô, số thực)
+const PEER_COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454'];
+const colorOf = (id) => PEER_COLORS[Math.max(0, room?.players.findIndex((p) => p.id === id) ?? 0) % PEER_COLORS.length];
 
 // ---------- âm thanh ----------
 let soundOn = store.get('pk.sound') !== '0';
@@ -51,6 +54,7 @@ function enter(c) {
   $('#room').hidden = false;
   room = board = sel = null;
   peers = {};
+  cursors = {};
   render();
   connect();
 }
@@ -95,6 +99,9 @@ function onMsg(m) {
     render();
     drawPath(m.path);
     return;
+  } else if (m.t === 'cur') {
+    if (m.p) cursors[m.id] = m.p; else delete cursors[m.id];
+    return renderCursors();
   } else if (m.t === 'sel') {
     if (m.a) peers[m.id] = m.a; else delete peers[m.id];
   } else if (m.t === 'board') {
@@ -116,6 +123,13 @@ $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
 $('#btnStart').onclick = () => send({ t: 'start' });
 for (const b of document.querySelectorAll('#modePick button')) b.onclick = () => send({ t: 'mode', mode: b.dataset.mode });
+$('#sizePick').replaceChildren(...SIZES.map(([c, r], i) => {
+  const b = document.createElement('button');
+  b.textContent = `${c}×${r}`;
+  b.title = `${(c * r) / 2} cặp`;
+  b.onclick = () => send({ t: 'size', size: i });
+  return b;
+}));
 $('#btnCopy').onclick = async () => {
   const link = `${location.origin}/?r=${code}`;
   try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời'); } catch { toast(link); }
@@ -138,7 +152,8 @@ let geo = { w: 40, h: 50, portrait: false };
 function layout() {
   const wrap = $('#boardWrap');
   const portrait = wrap.clientHeight > wrap.clientWidth;
-  const gw = (portrait ? ROWS : COLS) + 2, gh = (portrait ? COLS : ROWS) + 2;
+  const H = board.length, W = board[0].length; // đã gồm viền
+  const gw = portrait ? H : W, gh = portrait ? W : H;
   const w = Math.max(12, Math.floor(Math.min(wrap.clientWidth / gw, wrap.clientHeight / gh / 1.25)));
   geo = { w, h: Math.floor(w * 1.25), portrait };
   const b = $('#board');
@@ -154,8 +169,8 @@ function renderBoard() {
   if (!board) return;
   layout();
   const { w, h } = geo;
-  for (let r = 1; r <= ROWS; r++) {
-    for (let c = 1; c <= COLS; c++) {
+  for (let r = 1; r < board.length - 1; r++) {
+    for (let c = 1; c < board[0].length - 1; c++) {
       const t = board[r][c];
       if (!t) continue;
       const [x, y] = xy(r, c);
@@ -165,11 +180,61 @@ function renderBoard() {
       d.style.cssText = `left:${x * w}px;top:${y * h}px;width:${w - 1}px;height:${h - 1}px;` +
         `background-size:${36 * w}px ${h}px;background-position:${-(t - 1) * w}px 0`;
       if (sel && sel[0] === r && sel[1] === c) d.classList.add('sel');
-      else if (Object.values(peers).some((p) => p[0] === r && p[1] === c)) d.classList.add('peer');
+      else {
+        const peer = Object.keys(peers).find((id) => peers[id][0] === r && peers[id][1] === c);
+        if (peer) { d.classList.add('peer'); d.style.setProperty('--peer', colorOf(peer)); }
+      }
       b.append(d);
     }
   }
+  const layer = document.createElement('div');
+  layer.id = 'cursors';
+  b.append(layer);
+  renderCursors();
 }
+
+// Chuột đồng đội: toạ độ theo ô nên đúng trên mọi cỡ màn hình / khi bàn bị xoay.
+function renderCursors() {
+  const layer = $('#cursors');
+  if (!layer) return;
+  const alive = new Set();
+  for (const [id, [r, c]] of Object.entries(cursors)) {
+    const p = room?.players.find((x) => x.id === id);
+    if (!p?.online) continue;
+    alive.add(id);
+    let el = layer.querySelector(`[data-id="${CSS.escape(id)}"]`);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'cursor';
+      el.dataset.id = id;
+      el.innerHTML = icon('mouse-pointer-2');
+      el.append(Object.assign(document.createElement('span'), { textContent: p.name }));
+      layer.append(el);
+    }
+    el.style.setProperty('--c', colorOf(id));
+    const [x, y] = geo.portrait ? [r, c] : [c, r];
+    el.style.left = `${x * geo.w}px`;
+    el.style.top = `${y * geo.h}px`;
+  }
+  for (const el of layer.children) if (!alive.has(el.dataset.id)) el.remove();
+}
+
+let lastCur = 0, curTimer = null;
+$('#boardWrap').addEventListener('pointermove', (e) => {
+  if (room?.mode !== 'coop' || !playing()) return;
+  const rect = $('#board').getBoundingClientRect();
+  const x = (e.clientX - rect.left) / geo.w, y = (e.clientY - rect.top) / geo.h;
+  const p = (geo.portrait ? [x, y] : [y, x]).map((v) => Math.round(v * 100) / 100);
+  // ~20 lần/giây là đủ mượt (CSS transition nội suy phần còn lại).
+  const wait = 50 - (Date.now() - lastCur);
+  clearTimeout(curTimer);
+  const go = () => { lastCur = Date.now(); send({ t: 'cur', p }); };
+  if (wait <= 0) go(); else curTimer = setTimeout(go, wait);
+});
+$('#boardWrap').addEventListener('pointerleave', () => {
+  clearTimeout(curTimer);
+  if (room?.mode === 'coop' && playing()) send({ t: 'cur', p: null });
+});
 
 function drawPath(path) {
   const pts = path.map(([r, c]) => { const [x, y] = xy(r, c); return `${x * geo.w + geo.w / 2},${y * geo.h + geo.h / 2}`; });
@@ -221,10 +286,13 @@ function render() {
   $('#btnHint').disabled = !playing() || hints <= 0;
   $('#btnShuffle').disabled = !playing() || $('#shuffleLeft').textContent === '0';
 
+  const isHost = room?.host === deviceId;
+  const coop = room?.mode === 'coop';
   const players = [...(room?.players ?? [])].sort((a, b) => b.score - a.score);
   $('#players').replaceChildren(...players.map((p) => {
     const li = document.createElement('li');
     li.className = `${p.id === deviceId ? 'me' : ''} ${p.online ? '' : 'off'} ${peers[p.id] ? 'peer-on' : ''}`;
+    if (coop && p.id !== deviceId) { li.classList.add('mate'); li.style.setProperty('--peer', colorOf(p.id)); }
     if (p.id === room.host) li.innerHTML = icon('crown');
     li.append(`${p.name}${p.id === deviceId ? ' (bạn)' : ''} · `);
     const b = document.createElement('b');
@@ -233,13 +301,13 @@ function render() {
     return li;
   }));
 
-  const isHost = room?.host === deviceId;
-  const coop = room?.mode === 'coop';
   $('#modeTag').hidden = !room;
-  if (room) $('#modeTag').innerHTML = icon(coop ? 'users' : 'swords') + (coop ? 'Chơi chung' : 'Đua nhau');
+  if (room) $('#modeTag').innerHTML = icon(coop ? 'users' : 'swords') + `<span class="lbl">${coop ? 'Chơi chung' : 'Đua nhau'}</span>`;
   const ov = $('#overlay');
   const setTitle = (ic, text) => { $('#ovTitle').innerHTML = ic ? icon(ic) : ''; $('#ovTitle').append(text); };
   $('#modePick').hidden = !room || room.status === 'playing';
+  $('#sizePick').hidden = $('#modePick').hidden;
+  [...$('#sizePick').children].forEach((b, i) => { b.classList.toggle('on', i === room?.size); b.disabled = !isHost; });
   for (const b of document.querySelectorAll('#modePick button')) {
     b.classList.toggle('on', b.dataset.mode === room?.mode);
     b.disabled = !isHost;

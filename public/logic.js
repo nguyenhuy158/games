@@ -1,10 +1,16 @@
 // Luật chơi dùng chung cho browser (public/app.js) và Worker (worker/index.js).
-// Bàn là mảng (ROWS+2) x (COLS+2): viền ngoài luôn = 0 để đường nối đi vòng ra ngoài.
+// Bàn là mảng (rows+2) x (cols+2): viền ngoài luôn = 0 để đường nối đi vòng ra ngoài.
 // 0 = ô trống, 1..TYPES = loại icon (thứ tự trong pieces-sprite.png).
 
-export const ROWS = 9;
-export const COLS = 16;
-export const TYPES = 36; // 144 ô / 36 loại = mỗi loại 4 ô
+export const TYPES = 36;
+
+// Cỡ bàn phổ biến [cols, rows] (lấy từ bản gốc). Ràng buộc: số ô chia hết cho 4
+// và số ô / 4 <= TYPES để mỗi loại icon xuất hiện đúng 4 lần. Màn hình dọc thì
+// client tự xoay bàn nên không cần bản đứng riêng.
+export const SIZES = [[16, 9], [12, 9], [10, 8], [8, 6]];
+
+// 2.5 giây mỗi ô: 16x9 = 6 phút.
+export const durationOf = ([cols, rows]) => cols * rows * 2500;
 
 function shuffleArr(a, rand) {
   for (let i = a.length - 1; i > 0; i--) {
@@ -13,12 +19,15 @@ function shuffleArr(a, rand) {
   }
 }
 
-export function newBoard(rand = Math.random) {
-  const tiles = Array.from({ length: ROWS * COLS }, (_, i) => 1 + (i % TYPES));
+export function newBoard([cols, rows] = SIZES[0], rand = Math.random) {
+  // Bàn nhỏ dùng ít loại hơn: bốc ngẫu nhiên cols*rows/4 loại, mỗi loại 4 ô.
+  const types = Array.from({ length: TYPES }, (_, i) => i + 1);
+  shuffleArr(types, rand);
+  const tiles = Array.from({ length: cols * rows }, (_, i) => types[i >> 2]);
   shuffleArr(tiles, rand);
-  const g = Array.from({ length: ROWS + 2 }, () => Array(COLS + 2).fill(0));
+  const g = Array.from({ length: rows + 2 }, () => Array(cols + 2).fill(0));
   let k = 0;
-  for (let r = 1; r <= ROWS; r++) for (let c = 1; c <= COLS; c++) g[r][c] = tiles[k++];
+  for (let r = 1; r <= rows; r++) for (let c = 1; c <= cols; c++) g[r][c] = tiles[k++];
   if (!findPair(g)) reshuffle(g, rand);
   return g;
 }

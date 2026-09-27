@@ -59,6 +59,8 @@ input {
 .join { display: flex; gap: 8px; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.seg4 { grid-template-columns: repeat(4, 1fr); }
+.seg4 button { padding-inline: 4px; font-variant-numeric: tabular-nums; }
 .seg button.on { border-color: var(--accent); color: var(--accent); }
 .seg button:disabled { opacity: 1; }
 #ovTitle { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -100,6 +102,7 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 #players b { color: var(--accent); }
 #players li { display: inline-flex; align-items: center; gap: 4px; }
 #players .ic { color: var(--accent); }
+#players li.mate { box-shadow: inset 4px 0 var(--peer); }
 #players li.peer-on { border-color: var(--peer); }
 
 #boardWrap { position: relative; flex: 1; min-height: 0; margin: 8px; }
@@ -117,11 +120,19 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 .cell.peer { outline: 3px dashed var(--peer); z-index: 1; }
 .cell.hint { animation: hint .5s ease-in-out 3; }
 @keyframes hint { 50% { outline: 3px solid var(--good); transform: scale(1.1); } }
-#board svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 2; }
+#board > svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 2; }
 #board polyline { fill: none; stroke: var(--bad); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 #board.shake { animation: shake .25s; }
 @keyframes shake { 25% { margin-left: -6px; } 75% { margin-left: 6px; } }
 
+#cursors { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.cursor { position: absolute; transition: left 80ms linear, top 80ms linear; color: var(--c); }
+.cursor .ic { width: 22px; height: 22px; fill: var(--c); stroke: #0b1b2b; stroke-width: 1.5; filter: drop-shadow(0 1px 2px #0008); }
+.cursor span {
+  position: absolute; left: 16px; top: 18px;
+  background: var(--c); color: #0b1b2b;
+  font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 6px; white-space: nowrap;
+}
 #overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #0b1b2bb0; z-index: 5; }
 
 #toast {
