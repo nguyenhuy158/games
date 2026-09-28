@@ -87,11 +87,13 @@ Làm theo lối chơi của papergames.io (tham khảo cách bố trí / luật 
 
 ## Góc Nokia
 
-Game điện thoại Nokia ngày xưa ở `/nokia/<game>/`: **Rắn săn mồi** (snake), **Bantumi**, **Lật hình** (pairs), **Logic**. Hình pixel tự vẽ, không dùng ảnh của Nokia.
+Game điện thoại Nokia ngày xưa ở `/nokia/<game>/`: **Rắn săn mồi** (snake), **Bantumi**, **Lật hình** (pairs), **Logic**, **Rapid Roll**, **Space Impact**, **Bounce**. Hình pixel tự vẽ, không dùng ảnh của Nokia.
 
 - Một Durable Object dùng chung `NokiaRoom` (`worker/nokia.js`, WebSocket `/api/nk/<game>/room/CODE`, mỗi phòng là DO tên `<game>:<CODE>`): lo người chơi, chủ phòng, sảnh chờ, gửi view riêng từng người, lưu lịch sử. Mỗi game chỉ là một module `worker/nokia/<game>.js` (`start` / `msg` / `tick` / `view`), luật thuần ở `public/nokia/<game>/logic.js` (có test `nokia-<game>.test.mjs`).
 - Client chung `public/nokia/room.js` (trang vào phòng, mời QR, sảnh chờ, kết quả) + `public/nokia/lcd.js`: LCD 84×48 hai màu, font pixel 3×5 tự vẽ, bàn phím 2/4/5/6/8 (bàn phím thật, WASD, mũi tên, nút trên màn — giữ được), tiếng bíp WebAudio.
 - Snake: server bước theo tốc độ (5 cấp), có / không tường, 1–4 con; con sống cuối cùng thắng. Bantumi: luật Kalah, máy minimax alpha-beta. Lật hình: 6×4 lá, hình lá úp chỉ ở server. Logic: mọi người đoán cùng một mã (chỉ ở server), 10 lượt / 5 phút.
+- Rapid Roll + Bounce: "đua cùng đề" (`worker/nokia/race.js`) — server phát hạt giống / màn + giờ xuất phát, máy mỗi người tự chạy mô phỏng (`public/nokia/<game>/logic.js`), gửi vị trí 5 lần/giây để người khác thấy bóng mờ. Bounce có 3 màn dựng bằng hàm `build()`; sửa màn xong chạy `node scripts/bounce-solve.mjs` (beam search trên chính mô phỏng) để chắc còn qua được.
+- Space Impact: server chạy thế giới 20 lần/giây, client chỉ gửi phím đang giữ; tàu của mình được đoán trước theo phím cho đỡ trễ. 3 màn, mỗi màn một trùm.
 - Logo: `node scripts/nokia-logos.mjs`. Chạy thử riêng phần Nokia: `npx wrangler dev -c wrangler.nokia.toml --port 8788 --persist-to .wrangler/nokia-state` (thư mục state riêng để không khoá SQLite với `wrangler dev` chính).
 
 ## Ảnh chụp màn hình

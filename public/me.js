@@ -14,12 +14,12 @@ const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const moves = (v) => `${v} nước`;
 const SCORE = {
   'dao-vang': (v) => `$${v}`, 'do-min': mmss, 'bau-cua': (v) => `${v > 0 ? '+' : ''}${v} xu`, 'co-caro': moves, 'noi-4': moves,
-  'ban-tau': (v) => `${v} phát`, snake: (v) => `${v} điểm`, bantumi: (v) => `${v} sỏi`, logic: (v) => (v ? `${v} lượt` : 'chưa giải'),
+  'ban-tau': (v) => `${v} phát`, snake: (v) => `${v} điểm`, bantumi: (v) => `${v} sỏi`, 'rapid-roll': (v) => `${v} m`, bounce: (v) => `${v} giây`, 'space-impact': (v) => `${v} điểm`, logic: (v) => (v ? `${v} lượt` : 'chưa giải'),
 };
 const scoreText = (game, v) => (SCORE[game] ?? String)(v);
 // "level" mỗi game mang nghĩa khác nhau.
 const LEVEL = { 'do-min': () => '', 'bau-cua': (l) => ` · ${l} ván`, 'co-caro': (l) => ` · bàn ${l}×${l}`, 'noi-4': () => '', 'ban-tau': () => '',
-  snake: (l) => ` · tốc độ ${l}`, bantumi: (l) => ` · ${l} sỏi/hố`, pairs: () => '', logic: () => '' };
+  snake: (l) => ` · tốc độ ${l}`, bantumi: (l) => ` · ${l} sỏi/hố`, pairs: () => '', logic: () => '', 'rapid-roll': () => '' };
 const levelText = (game, l) => (LEVEL[game] ?? ((x) => ` · màn ${x}`))(l);
 
 const ago = (t) => {

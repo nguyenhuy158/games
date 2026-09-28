@@ -116,5 +116,8 @@ await import('./nokia-snake.test.mjs');
 await import('./nokia-bantumi.test.mjs');
 await import('./nokia-pairs.test.mjs');
 await import('./nokia-logic.test.mjs');
+await import('./nokia-rapid-roll.test.mjs');
+await import('./nokia-bounce.test.mjs');
+await import('./nokia-space-impact.test.mjs');
 await import('./sso.test.mjs');
 await import('./top.test.mjs');
