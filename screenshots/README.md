@@ -18,7 +18,7 @@ Tên file: `<profile>-<game>-<bước>[-<cỡ bàn>][-scrollN].webp` — bước
 
 ## Chỗ còn chưa ổn
 
-- Trang chủ, iPhone dọc: nút "Đăng nhập Google" đè lên tiêu đề "Game Cổ Điển" (`iphone14plus-portrait-home-scroll1`).
-- Bầu cua, iPhone ngang: bàn cao 669px > 428px, phải cuộn mới thấy hàng Cá/Cua/Tôm, chip và nút Mở bát (`iphone14plus-landscape-bau-cua-3-play-scroll1/2`).
+- ~~Trang chủ, iPhone dọc: nút "Đăng nhập Google" đè lên tiêu đề~~ — đã sửa: màn ≤640px nút nằm hàng riêng (`iphone14plus-portrait-home-scroll1`).
+- ~~Bầu cua, iPhone ngang: phải cuộn mới thấy Cá/Cua/Tôm, chip, Mở bát~~ — đã sửa: màn ngang thấp thì đĩa bên trái, bàn + phỉnh bên phải, vừa 1 màn (`iphone14plus-landscape-bau-cua-3-play`).
 - Caro 19×19 trên iPhone dọc: ô 21px (dưới mức 44px Apple khuyên), dễ bấm nhầm.
 - Nút giọt nước bên phải mọi ảnh là extension của trình duyệt, không phải của app.
