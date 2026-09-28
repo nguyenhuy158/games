@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import {
   MAX_PLAYERS, VERSUS_LEVELS, teamTarget, createWorld, step, shoot, dynamite, shopOffer,
 } from '../public/dao-vang/logic.js';
+import { uniqueName, otherNames } from './names.js';
 
 const TICK_MS = 50; // 20 lần/giây: đủ mượt, client nội suy phần còn lại
 const SHOP_MS = 20_000;
@@ -51,7 +52,7 @@ export class MinerRoom extends DurableObject {
       p = s.players[id] = { id, name, money: 0, dynamite: 0, buffs: {}, spec: (s.status !== 'lobby' && s.status !== 'ended') || playing >= MAX_PLAYERS };
       s.order.push(id);
     }
-    p.name = name;
+    p.name = uniqueName(name, otherNames(s.players, id));
     p.user = JSON.parse(req.headers.get('X-User') || 'null'); // tài khoản SSO, null = khách
     for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) ws.close(4000, 'replaced');
     this.ctx.acceptWebSocket(server);

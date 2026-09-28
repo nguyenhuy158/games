@@ -5,6 +5,7 @@ import {
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
+import { deviceName, randomName } from '../names.js';
 import { createPanel } from '../panel.js';
 
 hydrateIcons();
@@ -18,7 +19,7 @@ const store = {
 // Cùng danh tính thiết bị với Pikachu (pk.id / pk.name).
 let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
-const myName = () => store.get('pk.name') || 'Thợ mỏ';
+const myName = () => deviceName();
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const COLORS = ['#ffd23f', '#5cc8ff', '#ff7ab6', '#7dff9a'];
 const MODE_NAMES = { coop: 'Chung mỏ', versus: 'Tranh vàng' };
@@ -548,7 +549,7 @@ function menu() {
   panel.update([]);
   stop('up');
   const name = el('input', { value: myName(), maxLength: 20, placeholder: 'Tên của bạn' });
-  const saveName = () => store.set('pk.name', name.value.trim() || 'Thợ mỏ');
+  const saveName = () => store.set('pk.name', name.value.trim() || randomName());
   const code = el('input', { maxLength: 4, placeholder: 'MÃ PHÒNG', className: 'code' });
   const joinCode = () => {
     const c = code.value.trim().toUpperCase();

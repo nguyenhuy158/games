@@ -109,5 +109,6 @@ await import('./dao-vang.test.mjs');
 await import('./do-min.test.mjs');
 await import('./bau-cua.test.mjs');
 await import('./co-caro.test.mjs');
+await import('./names.test.mjs');
 await import('./sso.test.mjs');
 await import('./top.test.mjs');

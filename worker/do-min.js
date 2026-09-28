@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import {
   SIZES, LIVES, BOOM_PENALTY_MS, FLAG, newField, newVis, reveal, chord, toggleFlag, openedCount, safeTotal, cleared,
 } from '../public/do-min/logic.js';
+import { uniqueName, otherNames } from './names.js';
 
 const MAX_PLAYERS = 4;
 const MAX_ONLINE = 8;
@@ -46,7 +47,7 @@ export class MineRoom extends DurableObject {
       p = s.players[id] = { id, name, booms: 0, opened: 0, spec: s.status === 'playing' || playing >= MAX_PLAYERS };
       s.order.push(id);
     }
-    p.name = name;
+    p.name = uniqueName(name, otherNames(s.players, id));
     p.user = JSON.parse(req.headers.get('X-User') || 'null');
     for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) ws.close(4000, 'replaced');
     this.ctx.acceptWebSocket(server);

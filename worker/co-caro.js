@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { SIZES, winLine, full, botMove } from '../public/co-caro/logic.js';
+import { uniqueName, otherNames } from './names.js';
 
 const MAX_ONLINE = 12;
 const TURN_MS = 30_000; // hết giờ một nước = thua
@@ -36,7 +37,7 @@ export class CaroRoom extends DurableObject {
       s.order.push(id);
     }
     const p = s.players[id];
-    p.name = name;
+    p.name = uniqueName(name, otherNames(s.players, id));
     p.user = JSON.parse(req.headers.get('X-User') || 'null');
     for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) ws.close(4000, 'replaced');
     this.ctx.acceptWebSocket(server);

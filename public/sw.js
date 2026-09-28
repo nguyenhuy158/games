@@ -1,8 +1,8 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v14';
+const CACHE = 'games-v15';
 const CORE = [
-  '/', '/index.html', '/me.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/toast.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png',
+  '/', '/index.html', '/me.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/toast.js', '/names.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png',
   '/logos/hub.svg', '/logos/pikachu.svg', '/logos/dao-vang.svg', '/logos/do-min.svg', '/logos/bau-cua.svg', '/logos/co-caro.svg',
   '/co-caro/', '/co-caro/index.html', '/co-caro/style.css', '/co-caro/game.js', '/co-caro/logic.js',
   '/bau-cua/', '/bau-cua/index.html', '/bau-cua/style.css', '/bau-cua/game.js', '/bau-cua/logic.js',

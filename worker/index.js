@@ -4,6 +4,7 @@ export { MineRoom } from './do-min.js';
 export { DiceRoom } from './bau-cua.js';
 export { CaroRoom } from './co-caro.js';
 import { userFrom } from './sso.js';
+import { uniqueName, otherNames } from './names.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
 
 const MAX_PLAYERS = 4;
@@ -225,7 +226,7 @@ export class Room extends DurableObject {
       p = s.players[id] = { id, name, score: 0, spec, team: this.smallerTeam() };
       s.order.push(id);
     }
-    p.name = name;
+    p.name = uniqueName(name, otherNames(s.players, id));
     // Tài khoản SSO (Worker đã xác thực và gắn header). Khách thì null -> ván không được lưu.
     p.user = JSON.parse(req.headers.get('X-User') || 'null');
 

@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { SYMBOLS, CHIPS, START_COINS, RESCUE, roll, settle, betTotal } from '../public/bau-cua/logic.js';
+import { uniqueName, otherNames } from './names.js';
 
 const MAX_ONLINE = 10;
 const SHAKE_MS = 2500; // client lắc bát trong lúc này rồi mới mở
@@ -36,7 +37,7 @@ export class DiceRoom extends DurableObject {
       s.order.push(id);
     }
     const p = s.players[id];
-    p.name = name;
+    p.name = uniqueName(name, otherNames(s.players, id));
     p.user = JSON.parse(req.headers.get('X-User') || 'null');
     for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) ws.close(4000, 'replaced');
     this.ctx.acceptWebSocket(server);

@@ -2,6 +2,7 @@ import { SIZES, LEVELS, SLIDES, SLIDE_ICON, slide, findPath, findPair } from './
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
+import { deviceName } from '../names.js';
 import { createPanel, drawGrid } from '../panel.js';
 
 hydrateIcons();
@@ -16,7 +17,7 @@ const store = {
 // Ẩn danh: mỗi thiết bị một UUID cố định, dùng để vào lại đúng chỗ của mình.
 let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
-$('#name').value = store.get('pk.name') || `Pika${Math.floor(1000 + Math.random() * 9000)}`;
+$('#name').value = deviceName();
 const myName = () => $('#name').value.trim() || 'Pika';
 
 const HINTS = 3;
