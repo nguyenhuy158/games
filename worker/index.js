@@ -82,6 +82,7 @@ export default {
       const r = { key: 'debug:TEST', game: 'snake', code: 'TEST', path: '/nokia/snake/', players: 1, cap: 4, status: 'waiting', host: 'dbg' };
       let err = null;
       try { await top().roomUpsert(r); } catch (e) { err = String(e); }
+      if (url.searchParams.has('peek')) return Response.json(await top().debug());
       return Response.json({ err, rooms: await top().rooms() });
     }
     if (url.pathname === '/api/rooms') {
@@ -145,6 +146,7 @@ export class Top extends DurableObject {
   }
 
   roomUpsert(r) {
+    (this.dbg ??= []).push({ r, now: Date.now() }); this.dbg = this.dbg.slice(-10);
     this.ctx.storage.sql.exec(
       `INSERT INTO rooms (key, game, code, path, players, cap, status, host, mode, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(key) DO UPDATE SET players = excluded.players, cap = excluded.cap, status = excluded.status, host = excluded.host,
@@ -154,8 +156,11 @@ export class Top extends DurableObject {
   }
 
   roomDrop(key) {
+    (this.dbg ??= []).push({ drop: key, now: Date.now() }); this.dbg = this.dbg.slice(-10);
     this.ctx.storage.sql.exec('DELETE FROM rooms WHERE key = ?', key);
   }
+
+  debug() { return { log: this.dbg ?? [], raw: this.ctx.storage.sql.exec('SELECT key, at FROM rooms').toArray(), now: Date.now() }; }
 
   rooms() {
     const since = Date.now() - ROOM_TTL;
