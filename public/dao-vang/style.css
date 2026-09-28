@@ -87,7 +87,7 @@ input.code { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 3
 body:not(.panel-off):not(.panel-empty) #scores { display: none; }
 .arena #stage { padding: 0 8px 8px; }
 #scores .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); font-style: normal; }
-.sprite { display: inline-block; background-image: url("assets/atlas.png"); background-repeat: no-repeat; flex: none; }
+.sprite { display: inline-block; background-image: url("assets/atlas.webp"); background-repeat: no-repeat; flex: none; }
 .menu .sprite:first-child { max-width: 100%; }
 
 .shopkeeper { display: flex; align-items: center; gap: 10px; text-align: left; }

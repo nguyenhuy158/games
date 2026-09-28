@@ -1,5 +1,4 @@
 // Hộp mời vào phòng dùng chung các game: mã QR để quét bằng camera điện thoại + sao chép / chia sẻ link.
-import qrcode from './vendor/qrcode.mjs';
 import { icon } from './icons.js';
 import { toast } from './toast.js';
 import { t } from './i18n.js';
@@ -19,7 +18,9 @@ const CSS = `
 #invite .ic { width: 1.1em; height: 1.1em; }`;
 
 let dlg;
-export function invite(link, code) {
+// Thư viện QR (12KB) chỉ tải khi mở hộp mời, không tải sẵn ở mọi trang game.
+export async function invite(link, code) {
+  const { default: qrcode } = await import('./vendor/qrcode.mjs');
   if (!dlg) {
     document.head.append(Object.assign(document.createElement('style'), { textContent: CSS }));
     dlg = Object.assign(document.createElement('dialog'), { id: 'invite' });

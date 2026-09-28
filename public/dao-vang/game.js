@@ -35,7 +35,7 @@ const SHOP_EN = {
 
 // ---------- tài nguyên ----------
 const atlasImg = new Image();
-atlasImg.src = 'assets/atlas.png';
+atlasImg.src = 'assets/atlas.webp';
 const bgs = [1, 2, 3, 4].map((i) => Object.assign(new Image(), { src: `assets/bg${i}.jpg` }));
 let FRAMES = {};
 const ready = Promise.all([
