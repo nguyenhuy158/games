@@ -103,6 +103,22 @@
     .thumb.bt { background: #bfe6e8 radial-gradient(circle, #7cc4c6 2px, transparent 2.5px) 0 0 / 20px 20px; display: grid; place-items: center; }
     .thumb.bt div { display: grid; grid-template-columns: repeat(6, 18px); gap: 4px; }
     .thumb.bt i { width: 18px; height: 18px; border-radius: 6px; }
+    /* Chơi gần đây: vài game bấm gần nhất (localStorage 'hub.recent'), dạng chip ngang. */
+    #recent { width: min(760px, 100%); display: grid; gap: 10px; }
+    #recent h2.group { width: auto; margin: 0; }
+    .recent { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+    .recent a { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); color: inherit; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .recent a:hover { border-color: var(--accent); }
+    .recent img { width: 28px; height: 28px; }
+    /* Điện thoại: thẻ 2 cột gọn (ảnh thấp, bỏ mô tả + nhãn) cho đỡ phải cuộn. */
+    @media (max-width: 560px) {
+      .games { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .game { padding: 10px; gap: 6px; }
+      .game .thumb { height: 72px; }
+      .game > span, .game .tags { display: none; }
+      .game b { font-size: 15px; gap: 6px; }
+      .game .logo { width: 24px; height: 24px; }
+    }
     .thumb.bt i.s { background: #e8716f; } .thumb.bt i.t { background: #7c83d6; } .thumb.bt i.h { background: #5a6b78; box-shadow: inset 0 0 0 5px #5a6b78, inset 0 0 0 9px #e0312f; }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
     #lang { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; }
@@ -124,6 +140,38 @@
       document.getElementById('roomsCount').textContent = d.rooms?.length ? `· ${d.rooms.length}` : '';
     }).catch(() => {});
   </script>
+  <section id="recent" hidden>
+    <h2 class="group"><i data-icon="hourglass"></i> <span data-en="Recently played">Chơi gần đây</span></h2>
+    <div class="recent" id="recentList"></div>
+  </section>
+  <h2 class="group"><i data-icon="swords"></i> <span data-en="Board &amp; duel">Cờ &amp; đối kháng</span></h2>
+  <div class="games">
+    <a class="game" href="/co-caro/">
+      <div class="thumb cc"><span class="x"><i data-icon="x"></i></span><span class="o"><i data-icon="circle"></i></span><span class="x"><i data-icon="x"></i></span></div>
+      <b><img class="logo" src="/logos/co-caro.svg" alt=""> <span data-en="Gomoku">Cờ caro</span></b>
+      <span><span data-en="Five in a row wins, or tic-tac-toe 3×3. Play 1v1 with friends or vs the bot.">Nối 5 quân là thắng, hoặc XO 3×3 nối 3. Đấu 1v1 với bạn bè hoặc với máy.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Tic-tac-toe">XO 3×3</span></i><i><span data-en="Blocked ends">Chặn 2 đầu</span></i></div>
+    </a>
+    <a class="game" href="/noi-4/">
+      <div class="thumb c4"><div><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="r"></i><i></i><i></i><i></i><i></i><i></i><i class="y"></i><i class="r"></i><i class="y"></i><i></i><i></i></div></div>
+      <b><img class="logo" src="/logos/noi-4.svg" alt=""> <span data-en="Connect 4">Nối 4</span></b>
+      <span><span data-en="Drop discs into columns; 4 in a row horizontally, vertically or diagonally wins.">Thả quân vào cột, nối 4 quân liền ngang, dọc hoặc chéo là thắng.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Connect 4</i></div>
+    </a>
+    <a class="game" href="/ban-tau/">
+      <div class="thumb bt"><div><i class="s"></i><i class="s"></i><i class="h"></i><i class="s"></i><i></i><i class="t"></i><i></i><i></i><i></i><i></i><i></i><i class="t"></i></div></div>
+      <b><img class="logo" src="/logos/ban-tau.svg" alt=""> <span data-en="Battleship">Bắn tàu</span></b>
+      <span><span data-en="Hide 5 ships and take turns firing at the enemy sea. Sink their whole fleet to win.">Giấu 5 chiếc tàu, thay phiên bắn vào biển đối thủ. Chìm hết tàu bên kia là thắng.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Battleship</i></div>
+    </a>
+    <a class="game" href="/o-an-quan/">
+      <div class="thumb oq"><svg viewBox="-8 -8 716 216" aria-hidden="true"><path d="M100 0H600V200H100Z M100 100H600 M200 0V200 M300 0V200 M400 0V200 M500 0V200 M100 0A100 100 0 0 0 100 200 M600 0A100 100 0 0 1 600 200" fill="none" stroke="#f6f1e4" stroke-width="7" stroke-linecap="round"/><g stroke="#2a0d07" stroke-width="2"><circle cx="140" cy="40" r="15" fill="#d9d3c4"/><circle cx="155" cy="55" r="15" fill="#8f8b83"/><circle cx="245" cy="48" r="15" fill="#ebe5d6"/><circle cx="330" cy="145" r="15" fill="#a8957c"/><circle cx="345" cy="160" r="15" fill="#d9d3c4"/><circle cx="445" cy="150" r="15" fill="#b8b0a0"/><circle cx="150" cy="150" r="15" fill="#ebe5d6"/><circle cx="250" cy="140" r="15" fill="#75706a"/><circle cx="440" cy="45" r="15" fill="#c9b99c"/><circle cx="430" cy="60" r="15" fill="#d9d3c4"/></g><circle cx="60" cy="100" r="42" fill="#3d434c"/><circle cx="640" cy="100" r="42" fill="#3d434c"/></svg></div>
+      <b><img class="logo" src="/logos/o-an-quan.svg" alt=""> <span data-en="O An Quan">Ô ăn quan</span></b>
+      <span><span data-en="Vietnamese folk game chalked on a brick yard: sow pebbles, capture citizens, take the mandarins.">Trò dân gian vẽ phấn trên sân gạch: rải sỏi, ăn dân, bắt quan. Hết quan tàn dân là hết ván.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
+    </a>
+  </div>
+  <h2 class="group"><i data-icon="users"></i> <span data-en="Party games">Chơi đông người</span></h2>
   <div class="games">
     <a class="game" href="/pikachu/">
       <div class="thumb" style="background-image:url(pikachu/images/pieces-sprite.png);background-size:auto 60%;background-repeat:repeat-x;background-position:left center"></div>
@@ -142,30 +190,6 @@
       <b><img class="logo" src="/logos/bau-cua.svg" alt=""> <span data-en="Bau Cua">Bầu cua</span></b>
       <span><span data-en="Bet virtual coins on animals, shake 3 dice under the bowl. Bot dealer or rotating dealer.">Đặt xu ảo vào con vật, lắc bát 3 viên xúc xắc. Máy làm cái hoặc xoay vòng.</span></span>
       <div class="tags"><i><span data-en="2–10 players">2–10 người</span></i><i><span data-en="Dealer">Làm cái</span></i><i><span data-en="Virtual coins">Xu ảo</span></i></div>
-    </a>
-    <a class="game" href="/o-an-quan/">
-      <div class="thumb oq"><svg viewBox="-8 -8 716 216" aria-hidden="true"><path d="M100 0H600V200H100Z M100 100H600 M200 0V200 M300 0V200 M400 0V200 M500 0V200 M100 0A100 100 0 0 0 100 200 M600 0A100 100 0 0 1 600 200" fill="none" stroke="#f6f1e4" stroke-width="7" stroke-linecap="round"/><g stroke="#2a0d07" stroke-width="2"><circle cx="140" cy="40" r="15" fill="#d9d3c4"/><circle cx="155" cy="55" r="15" fill="#8f8b83"/><circle cx="245" cy="48" r="15" fill="#ebe5d6"/><circle cx="330" cy="145" r="15" fill="#a8957c"/><circle cx="345" cy="160" r="15" fill="#d9d3c4"/><circle cx="445" cy="150" r="15" fill="#b8b0a0"/><circle cx="150" cy="150" r="15" fill="#ebe5d6"/><circle cx="250" cy="140" r="15" fill="#75706a"/><circle cx="440" cy="45" r="15" fill="#c9b99c"/><circle cx="430" cy="60" r="15" fill="#d9d3c4"/></g><circle cx="60" cy="100" r="42" fill="#3d434c"/><circle cx="640" cy="100" r="42" fill="#3d434c"/></svg></div>
-      <b><img class="logo" src="/logos/o-an-quan.svg" alt=""> <span data-en="O An Quan">Ô ăn quan</span></b>
-      <span><span data-en="Vietnamese folk game chalked on a brick yard: sow pebbles, capture citizens, take the mandarins.">Trò dân gian vẽ phấn trên sân gạch: rải sỏi, ăn dân, bắt quan. Hết quan tàn dân là hết ván.</span></span>
-      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
-    </a>
-    <a class="game" href="/co-caro/">
-      <div class="thumb cc"><span class="x"><i data-icon="x"></i></span><span class="o"><i data-icon="circle"></i></span><span class="x"><i data-icon="x"></i></span></div>
-      <b><img class="logo" src="/logos/co-caro.svg" alt=""> <span data-en="Gomoku">Cờ caro</span></b>
-      <span><span data-en="Five in a row wins, or tic-tac-toe 3×3. Play 1v1 with friends or vs the bot.">Nối 5 quân là thắng, hoặc XO 3×3 nối 3. Đấu 1v1 với bạn bè hoặc với máy.</span></span>
-      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Tic-tac-toe">XO 3×3</span></i><i><span data-en="Blocked ends">Chặn 2 đầu</span></i></div>
-    </a>
-    <a class="game" href="/noi-4/">
-      <div class="thumb c4"><div><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="r"></i><i></i><i></i><i></i><i></i><i></i><i class="y"></i><i class="r"></i><i class="y"></i><i></i><i></i></div></div>
-      <b><img class="logo" src="/logos/noi-4.svg" alt=""> <span data-en="Connect 4">Nối 4</span></b>
-      <span><span data-en="Drop discs into columns; 4 in a row horizontally, vertically or diagonally wins.">Thả quân vào cột, nối 4 quân liền ngang, dọc hoặc chéo là thắng.</span></span>
-      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Connect 4</i></div>
-    </a>
-    <a class="game" href="/ban-tau/">
-      <div class="thumb bt"><div><i class="s"></i><i class="s"></i><i class="h"></i><i class="s"></i><i></i><i class="t"></i><i></i><i></i><i></i><i></i><i></i><i class="t"></i></div></div>
-      <b><img class="logo" src="/logos/ban-tau.svg" alt=""> <span data-en="Battleship">Bắn tàu</span></b>
-      <span><span data-en="Hide 5 ships and take turns firing at the enemy sea. Sink their whole fleet to win.">Giấu 5 chiếc tàu, thay phiên bắn vào biển đối thủ. Chìm hết tàu bên kia là thắng.</span></span>
-      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Battleship</i></div>
     </a>
     <a class="game" href="/dao-vang/">
       <div class="thumb" style="background-image:url(dao-vang/assets/bg2.jpg);background-size:cover"></div>
@@ -238,6 +262,28 @@
     <ol id="history"></ol>
   </section>
   <footer data-en-html="Animal art: &lt;a href=&quot;https://github.com/jdecked/twemoji&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Twemoji&lt;/a&gt; (CC-BY 4.0) · Minesweeper skin: &lt;a href=&quot;https://github.com/Minesweeper-World/MS-Texture&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;MS-Texture&lt;/a&gt; (MIT) · Bau Cua art: folk print (photo by Bách Hóa Xanh) · Icons: Lucide · A learning project">Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Skin dò mìn: <a href="https://github.com/Minesweeper-World/MS-Texture" target="_blank" rel="noopener">MS-Texture</a> (MIT) · Hình bầu cua: tờ in dân gian (ảnh Bách Hóa Xanh) · Icon: Lucide · Dự án học tập</footer>
+  <script>
+    // Chơi gần đây: nhớ game vừa bấm (tối đa 4), vẽ lại từ thẻ game có sẵn trên trang (khỏi lặp tên / logo).
+    (() => {
+      const KEY = 'hub.recent';
+      const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest('a.game');
+        if (!a) return;
+        const href = a.getAttribute('href');
+        try { localStorage.setItem(KEY, JSON.stringify([href, ...read().filter((h) => h !== href)].slice(0, 4))); } catch {}
+      });
+      const links = read().map((h) => document.querySelector(`a.game[href="${CSS.escape(h)}"]`)).filter(Boolean);
+      if (!links.length) return;
+      document.getElementById('recentList').append(...links.map((card) => {
+        const a = document.createElement('a');
+        a.href = card.getAttribute('href');
+        a.append(card.querySelector('b img').cloneNode(), card.querySelector('b span, b').lastChild.cloneNode(true));
+        return a;
+      }));
+      document.getElementById('recent').hidden = false;
+    })();
+  </script>
   <script type="module" src="me.js"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
 </body>
