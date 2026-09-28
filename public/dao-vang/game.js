@@ -179,7 +179,7 @@ function render(view) {
     draw(frame, m.x + 18, GROUND - 2, { anchor: [0.5, 1] });
     for (let i = 0; i < Math.min(m.dynamite, 5); i++) draw('dyn', m.x + 48 + i * 8, GROUND - 20, { scale: 0.8 });
     if (m.name) {
-      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.font = 'bold 11px "Be Vietnam Pro", system-ui, sans-serif';
       ctx.textAlign = 'center';
       const w = ctx.measureText(m.name).width + 10;
       ctx.fillStyle = m.color;
@@ -196,7 +196,7 @@ function render(view) {
     if (f.kind === 'boom') draw(BOOM[Math.min(9, Math.floor(f.t / 0.045))], f.x, f.y, { scale: f.scale ?? 3 });
     else {
       ctx.globalAlpha = Math.max(0, 1 - f.t);
-      ctx.font = `bold ${f.big ? 26 : 20}px system-ui, sans-serif`;
+      ctx.font = `bold ${f.big ? 26 : 20}px "Be Vietnam Pro", system-ui, sans-serif`;
       ctx.fillStyle = f.big ? '#ffe14d' : f.color ?? '#fff';
       ctx.strokeStyle = '#3b2a1a';
       ctx.lineWidth = 4;

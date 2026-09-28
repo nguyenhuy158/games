@@ -28,7 +28,7 @@ body.panel-off #panel, body.panel-empty #panel { display: none; }
 .tile-avatar {
   position: absolute; left: 50%; top: calc(50% - 11px); translate: -50% -50%;
   width: 46%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
-  background: var(--c, #888); color: #0b1b2b; font: 800 clamp(18px, 3vw, 30px) / 1 system-ui, sans-serif;
+  background: var(--c, #888); color: #0b1b2b; font: 800 clamp(18px, 3vw, 30px) / 1 "Be Vietnam Pro", system-ui, sans-serif;
 }
 .tile-label {
   position: absolute; left: 0; right: 0; bottom: 0; height: 22px; display: flex; gap: 6px; align-items: center;

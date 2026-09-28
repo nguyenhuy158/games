@@ -347,7 +347,7 @@ function renderPanel() {
           ctx.lineCap = 'round';
           ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * pct) / 100); ctx.stroke();
           ctx.fillStyle = '#fff';
-          ctx.font = `800 ${Math.round(r * 0.6)}px system-ui, sans-serif`;
+          ctx.font = `800 ${Math.round(r * 0.6)}px "Be Vietnam Pro", system-ui, sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(`${pct}%`, cx, cy);
