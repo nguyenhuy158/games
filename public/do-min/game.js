@@ -19,8 +19,17 @@ const myName = () => $('#name').value.trim() || 'Người chơi';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b', '#6bf0e0', '#ff9b9b'];
 const LONG_PRESS_MS = 400;
+// Giao diện là lựa chọn riêng từng máy (không đổi màn hình người khác).
+const SKINS = { modern: 'Hiện đại', xp: 'Windows XP', choco: 'Socola' };
+let skin = SKINS[store.get('ms.skin')] ? store.get('ms.skin') : 'modern';
+const gap = () => (skin === 'modern' ? 2 : 0); // skin cổ điển: ô sát nhau như bản gốc
+function applySkin() {
+  for (const k of Object.keys(SKINS)) document.body.classList.toggle(`skin-${k}`, k === skin);
+  builtFor = '';
+}
 
 let ws, code = null, room = null, grids = {}, mines = null, clockOffset = 0, flagMode = false;
+let peek = false; // hết ván: ẩn bảng kết quả để xem mìn nằm đâu
 let cursors = {};
 const panel = createPanel({ root: $('#panel'), toggle: $('#btnPanel'), storeKey: 'ms.panel' });
 
@@ -90,7 +99,7 @@ function onMsg(m) {
       const was = room?.status;
       room = m;
       clockOffset = m.now - Date.now();
-      if (m.status === 'playing' && was !== 'playing') { mines = null; play('start'); }
+      if (m.status === 'playing' && was !== 'playing') { mines = null; peek = false; play('start'); }
       if (was === 'playing' && m.status === 'ended') {
         const won = m.mode === 'coop' ? !!m.winner : m.winner === me()?.unit;
         play(won ? 'win' : 'boom');
@@ -138,6 +147,17 @@ $('#btnCopy').onclick = async () => {
   const link = `${location.origin}/do-min/?r=${code}`;
   try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời'); } catch { toast(link); }
 };
+$('#btnSkin').onclick = () => {
+  const keys = Object.keys(SKINS);
+  skin = keys[(keys.indexOf(skin) + 1) % keys.length];
+  store.set('ms.skin', skin);
+  applySkin();
+  toast(`Giao diện: ${SKINS[skin]}`);
+  render();
+};
+$('#btnPeek').onclick = () => { peek = true; render(); };
+$('#btnResult').onclick = () => { peek = false; render(); };
+$('#face').onclick = () => { if (room?.status === 'ended' && room.host === deviceId) send({ t: 'start' }); };
 $('#btnFlag').onclick = () => { flagMode = !flagMode; $('#btnFlag').classList.toggle('on', flagMode); toast(flagMode ? 'Chạm để cắm cờ' : 'Chạm để mở ô'); };
 for (const b of document.querySelectorAll('#modePick button')) b.onclick = () => send({ t: 'config', mode: b.dataset.mode });
 $('#sizePick').replaceChildren(...SIZES.map((z, i) => el('button', {
@@ -145,25 +165,27 @@ $('#sizePick').replaceChildren(...SIZES.map((z, i) => el('button', {
 })));
 
 // ---------- bàn ----------
-let geo = { s: 24, portrait: false, R: 9, C: 9 };
+let geo = { s: 24, portrait: false, R: 9, C: 9, g: 2 };
 // Bàn ngang (Khó 30x16) trên màn dọc thì xoay cho ô đỡ bé, giống Pikachu.
 function layout() {
   const wrap = $('#boardWrap');
   const { rows: R, cols: C } = size();
   const portrait = wrap.clientHeight > wrap.clientWidth && C > R;
   const gc = portrait ? R : C, gr = portrait ? C : R;
-  const s = Math.max(14, Math.floor(Math.min((wrap.clientWidth - (gc - 1) * 2) / gc, (wrap.clientHeight - (gr - 1) * 2) / gr, 44)));
-  geo = { s, portrait, R, C };
+  const g = gap();
+  const s = Math.max(14, Math.floor(Math.min((wrap.clientWidth - (gc - 1) * g - 20) / gc, (wrap.clientHeight - (gr - 1) * g - 20) / gr, 44)));
+  geo = { s, portrait, R, C, g };
   const b = $('#board');
-  b.style.width = `${gc * s + (gc - 1) * 2}px`;
-  b.style.height = `${gr * s + (gr - 1) * 2}px`;
+  b.style.width = `${gc * s + (gc - 1) * g}px`;
+  b.style.height = `${gr * s + (gr - 1) * g}px`;
+  $('#cells').style.gap = `${g}px`;
   b.style.setProperty('--s', `${s}px`);
   $('#cells').style.gridTemplateColumns = `repeat(${gc}, ${s}px)`;
   $('#cells').style.gridTemplateRows = `repeat(${gr}, ${s}px)`;
 }
 // Ô logic i -> vị trí hiển thị (có xoay).
 const disp = (i) => { const r = Math.floor(i / geo.C), c = i % geo.C; return geo.portrait ? [c, r] : [r, c]; }; // [hàng, cột] hiển thị
-const cellPx = (i) => { const [dr, dc] = disp(i); return [dc * (geo.s + 2), dr * (geo.s + 2)]; };
+const cellPx = (i) => { const [dr, dc] = disp(i); return [dc * (geo.s + geo.g), dr * (geo.s + geo.g)]; };
 
 let builtFor = '';
 function renderBoard() {
@@ -232,8 +254,8 @@ function renderCursors() {
     }
     n.style.setProperty('--c', colorOf(id));
     const [dr, dc] = geo.portrait ? [c, r] : [r, c];
-    n.style.left = `${dc * (geo.s + 2)}px`;
-    n.style.top = `${dr * (geo.s + 2)}px`;
+    n.style.left = `${dc * (geo.s + geo.g)}px`;
+    n.style.top = `${dr * (geo.s + geo.g)}px`;
   }
   for (const n of layer.querySelectorAll('.cursor')) if (!alive.has(n.dataset.id)) n.remove();
 }
@@ -243,7 +265,7 @@ let lastCur = 0, curTimer = null;
 $('#boardWrap').addEventListener('pointermove', (e) => {
   if (!shared() || !playing()) return;
   const rect = $('#board').getBoundingClientRect();
-  const x = (e.clientX - rect.left) / (geo.s + 2), y = (e.clientY - rect.top) / (geo.s + 2);
+  const x = (e.clientX - rect.left) / (geo.s + geo.g), y = (e.clientY - rect.top) / (geo.s + geo.g);
   const p = (geo.portrait ? [x, y] : [y, x]).map((v) => Math.round(v * 100) / 100);
   const wait = 50 - (Date.now() - lastCur);
   clearTimeout(curTimer);
@@ -345,6 +367,8 @@ function render() {
   const g = grids[view()];
   const flags = g ? g.filter((v) => v === FLAG || v === BOOM).length : 0;
   $('#minesLeft').querySelector('b').textContent = z.mines - flags;
+  led($('#ledMines'), z.mines - flags);
+  renderFace();
   $('#lives').hidden = !(r?.status === 'playing' && r.mode === 'coop');
   if (u) $('#lives').textContent = '❤️'.repeat(Math.max(0, u.lives)) + '🖤'.repeat(Math.max(0, LIVES - u.lives));
 
@@ -394,13 +418,41 @@ function render() {
     }
     $('#btnStart').hidden = !isHost;
     $('#btnStart').textContent = r.status === 'lobby' ? 'Bắt đầu' : 'Chơi ván mới';
+    if (r.status === 'ended' && peek) ov.hidden = true;
   }
+  $('#btnPeek').hidden = r?.status !== 'ended';
+  $('#btnResult').hidden = !(r?.status === 'ended' && peek);
 }
 
 setInterval(() => {
-  if (!room || room.status === 'lobby') { $('#clock').textContent = '0:00'; return; }
-  $('#clock').textContent = fmt(elapsed(room.units[view()]));
+  const ms = !room || room.status === 'lobby' ? 0 : elapsed(room.units[view()]);
+  $('#clock').textContent = fmt(ms);
+  led($('#ledTime'), Math.min(999, Math.floor(ms / 1000)));
 }, 250);
+
+// Bộ đếm LED 3 chữ số (skin cổ điển). Chỉ dựng lại khi số đổi.
+function led(box, n) {
+  const v = n < 0 ? `-${String(Math.min(99, -n)).padStart(2, '0')}` : String(Math.min(999, n)).padStart(3, '0');
+  if (box.dataset.v === v) return;
+  box.dataset.v = v;
+  box.replaceChildren(...[...v].map((d) => el('img', { src: `skins/led/counter${d}.svg`, alt: d })));
+}
+
+// Mặt cười: đang bấm -> "ô", thắng -> kính râm, thua -> x_x.
+let pressing = false;
+function renderFace() {
+  const r = room, u = r?.units[view()];
+  let f = 'smileface';
+  if (r?.status === 'ended') f = (r.mode === 'coop' ? r.winner : r.winner === me()?.unit) ? 'winface' : 'lostface';
+  else if (u?.done === 'clear') f = 'winface';
+  else if (pressing && playing()) f = 'clickface';
+  const src = `skins/face/${f}.svg`;
+  const img = $('#face img');
+  if (!img.src.endsWith(src)) img.src = src;
+}
+addEventListener('pointerdown', (e) => { if (e.target.closest?.('#cells')) { pressing = true; renderFace(); } });
+addEventListener('pointerup', () => { if (pressing) { pressing = false; setTimeout(renderFace, 60); } });
+applySkin();
 window.ms = { get room() { return room; }, get grids() { return grids; }, view }; // cho test tự động
 
 const initial = new URLSearchParams(location.search).get('r');

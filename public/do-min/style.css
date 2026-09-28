@@ -95,5 +95,50 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 
 #overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #1b2233b0; z-index: 5; }
 #ovScore { margin: 0; color: var(--accent); font-weight: 600; }
+#btnResult { position: absolute; left: 50%; bottom: 8px; translate: -50% 0; z-index: 6; box-shadow: 0 6px 20px #0008; }
 #toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: #000c; padding: 8px 16px; border-radius: 20px; z-index: 10; }
 
+
+/* ---------- Skin cổ điển: ảnh từ MS-Texture (MIT, xem skins/LICENSE) ---------- */
+body.skin-xp .m, body.skin-choco .m {
+  border-radius: 0; box-shadow: none; background: center / 100% 100% no-repeat; color: transparent; font-size: 0;
+}
+body.skin-xp .m { background-image: url(skins/xp/cellup.svg); }
+body.skin-xp .m.o { background-image: url(skins/xp/celldown.svg); }
+body.skin-xp .m.n1 { background-image: url(skins/xp/cell1.svg); }
+body.skin-xp .m.n2 { background-image: url(skins/xp/cell2.svg); }
+body.skin-xp .m.n3 { background-image: url(skins/xp/cell3.svg); }
+body.skin-xp .m.n4 { background-image: url(skins/xp/cell4.svg); }
+body.skin-xp .m.n5 { background-image: url(skins/xp/cell5.svg); }
+body.skin-xp .m.n6 { background-image: url(skins/xp/cell6.svg); }
+body.skin-xp .m.n7 { background-image: url(skins/xp/cell7.svg); }
+body.skin-xp .m.n8 { background-image: url(skins/xp/cell8.svg); }
+body.skin-xp .m.f { background-image: url(skins/xp/cellflag.svg); }
+body.skin-xp .m.b { background-image: url(skins/xp/blast.svg); }
+body.skin-xp .m.x { background-image: url(skins/xp/cellmine.svg); }
+body.skin-xp .m.wf { background-image: url(skins/xp/falsemine.svg); }
+body.skin-xp .m::after { content: none !important; }
+body.skin-choco .m { background-image: url(skins/choco/cellup.png); }
+body.skin-choco .m.o { background-image: url(skins/choco/cell0.png); }
+body.skin-choco .m.n1 { background-image: url(skins/choco/cell1.png); }
+body.skin-choco .m.n2 { background-image: url(skins/choco/cell2.png); }
+body.skin-choco .m.n3 { background-image: url(skins/choco/cell3.png); }
+body.skin-choco .m.n4 { background-image: url(skins/choco/cell4.png); }
+body.skin-choco .m.n5 { background-image: url(skins/choco/cell5.png); }
+body.skin-choco .m.n6 { background-image: url(skins/choco/cell6.png); }
+body.skin-choco .m.n7 { background-image: url(skins/choco/cell7.png); }
+body.skin-choco .m.n8 { background-image: url(skins/choco/cell8.png); }
+body.skin-choco .m.b, body.skin-choco .m.wf { background-image: url(skins/choco/celldown.png); }
+/* Socola không có ảnh cờ/mìn -> dùng emoji; ô đang để chữ trong suốt (giấu số) nên emoji phải có màu riêng. */
+body.skin-choco .m::after { color: #000; }
+/* Skin cổ điển: khung xám nổi kiểu Windows, mặt cười + đồng hồ LED. */
+body.skin-xp #board, body.skin-choco #board { outline: 6px solid #bdbdbd; box-shadow: 0 0 0 9px #7b7b7b; }
+#face { display: none; padding: 2px; background: none; border: 0; }
+#face img { width: 32px; height: 32px; display: block; }
+body.skin-xp #face, body.skin-choco #face { display: inline-flex; }
+.led { display: none; background: #000; padding: 2px; border-radius: 2px; }
+.led img { width: 13px; height: 23px; display: block; }
+body.skin-xp .led, body.skin-choco .led { display: inline-flex; }
+body.skin-xp #minesLeft, body.skin-choco #minesLeft, body.skin-xp #clock, body.skin-choco #clock { display: none; }
+header #ledTime { margin-left: auto; }
+body:not(.skin-xp):not(.skin-choco) #ledTime { margin-left: 0; }

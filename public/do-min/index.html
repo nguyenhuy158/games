@@ -23,7 +23,7 @@
         <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
         <button id="btnJoin">Vào phòng</button>
       </div>
-      <p class="muted">Chơi một mình: tạo phòng rồi bấm Bắt đầu.<br>Bấm trái: mở · Bấm phải / giữ: cắm cờ · Bấm số đủ cờ: mở nhanh · Shift+bấm: ping</p>
+      <p class="muted">Chơi một mình: tạo phòng rồi bấm Bắt đầu. Nút <b>⧉</b> trong phòng để đổi giao diện (Hiện đại / Windows XP / Socola).<br>Bấm trái: mở · Bấm phải / giữ: cắm cờ · Bấm số đủ cờ: mở nhanh · Shift+bấm: ping</p>
     </div>
   </section>
 
@@ -32,9 +32,13 @@
       <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
       <button id="btnCopy" title="Sao chép link mời"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="link"></i></button>
       <span id="conn" class="dot" title="Kết nối"></span>
+      <span id="ledMines" class="led" title="Mìn còn lại (trừ cờ)"></span>
       <span id="minesLeft" class="stat" title="Mìn còn lại (trừ cờ)">💣 <b>0</b></span>
       <span id="lives" class="stat" title="Mạng của cả đội"></span>
+      <button id="face" title="Chủ phòng: bấm để chơi ván mới khi hết ván"><img alt=""></button>
+      <span id="ledTime" class="led" title="Thời gian (giây)"></span>
       <span id="clock">0:00</span>
+      <button id="btnSkin" title="Đổi giao diện (chỉ máy bạn)"><i data-icon="layers"></i></button>
       <button id="btnFlag" title="Chế độ cắm cờ (cho điện thoại)">🚩</button>
       <button id="btnPanel" title="Ẩn màn hình người chơi khác" hidden><i data-icon="users"></i></button>
       <button id="btnSound" title="Âm thanh"></button>
@@ -55,8 +59,10 @@
             <div id="sizePick" class="seg seg3" hidden></div>
             <p id="ovText"></p>
             <button id="btnStart" class="primary" hidden>Bắt đầu</button>
+            <button id="btnPeek" hidden>👁 Xem bàn</button>
           </div>
         </div>
+        <button id="btnResult" hidden>🏁 Kết quả</button>
       </main>
     </div>
   </section>

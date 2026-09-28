@@ -48,6 +48,7 @@ Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.htm
 - `worker/do-min.js` (DO `MineRoom`, WebSocket `/api/ms/room/CODE`), luật ở `public/do-min/logic.js`.
 - Vị trí mìn **chỉ ở server**; client nhận ô đã mở. Đua cùng đề thì mỗi người chỉ nhận bàn của mình (thấy bàn đối thủ là chép được ô an toàn) — khung người chơi chỉ hiện % tiến độ. Hết ván mới lộ hết mìn.
 - Xuất phát: server chọn 1 ô, rải mìn chừa 3x3 quanh nó rồi mở sẵn cho mọi bàn (không ai đạp mìn nước đầu, đua công bằng).
+- 3 giao diện (riêng từng máy, lưu `ms.skin`): Hiện đại, **Windows XP**, **Socola** — ảnh từ [MS-Texture](https://github.com/Minesweeper-World/MS-Texture) (MIT, `public/do-min/skins/LICENSE`), có mặt cười + đồng hồ LED. Socola thu nhỏ còn 96px (`sips -Z 96`).
 - Chung: 3 mạng cả đội. Đua: đạp mìn +10 giây, ai mở hết trước thắng. Lịch sử lưu thời gian (giây); bảng vui có "💣 Thánh dò mìn" (thắng nhanh nhất).
 
 ## Chạy
