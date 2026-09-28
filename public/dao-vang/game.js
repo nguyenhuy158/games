@@ -5,7 +5,7 @@ import {
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
-import { deviceName, randomName } from '../names.js';
+import { deviceName, randomName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
 
 hydrateIcons();
@@ -563,7 +563,7 @@ function menu() {
     spriteEl('goldBig_0001', 0.5),
     el('p', { className: 'muted', textContent: 'Bấm / chạm (hoặc ↓, Space) để thả móc. Có thuốc nổ thì bấm ↑ để phá vật đang kéo.' }),
     el('button', { className: 'primary', textContent: 'Chơi một mình', onclick: () => { saveName(); driver = solo; solo.start(); } }),
-    el('label', { className: 'field' }, 'Tên của bạn', name),
+    el('label', { className: 'field' }, 'Tên của bạn', addReroll(name)),
     el('button', { onclick: () => { saveName(); startNet(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')); } }, iconEl('users'), ' Tạo phòng chơi nhiều người'),
     el('div', { className: 'row' }, code, el('button', { textContent: 'Vào phòng', onclick: joinCode })),
     el('p', { className: 'muted', textContent: best() ? `Kỷ lục chơi một mình: $${best()}` : '' }),

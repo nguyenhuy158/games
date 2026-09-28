@@ -2,7 +2,7 @@ import { SIZES, HIDDEN, FLAG, BOOM, LIVES } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
-import { deviceName } from '../names.js';
+import { deviceName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
 
 hydrateIcons();
@@ -17,6 +17,7 @@ const store = {
 let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
 $('#name').value = deviceName();
+addReroll($('#name'));
 const myName = () => $('#name').value.trim() || 'Người chơi';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

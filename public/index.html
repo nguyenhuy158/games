@@ -88,6 +88,8 @@
     .thumb.bc { background: radial-gradient(circle, #c62a2f, #6d0f13); display: grid; grid-template-columns: repeat(3, 44px); justify-content: center; align-content: center; gap: 6px; }
     .thumb.bc img { width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 0 0 2px #f3d27a; }
     .fun-card li .rank .ic { width: 1.2em; height: 1.2em; }
+    /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
+    @media (max-width: 640px) { #account { position: static; justify-self: end; margin-bottom: -8px; } }
   </style>
 </head>
 <body>
