@@ -6,7 +6,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 |---|---|---|
 | Pikachu nối thú | `/pikachu/` | Multiplayer ẩn danh (định danh theo thiết bị) |
 | Đào Vàng | `/dao-vang/` | 1 người hoặc 2–4 người chung mỏ; luật thuần ở `public/dao-vang/logic.js` |
-| Bầu cua | `/bau-cua/` | 2–10 người đặt xu ảo, làm cái xoay vòng (hoặc máy làm cái) |
+| Bầu cua | `/bau-cua/` | 2–10 người đặt xu ảo, máy làm cái (mặc định) hoặc xoay vòng |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |
 
 Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.html`, thêm file vào `CORE` trong `public/sw.js` (và tăng `CACHE`), test vào `<ten-game>.test.mjs` rồi import ở cuối `logic.test.mjs`.
@@ -58,7 +58,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 
 - `worker/bau-cua.js` (DO `DiceRoom`, WebSocket `/api/bc/room/CODE`), luật ở `public/bau-cua/logic.js`.
 - Mỗi người 1000 xu ảo/phòng, phỉnh 10/50/100/500. Ra k mặt ăn x·k, không ra mất x; cái chung/nhận phần ngược lại (xu cái có thể âm).
-- Làm cái xoay vòng mỗi ván; ở một mình hoặc chủ phòng chọn "Máy làm cái" thì máy làm cái (chủ phòng mở bát). Cái ngồi im quá 30 giây thì ai cũng mở bát được.
+- Mặc định **máy làm cái** (ai cũng đặt, chủ phòng mở bát). Chủ phòng đổi sang **xoay cái** lúc nào cũng được khi đang đặt cược (cái mới được trả lại cược); ở một mình thì luôn là máy. Cái ngồi im quá 30 giây thì ai cũng mở bát được.
 - Xúc xắc chỉ tung (crypto) lúc mở bát, sau khi cược đã khoá → không có gì để gian lận. Client lắc bát 2,5 giây rồi mới lật; xu hiển thị giữ số cũ tới lúc lật.
 - Hết xu được cứu trợ 500 (không tính vào lãi). Lãi/lỗ cả buổi ghi vào lịch sử khi rời phòng (người đã đăng nhập); bảng vui có "🦀 Đại gia Bầu cua" (tổng lãi).
 

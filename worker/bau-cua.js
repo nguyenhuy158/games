@@ -8,10 +8,10 @@ const AFK_MS = 30_000; // cái ngồi im quá lâu thì ai cũng mở bát đư�
 const MODES = ['rotate', 'house'];
 
 // Phòng Bầu cua. Cược công khai; xúc xắc chỉ tung lúc mở bát (cược đã khoá) nên không có gì để gian lận.
-//   rotate: người làm cái xoay vòng mỗi ván (ăn/chung bằng xu của mình) · house: máy làm cái.
+//   house (mặc định): máy làm cái, ai cũng được đặt · rotate: người làm cái xoay vòng mỗi ván (ăn/chung bằng xu của mình).
 // Ở một mình thì luôn là máy làm cái.
 const fresh = () => ({
-  mode: 'rotate', order: [], players: {}, dealerIdx: 0, phase: 'bet', phaseAt: Date.now(), round: 1,
+  mode: 'house', order: [], players: {}, dealerIdx: 0, phase: 'bet', phaseAt: Date.now(), round: 1,
   bets: {}, dice: null, deltas: null, dealer: null,
 });
 
@@ -67,9 +67,9 @@ export class DiceRoom extends DurableObject {
 
     switch (m.t) {
       case 'mode':
-        if (!betting || this.hostId() !== p.id || !MODES.includes(m.mode) || betTotal(betsOfAll(s))) return;
+        if (!betting || this.hostId() !== p.id || !MODES.includes(m.mode)) return;
         s.mode = m.mode;
-        this.dropDealerBets();
+        this.dropDealerBets(); // sang xoay cái: cái mới được trả lại cược
         break;
       case 'bet': {
         if (!betting || p.id === dealer || !Number.isInteger(m.s) || !SYMBOLS[m.s] || !CHIPS.includes(m.amt)) return;
@@ -205,5 +205,4 @@ export class DiceRoom extends DurableObject {
   }
 }
 
-const betsOfAll = (s) => Object.values(s.bets).flat();
 const cryptoRand = () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;

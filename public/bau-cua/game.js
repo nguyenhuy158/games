@@ -90,6 +90,7 @@ const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
 function onMsg(m) {
   if (m.t === 'error') return leave(m.msg);
   if (m.t !== 'state') return;
+  if (room && room.mode !== m.mode) toast(m.mode === 'house' ? '🤖 Chủ phòng đổi: máy làm cái, ai cũng được đặt' : '👑 Chủ phòng đổi: làm cái xoay vòng');
   room = m;
   clockOffset = m.now - Date.now();
   // Ván vừa mở bát: lắc bát, hết giờ lắc thì lật bát + báo thắng thua.
@@ -156,8 +157,8 @@ function render() {
   const isHost = r?.host === deviceId;
   const [emo, txt] = MODE_TEXT[r?.mode ?? 'rotate'];
   $('#btnMode').replaceChildren(emo, el('span', { className: 'lbl', textContent: txt }));
-  $('#btnMode').disabled = !isHost || r.phase !== 'bet' || anyBet();
-  $('#btnMode').title = isHost ? 'Đổi người làm cái (khi chưa ai đặt cược)' : 'Chỉ chủ phòng đổi được';
+  $('#btnMode').disabled = !isHost || r.phase !== 'bet';
+  $('#btnMode').title = isHost ? 'Đổi: máy làm cái ⇄ xoay vòng' : 'Chỉ chủ phòng đổi được';
 
   $('#players').replaceChildren(...(r?.players ?? []).map((p) => {
     const li = el('li', { className: [p.id === deviceId && 'me', p.id === r.dealer && 'dealer'].filter(Boolean).join(' ') });
