@@ -49,6 +49,22 @@
     #account a.primary { background: #fff; color: #1f1f1f; border-color: #fff; font-weight: 600; }
     #account small { color: var(--muted); }
     body { position: relative; }
+    #fun { width: min(760px, 100%); display: grid; gap: 10px; }
+    #fun h2 { margin: 0; }
+    .fun-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .seg { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
+    .seg button { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+    .seg button.on { background: var(--accent); color: #1b1300; font-weight: 600; }
+    .fun-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .fun-card { padding: 12px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); display: grid; gap: 6px; align-content: start; }
+    .fun-card b { font-size: 15px; }
+    .fun-card ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
+    .fun-card li { display: flex; gap: 8px; align-items: baseline; }
+    .fun-card li .rank { width: 1.4em; text-align: center; }
+    .fun-card li .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fun-card li .val { color: var(--accent); font-weight: 700; white-space: nowrap; }
+    .fun-card .empty { color: var(--muted); font-size: 13px; }
+    .hint { margin: 0; font-size: 13px; }
     #me { width: min(760px, 100%); display: grid; gap: 10px; }
     #me h2, #me h3 { margin: 0; }
     #me h3 { font-size: 15px; color: var(--muted); }
@@ -83,6 +99,17 @@
       <div class="tags"><i>1–4 người</i><i>Chung mỏ</i><i>Tranh vàng</i><i>Tiệm đồ</i></div>
     </a>
   </div>
+  <section id="fun">
+    <div class="fun-head">
+      <h2>🏅 Bảng xếp hạng vui</h2>
+      <div class="seg" id="funPeriod">
+        <button data-period="week" class="on">Tuần này</button>
+        <button data-period="all">Mọi lúc</button>
+      </div>
+    </div>
+    <div id="funList" class="fun-grid"></div>
+    <p class="sub hint" id="funHint">Đăng nhập Google để có tên trên bảng — khách vẫn chơi được, chỉ không được xếp hạng.</p>
+  </section>
   <section id="me" hidden>
     <h2>Thành tích của bạn</h2>
     <div id="stats" class="stats"></div>

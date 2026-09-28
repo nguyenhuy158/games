@@ -31,6 +31,7 @@ async function load() {
     el('a', { href: `${SSO}/logout?redirect_uri=${back()}`, textContent: 'Đăng xuất' }),
   );
   $('#me').hidden = false;
+  $('#funHint').hidden = true;
   $('#stats').replaceChildren(...(stats.length ? stats.map((s) => el('div', { className: 'stat' },
     el('b', { textContent: GAMES[s.game] ?? s.game }),
     el('span', {}, 'Số ván: ', el('strong', { textContent: s.plays }), s.wins ? ` · thắng ${s.wins}` : ''),
@@ -50,3 +51,24 @@ async function load() {
   }));
 }
 load();
+
+// ---------- bảng xếp hạng vui ----------
+const MEDALS = ['🥇', '🥈', '🥉', '4', '5'];
+let period = 'week';
+async function loadFun() {
+  for (const b of document.querySelectorAll('#funPeriod button')) b.classList.toggle('on', b.dataset.period === period);
+  let cats;
+  try { cats = await (await fetch(`/api/fun?period=${period}`)).json(); } catch { return; }
+  $('#funList').replaceChildren(...cats.map((c) => el('div', { className: 'fun-card' },
+    el('b', { textContent: c.title }),
+    c.rows.length
+      ? el('ol', {}, ...c.rows.map((r, i) => el('li', {},
+        el('span', { className: 'rank', textContent: MEDALS[i] }),
+        el('span', { className: 'name', textContent: r.name }),
+        el('span', { className: 'val', textContent: c.unit === '$' ? `$${r.value}` : `${r.value} ${c.unit}` }),
+      )))
+      : el('span', { className: 'empty', textContent: 'Chưa ai giành — cơ hội của bạn!' }),
+  )));
+}
+for (const b of document.querySelectorAll('#funPeriod button')) b.onclick = () => { period = b.dataset.period; loadFun(); };
+loadFun();

@@ -49,10 +49,14 @@ export default {
         if (b?.game !== 'dao-vang' || !Number.isInteger(score) || score < 0 || score > 1e7 || !Number.isInteger(level) || level < 1 || level > 999) {
           return new Response('Bad request', { status: 400 });
         }
-        await top().addPlays([{ sub: user.sub, game: 'dao-vang', mode: 'solo', score, level, won: false, detail: '' }]);
+        await top().addPlays([{ sub: user.sub, name: user.name, game: 'dao-vang', mode: 'solo', score, level, won: false, detail: '' }]);
         return Response.json({ ok: true });
       }
       return Response.json(await top().history(user.sub), { headers: { 'Cache-Control': 'no-store' } });
+    }
+    if (url.pathname === '/api/fun') {
+      const period = url.searchParams.get('period') === 'week' ? 'week' : 'all';
+      return Response.json(await top().fun(period), { headers: { 'Cache-Control': 'public, max-age=60' } });
     }
     if (url.pathname === '/api/top') {
       const mode = url.searchParams.get('mode');
@@ -88,10 +92,19 @@ export class Top extends DurableObject {
       id INTEGER PRIMARY KEY AUTOINCREMENT, sub TEXT NOT NULL, game TEXT NOT NULL, mode TEXT NOT NULL,
       score INTEGER NOT NULL, level INTEGER NOT NULL, won INTEGER NOT NULL, detail TEXT NOT NULL, at INTEGER NOT NULL)`);
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS plays_user ON plays (sub, at DESC)');
+    ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS plays_at ON plays (at)');
+    // Tên hiển thị cho bảng xếp hạng vui (tên SSO mới nhất của mỗi tài khoản).
+    ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS users (sub TEXT PRIMARY KEY, name TEXT NOT NULL, at INTEGER NOT NULL)');
   }
 
   addPlays(rows) {
     for (const r of rows) {
+      if (r.name) {
+        this.ctx.storage.sql.exec(
+          'INSERT INTO users (sub, name, at) VALUES (?, ?, ?) ON CONFLICT(sub) DO UPDATE SET name = excluded.name, at = excluded.at',
+          r.sub, r.name, Date.now(),
+        );
+      }
       this.ctx.storage.sql.exec(
         'INSERT INTO plays (sub, game, mode, score, level, won, detail, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         r.sub, r.game, r.mode, r.score, r.level, r.won ? 1 : 0, r.detail ?? '', Date.now(),
@@ -103,6 +116,29 @@ export class Top extends DurableObject {
     return this.ctx.storage.sql
       .exec('SELECT game, mode, score, level, won, detail, at FROM plays WHERE sub = ? ORDER BY at DESC LIMIT 30', sub)
       .toArray();
+  }
+
+  // Bảng xếp hạng "cho vui" giữa người đã đăng nhập, top 5 mỗi hạng mục.
+  fun(period) {
+    const since = period === 'week' ? Date.now() - 7 * 86400_000 : 0;
+    const q = (key, title, unit, agg, where = '1') => ({
+      key, title, unit,
+      rows: this.ctx.storage.sql.exec(
+        `SELECT COALESCE(u.name, 'Ẩn danh') AS name, ${agg} AS value FROM plays p LEFT JOIN users u ON u.sub = p.sub
+         WHERE p.at >= ? AND (${where}) GROUP BY p.sub HAVING value > 0 ORDER BY value DESC, MIN(p.at) ASC LIMIT 5`, since,
+      ).toArray(),
+    });
+    // Giờ Việt Nam = UTC+7; "cú đêm" = ván kết thúc từ 0h tới trước 5h sáng.
+    const vnHour = '((p.at / 3600000 + 7) % 24)';
+    return [
+      q('plays', '🎮 Chiến thần cày game', 'ván', 'COUNT(*)'),
+      q('wins', '👑 Vua chiến thắng', 'lần thắng', 'SUM(p.won)'),
+      q('gold', '💰 Đại gia Đào Vàng', '$', 'MAX(p.score)', "p.game = 'dao-vang'"),
+      q('tiles', '⚡ Thánh nối thú', 'điểm', 'MAX(p.score)', "p.game = 'pikachu'"),
+      q('deep', '⛏️ Thợ mỏ lì đòn', 'màn', 'MAX(p.level)', "p.game = 'dao-vang'"),
+      q('team', '🤝 Đồng đội quốc dân', 'ván chung', 'COUNT(*)', "p.mode IN ('coop', 'team')"),
+      q('night', '🌙 Cú đêm', 'ván lúc 0–5h', 'COUNT(*)', `${vnHour} < 5`),
+    ];
   }
 
   stats(sub) {
@@ -391,7 +427,7 @@ export class Room extends DurableObject {
     const plays = s.order.filter((id) => s.players[id].user && this.unitOf(s.players[id])).map((id) => {
       const p = s.players[id], uid = this.unitOf(p), u = s.units[uid];
       return {
-        sub: p.user.sub, game: 'pikachu', mode: s.mode, score: p.score, level: u.level,
+        sub: p.user.sub, name: p.user.name, game: 'pikachu', mode: s.mode, score: p.score, level: u.level,
         won: s.mode === 'coop' ? u.done === 'clear' : winner === uid,
         detail: JSON.stringify({ size: s.size, team: u.score, with: this.membersOf(uid).filter((x) => x !== id).map((x) => s.players[x].name) }),
       };

@@ -15,6 +15,7 @@ Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.htm
 - Worker xác thực rồi gắn `X-User` khi chuyển WebSocket vào phòng; header client tự gửi luôn bị xoá trước.
 - Lịch sử lưu ở bảng `plays` trong DO `Top` (chỉ `sub` + tên, không lưu email). Ván nhiều người do server ghi; Đào Vàng 1 người do client gửi `POST /api/me/history` (tự báo nên chỉ là lịch sử cá nhân).
 - `GET /api/me` (user + thống kê), `GET /api/me/history` (30 ván gần nhất). Trang chủ hiển thị cả hai.
+- **Bảng xếp hạng vui** `GET /api/fun?period=week|all`: 7 hạng mục (cày nhiều, thắng nhiều, đại gia Đào Vàng, thánh nối thú, thợ mỏ lì đòn, đồng đội quốc dân, cú đêm 0–5h giờ VN), top 5 mỗi mục, chỉ người đã đăng nhập. Tên lấy từ bảng `users` (tên SSO mới nhất).
 
 ## Pikachu
 

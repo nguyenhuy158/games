@@ -177,7 +177,7 @@ export class MinerRoom extends DurableObject {
       s.world = null;
       // Lịch sử cá nhân cho người đã đăng nhập. coop: màn đạt được là thành tích (luôn "thua" ở màn cuối).
       const plays = this.activeIds().filter((id) => s.players[id].user).map((id) => ({
-        sub: s.players[id].user.sub, game: 'dao-vang', mode: s.mode, score: s.players[id].money, level: s.level,
+        sub: s.players[id].user.sub, name: s.players[id].user.name, game: 'dao-vang', mode: s.mode, score: s.players[id].money, level: s.level,
         won: !coop && ranking[0]?.id === id,
         detail: JSON.stringify({ team: coop ? s.team : undefined, rank: ranking.findIndex((x) => x.id === id) + 1, of: ranking.length }),
       }));

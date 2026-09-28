@@ -107,3 +107,4 @@ console.log('logic ok');
 
 await import('./dao-vang.test.mjs');
 await import('./sso.test.mjs');
+await import('./top.test.mjs');
