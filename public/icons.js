@@ -49,7 +49,14 @@ const PATHS = {
   "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M12 18h.01\"/>",
   "pause": "<rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\"/><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\"/>",
   "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>",
-  "circle": "<circle cx=\"12\" cy=\"12\" r=\"10\"/>"
+  "circle": "<circle cx=\"12\" cy=\"12\" r=\"10\"/>",
+  "chevron-up": "<path d=\"m18 15-6-6-6 6\"/>",
+  "chevron-down": "<path d=\"m6 9 6 6 6-6\"/>",
+  "chevron-left": "<path d=\"m15 18-6-6 6-6\"/>",
+  "chevron-right": "<path d=\"m9 18 6-6-6-6\"/>",
+  "smartphone-nfc": "<rect width=\"7\" height=\"12\" x=\"2\" y=\"6\" rx=\"1\"/><path d=\"M13 8.32a7.43 7.43 0 0 1 0 7.36\"/><path d=\"M16.46 6.21a11.76 11.76 0 0 1 0 11.58\"/><path d=\"M19.91 4.1a15.91 15.91 0 0 1 .01 15.8\"/>",
+  "gamepad": "<line x1=\"6\" x2=\"10\" y1=\"12\" y2=\"12\"/><line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\"/><line x1=\"15\" x2=\"15.01\" y1=\"13\" y2=\"13\"/><line x1=\"18\" x2=\"18.01\" y1=\"11\" y2=\"11\"/><rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/>",
+  "rotate-cw": "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/>"
 };
 
 export const icon = (name) =>

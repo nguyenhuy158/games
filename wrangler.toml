@@ -43,6 +43,10 @@ class_name = "CaroRoom"
 name = "SHIPS"
 class_name = "ShipRoom"
 
+[[durable_objects.bindings]]
+name = "NOKIA"
+class_name = "NokiaRoom"
+
 # SQLite-backed DO: dung duoc o goi free.
 [[migrations]]
 tag = "v1"
@@ -77,6 +81,11 @@ new_sqlite_classes = ["CaroRoom"]
 [[migrations]]
 tag = "v7"
 new_sqlite_classes = ["ShipRoom"]
+
+# Cac game Nokia (Snake, Bantumi, Pairs, Logic...): mot class, moi phong 1 DO "<game>:<CODE>".
+[[migrations]]
+tag = "v8"
+new_sqlite_classes = ["NokiaRoom"]
 
 [observability]
 enabled = true

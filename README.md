@@ -84,6 +84,15 @@ Làm theo lối chơi của papergames.io (tham khảo cách bố trí / luật 
 - **Nối 4** (`public/noi-4/`): dùng chung DO `CaroRoom` với caro — bảng `RULES` trong `worker/co-caro.js` giữ phần khác nhau (cỡ bàn, nước đi hợp lệ, thắng, máy). Worker gửi `/api/c4/room/CODE` tới id `c4:CODE` kèm header `X-Game: c4`. Bàn 7×6, bấm ô nào trong cột là thả vào cột đó; máy dùng negamax alpha-beta 4 tầng (~2.5 ms/nước).
 - **Bắn tàu** (`worker/ban-tau.js`, DO `ShipRoom`, `/api/bt/room/CODE`, luật ở `public/ban-tau/logic.js`): biển 10×10, tàu 5-4-3-3-2 không chạm nhau. Xếp ngẫu nhiên (bấm *Xếp lại* tuỳ ý, 60 giây) → cả hai *Sẵn sàng* → bắn luân phiên, trúng được bắn tiếp; chìm tàu thì tự đánh dấu các ô xung quanh. Server gửi mỗi người một bản state: chỉ thấy hạm đội của mình tới khi hết ván. Hết 30 giây thì bắn giùm 1 phát ngẫu nhiên, 3 lượt liền như vậy thì thua. Máy: săn quanh ô trúng, không có thì bắn ô "bàn cờ" ngẫu nhiên.
 
+## Góc Nokia
+
+Game điện thoại Nokia ngày xưa ở `/nokia/<game>/`: **Rắn săn mồi** (snake), **Bantumi**, **Lật hình** (pairs), **Logic**. Hình pixel tự vẽ, không dùng ảnh của Nokia.
+
+- Một Durable Object dùng chung `NokiaRoom` (`worker/nokia.js`, WebSocket `/api/nk/<game>/room/CODE`, mỗi phòng là DO tên `<game>:<CODE>`): lo người chơi, chủ phòng, sảnh chờ, gửi view riêng từng người, lưu lịch sử. Mỗi game chỉ là một module `worker/nokia/<game>.js` (`start` / `msg` / `tick` / `view`), luật thuần ở `public/nokia/<game>/logic.js` (có test `nokia-<game>.test.mjs`).
+- Client chung `public/nokia/room.js` (trang vào phòng, mời QR, sảnh chờ, kết quả) + `public/nokia/lcd.js`: LCD 84×48 hai màu, font pixel 3×5 tự vẽ, bàn phím 2/4/5/6/8 (bàn phím thật, WASD, mũi tên, nút trên màn — giữ được), tiếng bíp WebAudio.
+- Snake: server bước theo tốc độ (5 cấp), có / không tường, 1–4 con; con sống cuối cùng thắng. Bantumi: luật Kalah, máy minimax alpha-beta. Lật hình: 6×4 lá, hình lá úp chỉ ở server. Logic: mọi người đoán cùng một mã (chỉ ở server), 10 lượt / 5 phút.
+- Logo: `node scripts/nokia-logos.mjs`. Chạy thử riêng phần Nokia: `npx wrangler dev -c wrangler.nokia.toml --port 8788 --persist-to .wrangler/nokia-state` (thư mục state riêng để không khoá SQLite với `wrangler dev` chính).
+
 ## Ảnh chụp màn hình
 
 [`screenshots/`](screenshots/README.md): mỗi game một thư mục, trong đó mỗi thiết bị một thư mục con (desktop / tablet / phone / iPhone dọc, ngang). README trong đó có ảnh nhỏ để xem nhanh; chụp lại xong chạy `node scripts/screenshots-readme.mjs`.

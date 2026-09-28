@@ -4,6 +4,7 @@ export { MineRoom } from './do-min.js';
 export { DiceRoom } from './bau-cua.js';
 export { CaroRoom } from './co-caro.js';
 export { ShipRoom } from './ban-tau.js';
+export { NokiaRoom } from './nokia.js';
 import { userFrom } from './sso.js';
 import { uniqueName, otherNames } from './names.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
@@ -69,6 +70,17 @@ export default {
       if (!MODES.includes(mode) || !SIZES[size]) return new Response('Bad request', { status: 400 });
       const rows = await top().list(mode, size);
       return Response.json(rows, { headers: { 'Cache-Control': 'public, max-age=30' } });
+    }
+    // /api/nk/<game>/room/CODE = các game Nokia: một class NokiaRoom, mỗi phòng là DO tên "<game>:<CODE>" (worker/nokia.js).
+    const nk = url.pathname.match(/^\/api\/nk\/([a-z-]+)\/room\/([A-Z0-9]{4})$/);
+    if (nk && req.headers.get('Upgrade') === 'websocket') {
+      const u = new URL(req.url);
+      u.searchParams.set('game', nk[1]);
+      const headers = new Headers(req.headers);
+      headers.delete('X-User');
+      const user = await userFrom(req);
+      if (user) headers.set('X-User', JSON.stringify({ sub: user.sub, name: user.name }));
+      return env.NOKIA.get(env.NOKIA.idFromName(`${nk[1]}:${nk[2]}`)).fetch(new Request(u, { headers }));
     }
     // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng, /api/ms/room/CODE = Dò mìn, /api/bc/room/CODE = Bầu cua,
     // /api/cc/room/CODE = Cờ caro, /api/c4/room/CODE = Nối 4 (chung class phòng với caro), /api/bt/room/CODE = Bắn tàu.
@@ -148,6 +160,7 @@ export class Top extends DurableObject {
       q('mines', 'Thánh dò mìn', 'giây', 'MIN(p.score)', "p.game = 'do-min' AND p.won = 1", 'ASC'),
       q('baucua', 'Đại gia Bầu cua', 'xu lãi', 'SUM(p.score)', "p.game = 'bau-cua'"),
     q('caro', 'Kỳ thủ caro', 'ván thắng', 'SUM(p.won)', "p.game = 'co-caro' AND p.mode = 'pvp'"),
+    q('nokia', 'Huyền thoại Nokia', 'ván', 'COUNT(*)', "p.game IN ('snake', 'bantumi', 'pairs', 'logic', 'rapid-roll', 'space-impact', 'bounce')"),
     q('team', 'Đồng đội quốc dân', 'ván chung', 'COUNT(*)', "p.mode IN ('coop', 'team')"),
       q('night', 'Cú đêm', 'ván lúc 0–5h', 'COUNT(*)', `${vnHour} < 5`),
     ];

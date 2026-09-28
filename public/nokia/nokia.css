@@ -1,0 +1,84 @@
+/* Chung cho các game Nokia: nền xanh đêm, thân máy xám xanh, màn LCD xanh lá. */
+:root {
+  --bg: #16202c; --panel: #223041; --line: #34485e; --text: #e8f1fa; --muted: #93a8bd; --accent: #9be564;
+  --lcd: #c7f0d8; --ink: #43523d; --body: #2d3e50; --body-hi: #4a6178; --good: #3ddc84; --bad: #ff5d5d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: radial-gradient(circle at 50% 0%, #26384c, var(--bg) 70%) fixed; color: var(--text); overflow: hidden;
+  font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  user-select: none; -webkit-tap-highlight-color: transparent; touch-action: pan-x pan-y;
+}
+[hidden] { display: none !important; }
+.ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
+button, input, select { font: inherit; color: inherit; }
+button {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
+  cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; justify-content: center;
+}
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: var(--accent); color: #142208; border-color: var(--accent); font-weight: 700; }
+button.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+input { background: #0f1822; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+  width: min(380px, calc(100vw - 32px)); display: grid; gap: 12px; text-align: center; box-shadow: 0 12px 40px #0008;
+}
+.card h1, .card h2 { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.card h1 .logo { width: 40px; height: 40px; }
+.card h1 .back { color: var(--muted); display: inline-flex; }
+.card label { display: grid; gap: 4px; text-align: left; color: var(--muted); }
+.sub, .muted { margin: 0; color: var(--muted); }
+.muted { font-size: 12px; }
+.join { display: flex; gap: 8px; }
+input.code { text-transform: uppercase; letter-spacing: 3px; text-align: center; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.seg button { flex: 1; }
+.cfg { display: grid; gap: 8px; }
+.cfg:empty { display: none; }
+.ranks { margin: 0; padding: 0 0 0 1.4em; text-align: left; display: grid; gap: 2px; }
+.ranks li span { display: inline-block; min-width: 60%; }
+.ranks li b { color: var(--accent); }
+#home { height: 100%; display: grid; place-items: center; padding: 16px; }
+
+#room { height: 100%; display: flex; flex-direction: column; }
+header { display: flex; align-items: center; gap: 6px; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); }
+header .grow { flex: 1; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); flex: none; }
+.dot.on { background: var(--good); }
+@media (max-width: 480px) { header .lbl { display: none; } }
+#players { list-style: none; margin: 0 12px; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+#players li { display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px 10px; font-size: 13px; white-space: nowrap; box-shadow: inset 4px 0 var(--c); }
+#players li.me { border-color: var(--accent); }
+#players b { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* Thân máy Nokia: màn LCD phía trên, bàn phím 2/4/5/6/8 phía dưới. Co giãn theo chiều cao màn hình. */
+.stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; padding: 8px 12px max(12px, env(safe-area-inset-bottom)); }
+.phone {
+  --w: min(92vw, 520px, calc((100dvh - 150px) * 1.02));
+  width: var(--w); display: grid; gap: calc(var(--w) * .035); justify-items: center; padding: calc(var(--w) * .05) calc(var(--w) * .06) calc(var(--w) * .06);
+  background: linear-gradient(160deg, var(--body-hi), var(--body)); border-radius: calc(var(--w) * .12) calc(var(--w) * .12) calc(var(--w) * .2) calc(var(--w) * .2);
+  box-shadow: inset 0 2px #ffffff22, 0 16px 40px #0009;
+}
+.brand { font-weight: 800; letter-spacing: .3em; font-size: calc(var(--w) * .04); color: #d7e3ee; opacity: .8; }
+.screen { width: 100%; padding: calc(var(--w) * .03); background: #10181f; border-radius: calc(var(--w) * .04); box-shadow: inset 0 2px 6px #000a; }
+.screen canvas { display: block; width: 100%; aspect-ratio: 84 / 48; image-rendering: pixelated; border-radius: 4px; box-shadow: inset 0 0 12px #0003; }
+.pad { width: 70%; display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--w) * .025); }
+.pad button {
+  aspect-ratio: 1.6; border-radius: 40%; padding: 0; display: grid; place-items: center; align-content: center; gap: 0; line-height: 1;
+  background: linear-gradient(#e8eef3, #b9c6d1); color: #1c2a36; border: 0; box-shadow: 0 3px 0 #0006; touch-action: none;
+}
+.pad button b { font-size: calc(var(--w) * .05); }
+.pad button small { font-size: calc(var(--w) * .028); opacity: .7; }
+.pad button small .ic { width: 1.4em; height: 1.4em; }
+.pad button.on { transform: translateY(2px); box-shadow: 0 1px 0 #0006; background: linear-gradient(#cfd9e2, #a3b3c0); }
+.pad button[data-k="ok"] { background: linear-gradient(#b8f07a, #7cc242); }
+.pad button.blank { visibility: hidden; }
+/* Màn ngang thấp: máy nằm ngang, bàn phím bên phải. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .phone { --w: min(88vw, calc((100dvh - 110px) * 2.1)); grid-template-columns: 1fr 34%; align-items: center; border-radius: calc(var(--w) * .06); padding: calc(var(--w) * .025); }
+  .brand { display: none; }
+  .pad { width: 100%; }
+}
+#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #16202cb0; z-index: 5; }

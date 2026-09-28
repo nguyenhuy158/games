@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import { newDeck, flip, done, ICONS } from './public/nokia/pairs/logic.js';
+
+assert.equal(ICONS.length, 12);
+for (const ic of ICONS) assert.ok(ic.length === 7 && ic.every((r) => r.length === 7), 'icons are 7x7');
+assert.equal(new Set(ICONS.map((i) => i.join())).size, 12, 'icons are distinct');
+const deck = newDeck();
+assert.equal(deck.length, 24);
+for (let v = 0; v < 12; v++) assert.equal(deck.filter((x) => x === v).length, 2);
+const g = { deck: [0, 1, 0, 1], owner: [null, null, null, null], open: [] };
+assert.equal(flip(g, 0), 'first');
+assert.equal(flip(g, 0), null, 'same card twice');
+assert.equal(flip(g, 1), 'miss');
+assert.equal(flip(g, 2), null, 'max two open');
+g.open = [];
+flip(g, 0);
+assert.equal(flip(g, 2), 'match');
+g.owner = ['a', null, 'a', null];
+g.open = [];
+assert.equal(flip(g, 0), null, 'owned card cannot flip');
+assert.equal(done(g), false);
+g.owner = ['a', 'b', 'a', 'b'];
+assert.equal(done(g), true);
+console.log('nokia-pairs ok');

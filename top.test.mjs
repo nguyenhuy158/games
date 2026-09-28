@@ -41,7 +41,7 @@ assert.deepEqual(all.night, [{ name: 'An Mới', value: 1 }], 'only the 2am VN p
 
 const week = Object.fromEntries(top.fun('week').map((c) => [c.key, c.rows]));
 assert.deepEqual(week.tiles, [{ name: 'An Mới', value: 300 }], 'old play excluded from this week');
-assert.equal(top.fun('all').length, 10);
+assert.equal(top.fun('all').length, 11);
 // Bầu cua: tổng lãi các buổi, buổi lỗ kéo tổng xuống, tổng âm thì không lên bảng.
 play('a', 'An Mới', 'bau-cua', 'rotate', 500, 6, true, now - H);
 play('a', 'An Mới', 'bau-cua', 'rotate', -200, 3, false, now - H);
