@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#5a0f12">
+  <title>Bầu cua</title>
+  <link rel="icon" href="/logos/bau-cua.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/bau-cua-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/bau-cua-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="home">
+    <div class="card">
+      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/bau-cua.svg" alt=""> Bầu cua</h1>
+      <p class="sub">Cả phòng đặt cược bằng xu ảo, làm cái xoay vòng — không cần đăng ký.</p>
+      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <div class="join">
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
+        <button id="btnJoin">Vào phòng</button>
+      </div>
+      <p class="muted">Mỗi người 1000 xu. Chọn phỉnh rồi bấm vào con vật để đặt. Ra 1 mặt ăn 1, 2 mặt ăn 2, 3 mặt ăn 3; không ra thì mất cược.<br>Hết xu được cứu trợ 500 xu. Xu chỉ để vui, không có giá trị thật.</p>
+    </div>
+  </section>
+
+  <section id="room" hidden>
+    <header>
+      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" title="Kết nối"></span>
+      <span id="myCoins" class="coins" title="Xu của bạn"></span>
+      <span class="grow"></span>
+      <button id="btnMode" title="Chủ phòng: đổi người làm cái"></button>
+      <button id="btnSound" title="Âm thanh"></button>
+    </header>
+    <ul id="players"></ul>
+    <main>
+      <div id="plate">
+        <div id="dice"></div>
+        <div id="bowl"></div>
+      </div>
+      <p id="status"></p>
+      <div id="board"></div>
+      <div id="bar">
+        <div id="chips"></div>
+        <button id="btnClear" title="Bỏ hết cược của bạn"><i data-icon="rotate-ccw"></i><span class="lbl"> Bỏ cược</span></button>
+        <button id="btnRoll" class="primary">Mở bát</button>
+      </div>
+    </main>
+  </section>
+
+  <div id="toast" hidden></div>
+  <script type="module" src="game.js"></script>
+</body>
+</html>

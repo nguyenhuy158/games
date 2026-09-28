@@ -1,5 +1,6 @@
 import { SIZES, HIDDEN, FLAG, BOOM, LIVES } from './logic.js';
 import { icon, hydrateIcons } from '../icons.js';
+import { invite } from '../invite.js';
 import { createPanel } from '../panel.js';
 
 hydrateIcons();
@@ -143,10 +144,7 @@ $('#btnJoin').onclick = () => {
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
 $('#btnStart').onclick = () => send({ t: 'start' });
-$('#btnCopy').onclick = async () => {
-  const link = `${location.origin}/do-min/?r=${code}`;
-  try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời'); } catch { toast(link); }
-};
+$('#btnCopy').onclick = () => invite(`${location.origin}/do-min/?r=${code}`, code, toast);
 $('#btnSkin').onclick = () => {
   const keys = Object.keys(SKINS);
   skin = keys[(keys.indexOf(skin) + 1) % keys.length];

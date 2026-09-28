@@ -68,6 +68,18 @@ export const LOGOS = {
     ${sticker(`<path d="M392 250V430" stroke="${INK}" stroke-width="12" stroke-linecap="round"/><path d="M398 256L470 282L398 312Z" fill="#ff5d5d" stroke="${INK}" stroke-width="10" stroke-linejoin="round"/>`)}
     ${sparkle(90, 110, 26)}${sparkle(84, 420, 18, '#ffd23f')}${sparkle(456, 460, 16)}`),
 
+  // Bầu cua: bé cua mặt cười giơ càng, cạnh viên xúc xắc, trên nền đỏ Tết.
+  'bau-cua': frame('b', '#ffe3d6', '#ff8a7a', `
+    ${sticker(`<rect x="318" y="300" width="140" height="140" rx="30" fill="#fff" stroke="${INK}" stroke-width="12" transform="rotate(14 388 370)"/>`)}
+    <g transform="rotate(14 388 370)" fill="${INK}"><circle cx="348" cy="330" r="13"/><circle cx="388" cy="370" r="13"/><circle cx="428" cy="410" r="13"/></g>
+    <path d="M150 300L92 330M150 330L100 372M362 300L420 330" stroke="${INK}" stroke-width="12" stroke-linecap="round"/>
+    ${sticker(`<path d="M120 196C82 160 96 104 140 96C124 128 140 150 164 156C172 180 150 204 120 196Z" fill="#ff5d4f" stroke="${INK}" stroke-width="11" stroke-linejoin="round"/>`)}
+    ${sticker(`<path d="M392 196C430 160 416 104 372 96C388 128 372 150 348 156C340 180 362 204 392 196Z" fill="#ff5d4f" stroke="${INK}" stroke-width="11" stroke-linejoin="round"/>`)}
+    ${sticker(`<ellipse cx="256" cy="262" rx="140" ry="104" fill="#ff5d4f" stroke="${INK}" stroke-width="12"/>`)}
+    <ellipse cx="200" cy="208" rx="36" ry="18" fill="#fff" opacity=".45" transform="rotate(-18 200 208)"/>
+    ${face(256, 256, 0.85)}
+    ${sparkle(88, 440, 28, '#ffd23f')}${sparkle(256, 70, 22)}${sparkle(454, 250, 18, '#ffd23f')}`),
+
   // Đào Vàng: cục vàng mặt cười bị móc câu gắp lên.
   'dao-vang': frame('d', '#fff1d6', '#f7b267', `
     <path d="M8 400C120 372 190 392 256 380S420 360 504 392V384 504H8Z" fill="#c98a55" opacity=".55"/>

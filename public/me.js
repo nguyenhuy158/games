@@ -2,12 +2,12 @@
 const SSO = 'https://auth.huyab.click';
 const $ = (s) => document.querySelector(s);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn' };
-const MODES = { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình' };
+const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua' };
+const MODES = { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình', rotate: 'Xoay cái', house: 'Máy làm cái' };
 const back = () => encodeURIComponent(location.origin + '/');
 const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 // Điểm hiển thị theo game: Đào Vàng = tiền, Dò mìn = thời gian (giây), còn lại = điểm.
-const scoreText = (game, v) => (game === 'dao-vang' ? `$${v}` : game === 'do-min' ? mmss(v) : v);
+const scoreText = (game, v) => (game === 'dao-vang' ? `$${v}` : game === 'do-min' ? mmss(v) : game === 'bau-cua' ? `${v > 0 ? '+' : ''}${v} xu` : v);
 
 const ago = (t) => {
   const s = (Date.now() - t) / 1000;
@@ -40,6 +40,8 @@ async function load() {
     el('span', {}, 'Số ván: ', el('strong', { textContent: s.plays }), s.wins ? ` · thắng ${s.wins}` : ''),
     s.game === 'do-min'
       ? el('span', {}, 'Thắng nhanh nhất: ', el('strong', { textContent: s.fastest != null ? mmss(s.fastest) : '—' }))
+      : s.game === 'bau-cua'
+      ? el('span', {}, 'Lãi đậm nhất: ', el('strong', { textContent: scoreText(s.game, s.best) }))
       : el('span', {}, 'Điểm cao nhất: ', el('strong', { textContent: scoreText(s.game, s.best) }), ` · màn xa nhất ${s.maxLevel}`),
   )) : [el('p', { className: 'sub', textContent: 'Chưa có ván nào — chơi thử một ván đi!' })]));
   const hist = await (await fetch('/api/me/history')).json();
@@ -48,7 +50,7 @@ async function load() {
     const extra = d.with?.length ? ` · cùng ${d.with.join(', ')}` : d.rank ? ` · hạng ${d.rank}/${d.of}` : d.size ? ` · ${d.size}, mở ${d.opened} ô, 💥${d.booms}` : '';
     return el('li', {},
       el('b', { textContent: GAMES[h.game] ?? h.game }),
-      el('span', { textContent: `${MODES[h.mode] ?? h.mode}${h.game === 'do-min' ? '' : ` · màn ${h.level}`}${extra}` }),
+      el('span', { textContent: `${MODES[h.mode] ?? h.mode}${h.game === 'do-min' ? '' : h.game === 'bau-cua' ? ` · ${h.level} ván` : ` · màn ${h.level}`}${extra}` }),
       el('span', { className: 'score', textContent: scoreText(h.game, h.score) }),
       h.won ? el('span', { className: 'won', textContent: '🏆 thắng' }) : '',
       el('span', { className: 'when', textContent: ago(h.at) }),

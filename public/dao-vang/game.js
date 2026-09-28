@@ -3,6 +3,7 @@ import {
   targetOf, shopOffer, createWorld, step, shoot, dynamite, tipOf, mouseX, mouseDir,
 } from './logic.js';
 import { icon, hydrateIcons } from '../icons.js';
+import { invite } from '../invite.js';
 import { createPanel } from '../panel.js';
 
 hydrateIcons();
@@ -496,11 +497,8 @@ const net = {
     const playerList = el('ul', { className: 'plist' }, ...r.players.map((p) => el('li', { className: p.online ? '' : 'off' },
       `${p.id === r.host ? '👑 ' : ''}${p.spec ? '👁 ' : ''}${p.name}${p.id === deviceId ? ' (bạn)' : ''}`)));
     const copy = el('button', {
-      textContent: `🔗 Mời: phòng ${this.code}`,
-      onclick: async () => {
-        const link = `${location.origin}/dao-vang/?r=${this.code}`;
-        try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời'); } catch { toast(link); }
-      },
+      textContent: `📱 Mời (QR): phòng ${this.code}`,
+      onclick: () => invite(`${location.origin}/dao-vang/?r=${this.code}`, this.code, toast),
     });
     const leave = el('button', { textContent: 'Rời phòng', onclick: () => this.leave() });
 
