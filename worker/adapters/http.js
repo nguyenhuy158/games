@@ -1,4 +1,5 @@
 import { userFrom } from '../sso.js';
+import { REPLAY_ID, REPLAY_MAX, replayId } from './top.js';
 import { SIZES } from '../../public/pikachu/logic.js';
 import { MODES } from '../pikachu.js';
 
@@ -28,12 +29,37 @@ export const http = {
       url.hostname = HOME;
       return Response.redirect(url.toString(), 301);
     }
+    // Link chia sẻ gọn /replay/<id> -> trang game ?replay=<id> (trang game tự phát lại, xem public/replay.js).
+    const short = url.pathname.match(/^\/replay\/([A-Za-z0-9]{12})\/?$/);
+    if (short) {
+      const page = await env.TOP.get(env.TOP.idFromName('global')).replayPage(short[1]);
+      if (!page) return new Response('Không tìm thấy bản xem lại (có thể đã hết hạn) · Replay not found', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      return Response.redirect(`${url.origin}${page}?replay=${short[1]}`, 302);
+    }
     if (!api) return env.ASSETS.fetch(req);
     const top = () => env.TOP.get(env.TOP.idFromName('global'));
     if (url.pathname === '/api/me') {
       const user = await userFrom(req);
       const body = user ? { user, stats: await top().stats(user.sub) } : { user: null };
       return Response.json(body, { headers: { 'Cache-Control': 'no-store' } });
+    }
+    // Xem lại ván: GET công khai (ai có link đều xem). POST = game chạy ở client (chơi 1 người) tự gửi bản ghi, cần đăng nhập.
+    const rp = url.pathname.match(/^\/api\/replay\/([^/]+)$/);
+    if (rp && req.method === 'GET') {
+      const r = REPLAY_ID.test(rp[1]) ? await top().replay(rp[1]) : null;
+      return r ? Response.json(r, { headers: { 'Cache-Control': 'public, max-age=86400' } }) : Response.json({ error: 'not found' }, { status: 404 });
+    }
+    if (url.pathname === '/api/replay' && req.method === 'POST') {
+      if (!(await userFrom(req))) return Response.json({ error: 'login' }, { status: 401 });
+      if (!req.headers.get('Content-Type')?.startsWith('application/json')) return new Response('Unsupported', { status: 415 });
+      const text = await req.text();
+      if (text.length > REPLAY_MAX) return new Response('Too large', { status: 413 });
+      let b;
+      try { b = JSON.parse(text); } catch { return new Response('Bad request', { status: 400 }); }
+      if (typeof b?.game !== 'string' || typeof b.page !== 'string' || !b.page.startsWith('/') || !Array.isArray(b.frames)) return new Response('Bad request', { status: 400 });
+      const id = replayId();
+      await top().saveReplay({ id, game: b.game.slice(0, 32), page: b.page.slice(0, 64), frames: b.frames });
+      return Response.json({ id });
     }
     if (url.pathname === '/api/me/history') {
       const user = await userFrom(req);
@@ -49,10 +75,12 @@ export const http = {
         if (b?.game !== 'dao-vang' || !Number.isInteger(score) || score < 0 || score > 1e7 || !Number.isInteger(level) || level < 1 || level > 999) {
           return new Response('Bad request', { status: 400 });
         }
-        await top().addPlays([{ sub: user.sub, name: user.name, game: 'dao-vang', mode: 'solo', score, level, won: false, detail: '' }]);
+        const detail = typeof b.rp === 'string' && REPLAY_ID.test(b.rp) ? JSON.stringify({ rp: b.rp }) : '';
+        await top().addPlays([{ sub: user.sub, name: user.name, game: 'dao-vang', mode: 'solo', score, level, won: false, detail }]);
         return Response.json({ ok: true });
       }
-      return Response.json(await top().history(user.sub), { headers: { 'Cache-Control': 'no-store' } });
+      const before = Number(url.searchParams.get('before'));
+      return Response.json(await top().history(user.sub, before > 0 ? before : undefined), { headers: { 'Cache-Control': 'no-store' } });
     }
     if (url.pathname === '/api/fun') {
       const period = url.searchParams.get('period') === 'week' ? 'week' : 'all';

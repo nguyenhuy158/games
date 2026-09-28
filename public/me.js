@@ -1,6 +1,7 @@
 // Đăng nhập Google qua SSO auth.huyab.click (dùng chung với chia-keo) + lịch sử chơi ở trang chủ.
 import { iconEl, hydrateIcons } from './icons.js';
 import { t, en } from './i18n.js';
+import { replayLinks } from './replay.js';
 
 hydrateIcons();
 
@@ -62,8 +63,15 @@ async function load() {
       ? el('span', {}, t('Lãi đậm nhất: ', 'Biggest profit: '), el('strong', { textContent: scoreText(s.game, s.best) }))
       : el('span', {}, t('Điểm cao nhất: ', 'Best score: '), el('strong', { textContent: scoreText(s.game, s.best) }), t(` · màn xa nhất ${s.maxLevel}`, ` · furthest level ${s.maxLevel}`)),
   )) : [el('p', { className: 'sub', textContent: t('Chưa có ván nào — chơi thử một ván đi!', 'No games yet — go play one!') })]));
-  const hist = await (await fetch('/api/me/history')).json();
-  $('#history').replaceChildren(...hist.map((h) => {
+  $('#history').replaceChildren();
+  await moreHistory();
+}
+// Thêm 30 ván cũ hơn vào cuối danh sách; còn nữa thì hiện nút "Xem thêm".
+let oldest = 0;
+async function moreHistory() {
+  const hist = await (await fetch(`/api/me/history${oldest ? `?before=${oldest}` : ''}`)).json();
+  if (hist.length) oldest = hist.at(-1).at;
+  $('#history').append(...hist.map((h) => {
     const d = (() => { try { return JSON.parse(h.detail || '{}'); } catch { return {}; } })();
     const extra = d.vs ? t(` · gặp ${d.vs}`, ` · vs ${d.vs}`) : d.with?.length ? t(` · cùng ${d.with.join(', ')}`, ` · with ${d.with.join(', ')}`) : d.rank ? t(` · hạng ${d.rank}/${d.of}`, ` · rank ${d.rank}/${d.of}`)
       : d.size ? t(` · ${d.size}, mở ${d.opened} ô, nổ ${d.booms}`, ` · ${d.size}, opened ${d.opened}, booms ${d.booms}`) : '';
@@ -73,8 +81,16 @@ async function load() {
       el('span', { className: 'score', textContent: scoreText(h.game, h.score) }),
       h.won ? el('span', { className: 'won' }, iconEl('trophy'), t(' thắng', ' won')) : '',
       el('span', { className: 'when', textContent: ago(h.at) }),
+      d.rp ? replayLinks(d.rp) : '',
     );
   }));
+  let btn = $('#historyMore');
+  if (!btn) {
+    btn = el('button', { id: 'historyMore', className: 'btn', textContent: t('Xem thêm', 'Show more') });
+    btn.onclick = async () => { btn.disabled = true; await moreHistory(); btn.disabled = false; };
+    $('#history').after(btn);
+  }
+  btn.hidden = hist.length < 30;
 }
 load();
 

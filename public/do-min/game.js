@@ -6,6 +6,7 @@ import { deviceName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx } from '../i18n.js';
 import { publicSwitch } from '../public-switch.js';
+import { replayParam, playReplay, replayLinks } from '../replay.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -18,6 +19,10 @@ const store = {
 // Cùng danh tính thiết bị với các game khác (pk.id / pk.name).
 let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+// Xem lại ván (?replay=<id>): không vào phòng, chỉ phát lại tin đã ghi (góc nhìn ghế 1). Người xem không phải người chơi
+// (deviceId rỗng) nên bàn hiện là bàn ghế 1 (view() lấy bàn đầu tiên), không bấm / gửi được gì.
+const rp = replayParam();
+if (rp) deviceId = '';
 $('#name').value = deviceName();
 addReroll($('#name'));
 const myName = () => $('#name').value.trim() || t('Người chơi', 'Player');
@@ -36,7 +41,11 @@ function applySkin() {
 
 let ws, code = null, room = null, grids = {}, mines = null, clockOffset = 0, flagMode = false;
 let peek = false; // hết ván: ẩn bảng kết quả để xem mìn nằm đâu
+let quiet = false; // đang tua bản xem lại (phát nhanh cả loạt tin): tắt âm, rung, toast, hiệu ứng ping
 let cursors = {};
+// Ván xong: nút "Xem lại / Chia sẻ" dưới dòng chữ của bảng kết quả (render() thay theo result.rp).
+let rpLinks = replayLinks(null), shownRp = null;
+$('#ovText').after(rpLinks);
 const panel = createPanel({ root: $('#panel'), toggle: $('#btnPanel'), storeKey: 'ms.panel' });
 
 const me = () => room?.players.find((p) => p.id === deviceId);
@@ -50,7 +59,7 @@ const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
 let soundOn = store.get('ms.sound') !== '0';
 const SND = Object.fromEntries(Object.entries({ open: 'sound2', boom: 'sound1', start: 'sound4', win: 'sound5' })
   .map(([k, f]) => [k, new Audio(`../pikachu/sound/${f}.mp3`)]));
-function play(k) { if (!soundOn) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
+function play(k) { if (!soundOn || quiet) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('ms.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
@@ -109,13 +118,14 @@ function onMsg(m) {
       break;
     }
     case 'grid':
-      grids = { ...grids, ...m.grids };
+      // Chép mảng: 'open' sửa bàn tại chỗ, còn tin xem lại được phát lại nhiều lần (tua) nên không được đụng vào tin gốc.
+      grids = { ...grids, ...Object.fromEntries(Object.entries(m.grids).map(([uid, g]) => [uid, [...g]])) };
       break;
     case 'open': {
       const g = grids[m.unit];
       if (!g) return;
       for (const [i, v] of m.cells) g[i] = v;
-      if (m.unit === view()) {
+      if (m.unit === view() && !quiet) {
         if (m.boom) { play('boom'); shake(); if (m.by !== deviceId) toast.error(t(`${nameOf(m.by)} đạp mìn!`, `${nameOf(m.by)} hit a mine!`), { icon: 'bomb' }); }
         else if (m.by === deviceId && m.cells.some(([, v]) => v >= 0)) play('open');
       }
@@ -128,11 +138,11 @@ function onMsg(m) {
       if (m.p) cursors[m.id] = m.p; else delete cursors[m.id];
       return renderCursors();
     case 'ping':
-      return pingFx(m.i, colorOf(m.id), nameOf(m.id));
+      return quiet || pingFx(m.i, colorOf(m.id), nameOf(m.id));
     default:
       return;
   }
-  render();
+  if (!quiet) render();
 }
 
 // ---------- nút ----------
@@ -318,7 +328,7 @@ new ResizeObserver(() => render()).observe($('#boardWrap'));
 function elapsed(u) {
   if (!room?.startedAt) return 0;
   if (u?.done === 'clear') return u.time;
-  const end = room.status === 'ended' ? room.endedAt : Date.now() + clockOffset;
+  const end = room.status === 'ended' ? room.endedAt : rp ? room.now : Date.now() + clockOffset; // xem lại: giờ của khung đang phát
   return Math.max(0, end - room.startedAt + (u?.penalty ?? 0));
 }
 const fmt = (ms) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -385,13 +395,13 @@ function render() {
   pub.update(r, isHost);
   const ov = $('#overlay');
   const lobbyish = r && r.status !== 'playing';
-  $('#modePick').hidden = $('#sizePick').hidden = !lobbyish;
+  $('#modePick').hidden = $('#sizePick').hidden = !lobbyish || !!rp;
   for (const b of document.querySelectorAll('#modePick button')) { b.classList.toggle('on', b.dataset.mode === r?.mode); b.disabled = !isHost; }
   [...$('#sizePick').children].forEach((b, i) => { b.classList.toggle('on', i === r?.size); b.disabled = !isHost; });
   $('#ovScore').hidden = true;
   if (!r) {
     ov.hidden = false;
-    $('#ovTitle').textContent = t('Đang kết nối…', 'Connecting…');
+    $('#ovTitle').textContent = rp ? t('Đang tải bản xem lại…', 'Loading replay…') : t('Đang kết nối…', 'Connecting…');
     $('#ovText').textContent = '';
     $('#btnStart').hidden = true;
   } else if (r.status === 'playing') {
@@ -419,12 +429,15 @@ function render() {
       $('#ovScore').textContent = wu
         ? t(`Thời gian ${fmt(wu.time)}${wu.penalty ? ` (gồm phạt ${wu.penalty / 1000}s)` : ''}`, `Time ${fmt(wu.time)}${wu.penalty ? ` (incl. ${wu.penalty / 1000}s penalty)` : ''}`)
         : t(`Đã mở ${u?.opened ?? 0}/${u?.total ?? 0} ô`, `Opened ${u?.opened ?? 0}/${u?.total ?? 0} cells`);
-      $('#ovText').textContent = isHost ? t('Ván mới?', 'New round?') : t('Chờ chủ phòng mở ván mới.', 'Waiting for the host to start a new round.');
+      $('#ovText').textContent = rp ? '' : isHost ? t('Ván mới?', 'New round?') : t('Chờ chủ phòng mở ván mới.', 'Waiting for the host to start a new round.');
     }
     $('#btnStart').hidden = !isHost;
     $('#btnStart').textContent = r.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Chơi ván mới', 'New round');
     if (r.status === 'ended' && peek) ov.hidden = true;
   }
+  // Ván xong: nút "Xem lại / Chia sẻ" (đang xem lại thì thanh phát đã có nút chia sẻ).
+  const rid = (!rp && r?.status === 'ended' && r.result?.rp) || null;
+  if (rid !== shownRp) { const n = replayLinks(rid); rpLinks.replaceWith(n); rpLinks = n; shownRp = rid; }
   $('#btnPeek').hidden = r?.status !== 'ended';
   $('#btnResult').hidden = !(r?.status === 'ended' && peek);
 }
@@ -461,4 +474,21 @@ applySkin();
 window.ms = { get room() { return room; }, get grids() { return grids; }, view }; // cho test tự động
 
 const initial = new URLSearchParams(location.search).get('r');
-if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+if (rp) {
+  $('#home').hidden = true;
+  $('#room').hidden = false;
+  $('#room').style.paddingBottom = '72px'; // chừa chỗ thanh phát
+  for (const s of ['#btnCopy', '#conn', '#btnFlag']) $(s).hidden = true;
+  $('#btnLeave').onclick = () => { location.href = location.pathname; };
+  render();
+  playReplay(rp, {
+    feed: onMsg,
+    // Tua: dọn sạch rồi phát lại nhanh từ đầu (cùng lượt JS), xong lượt đó mới vẽ + bật lại âm thanh.
+    reset: () => {
+      room = mines = null;
+      grids = {}; cursors = {}; peek = false;
+      quiet = true;
+      setTimeout(() => { quiet = false; render(); });
+    },
+  });
+} else if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);

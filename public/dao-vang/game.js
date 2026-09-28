@@ -1,6 +1,6 @@
 import {
   W, H, GROUND, PIVOT, LEVEL_TIME, ITEMS, SHOP,
-  targetOf, shopOffer, createWorld, step, shoot, dynamite, tipOf, mouseX, mouseDir,
+  targetOf, shopOffer, createWorld, step, shoot, dynamite, tipOf, mouseX, mouseDir, snapOf,
 } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
@@ -9,6 +9,8 @@ import { deviceName, randomName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx, langToggle } from '../i18n.js';
 import { publicSwitch } from '../public-switch.js';
+import { Tape } from '../tape.js';
+import { replayParam, playReplay, replayLinks, uploadReplay } from '../replay.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -49,11 +51,12 @@ const ready = Promise.all([
 ]);
 
 let soundOn = store.get('dv.sound') !== '0';
+let muted = false; // tua bản xem lại: nạp nhanh từ đầu thì im
 const SND = Object.fromEntries(['boom', 'down', 'goal', 'hvBad', 'hvCool', 'hvGood', 'scoreAdd', 'up', 'upfinish', 'win']
   .map((n) => [n, new Audio(`assets/audio/${n}.m4a`)]));
 SND.up.loop = true;
 function play(n) {
-  if (!soundOn) return;
+  if (!soundOn || muted) return;
   const a = SND[n];
   a.currentTime = 0;
   a.play().catch(() => {});
@@ -227,30 +230,55 @@ function hud({ money, target, level, levelText, time, dynamite: dyn, canDyn }) {
 // ---------- driver: chơi 1 người (chạy step() ngay trên máy) ----------
 const best = () => Number(store.get('dv.best') || 0);
 const solo = {
-  world: null, money: 0, level: 1, dynamite: 0, buffs: {}, screen: 'menu',
+  world: null, money: 0, level: 1, dynamite: 0, buffs: {}, screen: 'menu', tape: null, snapAt: 0,
 
   start() {
     Object.assign(this, { money: 0, level: 1, dynamite: 0, buffs: {} });
+    // Bản xem lại: ghi y như tin server gửi ván nhiều người (world / snap / ev / state) -> phát lại bằng net.onMsg.
+    this.tape = new Tape(100);
+    this.rec({ t: 'me', id: 'me' });
     this.begin();
   },
   begin() {
     this.world = createWorld(this.level, [{ id: 'me', dynamite: this.dynamite, buffs: this.buffs }]);
     this.screen = 'play';
+    this.snapAt = -1;
     fx = [];
     showOverlay(null);
+    this.rec({ t: 'world', world: this.world });
+    this.state('playing');
+  },
+  rec(msg) { this.tape?.push(msg); },
+  state(status, { offer = null, bought = null, result = null } = {}) {
+    this.rec({
+      t: 'state', status, mode: 'solo', level: this.level, team: this.money, target: targetOf(this.level), shopEndsAt: 0, now: Date.now(), result, host: 'me',
+      players: [{ id: 'me', name: myName(), money: this.money, spec: false, online: true, dynamite: this.dynamite, offer, bought, ready: false }],
+    });
   },
   me() { return this.world?.miners[0]; },
-  shoot() { if (this.screen === 'play' && shoot(this.world, 'me')) onEvents([{ k: 'shoot', id: 'me' }], () => this.me(), 'me'); },
+  shoot() {
+    if (this.screen !== 'play' || !shoot(this.world, 'me')) return;
+    const e = { k: 'shoot', id: 'me' };
+    onEvents([e], () => this.me(), 'me');
+    this.rec({ t: 'ev', evs: [e] });
+  },
   dyn() {
     const e = this.screen === 'play' && dynamite(this.world, 'me');
-    if (e) onEvents([e], () => this.me(), 'me');
+    if (!e) return;
+    onEvents([e], () => this.me(), 'me');
+    this.rec({ t: 'ev', evs: [e] });
   },
   update(dt) {
     if (this.screen !== 'play') return;
     const evs = step(this.world, dt);
     for (const e of evs) if (e.k === 'collect') this.money += e.value;
     onEvents(evs, () => this.me(), 'me');
-    if (evs.some((e) => e.k === 'end')) this.end();
+    const out = evs.filter((e) => e.k !== 'end');
+    if (out.length) this.rec({ t: 'ev', evs: out, money: { team: this.money, players: { me: this.money } } });
+    const ended = evs.some((e) => e.k === 'end');
+    // Snap 10/giây như băng ván nhiều người.
+    if (ended || this.world.t - this.snapAt >= 0.1) { this.snapAt = this.world.t; this.rec(snapOf(this.world)); }
+    if (ended) this.end();
   },
   end() {
     stop('up');
@@ -263,11 +291,20 @@ const solo = {
       return;
     }
     this.screen = 'over';
-    // Đã đăng nhập thì lưu vào lịch sử (khách: server trả 401, bỏ qua).
-    fetch('/api/me/history', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game: 'dao-vang', score: this.money, level: this.level }),
-    }).catch(() => {});
+    const ranking = [{ id: 'me', name: myName(), money: this.money }];
+    this.state('ended', { result: { win: false, level: this.level, team: this.money, target, ranking } });
+    const frames = this.tape?.done();
+    this.tape = null;
+    const links = el('div');
+    // Đã đăng nhập thì gửi bản xem lại + lưu vào lịch sử (khách: server trả 401, bỏ qua).
+    (async () => {
+      const rp = frames?.length ? await uploadReplay('dao-vang', '/dao-vang/', frames) : null;
+      links.replaceWith(replayLinks(rp));
+      fetch('/api/me/history', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game: 'dao-vang', score: this.money, level: this.level, ...(rp ? { rp } : {}) }),
+      }).catch(() => {});
+    })();
     const isBest = this.money > best();
     if (isBest) store.set('dv.best', String(this.money));
     play(isBest ? 'win' : 'hvBad');
@@ -275,6 +312,7 @@ const solo = {
       el('h2', { textContent: t('Hết giờ!', 'Time\'s up!') }),
       el('p', { textContent: t(`Bạn kiếm được $${this.money} / cần $${target} ở màn ${this.level}.`, `You earned $${this.money} / needed $${target} at level ${this.level}.`) }),
       el('p', { className: 'muted' }, ...(isBest ? [iconEl('trophy'), t(' Kỷ lục mới!', ' New record!')] : [t(`Kỷ lục: $${best()}`, `Best: $${best()}`)])),
+      links,
       el('button', { className: 'primary', textContent: t('Chơi lại', 'Play again'), onclick: () => this.start() }),
       el('button', { textContent: t('Về menu', 'Back to menu'), onclick: menu }),
     ));
@@ -292,8 +330,10 @@ const solo = {
       play('scoreAdd');
       moneyEl.textContent = `$${this.money}`;
       renderItems();
+      this.state('shop', { offer, bought });
     })));
     renderItems();
+    this.state('shop', { offer, bought });
     showOverlay(el('div', { className: 'card shop' },
       el('div', { className: 'shopkeeper' }, spriteEl('man0', 0.7), el('p', { textContent: t(`Qua màn ${this.level}! Mua gì cho màn ${next} không?`, `Cleared level ${this.level}! Buy something for level ${next}?`) })),
       list,
@@ -342,7 +382,7 @@ function shopItem(o, owned, affordable, onBuy) {
 // ---------- driver: nhiều người (server chạy vật lý, mình vẽ theo snapshot) ----------
 const INTERP = 0.1; // vẽ trễ 100 ms so với snapshot mới nhất để luôn có 2 mốc nội suy
 const net = {
-  ws: null, code: null, room: null, world: null, snaps: [], money: null, anims: {},
+  ws: null, code: null, room: null, world: null, snaps: [], money: null, anims: {}, replay: false,
 
   join(code) {
     this.code = code.toUpperCase();
@@ -370,14 +410,31 @@ const net = {
     if (msg) toast(tx(msg));
     menu();
   },
-  send(m) { if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(m)); },
+  send(m) { if (!this.replay && this.ws?.readyState === 1) this.ws.send(JSON.stringify(m)); },
   shoot() { this.send({ t: 'shoot' }); },
   dyn() { this.send({ t: 'dyn' }); },
   pause() { /* nhiều người không tạm dừng được */ },
 
   me() { return this.room?.players.find((p) => p.id === deviceId); },
+  // Chữ "bạn": xem lại thì không có "bạn" (deviceId = người được ghi, chỉ dùng cho tiếng / HUD / tiệm).
+  you(id) { return !this.replay && id === deviceId; },
   color(id) { return COLORS[Math.max(0, this.world?.miners.findIndex((m) => m.id === id) ?? 0) % COLORS.length]; },
   name(id) { return this.room?.players.find((p) => p.id === id)?.name ?? ''; },
+
+  // Xem lại (public/replay.js): tin 'me' đầu băng = góc nhìn của ai; tua = reset() rồi nạp lại nhanh từ đầu (im tiếng, bỏ hiệu ứng dồn).
+  feed(m) {
+    if (m.t === 'me') deviceId = m.id;
+    else this.onMsg(m);
+  },
+  reset() {
+    Object.assign(this, { room: null, world: null, snaps: [], money: null, anims: {} });
+    clearInterval(this.shopTick);
+    stop('up');
+    showOverlay(null);
+    fx = [];
+    muted = true;
+    queueMicrotask(() => { muted = false; fx = []; });
+  },
 
   onMsg(m) {
     if (m.t === 'error') return this.leave(m.msg);
@@ -444,7 +501,7 @@ const net = {
     const r = this.room;
     if (!r || (r.status !== 'playing' && r.status !== 'shop')) { $('#hud').hidden = true; $('#scores').hidden = true; panel.update([]); return; }
     const mine = view?.miners.find((m) => m.me);
-    const coop = r.mode === 'coop';
+    const coop = r.mode !== 'versus'; // 'solo' = bản xem lại chơi 1 người, tính như chung mỏ
     const myMoney = this.money?.players?.[deviceId] ?? this.me()?.money ?? 0;
     hud({
       money: coop ? (this.money?.team ?? r.team) : myMoney,
@@ -476,7 +533,7 @@ const net = {
   renderScores(coop) {
     const box = $('#scores');
     const r = this.room;
-    const show = r && r.status === 'playing';
+    const show = r && r.status === 'playing' && r.mode !== 'solo';
     box.hidden = !show;
     if (!show) return;
     const ps = r.players.filter((p) => !p.spec).map((p) => ({ ...p, money: this.money?.players?.[p.id] ?? p.money }));
@@ -485,16 +542,29 @@ const net = {
     if (box.dataset.key === key) return; // khỏi dựng lại DOM mỗi khung hình
     box.dataset.key = key;
     box.replaceChildren(...ps.map((p) => {
-      const li = el('li', {}, el('i', { className: 'dot' }), `${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''} `, el('b', { textContent: `$${p.money}` }));
+      const li = el('li', {}, el('i', { className: 'dot' }), `${p.name}${this.you(p.id) ? t(' (bạn)', ' (you)') : ''} `, el('b', { textContent: `$${p.money}` }));
       li.style.setProperty('--c', this.color(p.id));
       if (!p.online) li.classList.add('off');
       return li;
     }), ...(this.me()?.spec ? [el('li', { className: 'spec' }, iconEl('eye'), t(' Bạn đang xem', ' You are spectating'))] : []));
   },
 
+  // Thẻ kết quả ván (sảnh sau ván, bản xem lại).
+  resultEl(r) {
+    const x = r.result;
+    return el('div', { className: 'result' },
+      el('h2', {}, ...(x.winner ? [iconEl('trophy'), this.you(x.winner) ? t(' Bạn thắng!', ' You win!') : t(` ${this.name(x.winner)} thắng`, ` ${this.name(x.winner)} wins`)] : [t(`Thua ở màn ${x.level}`, `Lost at level ${x.level}`)])),
+      x.target ? el('p', { className: 'muted', textContent: r.mode === 'solo' ? t(`Kiếm được $${x.team} / cần $${x.target}`, `Earned $${x.team} / needed $${x.target}`) : t(`Quỹ chung $${x.team} / cần $${x.target}`, `Team fund $${x.team} / needed $${x.target}`) }) : '',
+      el('ol', {}, ...x.ranking.map((p) => el('li', { textContent: `${p.name}: $${p.money}` }))),
+      replayLinks(x.rp),
+    );
+  },
+
   renderOverlay() {
     const r = this.room;
     const me = this.me();
+    // Xem lại: chỉ thẻ kết quả / tiệm, không nút điều khiển phòng.
+    if (this.replay && r.status !== 'shop') return showOverlay(r.status === 'ended' && r.result ? el('div', { className: 'card' }, this.resultEl(r)) : null);
     const isHost = r.host === deviceId;
     // Công tắc "Công khai" (hiện ở /phong/): tạo một lần, thẻ sảnh dựng lại mỗi lần vẽ thì gắn lại.
     const pub = (this.pub ??= publicSwitch((m) => this.send(m)));
@@ -515,11 +585,7 @@ const net = {
       const desc = r.mode === 'coop'
         ? t('Cả phòng chung một mỏ, gom chung tiền. Mục tiêu tăng theo số người — không đủ là thua cả đội.', 'Everyone shares one mine and one purse. The target grows with more players — falling short loses for the whole team.')
         : t(`Chung một mỏ, ví riêng. Tranh nhau vàng trong ${r.versusLevels} màn, ai nhiều tiền nhất thắng.`, `Shared mine, separate wallets. Race for gold over ${r.versusLevels} levels — whoever has the most money wins.`);
-      const result = r.status === 'ended' && r.result ? el('div', { className: 'result' },
-        el('h2', {}, ...(r.result.winner ? [iconEl('trophy'), r.result.winner === deviceId ? t(' Bạn thắng!', ' You win!') : t(` ${this.name(r.result.winner)} thắng`, ` ${this.name(r.result.winner)} wins`)] : [t(`Thua ở màn ${r.result.level}`, `Lost at level ${r.result.level}`)])),
-        r.result.target ? el('p', { className: 'muted', textContent: t(`Quỹ chung $${r.result.team} / cần $${r.result.target}`, `Team fund $${r.result.team} / needed $${r.result.target}`) }) : '',
-        el('ol', {}, ...r.result.ranking.map((x) => el('li', { textContent: `${x.name}: $${x.money}` }))),
-      ) : '';
+      const result = r.status === 'ended' && r.result ? this.resultEl(r) : '';
       return showOverlay(el('div', { className: 'card' },
         result,
         el('h2', { textContent: t(`Phòng ${this.code}`, `Room ${this.code}`) }),
@@ -537,17 +603,19 @@ const net = {
       const offer = me?.offer ?? [];
       const left = el('span');
       const tickLeft = () => { left.textContent = Math.max(0, Math.ceil((r.shopEndsAt - (Date.now() + r.clockOffset)) / 1000)); };
-      tickLeft();
       clearInterval(this.shopTick);
-      this.shopTick = setInterval(tickLeft, 500);
+      // Xem lại: khoảng chờ ở tiệm bị rút ngắn nên không hiện đồng hồ đếm ngược.
+      const timer = !this.replay && r.shopEndsAt;
+      if (timer) { tickLeft(); this.shopTick = setInterval(tickLeft, 500); }
       const readyList = el('p', { className: 'muted', textContent: t(`Sẵn sàng: ${players.filter((p) => p.ready).map((p) => p.name).join(', ') || '—'}`, `Ready: ${players.filter((p) => p.ready).map((p) => p.name).join(', ') || '—'}`) });
+      const whose = coop ? t('Quỹ chung', 'Team fund') : this.replay ? t(`Ví của ${me?.name ?? ''}`, `${me?.name ?? ''}'s wallet`) : t('Ví của bạn', 'Your wallet');
       return showOverlay(el('div', { className: 'card shop' },
-        el('div', { className: 'shopkeeper' }, spriteEl('man0', 0.7), el('p', { textContent: t(`Qua màn ${r.level}! ${coop ? 'Quỹ chung' : 'Ví của bạn'}: $${wallet}`, `Cleared level ${r.level}! ${coop ? 'Team fund' : 'Your wallet'}: $${wallet}`) })),
-        me?.spec ? el('p', { textContent: t('Bạn đang xem — ván sau được chơi.', 'You are spectating — you\'ll play next round.') }) : el('div', { className: 'shop-items' },
+        el('div', { className: 'shopkeeper' }, spriteEl('man0', 0.7), el('p', { textContent: t(`Qua màn ${r.level}! ${whose}: $${wallet}`, `Cleared level ${r.level}! ${whose}: $${wallet}`) })),
+        me?.spec ? el('p', { textContent: t('Bạn đang xem — ván sau được chơi.', 'You are spectating — you\'ll play next round.') }) : el('div', { className: 'shop-items', inert: this.replay },
           ...offer.map((o) => shopItem(o, me.bought?.[o.key], wallet >= o.price, () => { play('scoreAdd'); this.send({ t: 'buy', key: o.key }); }))),
-        el('p', {}, t('Màn tiếp theo bắt đầu sau ', 'Next level starts in '), left, t(' giây', ' sec')),
-        readyList,
-        me && !me.spec ? el('button', { className: 'primary', textContent: me.ready ? t('Đã sẵn sàng', 'Ready') : t('Sẵn sàng', 'Ready up'), disabled: me.ready, onclick: () => this.send({ t: 'ready' }) }) : '',
+        timer ? el('p', {}, t('Màn tiếp theo bắt đầu sau ', 'Next level starts in '), left, t(' giây', ' sec')) : '',
+        r.mode === 'solo' ? '' : readyList,
+        me && !me.spec && !this.replay ? el('button', { className: 'primary', textContent: me.ready ? t('Đã sẵn sàng', 'Ready') : t('Sẵn sàng', 'Ready up'), disabled: me.ready, onclick: () => this.send({ t: 'ready' }) }) : '',
       ));
     }
   },
@@ -620,6 +688,14 @@ function loop(t) {
 await ready;
 fit();
 const initial = new URLSearchParams(location.search).get('r');
-if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) startNet(initial);
+const rp = replayParam();
+if (rp) {
+  // Xem lại (?replay=<id>): không mở WebSocket, không nhận lệnh; vẽ bằng net.onMsg theo băng (cả ván 1 người lẫn nhiều người).
+  driver = net;
+  net.replay = true;
+  $('#btnMenu').hidden = true;
+  showOverlay(null);
+  playReplay(rp, { feed: (m) => net.feed(m), reset: () => net.reset() });
+} else if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) startNet(initial);
 else menu();
 requestAnimationFrame(loop);

@@ -47,6 +47,7 @@
  * @property {(plays: object[]) => void} record                     ghi lịch sử tuỳ ý (Bầu cua ghi lúc rời phòng)
  * @property {(at: number) => void} wakeAt     hẹn gọi tick() lúc `at` (ms) — dùng alarm nên DO ngủ được, bị tắt vẫn dậy
  * @property {(result: Result) => void} end    kết thúc ván; adapter ghi lịch sử người đã đăng nhập qua Recorder
+ * @property {() => string | undefined} clip   game không kết thúc (Bầu cua): cắt bản xem lại tới lần gửi trạng thái kế tiếp, trả mã của đoạn đó
  * @property {(id: string, msg: object) => void} send
  * @property {(msg: object) => void} sendAll
  */

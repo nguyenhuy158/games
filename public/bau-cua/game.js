@@ -5,6 +5,7 @@ import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { t, tx, en } from '../i18n.js';
 import { publicSwitch } from '../public-switch.js';
+import { replayParam, playReplay, replayLinks } from '../replay.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -30,6 +31,9 @@ const NAME_EN = { nai: 'Deer', bau: 'Gourd', ga: 'Rooster', ca: 'Fish', cua: 'Cr
 const nm = (s) => t(s.name, NAME_EN[s.key]);
 
 let ws, code = null, room = null, clockOffset = 0, shown = 0;
+// Xem lại (?replay=<id>): chỉ xem, không mở WebSocket; quiet = đang tua (feed dồn dập) thì tắt tiếng + toast.
+const rp = replayParam();
+let quiet = false;
 let chip = Number(store.get('bc.chip')) || CHIPS[1];
 if (!CHIPS.includes(chip)) chip = CHIPS[1];
 
@@ -51,7 +55,7 @@ const signed = (n) => (n > 0 ? `+${n.toLocaleString(LOCALE)}` : n.toLocaleString
 let soundOn = store.get('bc.sound') !== '0';
 const SND = Object.fromEntries(Object.entries({ chip: 'sound2', shake: 'sound4', win: 'sound5', lose: 'sound1' })
   .map(([k, f]) => [k, new Audio(`../pikachu/sound/${f}.mp3`)]));
-function play(k) { if (!soundOn) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
+function play(k) { if (!soundOn || quiet) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('bc.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
@@ -88,7 +92,7 @@ function connect() {
     if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
   };
 }
-const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+const send = (m) => !rp && ws?.readyState === 1 && ws.send(JSON.stringify(m));
 // Công tắc "Công khai" (hiện ở /phong/): Bầu cua không có sảnh chờ nên để trên thanh đầu, cạnh nút làm cái.
 const pub = publicSwitch(send);
 $('#btnMode').after(pub.el);
@@ -96,7 +100,7 @@ $('#btnMode').after(pub.el);
 function onMsg(m) {
   if (m.t === 'error') return leave(m.msg);
   if (m.t !== 'state') return;
-  if (room && room.mode !== m.mode) toast(m.mode === 'house' ? t('Chủ phòng đổi: máy làm cái, ai cũng được đặt', 'Host switched: the bot is dealer, everyone can bet') : t('Chủ phòng đổi: làm cái xoay vòng', 'Host switched: dealer rotates'), { icon: m.mode === 'house' ? 'bot' : 'crown' });
+  if (room && room.mode !== m.mode && !quiet) toast(m.mode === 'house' ? t('Chủ phòng đổi: máy làm cái, ai cũng được đặt', 'Host switched: the bot is dealer, everyone can bet') : t('Chủ phòng đổi: làm cái xoay vòng', 'Host switched: dealer rotates'), { icon: m.mode === 'house' ? 'bot' : 'crown' });
   room = m;
   clockOffset = m.now - Date.now();
   // Ván vừa mở bát: lắc bát, hết giờ lắc thì lật bát + báo thắng thua.
@@ -143,7 +147,7 @@ $('#board').append(...SYMBOLS.map((s, i) => {
 }));
 
 function bet(i) {
-  if (!room) return;
+  if (!room || rp) return;
   if (room.phase !== 'bet') return toast(t('Đang mở bát, chờ ván sau nhé', 'Bowl is open — wait for the next round'));
   if (room.dealer === deviceId) return toast(t('Bạn đang làm cái — ngồi chờ ăn tiền thôi', 'You are the dealer — sit back and collect'), { icon: 'crown' });
   const left = (me()?.coins ?? 0) - betTotal(room.bets[deviceId]);
@@ -176,7 +180,8 @@ function render() {
     return li;
   }));
 
-  // Xúc xắc: chỉ hiện khi đã lật bát.
+  // Xúc xắc: chỉ hiện khi đã lật bát. Lật rồi thì có nút xem lại / chia sẻ ván này (trừ lúc đang xem lại).
+  rpHold.replaceChildren(...(open && r.rp && !rp ? [linksOf(r.rp)] : []));
   const bowl = $('#bowl');
   bowl.classList.toggle('shake', r?.phase === 'show' && !open);
   bowl.classList.toggle('open', open);
@@ -215,10 +220,33 @@ function render() {
   } else if (r.dealer === deviceId) st.replaceChildren(t(`Ván ${r.round}: `, `Round ${r.round}: `), el('b', { textContent: t('bạn làm cái', 'you are the dealer') }), anyBet() ? t(' — mở bát khi mọi người đặt xong.', ' — reveal when everyone has bet.') : t(' — chờ mọi người đặt cược.', ' — waiting for bets.'));
   else st.replaceChildren(t(`Ván ${r.round} · Cái: `, `Round ${r.round} · Dealer: `), el('b', { textContent: dealerName }), canRoll() ? '' : t(` — đặt cược rồi chờ ${r.dealer ? dealerName : 'chủ phòng'} mở bát.`, ` — place bets, then wait for ${r.dealer ? dealerName : 'the host'} to reveal.`));
 }
+// Nút "Xem lại / Chia sẻ" của ván vừa mở bát: giữ nguyên phần tử (render mỗi giây không làm mất chữ "Đã chép link").
+const rpHold = el('div');
+$('#status').after(rpHold);
+let links = null;
+const linksOf = (id) => {
+  if (links?.dataset.rp !== id) { links = replayLinks(id); links.dataset.rp = id; }
+  return links;
+};
 
 // Nhắc lại khi hết giờ lắc / quá hạn AFK (mở bát được) mà không có tin mới.
 setInterval(() => room && render(), 1000);
 window.bc = { get room() { return room; } }; // cho test tự động
 
-const initial = new URLSearchParams(location.search).get('r');
-if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+if (rp) {
+  // Người xem: không phải ai trong ván (không hiện "bạn"), ẩn nút chơi / mời / đổi cái / đặt cược.
+  deviceId = '';
+  $('#home').hidden = true;
+  $('#room').hidden = false;
+  for (const s of ['#btnLeave', '#btnCopy', '#conn', '#btnMode']) $(s).hidden = true;
+  $('#bar').style.visibility = 'hidden'; // giữ chỗ cho thanh tua của replay.js
+  pub.el.remove();
+  render();
+  playReplay(rp, {
+    feed: onMsg,
+    reset: () => { quiet = true; setTimeout(() => { quiet = false; }); room = null; shown = 0; render(); },
+  });
+} else {
+  const initial = new URLSearchParams(location.search).get('r');
+  if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+}

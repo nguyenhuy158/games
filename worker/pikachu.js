@@ -1,6 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
 import { uniqueName, otherNames } from './names.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
+import { Tape } from '../public/tape.js';
+import { replayId } from './adapters/top.js';
 
 // Phòng Pikachu nối thú (DO Room, /api/room/CODE). Chưa chuyển sang adapter phòng chung (bước 4 trong docs/hexagon-plan.md).
 const MAX_PLAYERS = 4;
@@ -18,7 +20,7 @@ const EMOJI_COUNT = 5; // khớp EMOJIS ở public/app.js
 // Nhờ vậy mọi luật (màn, combo, cộng giờ, thắng thua) viết một lần cho cả 3 chế độ.
 const fresh = () => ({
   status: 'lobby', mode: 'coop', size: 0, tiles: 'poke',
-  order: [], players: {}, units: {}, deck: [], winner: null,
+  order: [], players: {}, units: {}, deck: [], winner: null, rp: null,
 });
 const isCell = (p, g) =>
   Array.isArray(p) && Number.isInteger(p[0]) && Number.isInteger(p[1]) &&
@@ -236,7 +238,14 @@ export class Room extends DurableObject {
     }
     s.status = 'playing';
     s.winner = null;
+    s.rp = null;
     this.watch = {};
+    // Ghi lại ván để xem lại, theo góc nhìn khán giả mặc định (bàn đầu tiên). Chỉ trong bộ nhớ: DO ngủ đông / khởi động
+    // lại giữa ván thì ván đó không có bản xem lại. Bỏ tin chuột (cur) cho bản ghi đỡ nặng.
+    this.tape = new Tape(300);
+    this.tapeUnit = Object.keys(s.units)[0];
+    this.rec({ t: 'board', unit: this.tapeUnit, board: s.units[this.tapeUnit].board, why: 'start' });
+    this.rec({ t: 'minis', boards: Object.fromEntries(Object.entries(s.units).map(([uid, u]) => [uid, u.board])) });
     await this.save();
     await this.ctx.storage.setAlarm(endAt);
     for (const ws of this.sockets()) { this.sendBoardTo(ws, 'start'); this.sendMinis(ws); }
@@ -266,9 +275,13 @@ export class Room extends DurableObject {
     const s = this.s;
     s.status = 'ended';
     s.winner = winner;
+    // rp = mã bản xem lại, gửi kèm state kết thúc; client hiện nút "Xem lại / Chia sẻ".
+    s.rp = this.tape ? replayId() : null;
     await this.ctx.storage.deleteAlarm();
     await this.save();
     this.broadcast();
+    const frames = this.tape?.done();
+    this.tape = null;
     const rows = Object.entries(s.units)
       .filter(([, u]) => u.score > 0)
       .map(([uid, u]) => ({
@@ -281,14 +294,17 @@ export class Room extends DurableObject {
       return {
         sub: p.user.sub, name: p.user.name, game: 'pikachu', mode: s.mode, score: p.score, level: u.level,
         won: s.mode === 'coop' ? u.done === 'clear' : winner === uid,
-        detail: JSON.stringify({ size: s.size, team: u.score, with: this.membersOf(uid).filter((x) => x !== id).map((x) => s.players[x].name) }),
+        detail: JSON.stringify({ size: s.size, team: u.score, with: this.membersOf(uid).filter((x) => x !== id).map((x) => s.players[x].name), ...(s.rp ? { rp: s.rp } : {}) }),
       };
     });
-    // Lỗi ghi bảng xếp hạng / lịch sử không được làm hỏng ván chơi.
+    // Lỗi ghi bảng xếp hạng / lịch sử / bản xem lại không được làm hỏng ván chơi.
+    const top = this.env.TOP.get(this.env.TOP.idFromName('global'));
     try {
-      const top = this.env.TOP.get(this.env.TOP.idFromName('global'));
       if (rows.length) await top.add(rows);
       if (plays.length) await top.addPlays(plays);
+    } catch {}
+    try {
+      if (s.rp) await top.saveReplay({ id: s.rp, game: 'pikachu', page: '/pikachu/', frames });
     } catch {}
   }
 
@@ -327,11 +343,18 @@ export class Room extends DurableObject {
   // người còn lại nhận bản "mini" để vẽ ô xem trước kiểu Google Meet ở khung bên cạnh.
   toViewers(uid, msg, except) {
     const data = JSON.stringify(msg);
-    const mini = msg.board ? JSON.stringify({ t: 'mini', unit: uid, board: msg.board }) : null;
+    const miniMsg = msg.board ? { t: 'mini', unit: uid, board: msg.board } : null;
+    const mini = miniMsg && JSON.stringify(miniMsg);
+    if (msg.t !== 'cur') this.rec(uid === this.tapeUnit ? msg : miniMsg);
     for (const ws of this.sockets(except)) {
       const mine = this.viewOf(ws) === uid;
       try { if (mine) ws.send(data); else if (mini) ws.send(mini); } catch {}
     }
+  }
+
+  // Ghi vào bản xem lại (nếu đang ghi) đúng tin khán giả xem bàn tapeUnit nhận được.
+  rec(msg) {
+    if (msg) this.tape?.push(msg);
   }
 
   // Đủ bàn của mọi đơn vị (lúc vào phòng / bắt đầu ván) cho khung xem trước.
@@ -367,6 +390,7 @@ export class Room extends DurableObject {
   }
 
   relay(from, msg) {
+    this.rec(msg);
     const data = JSON.stringify(msg);
     for (const ws of this.sockets(from)) try { ws.send(data); } catch {}
   }
@@ -374,12 +398,13 @@ export class Room extends DurableObject {
   broadcast(except) {
     const s = this.s;
     const online = this.onlineIds(except);
-    const msg = JSON.stringify({
+    const msg = {
       t: 'state',
       status: s.status, mode: s.mode, size: s.size, tiles: s.tiles,
       duration: durationOf(SIZES[s.size]),
       now: Date.now(),
       winner: s.winner,
+      rp: s.rp,
       host: this.hostId(except),
       units: Object.fromEntries(Object.entries(s.units).map(([uid, u]) => [uid, {
         level: u.level, score: u.score, shuffles: u.shuffles, endAt: u.endAt, done: u.done,
@@ -389,7 +414,9 @@ export class Room extends DurableObject {
         const p = s.players[id];
         return { id, name: p.name, score: p.score, spec: p.spec, team: p.team, unit: this.unitOf(p), online: online.has(id) };
       }),
-    });
-    for (const ws of this.sockets(except)) try { ws.send(msg); } catch {}
+    };
+    this.rec(msg);
+    const data = JSON.stringify(msg);
+    for (const ws of this.sockets(except)) try { ws.send(data); } catch {}
   }
 }

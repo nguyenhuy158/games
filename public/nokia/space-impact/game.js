@@ -34,7 +34,7 @@ const app = nokiaApp({
     if (!v) { lcd.center(4, 'SPACE IMPACT'); lcd.sprite(10, 22, SHIP); lcd.sprite(60, 20, KINDS.a.rows); lcd.sprite(70, 28, KINDS.c.rows); lcd.rect(20, 24, 3, 1); return; }
     const blink = Math.floor(now / 100) % 2;
     // HUD
-    const me = v.ships.find((s) => s.id === app.id);
+    const me = v.ships.find((s) => s.id === app.pov);
     for (let k = 0; k < (me?.lives ?? 0); k++) lcd.sprite(1 + k * 5, 0, ['#.#', '###', '.#.']);
     lcd.text(84 - 4 * 5, 0, String(v.score).padStart(5, '0'));
     lcd.text(30, 0, `M${v.level}`);
@@ -57,7 +57,7 @@ const app = nokiaApp({
         x = Math.max(0, Math.min(42, x + ((keys.right ? 1 : 0) - (keys.left ? 1 : 0)) * SHIP_SPEED * dt));
         y = Math.max(TOP, Math.min(H - SHIP_H, y + ((keys.down ? 1 : 0) - (keys.up ? 1 : 0)) * SHIP_SPEED * dt));
       }
-      lcd.sprite(x, y, SHIP, s.id === app.id ? undefined : '#8fae8f');
+      lcd.sprite(x, y, SHIP, s.id === app.pov ? undefined : '#8fae8f');
     }
     if (v.phase === 'boss' && v.boss && v.boss.x > 70 && blink) lcd.center(24, 'BOSS!');
     if (r.status === 'playing' && me && me.lives <= 0) lcd.banner([t('HET MANG', 'NO LIVES'), t('DANG XEM', 'WATCHING')]);

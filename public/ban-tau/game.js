@@ -5,6 +5,7 @@ import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { t, tx } from '../i18n.js';
 import { publicSwitch } from '../public-switch.js';
+import { replayParam, playReplay, replayLinks } from '../replay.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -27,6 +28,9 @@ const SHIP_COLORS = ['#e8716f', '#7c83d6', '#4fb3ea', '#4aa89a', '#b06ad6'];
 const EMOS = [['thumbs-up', '#1f6fd6'], ['laugh', '#e0a100'], ['frown', '#8a5cd6'], ['flame', '#ff7a3d'], ['heart', '#e0312f']];
 
 let ws, code = null, room = null, clockOffset = 0, peek = false, sel = -1;
+// Xem lại (?replay=<id>): chỉ xem (góc nhìn ghế 1), không mở WebSocket; quiet = đang tua thì tắt tiếng + toast.
+const rp = replayParam();
+let quiet = false;
 const mySeat = () => (room?.seats.indexOf(deviceId) ?? -1) + 1;
 const myTurn = () => room?.status === 'playing' && mySeat() === room.turn;
 const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
@@ -39,7 +43,7 @@ const SND = Object.fromEntries(Object.entries({
   miss: '../pikachu/sound/sound2.mp3', hit: '../dao-vang/assets/audio/boom.m4a', start: '../pikachu/sound/sound4.mp3',
   win: '../pikachu/sound/sound5.mp3', lose: '../pikachu/sound/sound1.mp3',
 }).map(([k, f]) => [k, new Audio(f)]));
-function play(k) { if (!soundOn) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
+function play(k) { if (!soundOn || quiet) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('bt.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
@@ -76,10 +80,18 @@ function connect() {
     if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
   };
 }
-const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+const send = (m) => !rp && ws?.readyState === 1 && ws.send(JSON.stringify(m));
 // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ, ngay trên nút Bắt đầu.
 const pub = publicSwitch(send);
 $('#btnStart').before(pub.el);
+// Nút "Xem lại / Chia sẻ" ở thẻ kết quả: giữ nguyên phần tử giữa các lần vẽ (khỏi mất chữ "Đã chép link").
+const rpHold = el('div');
+$('#ovText').after(rpHold);
+let links = null;
+const linksOf = (id) => {
+  if (links?.dataset.rp !== id) { links = replayLinks(id); links.dataset.rp = id; }
+  return links;
+};
 
 function onMsg(m) {
   if (m.t === 'error') return leave(tx(m.msg));
@@ -91,7 +103,7 @@ function onMsg(m) {
   if (m.status === 'placing' && was?.status !== 'placing') peek = false;
   if (m.status === 'playing' && was?.status !== 'playing') play('start');
   const shot = m.last && JSON.stringify(m.last) !== JSON.stringify(was?.last) ? m.last : null;
-  if (shot && m.status !== 'placing') {
+  if (shot && m.status !== 'placing' && !quiet) {
     play(shot.hit ? 'hit' : 'miss');
     if (shot.sunk >= 0) {
       const mine = shot.by !== mySeat() && mySeat();
@@ -99,7 +111,7 @@ function onMsg(m) {
         : t(`Đánh chìm tàu ${FLEET[shot.sunk]} ô!`, `Sunk a ${FLEET[shot.sunk]}-cell ship!`), { icon: 'flame' });
     }
   }
-  if (was?.status === 'playing' && m.status === 'ended') {
+  if (was?.status === 'playing' && m.status === 'ended' && !quiet) {
     const seat = mySeat();
     const who = showName(m.names[m.winner - 1]);
     if (seat === m.winner) { play('win'); toast.success(m.why === 'timeout' ? t('Đối thủ bỏ lượt quá lâu — bạn thắng!', 'Opponent took too long — you win!') : t('Bạn đánh chìm hết tàu — thắng rồi!', 'You sank the whole fleet — you win!'), { icon: 'trophy' }); }
@@ -288,12 +300,14 @@ function render() {
       const two = players.slice(0, 2).map((p) => p.name);
       $('#ovText').textContent = (two.length < 2 ? t('Chỉ có mình bạn — sẽ đấu với máy. Mời bạn bè bằng mã QR ở trên nhé.', "It's just you — you'll play the bot. Invite friends with the QR code above.") : t(`${two[0]} đấu ${two[1]}.`, `${two[0]} vs ${two[1]}.`))
         + (players.length > 2 ? t(` ${players.length - 2} người xem.`, ` ${players.length - 2} watching.`) : '') + (isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.'));
+      rpHold.replaceChildren();
     } else {
       const who = showName(r.names[r.winner - 1]);
       $('#ovTitle').replaceChildren(iconEl('trophy'), r.seats[r.winner - 1] === deviceId ? t('Bạn thắng!', 'You win!') : t(`${who} thắng`, `${who} wins`));
       const shots = r.fired[r.winner - 1];
       $('#ovText').textContent = (r.why === 'timeout' ? t('Đối thủ bỏ lượt quá lâu. ', 'Opponent took too long. ') : t(`Đánh chìm hết tàu sau ${shots} phát. `, `Sank the whole fleet in ${shots} shots. `))
-        + (isHost ? t('Ván mới đổi người bắn trước.', 'New game — the first shot swaps sides.') : t('Chờ chủ phòng mở ván mới.', 'Waiting for the host to start a new game.'));
+        + (rp ? '' : isHost ? t('Ván mới đổi người bắn trước.', 'New game — the first shot swaps sides.') : t('Chờ chủ phòng mở ván mới.', 'Waiting for the host to start a new game.'));
+      rpHold.replaceChildren(...(r.result?.rp && !rp ? [linksOf(r.result.rp)] : []));
     }
     $('#btnStart').hidden = !isHost;
     $('#btnStart').textContent = r.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Ván mới', 'New game');
@@ -314,5 +328,20 @@ setInterval(() => {
 }, 250);
 window.bt = { get room() { return room; } }; // cho test tự động
 
-const initial = new URLSearchParams(location.search).get('r');
-if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+if (rp) {
+  // Người xem: không cầm ghế nào (biển trái = ghế 1), ẩn nút rời / mời / cảm xúc; bấm biển không gửi gì.
+  deviceId = '';
+  $('#home').hidden = true;
+  $('#room').hidden = false;
+  for (const s of ['#btnLeave', '#btnCopy', '#conn']) $(s).hidden = true;
+  $('#emoBar').style.visibility = 'hidden'; // giữ chỗ cho thanh tua của replay.js
+  pub.el.remove();
+  render();
+  playReplay(rp, {
+    feed: onMsg,
+    reset: () => { quiet = true; setTimeout(() => { quiet = false; }); room = null; peek = false; render(); },
+  });
+} else {
+  const initial = new URLSearchParams(location.search).get('r');
+  if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+}

@@ -1,8 +1,10 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
-  MAX_PLAYERS, VERSUS_LEVELS, teamTarget, createWorld, step, shoot, dynamite, shopOffer,
+  MAX_PLAYERS, VERSUS_LEVELS, teamTarget, createWorld, step, shoot, dynamite, shopOffer, snapOf,
 } from '../public/dao-vang/logic.js';
 import { uniqueName, otherNames } from './names.js';
+import { Tape } from '../public/tape.js';
+import { replayId } from './adapters/top.js';
 
 const TICK_MS = 50; // 20 lần/giây: đủ mượt, client nội suy phần còn lại
 const SHOP_MS = 20_000;
@@ -121,6 +123,7 @@ export class MinerRoom extends DurableObject {
     if (!online.size) {
       // Hết người: dừng vòng lặp, xoá phòng.
       this.stopTicking();
+      this.tape = null;
       this.s = fresh();
       await this.ctx.storage.deleteAll();
       return;
@@ -148,6 +151,11 @@ export class MinerRoom extends DurableObject {
     for (const id of Object.keys(s.players)) if (!online.has(id)) delete s.players[id];
     s.order.forEach((id, i) => Object.assign(s.players[id], { money: 0, dynamite: 0, buffs: {}, spec: i >= MAX_PLAYERS, ready: false, bought: null, offer: null }));
     Object.assign(s, { level: 1, team: 0, result: null });
+    // Bản xem lại (chỉ trong bộ nhớ: DO khởi động lại giữa ván thì ván đó không có). Mọi người nhận chung tin nên ghi một bản,
+    // tin 'me' đầu băng = xem theo góc người chơi đầu tiên (tiếng, HUD, tiệm).
+    this.tape = new Tape(100);
+    this.tapeSnap = 0;
+    this.tape.push({ t: 'me', id: this.activeIds()[0] });
     await this.beginLevel();
   }
 
@@ -173,14 +181,15 @@ export class MinerRoom extends DurableObject {
     const done = !coop && s.level >= VERSUS_LEVELS;
     if (failed || done) {
       s.status = 'ended';
+      const rp = this.tape ? replayId() : undefined;
       const ranking = this.activeIds().map((id) => ({ id, name: s.players[id].name, money: s.players[id].money })).sort((a, b) => b.money - a.money);
-      s.result = coop ? { win: false, level: s.level, team: s.team, target: teamTarget(s.level, n), ranking } : { win: true, winner: ranking[0]?.id, ranking };
+      s.result = coop ? { win: false, level: s.level, team: s.team, target: teamTarget(s.level, n), ranking, rp } : { win: true, winner: ranking[0]?.id, ranking, rp };
       s.world = null;
       // Lịch sử cá nhân cho người đã đăng nhập. coop: màn đạt được là thành tích (luôn "thua" ở màn cuối).
       const plays = this.activeIds().filter((id) => s.players[id].user).map((id) => ({
         sub: s.players[id].user.sub, name: s.players[id].user.name, game: 'dao-vang', mode: s.mode, score: s.players[id].money, level: s.level,
         won: !coop && ranking[0]?.id === id,
-        detail: JSON.stringify({ team: coop ? s.team : undefined, rank: ranking.findIndex((x) => x.id === id) + 1, of: ranking.length }),
+        detail: JSON.stringify({ team: coop ? s.team : undefined, rank: ranking.findIndex((x) => x.id === id) + 1, of: ranking.length, rp }),
       }));
       try { if (plays.length) await this.env.TOP.get(this.env.TOP.idFromName('global')).addPlays(plays); } catch {}
     } else {
@@ -192,6 +201,12 @@ export class MinerRoom extends DurableObject {
     }
     await this.save();
     this.broadcast();
+    // Trạng thái kết thúc (có rp) đã vào băng -> lưu bản xem lại.
+    if (s.status === 'ended' && this.tape) {
+      const frames = this.tape.done();
+      this.tape = null;
+      try { await this.env.TOP.get(this.env.TOP.idFromName('global')).saveReplay({ id: s.result.rp, game: 'dao-vang', page: '/dao-vang/', frames }); } catch {}
+    }
   }
 
   async nextLevel() {
@@ -250,13 +265,7 @@ export class MinerRoom extends DurableObject {
     }
     const out = evs.filter((e) => e.k !== 'end');
     if (out.length) this.sendAll({ t: 'ev', evs: out, money: this.moneyState() });
-    this.sendAll({
-      t: 'snap', time: s.world.time, wt: s.world.t,
-      miners: s.world.miners.map((m) => ({
-        id: m.id, a: Math.round(m.angle * 1000) / 1000, l: Math.round(m.len * 10) / 10, m: m.mode,
-        h: m.held?.type ?? null, an: m.anim?.name ?? null, d: m.dynamite, s: !!m.buffs.strength,
-      })),
-    });
+    this.sendAll(snapOf(s.world));
     if (ended) return this.endLevel();
     // Lưu định kỳ để deploy giữa ván không mất tiến trình.
     if (now - this.lastSave > 2000) { this.lastSave = now; this.save(); }
@@ -291,8 +300,20 @@ export class MinerRoom extends DurableObject {
   }
 
   sendAll(msg, except) {
+    this.rec(msg);
     const data = JSON.stringify(msg);
     for (const ws of this.sockets(except)) try { ws.send(data); } catch {}
+  }
+
+  // Ghi băng: snap 20/giây chỉ giữ ~10/giây (client vẫn nội suy được, băng nhỏ một nửa), tin khác giữ hết.
+  rec(msg) {
+    if (!this.tape) return;
+    if (msg.t === 'snap') {
+      const now = Date.now();
+      if (now - this.tapeSnap < 90) return;
+      this.tapeSnap = now;
+    }
+    this.tape.push(msg);
   }
 
   broadcast(except) {

@@ -52,9 +52,9 @@ nokiaApp({
         if (d === 'x') lcd.rect(dx, dy, 2, 2); else { lcd.px(dx, dy); lcd.px(dx + 1, dy + 1); }
       });
     });
-    // Hàng đang nhập (hoặc mã thật khi hết ván)
+    // Hàng đang nhập (hoặc mã thật khi hết ván); xem lại không biết người chơi đang xếp gì nên để trống.
     lcd.rect(0, 38, 40, 1);
-    const cur = v.secret ?? pick;
+    const cur = v.secret ?? (app.replay ? [] : pick);
     cur.forEach((s, i) => {
       lcd.sprite(X0 + i * 7, 41, SHAPES[s]);
       if (!v.secret && !mine.solved && i === slot && Math.floor(now / 350) % 2) lcd.rect(X0 + i * 7, 47, 5, 1);
@@ -67,7 +67,7 @@ nokiaApp({
     if (mine.solved) lcd.text(44, 16, t('DUNG!', 'YES!'));
     else if (v.secret) lcd.text(44, 16, t('MA LA', 'CODE'));
     // Tiến độ người khác: mỗi người 1 hàng "1st chữ cái + số lượt".
-    Object.entries(v.others).filter(([id]) => id !== app.id).slice(0, 3).forEach(([id, o], k) => {
+    Object.entries(v.others).filter(([id]) => id !== app.pov).slice(0, 3).forEach(([id, o], k) => {
       const n = (r.players.find((p) => p.id === id)?.name ?? '?').slice(0, 3);
       lcd.text(44, 24 + k * 7, `${n} ${o.solved ? 'OK' : o.n}`);
     });

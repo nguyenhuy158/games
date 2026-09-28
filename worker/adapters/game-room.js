@@ -1,5 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { uniqueName, otherNames } from '../names.js';
+import { Tape } from '../../public/tape.js';
+import { replayId } from './top.js';
 
 // Adapter phòng chơi dùng chung (hexagonal): Durable Object + WebSocket hibernation lo người chơi, chủ phòng, sảnh chờ,
 // view riêng từng người, lưu trạng thái, hẹn giờ, ghi lịch sử, danh sách phòng công khai. Luật + diễn biến ván nằm trong
@@ -26,6 +28,9 @@ export function gameRoom(games) {
         // DO bị tạo lại giữa ván (bị dừng / deploy): trạng thái lạ thì bỏ; game nhịp đều thì bật lại nhịp.
         if (this.s && !games[this.s.game]) this.s = null;
         if (this.s?.status === 'playing') this.arm();
+        // Bản xem lại đang ghi của game theo lượt (DO ngủ đông giữa các nước đi làm mất biến trong bộ nhớ).
+        const tape = this.s?.status === 'playing' && (await ctx.storage.get('tape'));
+        if (tape) { this.tape = Object.assign(new Tape(), tape); this.clipRp = tape.clipRp ?? null; }
       });
     }
 
@@ -123,6 +128,10 @@ export function gameRoom(games) {
       for (const id of Object.keys(s.players)) if (!online.has(id)) delete s.players[id];
       s.seats = s.order.slice(0, this.mod.max);
       Object.assign(s, { status: 'playing', g: {}, result: null, startedAt: Date.now(), wake: 0 });
+      // Ghi lại ván để xem lại (chỉ trong bộ nhớ: DO ngủ đông / khởi động lại giữa ván thì ván đó không có bản xem lại).
+      // Tạo trước mod.start để ghi cả tin game gửi lúc bắt đầu (Dò mìn gửi bàn 'grid').
+      this.tape = new Tape(tickMsOf(this.mod, s.cfg) ? 100 : 0);
+      this.clipRp = null;
       this.mod.start(this.ctxFor());
       this.arm();
     }
@@ -130,7 +139,7 @@ export function gameRoom(games) {
     // Nhịp đều (setInterval) cho game thời gian thực; game theo lượt dùng ctx.wakeAt (alarm).
     arm() {
       clearInterval(this.timer);
-      const ms = typeof this.mod.tickMs === 'function' ? this.mod.tickMs(this.s.cfg) : this.mod.tickMs;
+      const ms = tickMsOf(this.mod, this.s.cfg);
       if (ms) this.timer = setInterval(() => this.onTick(), ms);
     }
 
@@ -179,9 +188,11 @@ export function gameRoom(games) {
         allow: (key, ms) => this.allow(key, ms),
         wakeAt: (at) => { s.wake = at; this.schedule(); },
         end: (result) => this.finish(result),
+        // Game không bao giờ kết thúc (Bầu cua): cắt bản xem lại theo từng đợt; trả mã của đoạn đang ghi, lưu ở lần gửi trạng thái kế tiếp.
+        clip: () => (this.clipRp ??= this.tape ? replayId() : undefined),
         record: (plays) => { if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays)); },
-        send: (id, msg) => { for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) try { ws.send(JSON.stringify(msg)); } catch {} },
-        sendAll: (msg) => { const d = JSON.stringify(msg); for (const ws of this.sockets()) try { ws.send(d); } catch {} },
+        send: (id, msg) => { if (id === s.seats[0]) this.tape?.push(msg); for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) try { ws.send(JSON.stringify(msg)); } catch {} },
+        sendAll: (msg) => { this.tape?.push(msg); const d = JSON.stringify(msg); for (const ws of this.sockets()) try { ws.send(d); } catch {} },
       };
     }
 
@@ -189,11 +200,13 @@ export function gameRoom(games) {
       const s = this.s;
       clearInterval(this.timer);
       Object.assign(s, { status: 'ended', wake: 0 });
-      s.result = { ...result, ranks: result.ranks.map((r) => ({ ...r, name: s.players[r.id]?.name ?? r.name ?? '' })) };
+      // rp = mã bản xem lại, lưu khi gửi trạng thái kết thúc (broadcast); client hiện nút "Xem lại / Chia sẻ" theo result.rp.
+      const rp = this.tape ? replayId() : undefined;
+      s.result = { ...result, rp, ranks: result.ranks.map((r) => ({ ...r, name: s.players[r.id]?.name ?? r.name ?? '' })) };
       const plays = result.ranks.filter((r) => s.players[r.id]?.user).map((r) => ({
         sub: s.players[r.id].user.sub, name: s.players[r.id].user.name, game: this.slug, mode: result.mode ?? (s.seats.length > 1 ? 'multi' : 'solo'),
         score: r.score ?? 0, level: result.level ?? 1, won: !!r.won,
-        detail: JSON.stringify(r.detail ?? { rank: result.ranks.indexOf(r) + 1, of: result.ranks.length }),
+        detail: JSON.stringify({ ...(r.detail ?? { rank: result.ranks.indexOf(r) + 1, of: result.ranks.length }), ...(rp ? { rp } : {}) }),
       }));
       if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays));
     }
@@ -282,10 +295,28 @@ export function gameRoom(games) {
       const ctx = this.ctxFor(except);
       for (const ws of this.sockets(except)) {
         const id = ws.deserializeAttachment()?.id;
-        const msg = this.mod.flat ? { ...base, ...this.mod.view(ctx, id) } : { ...base, view: s.g ? this.mod.view(ctx, id) : null };
-        try { ws.send(JSON.stringify(msg)); } catch {}
+        try { ws.send(JSON.stringify(this.stateFor(base, ctx, id))); } catch {}
+      }
+      // Bản xem lại: góc nhìn người cầm ghế 1 (kể cả khi người đó đã rời). Ván xong (hoặc game cắt đoạn bằng ctx.clip) thì lưu lên Top.
+      if (this.tape) {
+        this.tape.push(this.stateFor(base, ctx, s.seats[0]));
+        const id = s.status !== 'playing' ? s.result?.rp : this.clipRp;
+        if (s.status !== 'playing' || id) {
+          const frames = this.tape.done();
+          this.tape = s.status === 'playing' ? new Tape(tickMsOf(this.mod, s.cfg) ? 100 : 0) : null;
+          this.clipRp = null;
+          if (id && this.recorder()) this.io(this.recorder().saveReplay({ id, game: this.slug, page: this.mod.page, frames }));
+          if (!this.tape) this.ctx.storage.delete('tape');
+        }
+        // Game theo lượt: giữ bản ghi qua lúc DO ngủ đông (game thời gian thực chạy nhịp nên không ngủ; khởi động lại thì về sảnh).
+        if (this.tape && !this.mod.volatile) this.ctx.storage.put('tape', { ...this.tape, clipRp: this.clipRp });
       }
       this.list(false, except);
     }
+    stateFor(base, ctx, id) {
+      return this.mod.flat ? { ...base, ...this.mod.view(ctx, id) } : { ...base, view: this.s.g ? this.mod.view(ctx, id) : null };
+    }
   };
 }
+
+const tickMsOf = (mod, cfg) => (typeof mod.tickMs === 'function' ? mod.tickMs(cfg) : mod.tickMs);

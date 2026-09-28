@@ -46,14 +46,14 @@ nokiaApp({
     const left = v.deadline ? Math.max(0, Math.ceil((v.deadline - now) / 1000)) : '';
     const solo = r.seats.length === 1;
     lcd.text(1, 1, solo ? t(`LUOT ${v.moves}`, `TURN ${v.moves}`) : mine ? t(`LUOT BAN ${left}`, `YOUR TURN ${left}`) : `${(r.players.find((p) => p.id === v.turn)?.name ?? '').split(' ')[0].slice(0, 8)} ${left}`);
-    if (!solo) lcd.text(84 - 4 * String(v.score[app.id] ?? 0).length, 1, String(v.score[app.id] ?? 0));
+    if (!solo) lcd.text(84 - 4 * String(v.score[app.pov] ?? 0).length, 1, String(v.score[app.pov] ?? 0));
     v.cards.forEach((c, i) => {
       const x = CX + (i % COLS) * CW, y = CY + Math.floor(i / COLS) * CH;
       const sel = i === cursor && mine && r.status === 'playing';
       if (v.owner[i]) {
         // Lá đã ăn: chỉ còn hình, của mình thì có khung chấm.
         lcd.sprite(x + 2, y + 1, ICONS[c]);
-        if (v.owner[i] === app.id && !solo) lcd.px(x + 10, y + 8);
+        if (v.owner[i] === app.pov && !solo) lcd.px(x + 10, y + 8);
       } else if (c >= 0) {
         lcd.frame(x, y, CW - 1, CH - 1);
         lcd.sprite(x + 2, y + 1, ICONS[c]);

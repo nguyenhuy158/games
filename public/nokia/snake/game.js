@@ -42,7 +42,7 @@ nokiaApp({
     if (!v || v.step === lastStep) return;
     lastStep = v.step;
     for (const e of v.events ?? []) {
-      if (e.t === 'eat') app.beep(e.id === app.id ? 1200 : 700, 40);
+      if (e.t === 'eat') app.beep(e.id === app.pov ? 1200 : 700, 40);
       if (e.t === 'bug') app.beep(1600, 90);
       if (e.t === 'die') app.beep(180, 300, 'sawtooth');
     }
@@ -54,7 +54,7 @@ nokiaApp({
       drawSnakeArt(lcd);
       return;
     }
-    const me = v.snakes.find((s) => s.id === app.id);
+    const me = v.snakes.find((s) => s.id === app.pov);
     lcd.text(1, 1, String(me?.score ?? v.snakes[0].score).padStart(4, '0'));
     if (v.bug) { lcd.sprite(58, 1, ['#.#', '.#.', '###', '.#.', '#.#']); lcd.text(64, 1, String(v.bug.left).padStart(2, '0')); }
     const board = v.board ?? v.snakes;
@@ -67,7 +67,7 @@ nokiaApp({
     if (v.bug && Math.floor(now / 250) % 2) { const [x, y] = at(v.bug.at); lcd.sprite(x, y, ['#.#', '.#.', '#.#']); }
     for (const s of v.snakes) {
       if (!s.alive && Math.floor(now / 300) % 2) continue; // rắn chết nhấp nháy
-      const mine = s.id === app.id;
+      const mine = s.id === app.pov;
       s.body.forEach((c, i) => {
         const [x, y] = at(c);
         if (mine || i === 0) lcd.rect(x, y, CELL, CELL);

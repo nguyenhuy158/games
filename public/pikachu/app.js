@@ -6,6 +6,7 @@ import { deviceName, addReroll } from '../names.js';
 import { createPanel, drawGrid } from '../panel.js';
 import { t, tx } from '../i18n.js';
 import { publicSwitch } from '../public-switch.js';
+import { replayParam, playReplay, replayLinks } from '../replay.js';
 
 hydrateIcons();
 
@@ -19,6 +20,9 @@ const store = {
 // Ẩn danh: mỗi thiết bị một UUID cố định, dùng để vào lại đúng chỗ của mình.
 let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+// ?replay=<id>: xem lại ván đã ghi, như khán giả (không mở WebSocket, không là người chơi nào).
+const replaying = replayParam();
+if (replaying) deviceId = '';
 $('#name').value = deviceName();
 addReroll($('#name'));
 const myName = () => $('#name').value.trim() || 'Pika';
@@ -34,7 +38,8 @@ const PEER_COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ff
 const SPRITES = { poke: 'images/pieces-sprite.png', animal: 'images/animals-sprite.png' };
 const LONG_PRESS_MS = 450;
 
-let ws, code = null, room = null, board = null, sel = null, hints = HINTS, clockOffset = 0;
+let ws, code = null, room = null, board = null, sel = null, hints = HINTS, clockOffset = 0, stateAt = 0;
+let muted = false; // đang tua bản xem lại: bỏ âm thanh / hiệu ứng / toast, vẽ một lần lúc tua xong
 let watchUnit = null; // khán giả: bàn đang xem
 let peers = {}; // id đồng đội -> ô họ đang chọn
 let cursors = {}; // id đồng đội -> [r, c] chuột (đơn vị ô, số thực)
@@ -65,7 +70,7 @@ let soundOn = store.get('pk.sound') !== '0';
 const SOUNDS = { select: 'sound2', match: 'sound5', miss: 'sound1', start: 'sound4' };
 const audio = Object.fromEntries(Object.entries(SOUNDS).map(([k, f]) => [k, new Audio(`sound/${f}.mp3`)]));
 function play(k) {
-  if (!soundOn) return;
+  if (!soundOn || muted) return;
   audio[k].currentTime = 0;
   audio[k].play().catch(() => {});
 }
@@ -116,6 +121,10 @@ const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
 // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ, ngay trên nút Bắt đầu.
 const pub = publicSwitch(send);
 $('#btnStart').before(pub.el);
+// Nút "Xem lại / Chia sẻ" ở màn kết quả.
+const rpSlot = el('div');
+$('#btnStart').before(rpSlot);
+let rpShown = null;
 addEventListener('offline', () => toast.error(t('Mất mạng — sẽ tự kết nối lại', 'Offline — will reconnect automatically')));
 
 function onMsg(m) {
@@ -125,7 +134,7 @@ function onMsg(m) {
     case 'state': {
       const was = room;
       room = m;
-      clockOffset = m.now - Date.now();
+      clockOffset = m.now - (stateAt = Date.now());
       if (was?.status === 'playing' && m.status === 'ended') {
         const won = m.mode === 'coop' ? !!m.winner : m.winner === me()?.unit;
         play(won ? 'match' : 'miss');
@@ -146,8 +155,8 @@ function onMsg(m) {
         banner(t(`Màn ${lv}/${LEVELS}`, `Level ${lv}/${LEVELS}`), SLIDE_ICON[SLIDES[lv - 1]] ? t(`Ô dồn ${SLIDE_ICON[SLIDES[lv - 1]]}`, `Tiles shift ${SLIDE_ICON[SLIDES[lv - 1]]}`) : '');
         play('start');
       }
-      if (m.why === 'stuck') toast.warning(t('Hết nước — tự xáo lại, +10 giây', 'No moves — auto-shuffled, +10 seconds'), { icon: 'shuffle' });
-      if (m.why === 'shuffle' && m.by !== deviceId) toast(t(`${nameOf(m.by)} vừa đổi vị trí`, `${nameOf(m.by)} just shuffled`), { icon: 'shuffle' });
+      if (m.why === 'stuck' && !muted) toast.warning(t('Hết nước — tự xáo lại, +10 giây', 'No moves — auto-shuffled, +10 seconds'), { icon: 'shuffle' });
+      if (m.why === 'shuffle' && m.by !== deviceId && !muted) toast(t(`${nameOf(m.by)} vừa đổi vị trí`, `${nameOf(m.by)} just shuffled`), { icon: 'shuffle' });
       break;
     case 'match': {
       if (m.unit !== view()) return;
@@ -172,10 +181,10 @@ function onMsg(m) {
     case 'mini':
       minis[m.unit] = m.board;
       miniVer[m.unit] = (miniVer[m.unit] ?? 0) + 1;
-      return renderPanel();
+      return muted || renderPanel();
     case 'cur':
       if (m.p) cursors[m.id] = m.p; else delete cursors[m.id];
-      return renderCursors();
+      return muted || renderCursors();
     case 'sel':
       if (m.a) peers[m.id] = m.a; else delete peers[m.id];
       break;
@@ -186,7 +195,7 @@ function onMsg(m) {
     default:
       return;
   }
-  render();
+  if (!muted) render();
 }
 
 // ---------- nút ----------
@@ -271,6 +280,7 @@ function renderBoard() {
 
 // Hiệu ứng nằm ở #fx (không bị renderBoard xoá).
 function fx(node, ms) {
+  if (muted) return;
   $('#fx').append(node);
   setTimeout(() => node.remove(), ms);
 }
@@ -313,7 +323,7 @@ function banner(title, sub) {
 
 // Cảm xúc bay lên từ chip tên người gửi (luôn thấy được kể cả khác bàn).
 function emoFx(id, i) {
-  const chip = $(`#players [data-id="${CSS.escape(id)}"]`);
+  const chip = !muted && $(`#players [data-id="${CSS.escape(id)}"]`);
   if (!chip) return;
   const r = chip.getBoundingClientRect();
   const [name, color] = EMOJIS[i];
@@ -503,23 +513,23 @@ function render() {
   // Overlay sảnh chờ / kết quả
   const ov = $('#overlay');
   const setTitle = (ic, text) => { $('#ovTitle').innerHTML = ic ? icon(ic) : ''; $('#ovTitle').append(text); };
-  for (const id of ['#modePick', '#sizePick', '#tilesPick']) $(id).hidden = !lobby;
+  for (const id of ['#modePick', '#sizePick', '#tilesPick']) $(id).hidden = !lobby || !!replaying;
   const pickOn = (sel, attr, value) => {
     for (const b of document.querySelectorAll(`${sel} button`)) { b.classList.toggle('on', b.dataset[attr] === value); b.disabled = !isHost; }
   };
   pickOn('#modePick', 'mode', room?.mode);
   pickOn('#tilesPick', 'tiles', room?.tiles);
   [...$('#sizePick').children].forEach((b, i) => { b.classList.toggle('on', i === room?.size); b.disabled = !isHost; });
-  renderTeams(lobby && room.mode === 'team');
+  renderTeams(lobby && !replaying && room.mode === 'team');
   $('#ovScore').hidden = true;
 
   if (!room) {
     ov.hidden = false;
-    setTitle(null, t('Đang kết nối…', 'Connecting…'));
+    setTitle(null, replaying ? t('Đang tải…', 'Loading…') : t('Đang kết nối…', 'Connecting…'));
     $('#ovText').textContent = '';
     $('#btnStart').hidden = true;
   } else if (room.status === 'playing') {
-    ov.hidden = !!mine?.unit && !u?.done;
+    ov.hidden = !!replaying || (!!mine?.unit && !u?.done);
     if (!ov.hidden) {
       // Bàn mình đã xong (phá đảo / hết giờ) nhưng bàn khác còn chơi, hoặc là khán giả.
       setTitle(u?.done === 'clear' ? 'trophy' : null, mine?.spec ? t('Bạn đang xem', 'You are watching') : u?.done === 'clear' ? t('Phá đảo!', 'Cleared!') : t('Hết giờ rồi…', 'Time is up…'));
@@ -549,11 +559,13 @@ function render() {
       const scores = Object.entries(room.units).map(([uid, x]) => t(`${unitName(uid)}: ${x.score} điểm, màn ${x.level}`, `${unitName(uid)}: ${x.score} pts, level ${x.level}`));
       $('#ovScore').hidden = false;
       $('#ovScore').textContent = scores.join(' · ');
-      $('#ovText').textContent = (wu?.done === 'clear' || !w ? '' : t('Không ai phá đảo — xét màn rồi điểm. ', 'No one cleared it — ranked by level then score. ')) + (isHost ? t('Ván mới?', 'New round?') : t('Chờ chủ phòng mở ván mới.', 'Waiting for host to start a new round.'));
+      $('#ovText').textContent = (wu?.done === 'clear' || !w ? '' : t('Không ai phá đảo — xét màn rồi điểm. ', 'No one cleared it — ranked by level then score. ')) + (replaying ? '' : isHost ? t('Ván mới?', 'New round?') : t('Chờ chủ phòng mở ván mới.', 'Waiting for host to start a new round.'));
     }
     $('#btnStart').hidden = !isHost;
     $('#btnStart').textContent = room.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Chơi ván mới', 'New round');
   }
+  const rpNow = !replaying && room?.status === 'ended' ? room.rp ?? null : null;
+  if (rpNow !== rpShown) { rpShown = rpNow; rpSlot.replaceChildren(replayLinks(rpNow)); }
 }
 
 function renderTeams(show) {
@@ -573,7 +585,8 @@ function renderTeams(show) {
 setInterval(() => {
   const u = unit();
   if (room?.status !== 'playing' || !u || u.done) { $('#clock').textContent = '--:--'; $('#timebar').style.width = '0'; return; }
-  const left = Math.max(0, u.endAt - (Date.now() + clockOffset));
+  // Xem lại: đồng hồ chạy tiếp tối đa 1,5 giây sau state cuối (khoảng lặng đã rút gọn), tạm dừng thì đứng yên.
+  const left = Math.max(0, u.endAt - ((replaying ? Math.min(Date.now(), stateAt + 1500) : Date.now()) + clockOffset));
   const s = Math.ceil(left / 1000);
   $('#clock').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   const pct = Math.min(100, (left / room.duration) * 100);
@@ -611,5 +624,25 @@ async function loadTop() {
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
 const initial = new URLSearchParams(location.search).get('r');
-if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+if (replaying) {
+  $('#home').hidden = true;
+  $('#room').hidden = false;
+  for (const id of ['#btnLeave', '#btnCopy', '#conn', '#btnHint', '#btnShuffle', '#emoBar']) $(id).hidden = true;
+  render();
+  playReplay(replaying, {
+    feed: onMsg,
+    // Tua: dọn sạch rồi phát lại nhanh từ đầu (cùng một lượt chạy), xong mới vẽ.
+    reset: () => {
+      room = board = sel = null;
+      peers = {};
+      cursors = {};
+      minis = {};
+      miniVer = {};
+      hints = HINTS;
+      $('#fx').replaceChildren();
+      muted = true;
+      setTimeout(() => { muted = false; render(); });
+    },
+  });
+} else if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
 else loadTop();

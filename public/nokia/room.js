@@ -4,6 +4,8 @@
 //              onState?(room, prev), onMsg?(m), badge?(player, room), onTap?(x, y, room, app) })
 // Game không dùng LCD (vd Ô ăn quan): truyền mount(stage, app) + render(room, app) thay cho draw, path = đường dẫn trang.
 // Server: /api/nk/<game>/room/CODE (worker/nokia.js). Tin game gửi qua app.send({...}) -> { t: 'g', ... }.
+// Xem lại (?replay=<id>): không vào phòng, nạp tin server đã ghi (view của ghế 1) qua cùng onMsg; mình là người xem
+// (app.id = 'replay', app.replay = true, app.pov = ghế 1), phím / chạm tắt; app.now() / now của draw theo giờ trong bản ghi.
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
@@ -11,6 +13,7 @@ import { deviceName, addReroll } from '../names.js';
 import { createLCD, bindKeys } from './lcd.js';
 import { t, tx, langToggle } from '../i18n.js';
 import { publicSwitch } from '../public-switch.js';
+import { replayParam, playReplay, replayLinks } from '../replay.js';
 
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 const store = {
@@ -21,9 +24,11 @@ const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b'];
 
 export function nokiaApp(opt) {
-  let deviceId = store.get('pk.id');
+  const rp = replayParam();
+  let deviceId = rp ? 'replay' : store.get('pk.id');
   if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
   let ws, code = null, room = null, clockOffset = 0;
+  let quiet = false; // đang tua bản xem lại (nạp dồn dập): không kêu, không toast, vẽ một lần lúc xong
 
   // ---------- DOM ----------
   const name = el('input', { maxLength: 20, autocomplete: 'off', value: deviceName() });
@@ -48,20 +53,18 @@ export function nokiaApp(opt) {
   const canvas = el('canvas');
   const pad = el('div', { className: 'pad' });
   const ov = el('div', { id: 'overlay', hidden: true });
+  const btnLeave = el('button', { title: t('Rời phòng', 'Leave room'), innerHTML: icon('arrow-left'), onclick: () => leave() });
+  const btnInvite = el('button', { title: t('Mời bạn: mã QR / link', 'Invite: QR code / link'), onclick: () => invite(`${location.origin}${opt.path ?? `/nokia/${opt.game}/`}?r=${code}`, code) },
+    el('span', { className: 'lbl', textContent: t('Phòng ', 'Room ') }), roomCode, iconEl('qr-code'));
+  const hint = el('div', { className: 'hint' },
+    el('span', { className: 'touch', textContent: t('Vuốt ở đây hoặc bấm phím bên dưới', 'Swipe here or use the keys below') }),
+    el('span', { className: 'keys', textContent: t('Phím mũi tên / WASD · Enter hoặc 5 = OK', 'Arrow keys / WASD · Enter or 5 = OK') }));
   const roomEl = el('section', { id: 'room', hidden: true },
-    el('header', {},
-      el('button', { title: t('Rời phòng', 'Leave room'), innerHTML: icon('arrow-left'), onclick: () => leave() }),
-      el('button', { title: t('Mời bạn: mã QR / link', 'Invite: QR code / link'), onclick: () => invite(`${location.origin}${opt.path ?? `/nokia/${opt.game}/`}?r=${code}`, code) },
-        el('span', { className: 'lbl', textContent: t('Phòng ', 'Room ') }), roomCode, iconEl('qr-code')),
-      conn, el('span', { className: 'grow' }), btnSound),
+    el('header', {}, btnLeave, btnInvite, conn, el('span', { className: 'grow' }), btnSound),
     players,
     el('main', { className: 'stage' },
       opt.mount ? el('div', { className: 'board-stage' })
-        : el('div', { className: 'phone' }, el('div', { className: 'screen' }, canvas),
-          el('div', { className: 'hint' },
-            el('span', { className: 'touch', textContent: t('Vuốt ở đây hoặc bấm phím bên dưới', 'Swipe here or use the keys below') }),
-            el('span', { className: 'keys', textContent: t('Phím mũi tên / WASD · Enter hoặc 5 = OK', 'Arrow keys / WASD · Enter or 5 = OK') })),
-          pad),
+        : el('div', { className: 'phone' }, el('div', { className: 'screen' }, canvas), hint, pad),
       ov),
   );
   document.body.append(home, roomEl);
@@ -72,7 +75,7 @@ export function nokiaApp(opt) {
   let soundOn = store.get('nk.sound') !== '0';
   let audio;
   const beep = (freq = 880, ms = 60, type = 'square') => {
-    if (!soundOn) return;
+    if (!soundOn || quiet) return;
     try {
       audio ??= new AudioContext();
       const o = audio.createOscillator(), g = audio.createGain();
@@ -125,31 +128,40 @@ export function nokiaApp(opt) {
   // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ.
   const pub = publicSwitch(raw);
 
+  // Xem lại: giờ trong bản ghi, chạy theo nhịp tin phát lại (tua nhanh thì nhanh); không có tin mới quá một khoảng giữa hai
+  // tin trước (dừng / chờ nước đi, tối đa 1 giây) thì đứng lại, khỏi chạy lố.
+  let rc = null;
+  const now = () => (!rp ? Date.now() + clockOffset : rc ? rc.now + Math.min((performance.now() - rc.at) * rc.rate, rc.span) : 0);
+
   function onMsg(m) {
     if (m.t === 'error') return leave(m.msg);
     if (m.t !== 'state') return opt.onMsg?.(m, app);
     const prev = room;
     room = m;
     clockOffset = m.now - Date.now();
+    if (rp) {
+      const at = performance.now(), span = rc ? m.now - rc.now : 0, wall = rc ? at - rc.at : 0;
+      rc = { now: m.now, at, span: Math.min(1000, Math.max(0, span)), rate: wall > 4 && span > 0 ? Math.min(50, Math.max(0.1, span / wall)) : rc?.rate ?? 1 };
+    }
     if (m.status === 'playing' && prev?.status !== 'playing') beep(1320, 120);
-    if (m.status === 'ended' && prev?.status === 'playing') {
+    if (m.status === 'ended' && prev?.status === 'playing' && !quiet) {
       const me = m.result?.ranks?.find((r) => r.id === deviceId);
       if (me?.won) { toast.success(t('Bạn thắng!', 'You win!'), { icon: 'trophy' }); beep(1760, 250); }
       else if (m.result?.ranks?.length > 1) toast(t(`${m.result.ranks[0].name} thắng`, `${m.result.ranks[0].name} wins`), { icon: 'trophy' });
     }
     opt.onState?.(m, prev, app);
-    render();
+    if (!quiet) render();
   }
 
-  if (opt.draw) bindKeys(pad, (k, down) => opt.onKey?.(k, down, room, app), () => !!room && roomEl.hidden === false);
-  canvas.onpointerdown = (e) => { if (room && opt.onTap) { e.preventDefault(); opt.onTap(...app.lcdPoint(e), room, app); } };
+  if (opt.draw) bindKeys(pad, (k, down) => opt.onKey?.(k, down, room, app), () => !rp && !!room && roomEl.hidden === false);
+  canvas.onpointerdown = (e) => { if (!rp && room && opt.onTap) { e.preventDefault(); opt.onTap(...app.lcdPoint(e), room, app); } };
   // Vuốt = bấm 1 mũi tên (nhấn + nhả). Vùng trống quanh màn luôn vuốt được; trên màn LCD thì chỉ khi game không dùng chạm
   // (Lật hình, Logic, Bantumi, Bounce chạm thẳng lên màn nên vuốt ở đó sẽ lẫn với chạm).
   if (opt.draw) {
     let from = null;
     const stage = roomEl.querySelector('.stage');
     stage.addEventListener('pointerdown', (e) => {
-      from = !room || e.target.closest('.pad, #overlay') || (opt.onTap && e.target === canvas) ? null : [e.clientX, e.clientY];
+      from = rp || !room || e.target.closest('.pad, #overlay') || (opt.onTap && e.target === canvas) ? null : [e.clientX, e.clientY];
     });
     stage.addEventListener('pointercancel', () => { from = null; });
     stage.addEventListener('pointerup', (e) => {
@@ -179,14 +191,23 @@ export function nokiaApp(opt) {
     }));
     const isHost = r?.host === deviceId;
     pub.update(r, isHost);
-    if (!r || r.status === 'playing') { ov.hidden = !!r; if (!r) ov.replaceChildren(el('div', { className: 'card' }, el('h2', { textContent: t('Đang kết nối…', 'Connecting…') }))); return; }
+    if (!r || r.status === 'playing') {
+      ov.hidden = !!r;
+      if (!r) ov.replaceChildren(el('div', { className: 'card' }, el('h2', { textContent: rp ? t('Đang tải bản xem lại…', 'Loading replay…') : t('Đang kết nối…', 'Connecting…') })));
+      return;
+    }
     ov.hidden = false;
-    const box = el('div', { className: 'cfg' });
-    opt.lobby?.(box, r, isHost, (cfg) => raw({ t: 'config', cfg }));
     const res = r.status === 'ended' && r.result;
-    ov.replaceChildren(el('div', { className: 'card' },
+    const head = [
       el('h2', {}, ...(res ? [iconEl('trophy'), ` ${tx(res.title) ?? (res.ranks.length > 1 ? t(`${res.ranks[0].name} thắng`, `${res.ranks[0].name} wins`) : t('Hết ván', 'Game over'))}`] : [t(`Phòng ${code}`, `Room ${code}`)])),
       res ? el('ol', { className: 'ranks' }, ...res.ranks.map((x) => el('li', {}, el('span', { textContent: x.name }), el('b', { textContent: opt.scoreText?.(x.score, res) ?? x.score })))) : '',
+    ];
+    // Xem lại: chỉ bảng kết quả (thanh phát lại đã có Chia sẻ / Chơi).
+    if (rp) return ov.replaceChildren(el('div', { className: 'card' }, ...head));
+    const box = el('div', { className: 'cfg' });
+    opt.lobby?.(box, r, isHost, (cfg) => raw({ t: 'config', cfg }));
+    ov.replaceChildren(el('div', { className: 'card' }, ...head,
+      res?.rp ? replayLinks(res.rp) : '',
       box,
       pub.el,
       el('p', { className: 'sub', textContent: `${t(`${r.players.length} người trong phòng.`, `${r.players.length} in the room.`)} ${opt.lobbyText?.(r) ?? ''}${isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.')}` }),
@@ -197,21 +218,36 @@ export function nokiaApp(opt) {
   function frame() {
     if (room && !roomEl.hidden) {
       lcd.clear();
-      opt.draw(lcd, room, Date.now() + clockOffset, app);
+      opt.draw(lcd, room, now(), app);
     }
     requestAnimationFrame(frame);
   }
   if (opt.draw) requestAnimationFrame(frame);
 
   const app = {
-    get id() { return deviceId; }, get room() { return room; }, lcd, canvas, beep, toast, colorOf,
+    get id() { return deviceId; }, get room() { return room; }, replay: !!rp, lcd, canvas, beep, toast, colorOf,
+    // Người mà view đang thể hiện: mình; xem lại thì ghế 1 (server ghi view của người đó).
+    get pov() { return rp ? room?.seats[0] ?? deviceId : deviceId; },
     // Toạ độ LCD (0..83, 0..47) của một lần chạm/bấm chuột lên màn hình.
     lcdPoint(e) { const r = canvas.getBoundingClientRect(); return [Math.floor(((e.clientX - r.left) / r.width) * 84), Math.floor(((e.clientY - r.top) / r.height) * 48)]; },
-    send: (m) => raw({ t: 'g', ...m }), now: () => Date.now() + clockOffset,
+    send: (m) => raw({ t: 'g', ...m }), now,
   };
   window.nk = app; // cho test tự động
   if (opt.mount) opt.mount(roomEl.querySelector('.board-stage'), app);
   const initial = new URLSearchParams(location.search).get('r');
-  if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+  if (rp) {
+    // Chỉ để xem: không mời / không kết nối, ẩn phím trên màn; nút quay lại về trang chủ game.
+    home.hidden = true;
+    roomEl.hidden = false;
+    btnInvite.hidden = conn.hidden = hint.hidden = pad.hidden = true;
+    btnLeave.title = t('Chơi game này', 'Play this game');
+    btnLeave.onclick = () => { location.href = location.pathname; };
+    render();
+    playReplay(rp, {
+      feed: onMsg,
+      // Tua = dọn rồi nạp lại từ đầu (đồng bộ, cùng lượt JS): im lặng tới hết lượt đó rồi mới vẽ một lần.
+      reset: () => { quiet = true; setTimeout(() => { quiet = false; render(); }); room = null; rc = null; },
+    }).then((rec) => { if (!rec?.frames?.length) ov.replaceChildren(el('div', { className: 'card' }, el('h2', { textContent: t('Không tìm thấy bản xem lại', 'Replay not found') }))); });
+  } else if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
   return app;
 }

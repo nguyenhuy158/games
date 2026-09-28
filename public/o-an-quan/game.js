@@ -65,7 +65,7 @@ const app = nokiaApp({
   render(r) {
     const v = r.view;
     if (!v) return;
-    seat = v.side.indexOf(app.id) + 1 || 1;
+    seat = v.side.indexOf(app.pov) + 1 || 1; // xem lại: bàn theo phía người 1
     for (let k = 0; k < 12; k++) {
       const [x, y, w, h] = box(disp(k));
       Object.assign(cells[k].style, { left: pct(x, 716), top: pct(y, 216), width: `${(w * 100 / 716) * 100}%`, height: `${(h * 100 / 216) * 100}%` });

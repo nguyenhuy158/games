@@ -53,7 +53,7 @@ nokiaApp({
   draw(lcd, r, now, app) {
     const v = r.view;
     if (!v) { lcd.center(8, 'BANTUMI'); art(lcd); return; }
-    const L = layout(r, app.id);
+    const L = layout(r, app.pov); // xem lại: bàn theo phía người 1
     const mine = seatOf(r, app.id) === v.turn;
     const left = Math.max(0, Math.ceil((v.deadline - now) / 1000));
     const bot = v.side[v.turn - 1] === 'bot';

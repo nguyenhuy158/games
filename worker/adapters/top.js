@@ -4,6 +4,11 @@ import { DurableObject } from 'cloudflare:workers';
 // Bảng: scores (top Pikachu), plays (lịch sử người đã đăng nhập), users (tên hiển thị), rooms (phòng công khai).
 const TOP_LIMIT = 10;
 const ROOM_TTL = 90_000;
+const REPLAY_DAYS = 30;
+// Mã bản ghi: 12 ký tự ngẫu nhiên (khó đoán -> link share là quyền xem). Giới hạn cỡ để vừa 1 ô SQLite của DO (2MB).
+export const REPLAY_ID = /^[A-Za-z0-9]{12}$/;
+export { REPLAY_MAX } from '../../public/tape.js';
+export const replayId = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'[b % 57]).join('');
 
 // Hạng mục bảng xếp hạng "cho vui" (icon + tên tiếng Anh chọn ở client theo key, xem public/me.js):
 // [key, tên, đơn vị, giá trị gộp theo người, điều kiện, thứ tự]. order 'ASC' = càng nhỏ càng giỏi (thời gian dò mìn, số phát bắn).
@@ -45,6 +50,10 @@ export class Top extends DurableObject {
     ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS rooms (
       key TEXT PRIMARY KEY, game TEXT NOT NULL, code TEXT NOT NULL, path TEXT NOT NULL, players INTEGER NOT NULL, cap INTEGER NOT NULL,
       status TEXT NOT NULL, host TEXT NOT NULL, mode TEXT, at INTEGER NOT NULL)`);
+    // Bản ghi xem lại ván (share bằng link /<game>/?replay=<id>, ai có link đều xem được). Giữ REPLAY_DAYS ngày.
+    ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS replays (
+      id TEXT PRIMARY KEY, game TEXT NOT NULL, page TEXT NOT NULL, data TEXT NOT NULL, at INTEGER NOT NULL)`);
+    ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS replays_at ON replays (at)');
   }
 
   roomUpsert(r) {
@@ -68,6 +77,23 @@ export class Top extends DurableObject {
       .toArray();
   }
 
+  // r = { id, game, page, frames: [[ms, msg], ...] } (xem public/replay.js). Dọn bản ghi quá hạn mỗi lần ghi.
+  saveReplay(r) {
+    const now = Date.now();
+    this.ctx.storage.sql.exec('DELETE FROM replays WHERE at < ?', now - REPLAY_DAYS * 86_400_000);
+    this.ctx.storage.sql.exec('INSERT OR REPLACE INTO replays (id, game, page, data, at) VALUES (?, ?, ?, ?, ?)',
+      r.id, r.game, r.page, JSON.stringify(r.frames), now);
+  }
+
+  replay(id) {
+    const row = this.ctx.storage.sql.exec('SELECT game, page, data, at FROM replays WHERE id = ?', id).toArray()[0];
+    return row ? { game: row.game, page: row.page, at: row.at, frames: JSON.parse(row.data) } : null;
+  }
+
+  replayPage(id) {
+    return this.ctx.storage.sql.exec('SELECT page FROM replays WHERE id = ?', id).toArray()[0]?.page ?? null;
+  }
+
   addPlays(rows) {
     for (const r of rows) {
       if (r.name) {
@@ -83,9 +109,10 @@ export class Top extends DurableObject {
     }
   }
 
-  history(sub) {
+  // Trang lịch sử: 30 ván trước mốc `before` (ms), mới nhất trước.
+  history(sub, before = Number.MAX_SAFE_INTEGER) {
     return this.ctx.storage.sql
-      .exec('SELECT game, mode, score, level, won, detail, at FROM plays WHERE sub = ? ORDER BY at DESC LIMIT 30', sub)
+      .exec('SELECT game, mode, score, level, won, detail, at FROM plays WHERE sub = ? AND at < ? ORDER BY at DESC LIMIT 30', sub, before)
       .toArray();
   }
 

@@ -44,6 +44,8 @@ function ensure(sim) {
 }
 
 export const score = (sim) => Math.floor(scrollAt(sim.t) / 4);
+// Người xem / bản xem lại: chỉ cuộn đề tới giây t (không có bóng của mình, chỉ tiến).
+export function rollTo(sim, t) { if (t > sim.t) { sim.t = t; ensure(sim); } return sim; }
 
 // Một bước dt giây với phím đang giữ { left, right }.
 export function step(sim, dt, keys = {}) {

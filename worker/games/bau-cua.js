@@ -41,7 +41,8 @@ function doRoll(ctx, dealer) {
     p.net += d;
     p.rounds++;
   }
-  Object.assign(g, { phase: 'show', phaseAt: Date.now(), dice, deltas, dealer, bets });
+  // Mỗi ván một bản xem lại: cắt đoạn đang ghi ở lần gửi trạng thái mở bát này (kết thúc bằng lúc lật bát).
+  Object.assign(g, { phase: 'show', phaseAt: Date.now(), dice, deltas, dealer, bets, rp: ctx.clip?.() });
   ctx.wakeAt(g.phaseAt + SHOW_MS);
   return true;
 }
@@ -98,7 +99,7 @@ export default {
     for (const p of Object.values(g.purse)) {
       if (p.coins < CHIPS[0]) { p.coins += RESCUE; p.rescues++; }
     }
-    Object.assign(g, { phase: 'bet', phaseAt: Date.now(), round: g.round + 1, bets: {}, dice: null, deltas: null, dealer: null });
+    Object.assign(g, { phase: 'bet', phaseAt: Date.now(), round: g.round + 1, bets: {}, dice: null, deltas: null, dealer: null, rp: undefined });
     return true;
   },
   // Rời phòng: lưu lãi/lỗ cả buổi (người đã đăng nhập), bỏ cược đang đặt. Vào lại thì tính buổi mới.
@@ -121,7 +122,7 @@ export default {
     const online = ctx.online();
     return {
       mode: g.mode, phase: g.phase, phaseAt: g.phaseAt, round: g.round, shakeMs: SHAKE_MS, showMs: SHOW_MS, afkMs: AFK_MS,
-      dealer: dealerId(ctx), bets: g.bets, dice: g.dice, deltas: g.deltas,
+      dealer: dealerId(ctx), bets: g.bets, dice: g.dice, deltas: g.deltas, rp: g.rp,
       players: ctx.order().filter((id) => online.has(id)).map((id) => {
         const p = purse(g, id);
         return { id, name: ctx.name(id), coins: p.coins, net: p.net, rescues: p.rescues };

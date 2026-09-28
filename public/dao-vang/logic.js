@@ -238,3 +238,13 @@ export function step(world, dt, rand = Math.random) {
   if (world.time <= 0 || (!world.items.length && world.miners.every((m) => m.mode === 'swing'))) ev.push({ k: 'end' });
   return ev;
 }
+
+// Ảnh chụp móc của cả mỏ: server gửi mỗi nhịp, bản 1 người ghi vào bản xem lại. Làm tròn cho gọn.
+const r3 = (x) => Math.round(x * 1000) / 1000;
+export const snapOf = (world) => ({
+  t: 'snap', time: r3(world.time), wt: r3(world.t),
+  miners: world.miners.map((m) => ({
+    id: m.id, a: r3(m.angle), l: Math.round(m.len * 10) / 10, m: m.mode,
+    h: m.held?.type ?? null, an: m.anim?.name ?? null, d: m.dynamite, s: !!m.buffs.strength,
+  })),
+});

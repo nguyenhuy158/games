@@ -5,6 +5,7 @@ import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { t, tx } from '../i18n.js';
 import { publicSwitch } from '../public-switch.js';
+import { replayParam, playReplay, replayLinks } from '../replay.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -17,6 +18,9 @@ const store = {
 // Cùng danh tính thiết bị với các game khác (pk.id / pk.name).
 let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+// Xem lại (?replay=<id>): xem như người ngoài, không vào phòng, không gửi gì.
+const replay = replayParam();
+if (replay) deviceId = 'replay';
 $('#name').value = deviceName();
 addReroll($('#name'));
 const myName = () => $('#name').value.trim() || t('Người chơi', 'Player');
@@ -28,6 +32,7 @@ const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const EMOS = [['thumbs-up', '#1f6fd6'], ['laugh', '#e0a100'], ['frown', '#8a5cd6'], ['flame', '#ff7a3d'], ['heart', '#e0312f']];
 
 let ws, code = null, room = null, clockOffset = 0, peek = false;
+let quiet = false; // đang tua bản xem lại: không kêu, không toast, không bay cảm xúc
 const mySeat = () => (room?.seats.indexOf(deviceId) ?? -1) + 1;
 const myTurn = () => room?.status === 'playing' && mySeat() === room.turn;
 const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
@@ -36,7 +41,7 @@ const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
 let soundOn = store.get('c4.sound') !== '0';
 const SND = Object.fromEntries(Object.entries({ move: 'sound2', start: 'sound4', win: 'sound5', lose: 'sound1' })
   .map(([k, f]) => [k, new Audio(`../pikachu/sound/${f}.mp3`)]));
-function play(k) { if (!soundOn) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
+function play(k) { if (!soundOn || quiet) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('c4.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
@@ -77,17 +82,21 @@ const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
 // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ, ngay trên nút Bắt đầu.
 const pub = publicSwitch(send);
 $('#btnStart').before(pub.el);
+// Nút Xem lại / Chia sẻ ván vừa xong (server gắn result.rp vào tin state lúc kết thúc).
+const links = el('div');
+$('#ovText').after(links);
+let linksRp = null;
 
 function onMsg(m) {
   if (m.t === 'error') return leave(m.msg);
-  if (m.t === 'emo') return emoFx(m.id, m.e);
+  if (m.t === 'emo') return quiet || emoFx(m.id, m.e);
   if (m.t !== 'state') return;
   const was = room;
   room = m;
   clockOffset = m.now - Date.now();
   if (m.status === 'playing' && was?.status !== 'playing') { peek = false; play('start'); }
   else if (m.status === 'playing' && was && m.moves > was.moves) play('move');
-  if (was?.status === 'playing' && m.status === 'ended') {
+  if (!quiet && was?.status === 'playing' && m.status === 'ended') {
     const seat = mySeat();
     const who = m.winner ? botName(m.names[m.winner - 1]) : '';
     if (!m.winner) toast(t('Hoà — kín bàn rồi!', 'Draw — board is full!'));
@@ -198,16 +207,16 @@ function render(was) {
   }
 
   const isHost = r?.host === deviceId;
-  pub.update(r, isHost);
+  pub.update(replay ? null : r, isHost);
   const ov = $('#overlay');
   const players = r?.players ?? [];
   // Độ khó chỉ có nghĩa khi đánh với máy (phòng 1 người), chủ phòng chọn ở sảnh.
   const vsBot = r?.status === 'lobby' ? players.length < 2 : !!r?.seats?.includes('bot');
-  $('#levelPick').hidden = !r || r.status === 'playing' || !vsBot;
+  $('#levelPick').hidden = !r || r.status === 'playing' || !vsBot || !!replay;
   [...$('#levelPick').children].forEach((b, k) => { b.classList.toggle('on', k === (r?.level ?? 1)); b.disabled = !isHost; });
   if (!r) {
     ov.hidden = false;
-    $('#ovTitle').textContent = t('Đang kết nối…', 'Connecting…');
+    $('#ovTitle').textContent = replay ? t('Đang tải bản xem lại…', 'Loading replay…') : t('Đang kết nối…', 'Connecting…');
     $('#ovText').textContent = '';
     $('#btnStart').hidden = true;
   } else if (r.status === 'playing') {
@@ -222,11 +231,13 @@ function render(was) {
     } else {
       const who = botName(r.names[r.winner - 1]);
       $('#ovTitle').replaceChildren(...(r.winner ? [iconEl('trophy'), r.seats[r.winner - 1] === deviceId ? t('Bạn thắng!', 'You win!') : t(`${who} thắng`, `${who} wins`)] : [t('Hoà!', 'Draw!')]));
-      $('#ovText').textContent = `${r.why === 'timeout' ? t('Đối thủ hết giờ. ', 'Opponent ran out of time. ') : ''}${t(`${r.moves} nước.`, `${r.moves} moves.`)}` + (isHost ? t(' Ván mới đổi người đi trước.', ' New round, starting player alternates.') : t(' Chờ chủ phòng mở ván mới.', ' Waiting for the host to start a new round.'));
+      $('#ovText').textContent = `${r.why === 'timeout' ? t('Đối thủ hết giờ. ', 'Opponent ran out of time. ') : ''}${t(`${r.moves} nước.`, `${r.moves} moves.`)}` + (isHost ? t(' Ván mới đổi người đi trước.', ' New round, starting player alternates.') : replay ? '' : t(' Chờ chủ phòng mở ván mới.', ' Waiting for the host to start a new round.'));
     }
     $('#btnStart').hidden = !isHost;
     $('#btnStart').textContent = r.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Ván mới', 'New round');
   }
+  const rp = !replay && r?.status === 'ended' ? r.result?.rp ?? null : null;
+  if (rp !== linksRp) { linksRp = rp; links.replaceChildren(replayLinks(rp)); }
   $('#btnPeek').hidden = r?.status !== 'ended';
   $('#btnResult').hidden = !(r?.status === 'ended' && peek);
 }
@@ -242,4 +253,16 @@ setInterval(() => {
 window.c4 = { get room() { return room; } }; // cho test tự động
 
 const initial = new URLSearchParams(location.search).get('r');
-if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+if (replay) {
+  // Chỉ để xem: hiện bàn như người xem, bỏ mời / cảm xúc; nút quay lại về trang chủ game.
+  $('#home').hidden = true;
+  $('#room').hidden = false;
+  $('#btnCopy').hidden = $('#emoBar').hidden = $('#conn').hidden = true;
+  $('#btnLeave').onclick = () => { location.href = location.pathname; };
+  render();
+  playReplay(replay, {
+    feed: onMsg,
+    // Tua = dọn bàn rồi nạp lại từ đầu (đồng bộ), nên chỉ cần im lặng tới hết lượt JS này.
+    reset: () => { quiet = true; setTimeout(() => { quiet = false; }); room = null; peek = false; render(); },
+  }).then((rec) => { if (!rec?.frames?.length) $('#ovTitle').textContent = t('Không tìm thấy bản xem lại', 'Replay not found'); });
+} else if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
