@@ -120,7 +120,7 @@ $('#btnJoin').onclick = () => {
   if (!/^[A-Z0-9]{4}$/.test(c)) return toast.warning(t('Mã phòng gồm 4 ký tự', 'Room codes have 4 characters'));
   enter(c);
 };
-$('#code').onkeydown = (e) => e.key === 'Enter' && $('#btnJoin').click();
+$('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
 $('#btnCopy').onclick = () => invite(`${location.origin}/bau-cua/?r=${code}`, code);
 $('#btnMode').onclick = () => send({ t: 'mode', mode: room?.mode === 'rotate' ? 'house' : 'rotate' });

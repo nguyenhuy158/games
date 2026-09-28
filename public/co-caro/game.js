@@ -114,7 +114,7 @@ $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
   if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
-$('#code').onkeydown = (e) => e.key === 'Enter' && $('#btnJoin').click();
+$('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
 $('#btnCopy').onclick = () => invite(`${location.origin}/co-caro/?r=${code}`, code);
 $('#btnStart').onclick = () => send({ t: 'start' });

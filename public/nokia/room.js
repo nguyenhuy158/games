@@ -39,7 +39,7 @@ export function nokiaApp(opt) {
     el('div', { className: 'lang' }, langToggle()),
   ));
   addReroll(name);
-  codeIn.onkeydown = (e) => e.key === 'Enter' && joinCode();
+  codeIn.onkeydown = (e) => { if (e.key === 'Enter') joinCode(); };
 
   const roomCode = el('b');
   const conn = el('span', { className: 'dot', title: t('Kết nối', 'Connection') });
