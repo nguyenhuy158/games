@@ -14,9 +14,20 @@ const TILESETS = ['poke', 'animal'];
 const EMOJI_COUNT = 5; // khớp EMOJIS ở public/app.js
 const TOP_LIMIT = 10;
 
+const HOME = 'games.huyab.click';
+const OLD_HOSTS = ['pikachu.huyab.click'];
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    const api = url.pathname.startsWith('/api/');
+    // Domain cũ: đổi sang domain mới, giữ nguyên đường dẫn + query (hub tự đưa ?r= cũ về /pikachu/).
+    // /api/* vẫn phục vụ để tab đang mở không rớt WebSocket.
+    if (OLD_HOSTS.includes(url.hostname) && !api) {
+      url.hostname = HOME;
+      return Response.redirect(url.toString(), 301);
+    }
+    if (!api) return env.ASSETS.fetch(req);
     if (url.pathname === '/api/top') {
       const mode = url.searchParams.get('mode');
       const size = Number(url.searchParams.get('size'));

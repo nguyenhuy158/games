@@ -1,6 +1,6 @@
 # Game Cổ Điển
 
-Bộ game cổ điển chơi trên trình duyệt. https://pikachu.huyab.click
+Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click — mỗi game một đường dẫn con. Domain cũ `pikachu.huyab.click` tự 301 sang (xem `OLD_HOSTS` ở `worker/index.js`).
 
 | Game | Đường dẫn | Ghi chú |
 |---|---|---|

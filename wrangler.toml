@@ -3,12 +3,17 @@ main = "worker/index.js"
 compatibility_date = "2026-07-03"
 # Chi vao qua custom domain, giong chia-keo.
 workers_dev = false
-routes = [{ pattern = "pikachu.huyab.click", custom_domain = true }]
+# games.huyab.click la domain chinh; pikachu.huyab.click (cu) chi con 301 sang domain moi.
+routes = [
+  { pattern = "games.huyab.click", custom_domain = true },
+  { pattern = "pikachu.huyab.click", custom_domain = true },
+]
 
-# public/ la file tinh; Worker chi chay cho /api/* (WebSocket phong choi).
+# public/ la file tinh. Worker chay truoc (de 301 domain cu), roi tra file qua ASSETS.
 [assets]
 directory = "./public"
-run_worker_first = ["/api/*"]
+binding = "ASSETS"
+run_worker_first = true
 
 [[durable_objects.bindings]]
 name = "ROOM"
