@@ -32,6 +32,10 @@ async function join(path, n, onState = () => {}) {
   const send = (ws, m) => ws.send(JSON.stringify(m));
   return { socks, send, host: () => socks.find((s) => s.last.host === s.me), close: () => socks.forEach((s) => s.close()) };
 }
+async function untilAsync(fn, ms, what) {
+  for (const end = Date.now() + ms; Date.now() < end; await sleep(200)) if (await fn()) return;
+  throw new Error(`timeout: ${what}`);
+}
 async function until(fn, ms, what) {
   for (const end = Date.now() + ms; Date.now() < end; await sleep(50)) if (fn()) return;
   throw new Error(`timeout: ${what}`);
@@ -123,6 +127,25 @@ const GAMES = {
     const r = await nokia('snake', 2, () => {}, { mode: 'solo', walls: true, speed: 4 });
     await until(() => r.socks[0].last.status === 'ended', 20000, 'snake ends');
     return `mode=${r.socks[0].last.result.ranks.length}p`;
+  },
+  // Phòng công khai: bật -> có trong /api/rooms (waiting), bắt đầu -> playing, tắt -> biến mất.
+  async public() {
+    const http = base.replace(/^ws/, 'http');
+    const rooms = async () => (await (await fetch(`${http}/api/rooms`)).json()).rooms;
+    const r = await join((c) => `/api/nk/pairs/room/${c}`, 2);
+    const code = r.socks[0].last && new URL(r.socks[0].url).pathname.split('/').pop();
+    const key = `pairs:${code}`;
+    r.send(r.host(), { t: 'public', on: true });
+    await until(() => r.socks.every((s) => s.last.pub === true), 3000, 'pub in state');
+    let row;
+    await untilAsync(async () => (row = (await rooms()).find((x) => x.key === key)), 5000, 'listed');
+    if (row.status !== 'waiting' || row.players !== 2 || row.path !== '/nokia/pairs/') throw new Error(JSON.stringify(row));
+    r.send(r.host(), { t: 'start' });
+    await untilAsync(async () => (await rooms()).find((x) => x.key === key)?.status === 'playing', 5000, 'listed as playing');
+    r.send(r.host(), { t: 'public', on: false });
+    await untilAsync(async () => !(await rooms()).some((x) => x.key === key), 5000, 'unlisted');
+    r.close();
+    return `${key} listed -> playing -> unlisted`;
   },
   // Các game Nokia còn lại: bắt đầu được và có view.
   async pairs() { return nokiaStart('pairs'); },

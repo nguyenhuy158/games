@@ -83,7 +83,7 @@ const r0 = () => 0; // mồi luôn rơi vào ô trống đầu tiên -> dễ đo
 }
 // Module server, sân riêng: mỗi người 1 thế giới, hết khi tất cả chết, xếp theo điểm
 {
-  const mod = (await import('./worker/nokia/snake.js')).default;
+  const mod = (await import('./worker/games/snake.js')).default;
   let result = null;
   const ctx = { g: {}, seats: ['a', 'b'], cfg: mod.config(mod.cfg, { mode: 'solo', walls: true }), rand: r0, end: (r) => { result = r; } };
   mod.start(ctx);

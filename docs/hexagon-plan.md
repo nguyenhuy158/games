@@ -39,6 +39,8 @@ Kiểm bằng `scripts/check-deps.mjs` (đọc dòng import), gọi trong `logic
 
 ## Giai đoạn (mỗi giai đoạn = 1 commit, test xanh, deploy được)
 
+Tiến độ: 0 xong (`scripts/smoke.mjs`) · 1 xong (`worker/adapters/game-room.js`, `worker/ports.js`, `worker/games/*`, `scripts/check-deps.mjs`, phòng công khai)
+
 | # | Việc | File | Rủi ro |
 |---|---|---|---|
 | 0 | Lưới an toàn: `scripts/smoke.mjs <url>` (bot WebSocket chơi 1 ván với máy + 1 ván 2 người mỗi game); test mức module cho game chưa có | scripts, *.test.mjs | thấp |

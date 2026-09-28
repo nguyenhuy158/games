@@ -4,8 +4,16 @@ export { MineRoom } from './do-min.js';
 export { DiceRoom } from './bau-cua.js';
 export { CaroRoom } from './co-caro.js';
 export { ShipRoom } from './ban-tau.js';
-export { NokiaRoom } from './nokia.js';
 import { userFrom } from './sso.js';
+import { gameRoom } from './adapters/game-room.js';
+import snake from './games/snake.js';
+import bantumi from './games/bantumi.js';
+import pairs from './games/pairs.js';
+import logic from './games/logic.js';
+import rapidRoll from './games/rapid-roll.js';
+import spaceImpact from './games/space-impact.js';
+import bounce from './games/bounce.js';
+import oAnQuan from './games/o-an-quan.js';
 import { uniqueName, otherNames } from './names.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
 
@@ -20,6 +28,11 @@ const MODES = ['coop', 'race', 'team'];
 const TILESETS = ['poke', 'animal'];
 const EMOJI_COUNT = 5; // khớp EMOJIS ở public/app.js
 const TOP_LIMIT = 10;
+const ROOM_TTL = 90_000;
+
+// Các game chạy trên adapter phòng chung (worker/adapters/game-room.js): /api/nk/<game>/room/CODE, DO tên "<game>:<CODE>".
+export const NOKIA_GAMES = { snake, bantumi, pairs, logic, 'rapid-roll': rapidRoll, 'space-impact': spaceImpact, bounce, 'o-an-quan': oAnQuan };
+export class NokiaRoom extends gameRoom(NOKIA_GAMES) {}
 
 const HOME = 'games.huyab.click';
 const OLD_HOSTS = ['pikachu.huyab.click'];
@@ -64,6 +77,10 @@ export default {
       const period = url.searchParams.get('period') === 'week' ? 'week' : 'all';
       return Response.json(await top().fun(period), { headers: { 'Cache-Control': 'public, max-age=60' } });
     }
+    // Phòng đang mở mà chủ phòng bật "Công khai" (trang /phong/).
+    if (url.pathname === '/api/rooms') {
+      return Response.json({ rooms: await top().rooms(), now: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
+    }
     if (url.pathname === '/api/top') {
       const mode = url.searchParams.get('mode');
       const size = Number(url.searchParams.get('size'));
@@ -71,16 +88,16 @@ export default {
       const rows = await top().list(mode, size);
       return Response.json(rows, { headers: { 'Cache-Control': 'public, max-age=30' } });
     }
-    // /api/nk/<game>/room/CODE = các game Nokia: một class NokiaRoom, mỗi phòng là DO tên "<game>:<CODE>" (worker/nokia.js).
+    // /api/nk/<game>/room/CODE = các game Nokia: một class NokiaRoom, mỗi phòng là DO tên "<game>:<CODE>" (adapter worker/adapters/game-room.js).
     const nk = url.pathname.match(/^\/api\/nk\/([a-z-]+)\/room\/([A-Z0-9]{4})$/);
     if (nk && req.headers.get('Upgrade') === 'websocket') {
-      const u = new URL(req.url);
-      u.searchParams.set('game', nk[1]);
       const headers = new Headers(req.headers);
-      headers.delete('X-User');
+      for (const h of ['X-User', 'X-Game', 'X-Room']) headers.delete(h);
+      headers.set('X-Game', nk[1]);
+      headers.set('X-Room', nk[2]);
       const user = await userFrom(req);
       if (user) headers.set('X-User', JSON.stringify({ sub: user.sub, name: user.name }));
-      return env.NOKIA.get(env.NOKIA.idFromName(`${nk[1]}:${nk[2]}`)).fetch(new Request(u, { headers }));
+      return env.NOKIA.get(env.NOKIA.idFromName(`${nk[1]}:${nk[2]}`)).fetch(new Request(req, { headers }));
     }
     // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng, /api/ms/room/CODE = Dò mìn, /api/bc/room/CODE = Bầu cua,
     // /api/cc/room/CODE = Cờ caro, /api/c4/room/CODE = Nối 4 (chung class phòng với caro), /api/bt/room/CODE = Bắn tàu.
@@ -115,6 +132,31 @@ export class Top extends DurableObject {
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS plays_at ON plays (at)');
     // Tên hiển thị cho bảng xếp hạng vui (tên SSO mới nhất của mỗi tài khoản).
     ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS users (sub TEXT PRIMARY KEY, name TEXT NOT NULL, at INTEGER NOT NULL)');
+    // Danh sách phòng công khai: phòng tự báo khi đổi + mỗi 30s; im quá ROOM_TTL thì coi như đã đóng.
+    ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS rooms (
+      key TEXT PRIMARY KEY, game TEXT NOT NULL, code TEXT NOT NULL, path TEXT NOT NULL, players INTEGER NOT NULL, cap INTEGER NOT NULL,
+      status TEXT NOT NULL, host TEXT NOT NULL, mode TEXT, at INTEGER NOT NULL)`);
+  }
+
+  roomUpsert(r) {
+    this.ctx.storage.sql.exec(
+      `INSERT INTO rooms (key, game, code, path, players, cap, status, host, mode, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET players = excluded.players, cap = excluded.cap, status = excluded.status, host = excluded.host,
+       mode = excluded.mode, at = excluded.at`,
+      r.key, r.game, r.code, r.path, r.players, r.cap, r.status, r.host, r.mode ?? null, Date.now(),
+    );
+  }
+
+  roomDrop(key) {
+    this.ctx.storage.sql.exec('DELETE FROM rooms WHERE key = ?', key);
+  }
+
+  rooms() {
+    const since = Date.now() - ROOM_TTL;
+    this.ctx.storage.sql.exec('DELETE FROM rooms WHERE at < ?', since);
+    return this.ctx.storage.sql
+      .exec("SELECT key, game, code, path, players, cap, status, host, mode, at FROM rooms ORDER BY status = 'playing', players DESC, at DESC LIMIT 100")
+      .toArray();
   }
 
   addPlays(rows) {
