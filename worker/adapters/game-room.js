@@ -7,9 +7,13 @@ import { uniqueName, otherNames } from '../names.js';
 //
 //   export class NokiaRoom extends gameRoom({ snake, bantumi, ... }) {}
 //
+// Module "phẳng" (flat: true — Caro, Bắn tàu, Bầu cua) giữ giao thức cũ: view() trả thẳng các trường của tin state,
+// tin riêng của game ({ t: 'move' | 'shoot' | 'bet' ... }) khai trong messages, emote qua emotes: số mặt.
+//
 // Worker (index.js) gọi DO với header tin cậy: X-Game (key game), X-Room (mã phòng), X-User (tài khoản SSO) — header client tự gửi bị xoá trước.
 // Chữ gửi cho người chơi (lỗi, tiêu đề kết quả) là cặp ['vi', 'en'], client chọn bằng tx() (public/i18n.js).
 const MAX_ONLINE = 12;
+const EMO_MS = 700; // chống spam emote
 const BEAT_MS = 30_000; // phòng công khai: nhịp báo "còn sống" cho danh sách phòng (Top bỏ phòng im quá 90s)
 
 /** @param {Record<string, import('../ports.js').GameModule>} games */
@@ -50,11 +54,12 @@ export function gameRoom(games) {
         return new Response(null, { status: 101, webSocket: client });
       };
       if (!games[game]) return reject(['Không có game này', 'No such game']);
+      if (this.s && this.s.game !== game) this.s = null;
       if (!/^[\w-]{8,64}$/.test(id)) return reject(['Thiết bị không hợp lệ', 'Invalid device']);
-      if (!this.s || this.s.game !== game) this.s = this.fresh(game, req.headers.get('X-Room') ?? '');
+      if (!this.s) this.s = this.fresh(game, req.headers.get('X-Room') ?? '');
       const s = this.s;
       if (!s.players[id]) {
-        if (this.onlineIds().size >= MAX_ONLINE) return reject(['Phòng đông quá rồi', 'This room is full']);
+        if (this.onlineIds().size >= (games[game].maxOnline ?? MAX_ONLINE)) return reject(['Phòng đông quá rồi', 'This room is full']);
         s.players[id] = { id, name };
         s.order.push(id);
       }
@@ -64,6 +69,9 @@ export function gameRoom(games) {
       for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) ws.close(4000, 'replaced');
       this.ctx.acceptWebSocket(server);
       server.serializeAttachment({ id });
+      // Game không có sảnh chờ (Bầu cua): ván chạy luôn từ lúc mở phòng.
+      if (this.mod.autostart && s.status === 'lobby') this.start();
+      else if (s.status === 'playing') this.mod.join?.(this.ctxFor(), p);
       await this.save();
       this.broadcast();
       await this.drain();
@@ -80,11 +88,11 @@ export function gameRoom(games) {
       const lobby = s.status !== 'playing';
       if (m.t === 'config') {
         if (!isHost || !lobby) return;
-        const cfg = this.mod.config?.(s.cfg, m.cfg ?? {});
+        const cfg = this.mod.config?.(s.cfg, m.cfg ?? m); // Nokia gửi { cfg }, game phẳng gửi thẳng các trường
         if (!cfg) return;
         s.cfg = cfg;
       } else if (m.t === 'start') {
-        if (!isHost || !lobby) return;
+        if (!isHost || !lobby || this.mod.autostart) return;
         this.start();
       } else if (m.t === 'public') {
         // Công khai phòng lên danh sách /phong/ (chủ phòng bật/tắt lúc nào cũng được).
@@ -92,8 +100,15 @@ export function gameRoom(games) {
         s.pub = m.on;
         if (!s.pub) this.unlist();
         await this.schedule();
+      } else if (m.t === 'emo' && this.mod.emotes) {
+        // Cảm xúc: chỉ phát lại, không lưu.
+        if (!Number.isInteger(m.e) || m.e < 0 || m.e >= this.mod.emotes || !this.allow(`${p.id}:emo`, EMO_MS)) return;
+        this.ctxFor().sendAll({ t: 'emo', id: p.id, e: m.e });
+        return;
       } else if (m.t === 'g') {
         if (s.status !== 'playing' || !this.mod.msg(this.ctxFor(), p, m)) return;
+      } else if (this.mod.messages?.includes(m.t)) {
+        if (!this.mod.msg(this.ctxFor(), p, m)) return; // module tự kiểm pha / lượt
       } else return;
       await this.save();
       this.broadcast();
@@ -142,22 +157,28 @@ export function gameRoom(games) {
       if (s.status === 'playing' && s.wake && Date.now() >= s.wake) { // alarm không bao giờ chạy sớm
         s.wake = 0;
         if (this.mod.tick?.(this.ctxFor())) { await this.save(); this.broadcast(); }
+        // Ván giữ lại khi cả phòng rớt mạng (persist) mà tự kết thúc lúc không còn ai: dọn phòng.
+        if (s.status !== 'playing' && !this.onlineIds().size) { if (s.pub) this.unlist(); this.s = null; await this.ctx.storage.deleteAll(); await this.drain(); return; }
       }
       if (s.pub) this.list(true);
       await this.schedule();
       await this.drain();
     }
 
-    // Ngữ cảnh đưa cho module game (port Ctx).
-    ctxFor() {
+    // Ngữ cảnh đưa cho module game (port Ctx). except = socket đang đóng (chưa rời hẳn khỏi getWebSockets()).
+    ctxFor(except) {
       const s = this.s;
       return {
-        g: s.g, cfg: s.cfg, seats: s.seats, players: s.players, now: () => Date.now(),
+        g: s.g, cfg: s.cfg, seats: s.seats, players: s.players, keep: (s.keep ??= {}), now: () => Date.now(),
         rand: () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32,
         name: (id) => s.players[id]?.name ?? '',
-        online: () => this.onlineIds(),
+        online: () => this.onlineIds(except),
+        host: () => this.hostId(except),
+        order: () => s.order,
+        allow: (key, ms) => this.allow(key, ms),
         wakeAt: (at) => { s.wake = at; this.schedule(); },
         end: (result) => this.finish(result),
+        record: (plays) => { if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays)); },
         send: (id, msg) => { for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) try { ws.send(JSON.stringify(msg)); } catch {} },
         sendAll: (msg) => { const d = JSON.stringify(msg); for (const ws of this.sockets()) try { ws.send(d); } catch {} },
       };
@@ -171,7 +192,7 @@ export function gameRoom(games) {
       const plays = result.ranks.filter((r) => s.players[r.id]?.user).map((r) => ({
         sub: s.players[r.id].user.sub, name: s.players[r.id].user.name, game: this.slug, mode: result.mode ?? (s.seats.length > 1 ? 'multi' : 'solo'),
         score: r.score ?? 0, level: result.level ?? 1, won: !!r.won,
-        detail: JSON.stringify({ rank: result.ranks.indexOf(r) + 1, of: result.ranks.length }),
+        detail: JSON.stringify(r.detail ?? { rank: result.ranks.indexOf(r) + 1, of: result.ranks.length }),
       }));
       if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays));
     }
@@ -181,11 +202,14 @@ export function gameRoom(games) {
       if (!s) return;
       const id = ws.deserializeAttachment()?.id;
       const online = this.onlineIds(ws);
-      if (s.status !== 'playing' && id && !online.has(id)) {
+      const gone = id && !online.has(id);
+      if (gone && s.status === 'playing') this.mod.leave?.(this.ctxFor(ws), id);
+      if (gone && s.status !== 'playing') {
         s.order = s.order.filter((i) => i !== id);
         delete s.players[id];
       }
-      if (!online.size) {
+      // Cả phòng rớt mạng giữa ván: game persist (Caro, Bắn tàu) giữ ván chờ người quay lại (hết giờ thì tự xử thua).
+      if (!online.size && !(this.mod.persist && s.status === 'playing')) {
         clearInterval(this.timer);
         if (s.pub) this.unlist();
         this.s = null;
@@ -193,7 +217,6 @@ export function gameRoom(games) {
         await this.drain();
         return;
       }
-      this.mod.leave?.(this.ctxFor(), id);
       await this.save();
       this.broadcast(ws);
       await this.drain();
@@ -201,6 +224,13 @@ export function gameRoom(games) {
 
     webSocketError(ws) {
       return this.webSocketClose(ws);
+    }
+
+    allow(key, ms) {
+      const now = Date.now();
+      if (now - ((this.rate ??= {})[key] ?? 0) < ms) return false;
+      this.rate[key] = now;
+      return true;
     }
 
     // ---------- danh sách phòng công khai (Recorder = DO Top) ----------
@@ -245,10 +275,11 @@ export function gameRoom(games) {
         t: 'state', game: s.game, status: s.status, cfg: s.cfg, host: this.hostId(except), now: Date.now(), result: s.result, pub: !!s.pub,
         seats: s.seats, players: s.order.filter((id) => online.has(id)).map((id) => ({ id, name: s.players[id].name })),
       };
-      const ctx = this.ctxFor();
+      const ctx = this.ctxFor(except);
       for (const ws of this.sockets(except)) {
         const id = ws.deserializeAttachment()?.id;
-        try { ws.send(JSON.stringify({ ...base, view: s.g ? this.mod.view(ctx, id) : null })); } catch {}
+        const msg = this.mod.flat ? { ...base, ...this.mod.view(ctx, id) } : { ...base, view: s.g ? this.mod.view(ctx, id) : null };
+        try { ws.send(JSON.stringify(msg)); } catch {}
       }
       this.list(false, except);
     }

@@ -19,6 +19,13 @@
  * @property {(ctx: Ctx, id: string) => object} view                trạng thái gửi riêng cho người id (giấu thông tin nếu cần)
  * @property {(ctx: Ctx, id: string) => void} [leave]               một người rời phòng giữa ván
  * @property {boolean} [volatile]              không lưu ctx.g mỗi nhịp (game thời gian thực; DO khởi động lại thì về sảnh)
+ * @property {boolean} [flat]                  giao thức "phẳng": view() trả thẳng các trường của tin state (luôn gọi, kể cả lúc chưa có ván)
+ * @property {string[]} [messages]             tin riêng của game ({ t: 'move' ... }) chuyển cho msg() ở mọi pha (module tự kiểm)
+ * @property {number} [emotes]                 số emote; adapter xử lý { t: 'emo', e } (chống spam) và phát lại cho cả phòng
+ * @property {boolean} [autostart]             không có sảnh chờ: ván chạy luôn từ lúc mở phòng (Bầu cua)
+ * @property {boolean} [persist]               cả phòng rớt mạng giữa ván thì giữ ván (hẹn giờ vẫn chạy), không xoá phòng
+ * @property {number} [maxOnline]              số người tối đa trong phòng (mặc định 12)
+ * @property {(ctx: Ctx, p: Player) => void} [join]                 có người vào giữa ván
  */
 
 /**
@@ -32,6 +39,11 @@
  * @property {() => number} rand               số ngẫu nhiên [0, 1) an toàn (crypto)
  * @property {(id: string) => string} name
  * @property {() => Set<string>} online
+ * @property {object} keep                     dữ liệu giữ qua các ván (tỉ số cặp đấu, ai đi trước)
+ * @property {() => string | null} host        chủ phòng hiện tại
+ * @property {() => string[]} order            thứ tự vào phòng
+ * @property {(key: string, ms: number) => boolean} allow            chống spam: false nếu `key` vừa dùng trong ms
+ * @property {(plays: object[]) => void} record                     ghi lịch sử tuỳ ý (Bầu cua ghi lúc rời phòng)
  * @property {(at: number) => void} wakeAt     hẹn gọi tick() lúc `at` (ms) — dùng alarm nên DO ngủ được, bị tắt vẫn dậy
  * @property {(result: Result) => void} end    kết thúc ván; adapter ghi lịch sử người đã đăng nhập qua Recorder
  * @property {(id: string, msg: object) => void} send
@@ -39,7 +51,7 @@
  */
 
 /** @typedef {{ id: string, name: string, user?: { sub: string, name: string } | null }} Player */
-/** @typedef {{ ranks: { id: string, score: number, won: boolean }[], mode?: string, level?: number, title?: string | [string, string] }} Result */
+/** @typedef {{ ranks: { id: string, score: number, won: boolean, detail?: object }[], mode?: string, level?: number, title?: string | [string, string] }} Result */
 
 /**
  * Nơi ghi kết quả + danh sách phòng công khai (adapters/top.js, DO SQLite "global").

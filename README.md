@@ -68,7 +68,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 
 ## Bầu cua
 
-- `worker/bau-cua.js` (DO `DiceRoom`, WebSocket `/api/bc/room/CODE`), luật ở `public/bau-cua/logic.js`.
+- `worker/games/bau-cua.js` (module trong adapter phòng chung, DO `DiceRoom`, WebSocket `/api/bc/room/CODE`), luật ở `public/bau-cua/logic.js`.
 - Mỗi người 1000 xu ảo/phòng, phỉnh 10/50/100/500. Ra k mặt ăn x·k, không ra mất x; cái chung/nhận phần ngược lại (xu cái có thể âm).
 - Mặc định **máy làm cái** (ai cũng đặt, chủ phòng mở bát). Chủ phòng đổi sang **xoay cái** lúc nào cũng được khi đang đặt cược (cái mới được trả lại cược); ở một mình thì luôn là máy. Cái ngồi im quá 30 giây thì ai cũng mở bát được.
 - Xúc xắc chỉ tung (crypto) lúc mở bát, sau khi cược đã khoá → không có gì để gian lận. Client lắc bát 2,5 giây rồi mới lật; xu hiển thị giữ số cũ tới lúc lật.
@@ -77,7 +77,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 
 ## Cờ caro
 
-- `worker/co-caro.js` (DO `CaroRoom`, WebSocket `/api/cc/room/CODE`), luật + máy đánh ở `public/co-caro/logic.js`.
+- `worker/games/caro.js` (module trong adapter phòng chung, DO `CaroRoom`, WebSocket `/api/cc/room/CODE`), luật + máy đánh ở `public/co-caro/logic.js`.
 - Bàn 15×15 / 19×19 nối 5 là thắng, hoặc **XO 3×3** (tic-tac-toe) nối 3 — máy dùng minimax cả cây nên không bao giờ thua (đánh đúng thì hoà). Luật **chặn 2 đầu** (tuỳ chọn): 5 quân bị quân đối phương chặn cả 2 đầu thì không tính; mép bàn không tính là chặn.
 - 2 người vào đầu cầm X / O (X đi trước), còn lại xem + thả cảm xúc. Một mình thì đánh với máy (heuristic chấm điểm 1 nước: tấn công ×1.1 + phòng thủ). Ván mới đổi người đi trước; tỉ số tính theo cặp đấu.
 - Mỗi nước 30 giây, hết giờ thua (server hẹn giờ; `tick()` kiểm lại nếu DO bị tắt). Lịch sử lưu số nước; bảng vui có "Kỳ thủ caro" (số ván thắng người thật).
@@ -86,9 +86,9 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 
 Làm theo lối chơi của papergames.io (tham khảo cách bố trí / luật để học), hình vẽ tự làm bằng CSS + logo trong `scripts/logos.mjs`, không lấy ảnh của họ.
 
-- **Nối 4** (`public/noi-4/`): dùng chung DO `CaroRoom` với caro — bảng `RULES` trong `worker/co-caro.js` giữ phần khác nhau (cỡ bàn, nước đi hợp lệ, thắng, máy). Worker gửi `/api/c4/room/CODE` tới id `c4:CODE` kèm header `X-Game: c4`. Bàn 7×6, bấm ô nào trong cột là thả vào cột đó; máy dùng negamax alpha-beta 4 tầng (~2.5 ms/nước).
+- **Nối 4** (`public/noi-4/`): dùng chung DO `CaroRoom` với caro — bảng `RULES` trong `worker/games/caro.js` giữ phần khác nhau (cỡ bàn, nước đi hợp lệ, thắng, máy). Worker gửi `/api/c4/room/CODE` tới id `c4:CODE` kèm header `X-Game: c4`. Bàn 7×6, bấm ô nào trong cột là thả vào cột đó; máy dùng negamax alpha-beta 4 tầng (~2.5 ms/nước).
 - **Ô ăn quan** (`public/o-an-quan/`): luật + máy (minimax) ở `logic.js`, server là module `worker/games/o-an-quan.js` chạy trong DO `NokiaRoom` (`/api/nk/o-an-quan/room/CODE`), giao diện DOM qua `nokiaApp({ mount, render })` thay cho LCD. Mỗi nước server gửi kèm các bước rải (`last.steps`) để client diễn lại từng viên; hạn giờ cộng thêm thời gian diễn.
-- **Bắn tàu** (`worker/ban-tau.js`, DO `ShipRoom`, `/api/bt/room/CODE`, luật ở `public/ban-tau/logic.js`): biển 10×10, tàu 5-4-3-3-2 không chạm nhau. Xếp ngẫu nhiên (*Xếp lại*) hoặc tự xếp — chạm tàu để chọn, chạm ô trống để dời, chạm lại / *Xoay* để đổi chiều; server kiểm lại bằng `validFleet` (60 giây) → cả hai *Sẵn sàng* → bắn luân phiên, trúng được bắn tiếp; chìm tàu thì tự đánh dấu các ô xung quanh. Server gửi mỗi người một bản state: chỉ thấy hạm đội của mình tới khi hết ván. Hết 30 giây thì bắn giùm 1 phát ngẫu nhiên, 3 lượt liền như vậy thì thua. Máy: săn quanh ô trúng, không có thì bắn ô "bàn cờ" ngẫu nhiên. Dưới mỗi biển có hàng tàu (chìm thì mờ) — server gửi `sunk` theo thứ tự FLEET, không lộ vị trí.
+- **Bắn tàu** (`worker/games/ban-tau.js`, DO `ShipRoom`, `/api/bt/room/CODE`, luật ở `public/ban-tau/logic.js`): biển 10×10, tàu 5-4-3-3-2 không chạm nhau. Xếp ngẫu nhiên (*Xếp lại*) hoặc tự xếp — chạm tàu để chọn, chạm ô trống để dời, chạm lại / *Xoay* để đổi chiều; server kiểm lại bằng `validFleet` (60 giây) → cả hai *Sẵn sàng* → bắn luân phiên, trúng được bắn tiếp; chìm tàu thì tự đánh dấu các ô xung quanh. Server gửi mỗi người một bản state: chỉ thấy hạm đội của mình tới khi hết ván. Hết 30 giây thì bắn giùm 1 phát ngẫu nhiên, 3 lượt liền như vậy thì thua. Máy: săn quanh ô trúng, không có thì bắn ô "bàn cờ" ngẫu nhiên. Dưới mỗi biển có hàng tàu (chìm thì mờ) — server gửi `sunk` theo thứ tự FLEET, không lộ vị trí.
 - Bảng vui: "Vua Nối 4" (ván thắng người thật), "Xạ thủ Bắn tàu" (thắng bằng ít phát nhất).
 
 ## Góc Nokia

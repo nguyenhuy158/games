@@ -1,9 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 export { MinerRoom } from './dao-vang.js';
 export { MineRoom } from './do-min.js';
-export { DiceRoom } from './bau-cua.js';
-export { CaroRoom } from './co-caro.js';
-export { ShipRoom } from './ban-tau.js';
 import { userFrom } from './sso.js';
 import { gameRoom } from './adapters/game-room.js';
 import snake from './games/snake.js';
@@ -14,6 +11,9 @@ import rapidRoll from './games/rapid-roll.js';
 import spaceImpact from './games/space-impact.js';
 import bounce from './games/bounce.js';
 import oAnQuan from './games/o-an-quan.js';
+import { caro, c4 } from './games/caro.js';
+import banTau from './games/ban-tau.js';
+import bauCua from './games/bau-cua.js';
 import { uniqueName, otherNames } from './names.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
 
@@ -33,6 +33,11 @@ const ROOM_TTL = 90_000;
 // Các game chạy trên adapter phòng chung (worker/adapters/game-room.js): /api/nk/<game>/room/CODE, DO tên "<game>:<CODE>".
 export const NOKIA_GAMES = { snake, bantumi, pairs, logic, 'rapid-roll': rapidRoll, 'space-impact': spaceImpact, bounce, 'o-an-quan': oAnQuan };
 export class NokiaRoom extends gameRoom(NOKIA_GAMES) {}
+// Cùng adapter, giữ tên class + URL cũ: /api/cc|c4/room/CODE (Cờ caro / Nối 4 chung class), /api/bt/room/CODE, /api/bc/room/CODE.
+export class CaroRoom extends gameRoom({ caro, c4 }) {}
+export class ShipRoom extends gameRoom({ 'ban-tau': banTau }) {}
+export class DiceRoom extends gameRoom({ 'bau-cua': bauCua }) {}
+const ADAPTER_GAME = { 'cc/': 'caro', 'c4/': 'c4', 'bt/': 'ban-tau', 'bc/': 'bau-cua' };
 
 const HOME = 'games.huyab.click';
 const OLD_HOSTS = ['pikachu.huyab.click'];
@@ -106,9 +111,8 @@ export default {
     const ns = { 'dv/': env.MINER, 'ms/': env.MINES, 'bc/': env.DICE, 'cc/': env.CARO, 'c4/': env.CARO, 'bt/': env.SHIPS }[m[1]] ?? env.ROOM;
     // Phòng tin header X-User / X-Game vì chỉ Worker gọi được DO; header client tự gửi luôn bị xoá trước.
     const headers = new Headers(req.headers);
-    headers.delete('X-User');
-    headers.delete('X-Game');
-    if (m[1] === 'c4/') headers.set('X-Game', 'c4');
+    for (const h of ['X-User', 'X-Game', 'X-Room']) headers.delete(h);
+    if (ADAPTER_GAME[m[1]]) { headers.set('X-Game', ADAPTER_GAME[m[1]]); headers.set('X-Room', m[2]); }
     const user = await userFrom(req);
     if (user) headers.set('X-User', JSON.stringify({ sub: user.sub, name: user.name }));
     return ns.get(ns.idFromName(m[1] === 'c4/' ? `c4:${m[2]}` : m[2])).fetch(new Request(req, { headers }));

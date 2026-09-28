@@ -39,7 +39,7 @@ Kiểm bằng `scripts/check-deps.mjs` (đọc dòng import), gọi trong `logic
 
 ## Giai đoạn (mỗi giai đoạn = 1 commit, test xanh, deploy được)
 
-Tiến độ: 0 xong (`scripts/smoke.mjs`) · 1 xong (`worker/adapters/game-room.js`, `worker/ports.js`, `worker/games/*`, `scripts/check-deps.mjs`, phòng công khai)
+Tiến độ: 0 xong (`scripts/smoke.mjs`) · 1 xong (`worker/adapters/game-room.js`, `worker/ports.js`, `worker/games/*`, `scripts/check-deps.mjs`, phòng công khai) · 2 xong (Caro + Nối 4, Bắn tàu, Bầu cua chạy trên adapter; giữ nguyên giao thức client)
 
 | # | Việc | File | Rủi ro |
 |---|---|---|---|
