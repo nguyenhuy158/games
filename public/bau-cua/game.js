@@ -4,6 +4,7 @@ import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { t, tx, en } from '../i18n.js';
+import { publicSwitch } from '../public-switch.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -88,6 +89,9 @@ function connect() {
   };
 }
 const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+// Công tắc "Công khai" (hiện ở /phong/): Bầu cua không có sảnh chờ nên để trên thanh đầu, cạnh nút làm cái.
+const pub = publicSwitch(send);
+$('#btnMode').after(pub.el);
 
 function onMsg(m) {
   if (m.t === 'error') return leave(m.msg);
@@ -157,6 +161,7 @@ function render() {
   const coinsOf = (p) => (open ? p.coins : p.coins - (r.deltas?.[p.id] ?? 0) - betTotal(r.bets[p.id]));
   $('#myCoins').replaceChildren(...(m ? [iconEl('coins'), ` ${xu(coinsOf(m))}`] : []));
   const isHost = r?.host === deviceId;
+  pub.update(r, isHost);
   const [emo, txt] = MODE_TEXT[r?.mode ?? 'rotate'];
   $('#btnMode').replaceChildren(iconEl(emo), el('span', { className: 'lbl', textContent: txt }));
   $('#btnMode').disabled = !isHost || r.phase !== 'bet';

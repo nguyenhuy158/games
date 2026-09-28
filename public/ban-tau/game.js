@@ -4,6 +4,7 @@ import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { t, tx } from '../i18n.js';
+import { publicSwitch } from '../public-switch.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -76,6 +77,9 @@ function connect() {
   };
 }
 const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+// Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ, ngay trên nút Bắt đầu.
+const pub = publicSwitch(send);
+$('#btnStart').before(pub.el);
 
 function onMsg(m) {
   if (m.t === 'error') return leave(tx(m.msg));
@@ -267,6 +271,7 @@ function render() {
   }
 
   const isHost = r?.host === deviceId;
+  pub.update(r, isHost);
   const ov = $('#overlay');
   const players = r?.players ?? [];
   if (!r) {

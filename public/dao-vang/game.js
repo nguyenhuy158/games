@@ -8,6 +8,7 @@ import { toast } from '../toast.js';
 import { deviceName, randomName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx, langToggle } from '../i18n.js';
+import { publicSwitch } from '../public-switch.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -495,6 +496,9 @@ const net = {
     const r = this.room;
     const me = this.me();
     const isHost = r.host === deviceId;
+    // Công tắc "Công khai" (hiện ở /phong/): tạo một lần, thẻ sảnh dựng lại mỗi lần vẽ thì gắn lại.
+    const pub = (this.pub ??= publicSwitch((m) => this.send(m)));
+    pub.update(r, isHost);
     const players = r.players.filter((p) => !p.spec);
     const playerList = el('ul', { className: 'plist' }, ...r.players.map((p) => el('li', { className: p.online ? '' : 'off' },
       p.id === r.host ? iconEl('crown') : '', p.spec ? iconEl('eye') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`)));
@@ -521,6 +525,7 @@ const net = {
         el('h2', { textContent: t(`Phòng ${this.code}`, `Room ${this.code}`) }),
         modes, el('p', { className: 'muted', textContent: desc }),
         playerList,
+        pub.el,
         el('p', { className: 'muted', textContent: t(`${players.length}/4 thợ mỏ.`, `${players.length}/4 miners.`) + (isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.')) }),
         isHost ? el('button', { className: 'primary', textContent: r.status === 'ended' ? t('Chơi ván mới', 'Play again') : t('Bắt đầu', 'Start'), onclick: () => this.send({ t: 'start' }) }) : '',
         el('div', { className: 'row' }, copy, leave),

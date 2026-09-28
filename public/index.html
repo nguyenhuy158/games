@@ -115,6 +115,15 @@
   <div id="lang"><span data-lang-toggle></span></div>
   <h1><img class="logo" src="/logos/hub.svg" alt=""> <span data-en="Classic Games">Game Cổ Điển</span></h1>
   <p class="sub"><span data-en="Play right in your browser, no sign-up needed. Sign in to keep your game history.">Chơi ngay trên trình duyệt, không cần đăng ký. Đăng nhập để lưu lịch sử các lần chơi.</span></p>
+  <!-- Hiện khi server đã có /api/rooms (danh sách phòng công khai của mọi game). -->
+  <a id="roomsLink" class="btn" href="/phong/" hidden><i data-icon="users"></i> <span data-en="Open rooms">Phòng đang mở</span> <b id="roomsCount"></b></a>
+  <script type="module">
+    fetch('/api/rooms', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (!d) return;
+      document.getElementById('roomsLink').hidden = false;
+      document.getElementById('roomsCount').textContent = d.rooms?.length ? `· ${d.rooms.length}` : '';
+    }).catch(() => {});
+  </script>
   <div class="games">
     <a class="game" href="/pikachu/">
       <div class="thumb" style="background-image:url(pikachu/images/pieces-sprite.png);background-size:auto 60%;background-repeat:repeat-x;background-position:left center"></div>

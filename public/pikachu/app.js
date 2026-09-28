@@ -5,6 +5,7 @@ import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { createPanel, drawGrid } from '../panel.js';
 import { t, tx } from '../i18n.js';
+import { publicSwitch } from '../public-switch.js';
 
 hydrateIcons();
 
@@ -112,6 +113,9 @@ function connect() {
   };
 }
 const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+// Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ, ngay trên nút Bắt đầu.
+const pub = publicSwitch(send);
+$('#btnStart').before(pub.el);
 addEventListener('offline', () => toast.error(t('Mất mạng — sẽ tự kết nối lại', 'Offline — will reconnect automatically')));
 
 function onMsg(m) {
@@ -452,6 +456,7 @@ function render() {
   renderBoard();
   renderPanel();
   const u = unit(), mine = me(), isHost = room?.host === deviceId;
+  pub.update(room, isHost);
   const lobby = room && room.status !== 'playing';
   $('#hintLeft').textContent = hints;
   $('#shuffleLeft').textContent = u?.shuffles ?? 0;

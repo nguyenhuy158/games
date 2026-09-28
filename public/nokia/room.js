@@ -10,6 +10,7 @@ import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { createLCD, bindKeys } from './lcd.js';
 import { t, tx, langToggle } from '../i18n.js';
+import { publicSwitch } from '../public-switch.js';
 
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 const store = {
@@ -121,6 +122,8 @@ export function nokiaApp(opt) {
     };
   }
   const raw = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+  // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ.
+  const pub = publicSwitch(raw);
 
   function onMsg(m) {
     if (m.t === 'error') return leave(m.msg);
@@ -175,6 +178,7 @@ export function nokiaApp(opt) {
       return li;
     }));
     const isHost = r?.host === deviceId;
+    pub.update(r, isHost);
     if (!r || r.status === 'playing') { ov.hidden = !!r; if (!r) ov.replaceChildren(el('div', { className: 'card' }, el('h2', { textContent: t('Đang kết nối…', 'Connecting…') }))); return; }
     ov.hidden = false;
     const box = el('div', { className: 'cfg' });
@@ -184,6 +188,7 @@ export function nokiaApp(opt) {
       el('h2', {}, ...(res ? [iconEl('trophy'), ` ${tx(res.title) ?? (res.ranks.length > 1 ? t(`${res.ranks[0].name} thắng`, `${res.ranks[0].name} wins`) : t('Hết ván', 'Game over'))}`] : [t(`Phòng ${code}`, `Room ${code}`)])),
       res ? el('ol', { className: 'ranks' }, ...res.ranks.map((x) => el('li', {}, el('span', { textContent: x.name }), el('b', { textContent: opt.scoreText?.(x.score, res) ?? x.score })))) : '',
       box,
+      pub.el,
       el('p', { className: 'sub', textContent: `${t(`${r.players.length} người trong phòng.`, `${r.players.length} in the room.`)} ${opt.lobbyText?.(r) ?? ''}${isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.')}` }),
       isHost ? el('button', { className: 'primary', textContent: res ? t('Chơi lại', 'Play again') : t('Bắt đầu', 'Start'), onclick: () => raw({ t: 'start' }) }) : '',
     ));
