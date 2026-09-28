@@ -60,6 +60,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 - Mỗi người 1000 xu ảo/phòng, phỉnh 10/50/100/500. Ra k mặt ăn x·k, không ra mất x; cái chung/nhận phần ngược lại (xu cái có thể âm).
 - Mặc định **máy làm cái** (ai cũng đặt, chủ phòng mở bát). Chủ phòng đổi sang **xoay cái** lúc nào cũng được khi đang đặt cược (cái mới được trả lại cược); ở một mình thì luôn là máy. Cái ngồi im quá 30 giây thì ai cũng mở bát được.
 - Xúc xắc chỉ tung (crypto) lúc mở bát, sau khi cược đã khoá → không có gì để gian lận. Client lắc bát 2,5 giây rồi mới lật; xu hiển thị giữ số cũ tới lúc lật.
+- Hình 6 con (`public/bau-cua/assets/*.webp`, 256px, ~14KB/hình) cắt tròn từ ảnh chụp tờ bầu cua in dân gian trong [bài của Bách Hóa Xanh](https://www.bachhoaxanh.com/kinh-nghiem-hay/luat-choi-bau-cua-tom-ca-huong-dan-toan-tap-tu-a-z-cho-nguoi-moi-1589468) (mục đích học tập); ảnh gốc ở `reference/bau-cua/` (không commit). Cắt bằng canvas trong Chrome headless rồi `cwebp -q 85`.
 - Hết xu được cứu trợ 500 (không tính vào lãi). Lãi/lỗ cả buổi ghi vào lịch sử khi rời phòng (người đã đăng nhập); bảng vui có "🦀 Đại gia Bầu cua" (tổng lãi).
 
 ## Chạy

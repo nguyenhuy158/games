@@ -25,6 +25,8 @@ let ws, code = null, room = null, clockOffset = 0, shown = 0;
 let chip = Number(store.get('bc.chip')) || CHIPS[1];
 if (!CHIPS.includes(chip)) chip = CHIPS[1];
 
+// Hình cắt từ tờ bầu cua in dân gian (xem README); emoji chỉ để làm chữ thay thế.
+const pic = (s, cls) => el('img', { className: cls, src: `assets/${s.key}.webp`, alt: s.emoji, draggable: false });
 const now = () => Date.now() + clockOffset;
 const me = () => room?.players.find((p) => p.id === deviceId);
 const colorOf = (id) => COLORS[Math.max(0, room?.players.findIndex((p) => p.id === id) ?? 0) % COLORS.length];
@@ -129,7 +131,7 @@ $('#chips').append(...CHIPS.map((c) => {
 }));
 $('#board').append(...SYMBOLS.map((s, i) => {
   const c = el('div', { className: 'cell', title: `Đặt vào ${s.name} (chuột phải / giữ để bỏ)` },
-    el('span', { className: 'em', textContent: s.emoji }), el('span', { className: 'nm', textContent: s.name.toUpperCase() }),
+    pic(s, 'em'), el('span', { className: 'nm', textContent: s.name.toUpperCase() }),
     el('span', { className: 'x' }), el('div', { className: 'stack' }));
   c.onclick = () => bet(i);
   c.oncontextmenu = (e) => { e.preventDefault(); send({ t: 'unbet', s: i }); };
@@ -176,7 +178,7 @@ function render() {
   const diceKey = open ? `${r.phaseAt}` : '';
   if ($('#dice').dataset.k !== diceKey) {
     $('#dice').dataset.k = diceKey;
-    $('#dice').replaceChildren(...(open ? r.dice.map((d) => el('div', { className: 'die', textContent: SYMBOLS[d].emoji })) : []));
+    $('#dice').replaceChildren(...(open ? r.dice.map((d) => el('div', { className: 'die' }, pic(SYMBOLS[d]))) : []));
   }
   const hits = SYMBOLS.map((_, s) => (open ? r.dice.filter((d) => d === s).length : 0));
   [...$('#board').children].forEach((c, s) => {
@@ -204,7 +206,7 @@ function render() {
   else if (!betting && !open) st.replaceChildren('Đang lắc… 🎲');
   else if (open) {
     const won = Object.values(r.deltas ?? {}).filter((d) => d > 0).length;
-    st.replaceChildren('Ra ', el('b', { textContent: r.dice.map((d) => SYMBOLS[d].name).join(' · ') }), ` — ${won} người ăn. Ván mới sắp bắt đầu…`);
+    st.replaceChildren('Ra ', el('b', { textContent: r.dice.map((d) => SYMBOLS[d].name).join(' · ') }), won ? ` — ${won} người ăn` : ' — không ai ăn');
   } else if (r.dealer === deviceId) st.replaceChildren(`Ván ${r.round}: `, el('b', { textContent: 'bạn làm cái' }), anyBet() ? ' — mở bát khi mọi người đặt xong.' : ' — chờ mọi người đặt cược.');
   else st.replaceChildren(`Ván ${r.round} · Cái: `, el('b', { textContent: dealerName }), canRoll() ? '' : ` — đặt cược rồi chờ ${r.dealer ? dealerName : 'chủ phòng'} mở bát.`);
 }
