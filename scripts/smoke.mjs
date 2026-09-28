@@ -108,7 +108,7 @@ const GAMES = {
       const [k, d] = oaqBot({ b: v.b, big: v.big, cap: v.cap, debt: v.debt, turn: v.turn, quanNon: v.quanNon, over: false, moves: v.moves }, 1);
       r.send(ws, { t: 'g', k, d });
     }, { level: 0 });
-    await until(() => r.socks[0].last.status === 'ended', 120000, 'o-an-quan ends');
+    await until(() => r.socks[0].last.status === 'ended', 300000, 'o-an-quan ends'); // ván dài: mỗi nước còn chờ client diễn lại
     return JSON.stringify(r.socks[0].last.result.title);
   },
   // Bantumi với máy: tới hết ván.
