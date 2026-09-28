@@ -145,6 +145,7 @@ export class Top extends DurableObject {
        mode = excluded.mode, at = excluded.at`,
       r.key, r.game, r.code, r.path, r.players, r.cap, r.status, r.host, r.mode ?? null, Date.now(),
     );
+    console.log('roomUpsert', JSON.stringify(r), Date.now(), this.ctx.storage.sql.exec('SELECT COUNT(*) AS n FROM rooms').one().n);
   }
 
   roomDrop(key) {
@@ -153,6 +154,7 @@ export class Top extends DurableObject {
 
   rooms() {
     const since = Date.now() - ROOM_TTL;
+    console.log('rooms', since, JSON.stringify(this.ctx.storage.sql.exec('SELECT key, at FROM rooms').toArray()));
     this.ctx.storage.sql.exec('DELETE FROM rooms WHERE at < ?', since);
     return this.ctx.storage.sql
       .exec("SELECT key, game, code, path, players, cap, status, host, mode, at FROM rooms ORDER BY status = 'playing', players DESC, at DESC LIMIT 100")
