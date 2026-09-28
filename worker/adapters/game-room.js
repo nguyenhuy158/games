@@ -25,6 +25,11 @@ export function gameRoom(games) {
       });
     }
 
+    // Gọi ra ngoài (Top: lịch sử, danh sách phòng) phải được chờ trước khi sự kiện kết thúc: DO ngủ đông sau khi
+    // xử lý xong tin WebSocket sẽ huỷ lời gọi còn treo. io() ghi nhận, drain() chờ hết ở cuối fetch / tin / đóng / alarm.
+    io(p) { (this.pending ??= []).push(p.catch(() => {})); }
+    async drain() { while (this.pending?.length) await Promise.all(this.pending.splice(0)); }
+
     fresh(game, code) {
       return { game, code, status: 'lobby', order: [], players: {}, cfg: { ...games[game].cfg }, seats: [], g: null, result: null, pub: false, wake: 0 };
     }
@@ -61,6 +66,7 @@ export function gameRoom(games) {
       server.serializeAttachment({ id });
       await this.save();
       this.broadcast();
+      await this.drain();
       return new Response(null, { status: 101, webSocket: client });
     }
 
@@ -91,6 +97,7 @@ export function gameRoom(games) {
       } else return;
       await this.save();
       this.broadcast();
+      await this.drain();
     }
 
     start() {
@@ -118,6 +125,7 @@ export function gameRoom(games) {
         if (!this.mod.volatile) this.save();
         this.broadcast();
       }
+      this.drain(); // kết quả ván ghi lúc đang chạy nhịp
     }
 
     // Một alarm cho cả hai việc: giờ game đã hẹn (s.wake) + nhịp báo danh sách phòng công khai.
@@ -137,6 +145,7 @@ export function gameRoom(games) {
       }
       if (s.pub) this.list(true);
       await this.schedule();
+      await this.drain();
     }
 
     // Ngữ cảnh đưa cho module game (port Ctx).
@@ -164,7 +173,7 @@ export function gameRoom(games) {
         score: r.score ?? 0, level: result.level ?? 1, won: !!r.won,
         detail: JSON.stringify({ rank: result.ranks.indexOf(r) + 1, of: result.ranks.length }),
       }));
-      if (plays.length) this.recorder()?.addPlays(plays).catch(() => {});
+      if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays));
     }
 
     async webSocketClose(ws) {
@@ -181,11 +190,13 @@ export function gameRoom(games) {
         if (s.pub) this.unlist();
         this.s = null;
         await this.ctx.storage.deleteAll(); // xoá cả alarm
+        await this.drain();
         return;
       }
       this.mod.leave?.(this.ctxFor(), id);
       await this.save();
       this.broadcast(ws);
+      await this.drain();
     }
 
     webSocketError(ws) {
@@ -206,11 +217,11 @@ export function gameRoom(games) {
       const sig = JSON.stringify(row);
       if (!force && sig === this.listed) return;
       this.listed = sig;
-      this.recorder()?.roomUpsert(row).catch(() => {});
+      if (this.recorder()) this.io(this.recorder().roomUpsert(row));
     }
     unlist() {
       this.listed = null;
-      if (this.s?.code) this.recorder()?.roomDrop(`${this.s.game}:${this.s.code}`).catch(() => {});
+      if (this.s?.code && this.recorder()) this.io(this.recorder().roomDrop(`${this.s.game}:${this.s.code}`));
     }
 
     save() {
