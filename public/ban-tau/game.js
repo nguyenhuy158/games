@@ -141,10 +141,15 @@ function tryPlace(k, cells) {
 }
 function rotate(k) {
   if (!canEdit() || k < 0) return;
-  const ship = myFleet()[k], down = !isDown(ship), len = ship.length;
-  // Xoay quanh đầu tàu; chạm mép thì lùi đầu tàu vào trong cho vừa.
-  const r = Math.floor(ship[0] / N), c = ship[0] % N;
-  tryPlace(k, shipAt(down ? Math.min(r, N - len) * N + c : r * N + Math.min(c, N - len), len, down));
+  const ship = myFleet()[k], down = !isDown(ship), len = ship.length, step = down ? N : 1;
+  // Xoay quanh đầu tàu trước; tràn mép / sát tàu khác thì thử lấy lần lượt từng ô của tàu làm trục, chỗ nào hợp lệ đầu tiên thì lấy.
+  for (const pivot of ship) for (let o = 0; o < len; o++) {
+    const head = pivot - o * step;
+    if (head < 0 || (!down && Math.floor(head / N) !== Math.floor(pivot / N))) continue;
+    const cells = shipAt(head, len, down);
+    if (cells && validFleet(myFleet().map((s, j) => (j === k ? cells : s)))) return tryPlace(k, cells);
+  }
+  tryPlace(k, null);
 }
 $('#seaA .grid').onclick = (e) => {
   const c = e.target.closest('.c');
