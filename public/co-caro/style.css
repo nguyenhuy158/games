@@ -41,7 +41,17 @@ input { background: #fff; border: 1px solid var(--line); border-radius: 10px; pa
 .card h2 { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .card label { display: grid; gap: 4px; text-align: left; color: var(--muted); }
 .card label.check { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text); }
-.card label.check input { width: auto; }
+/* Công tắc kiểu chia-keo (h-6 w-11, núm trắng trượt) làm từ checkbox gốc: vẫn dùng bàn phím / trình đọc màn hình. */
+input.switch {
+  --off: #d6d3d1;
+  appearance: none; flex: none; width: 44px; height: 24px; margin: 0; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
+  /* Núm = lớp gradient tròn trắng, trượt bằng background-position (pseudo-element không chạy trên input). */
+  background: radial-gradient(circle, #fff 9px, #0000 10px) left 2px center / 20px 20px no-repeat, var(--off);
+  box-shadow: inset 0 1px 2px #0002; transition: background-position .2s, background-color .2s;
+}
+input.switch:checked { --off: var(--accent); background-position: right 2px center, 0 0; }
+input.switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input.switch:disabled { opacity: .5; cursor: default; }
 .sub, .muted { margin: 0; color: var(--muted); }
 .muted { font-size: 12px; }
 .join { display: flex; gap: 8px; }
