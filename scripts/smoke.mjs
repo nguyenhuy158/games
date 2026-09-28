@@ -98,7 +98,38 @@ const GAMES = {
   // Pikachu / Đào Vàng / Dò mìn: vào phòng 2 người, bắt đầu, thấy ván chạy.
   async pikachu() { return startOnly((c) => `/api/room/${c}`); },
   async 'dao-vang'() { return startOnly((c) => `/api/dv/room/${c}`); },
-  async 'do-min'() { return startOnly((c) => `/api/ms/room/${c}`); },
+  // Dò mìn đua 2 người: mỗi người mở ô ẩn ngẫu nhiên tới hết ván; không ai được nhận bàn của đối thủ trước khi hết ván.
+  async 'do-min'() {
+    const r = await join((c) => `/api/ms/room/${c}`, 2);
+    const grid = {};
+    let leak = false;
+    for (const ws of r.socks) {
+      ws.addEventListener('message', (e) => {
+        const m = JSON.parse(e.data);
+        // Bàn đối thủ chỉ được tới kèm 'reveal' ngay sau (hết ván).
+        if (ws.foreign && m.t !== 'reveal') leak = true;
+        ws.foreign = m.t === 'grid' && Object.keys(m.grids).some((u) => u !== ws.me);
+        if (m.t === 'grid' && m.grids[ws.me]) grid[ws.me] = m.grids[ws.me];
+        if (m.t === 'open' && m.unit === ws.me) for (const [i, v] of m.cells) grid[ws.me][i] = v;
+      });
+    }
+    r.send(r.host(), { t: 'config', mode: 'race', size: 0 });
+    await until(() => r.socks.every((s) => s.last.mode === 'race'), 3000, 'race mode');
+    r.send(r.host(), { t: 'start' });
+    await until(() => r.socks.every((s) => grid[s.me]), 5000, 'grids received');
+    for (let n = 0; r.socks[0].last.status === 'playing' && n < 400; n++) {
+      for (const ws of r.socks) {
+        const hidden = grid[ws.me].flatMap((v, i) => (v === -1 ? [i] : []));
+        if (hidden.length) r.send(ws, { t: 'open', i: hidden[Math.floor(Math.random() * hidden.length)] });
+      }
+      await sleep(40);
+    }
+    await until(() => r.socks[0].last.status === 'ended', 5000, 'do-min ends');
+    await until(() => r.socks.every((s) => s.msgs.some((m) => m.t === 'reveal')), 3000, 'mines revealed');
+    if (leak) throw new Error('race: opponent grid leaked');
+    const w = r.socks[0].last.winner;
+    return `winner=${w === r.socks[0].me ? 'Bot0' : w === r.socks[1].me ? 'Bot1' : w}`;
+  },
   // Ô ăn quan với máy: tới hết ván.
   async 'o-an-quan'() {
     const r = await nokia('o-an-quan', 1, (ws, m) => {

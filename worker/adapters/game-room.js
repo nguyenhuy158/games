@@ -74,6 +74,7 @@ export function gameRoom(games) {
       else if (s.status === 'playing') this.mod.join?.(this.ctxFor(), p);
       await this.save();
       this.broadcast();
+      this.mod.hello?.(this.ctxFor(), id);
       await this.drain();
       return new Response(null, { status: 101, webSocket: client });
     }

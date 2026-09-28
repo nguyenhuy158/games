@@ -26,6 +26,7 @@
  * @property {boolean} [persist]               cả phòng rớt mạng giữa ván thì giữ ván (hẹn giờ vẫn chạy), không xoá phòng
  * @property {number} [maxOnline]              số người tối đa trong phòng (mặc định 12)
  * @property {(ctx: Ctx, p: Player) => void} [join]                 có người vào giữa ván
+ * @property {(ctx: Ctx, id: string) => void} [hello]               mỗi lần có người vào / vào lại (sau tin state): gửi dữ liệu riêng qua ctx.send (Dò mìn: bàn)
  */
 
 /**
