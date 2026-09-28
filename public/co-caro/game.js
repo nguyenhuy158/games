@@ -24,7 +24,7 @@ const PIECE = ['', 'x', 'circle'];
 // Cảm xúc = icon lucide + màu; số lượng khớp EMO_COUNT ở worker (gửi theo chỉ số).
 const EMOS = [['thumbs-up', '#1f6fd6'], ['laugh', '#e0a100'], ['frown', '#8a5cd6'], ['flame', '#ff7a3d'], ['heart', '#e0312f']];
 
-let ws, code = null, room = null, clockOffset = 0, peek = false, built = '';
+let ws, code = null, room = null, clockOffset = 0, peek = false, built = '', seenLast = null;
 const mySeat = () => (room?.seats.indexOf(deviceId) ?? -1) + 1;
 const myTurn = () => room?.status === 'playing' && mySeat() === room.turn;
 const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
@@ -134,13 +134,15 @@ function emoFx(id, e) {
 }
 
 // ---------- vẽ ----------
+const MIN_CELL = 34; // nhỏ hơn thì khó chạm trúng trên điện thoại; bàn tràn thì kéo (#wrap cuộn)
 function fit() {
   const n = SIZES[room?.size ?? 0];
   const w = $('#wrap');
-  const s = Math.max(14, Math.min(120, Math.floor(Math.min(w.clientWidth, w.clientHeight) / n)));
+  const s = Math.max(MIN_CELL, Math.min(120, Math.floor((Math.min(w.clientWidth, w.clientHeight) - 4) / n)));
   $('#board').style.gridTemplateColumns = `repeat(${n}, ${s}px)`;
   $('#board').style.gridAutoRows = `${s}px`;
 }
+const center = () => { const w = $('#wrap'); w.scrollTo((w.scrollWidth - w.clientWidth) / 2, (w.scrollHeight - w.clientHeight) / 2); };
 new ResizeObserver(fit).observe($('#wrap'));
 
 function render() {
@@ -155,6 +157,7 @@ function render() {
       return c;
     }));
     fit();
+    center();
   }
   const cells = board.children;
   const cur = r?.board ?? [];
@@ -173,6 +176,9 @@ function render() {
   board.classList.toggle('mine', myTurn());
   board.classList.toggle('as-x', seat === 1);
   board.classList.toggle('as-o', seat === 2);
+  // Nước mới nằm ngoài vùng đang xem (bàn to hơn màn) thì kéo tới.
+  if (r?.last != null && r.last !== seenLast) cells[r.last]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  seenLast = r?.last;
 
   // Thanh đối đầu
   for (const side of document.querySelectorAll('.side')) {

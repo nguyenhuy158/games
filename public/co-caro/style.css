@@ -82,9 +82,11 @@ header .grow { flex: 1; }
 #clock.low { color: var(--x); animation: blink .5s infinite alternate; }
 @keyframes blink { to { opacity: .4; } }
 
-#wrap { position: relative; flex: 1; min-height: 0; margin: 8px; }
+/* Bàn to hơn màn (điện thoại, 19×19) thì ô giữ cỡ tối thiểu, vuốt 1 ngón để kéo bàn. */
+#wrap { flex: 1; min-height: 0; margin: 8px; display: grid; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }
+#wrap::-webkit-scrollbar { display: none; }
 #board {
-  position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; background: var(--paper);
+  margin: auto; display: grid; background: var(--paper);
   border: 2px solid #9fb4cf; box-shadow: 0 8px 24px #6b4a2033; border-radius: 4px;
 }
 .c { border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid); display: grid; place-items: center; cursor: pointer; }
