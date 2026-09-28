@@ -3,8 +3,8 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const ROOT = 'screenshots';
-const GAMES = { hub: 'Trang chủ', pikachu: 'Pikachu', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'dao-vang': 'Đào Vàng' };
-const URL = { hub: '/', pikachu: '/pikachu/', 'do-min': '/do-min/', 'bau-cua': '/bau-cua/', 'co-caro': '/co-caro/', 'dao-vang': '/dao-vang/' };
+const GAMES = { hub: 'Trang chủ', pikachu: 'Pikachu', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', 'dao-vang': 'Đào Vàng' };
+const URL = { hub: '/', pikachu: '/pikachu/', 'do-min': '/do-min/', 'bau-cua': '/bau-cua/', 'co-caro': '/co-caro/', 'noi-4': '/noi-4/', 'ban-tau': '/ban-tau/', 'dao-vang': '/dao-vang/' };
 // Thiết bị: tên thư mục -> [mô tả, bộ chụp, bề rộng ảnh nhỏ]
 const DEVICES = {
   desktop: ['Desktop 1280×800', 'A', 260],

@@ -221,6 +221,7 @@ function render() {
   const me = mySeat();
   const a = me || 1, b = 3 - a;
   const placing = r?.status === 'placing';
+  document.body.classList.toggle('placing', placing);
   drawSea('#seaA', a);
   drawSea('#seaB', b);
   const nm = (k) => r?.names?.[k - 1] || '…';

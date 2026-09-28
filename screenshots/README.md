@@ -7,7 +7,7 @@ Xem nhanh từng game theo thiết bị — bấm ảnh để mở ảnh gốc. 
 | **A** (mới nhất) | Playwright + Chrome headless trên prod https://games.huyab.click, sau commit `0d8c435` (tên ngẫu nhiên, nút bốc tên, XO 3×3) | `desktop`, `tablet`, `phone` |
 | **B** | browser-use (Chrome CDP) trên `wrangler dev`, commit `55fef44`; có thử chạm thật, màn ngang, cỡ bàn khác | `desktop-1440`, `iphone-portrait`, `iphone-landscape` |
 
-**Mục lục:** [Trang chủ](#trang-chủ) · [Pikachu](#pikachu) · [Dò mìn](#dò-mìn) · [Bầu cua](#bầu-cua) · [Cờ caro](#cờ-caro) · [Đào Vàng](#đào-vàng)
+**Mục lục:** [Trang chủ](#trang-chủ) · [Pikachu](#pikachu) · [Dò mìn](#dò-mìn) · [Bầu cua](#bầu-cua) · [Cờ caro](#cờ-caro) · [Nối 4](#nối-4) · [Bắn tàu](#bắn-tàu) · [Đào Vàng](#đào-vàng)
 
 ## Trang chủ
 
@@ -148,6 +148,38 @@ https://games.huyab.click/co-caro/
 ### iPhone 14 Plus ngang 926×428 · bộ B · `co-caro/iphone-landscape/`
 
 <table><tr><td align="center" valign="top"><a href="co-caro/iphone-landscape/1-lobby-scroll1.webp"><img src="co-caro/iphone-landscape/1-lobby-scroll1.webp" width="260" alt="1-lobby-scroll1.webp"></a><br><sub>1-lobby-scroll1</sub></td><td align="center" valign="top"><a href="co-caro/iphone-landscape/1-lobby-scroll2.webp"><img src="co-caro/iphone-landscape/1-lobby-scroll2.webp" width="260" alt="1-lobby-scroll2.webp"></a><br><sub>1-lobby-scroll2</sub></td><td align="center" valign="top"><a href="co-caro/iphone-landscape/2-room.webp"><img src="co-caro/iphone-landscape/2-room.webp" width="260" alt="2-room.webp"></a><br><sub>2-room</sub></td><td align="center" valign="top"><a href="co-caro/iphone-landscape/3-play-19x19.webp"><img src="co-caro/iphone-landscape/3-play-19x19.webp" width="260" alt="3-play-19x19.webp"></a><br><sub>3-play-19x19</sub></td><td align="center" valign="top"><a href="co-caro/iphone-landscape/3-play-3x3.webp"><img src="co-caro/iphone-landscape/3-play-3x3.webp" width="260" alt="3-play-3x3.webp"></a><br><sub>3-play-3x3</sub></td><td align="center" valign="top"><a href="co-caro/iphone-landscape/3-play.webp"><img src="co-caro/iphone-landscape/3-play.webp" width="260" alt="3-play.webp"></a><br><sub>3-play</sub></td></tr></table>
+
+## Nối 4
+
+https://games.huyab.click/noi-4/
+
+### Desktop 1440×900 · bộ B · `noi-4/desktop-1440/`
+
+<table><tr><td align="center" valign="top"><a href="noi-4/desktop-1440/1-lobby.webp"><img src="noi-4/desktop-1440/1-lobby.webp" width="260" alt="1-lobby.webp"></a><br><sub>1-lobby</sub></td><td align="center" valign="top"><a href="noi-4/desktop-1440/2-room.webp"><img src="noi-4/desktop-1440/2-room.webp" width="260" alt="2-room.webp"></a><br><sub>2-room</sub></td><td align="center" valign="top"><a href="noi-4/desktop-1440/3-play.webp"><img src="noi-4/desktop-1440/3-play.webp" width="260" alt="3-play.webp"></a><br><sub>3-play</sub></td><td align="center" valign="top"><a href="noi-4/desktop-1440/4-end.webp"><img src="noi-4/desktop-1440/4-end.webp" width="260" alt="4-end.webp"></a><br><sub>4-end</sub></td></tr></table>
+
+### iPhone 14 Plus dọc 428×926 · bộ B · `noi-4/iphone-portrait/`
+
+<table><tr><td align="center" valign="top"><a href="noi-4/iphone-portrait/1-lobby.webp"><img src="noi-4/iphone-portrait/1-lobby.webp" width="130" alt="1-lobby.webp"></a><br><sub>1-lobby</sub></td><td align="center" valign="top"><a href="noi-4/iphone-portrait/2-room.webp"><img src="noi-4/iphone-portrait/2-room.webp" width="130" alt="2-room.webp"></a><br><sub>2-room</sub></td><td align="center" valign="top"><a href="noi-4/iphone-portrait/3-play.webp"><img src="noi-4/iphone-portrait/3-play.webp" width="130" alt="3-play.webp"></a><br><sub>3-play</sub></td><td align="center" valign="top"><a href="noi-4/iphone-portrait/4-end.webp"><img src="noi-4/iphone-portrait/4-end.webp" width="130" alt="4-end.webp"></a><br><sub>4-end</sub></td></tr></table>
+
+### iPhone 14 Plus ngang 926×428 · bộ B · `noi-4/iphone-landscape/`
+
+<table><tr><td align="center" valign="top"><a href="noi-4/iphone-landscape/1-lobby.webp"><img src="noi-4/iphone-landscape/1-lobby.webp" width="260" alt="1-lobby.webp"></a><br><sub>1-lobby</sub></td><td align="center" valign="top"><a href="noi-4/iphone-landscape/2-room.webp"><img src="noi-4/iphone-landscape/2-room.webp" width="260" alt="2-room.webp"></a><br><sub>2-room</sub></td><td align="center" valign="top"><a href="noi-4/iphone-landscape/3-play.webp"><img src="noi-4/iphone-landscape/3-play.webp" width="260" alt="3-play.webp"></a><br><sub>3-play</sub></td><td align="center" valign="top"><a href="noi-4/iphone-landscape/4-end.webp"><img src="noi-4/iphone-landscape/4-end.webp" width="260" alt="4-end.webp"></a><br><sub>4-end</sub></td></tr></table>
+
+## Bắn tàu
+
+https://games.huyab.click/ban-tau/
+
+### Desktop 1440×900 · bộ B · `ban-tau/desktop-1440/`
+
+<table><tr><td align="center" valign="top"><a href="ban-tau/desktop-1440/1-lobby.webp"><img src="ban-tau/desktop-1440/1-lobby.webp" width="260" alt="1-lobby.webp"></a><br><sub>1-lobby</sub></td><td align="center" valign="top"><a href="ban-tau/desktop-1440/2-room.webp"><img src="ban-tau/desktop-1440/2-room.webp" width="260" alt="2-room.webp"></a><br><sub>2-room</sub></td><td align="center" valign="top"><a href="ban-tau/desktop-1440/3-xep-tau.webp"><img src="ban-tau/desktop-1440/3-xep-tau.webp" width="260" alt="3-xep-tau.webp"></a><br><sub>3-xep-tau</sub></td><td align="center" valign="top"><a href="ban-tau/desktop-1440/4-dang-ban.webp"><img src="ban-tau/desktop-1440/4-dang-ban.webp" width="260" alt="4-dang-ban.webp"></a><br><sub>4-dang-ban</sub></td><td align="center" valign="top"><a href="ban-tau/desktop-1440/5-het-van.webp"><img src="ban-tau/desktop-1440/5-het-van.webp" width="260" alt="5-het-van.webp"></a><br><sub>5-het-van</sub></td></tr></table>
+
+### iPhone 14 Plus dọc 428×926 · bộ B · `ban-tau/iphone-portrait/`
+
+<table><tr><td align="center" valign="top"><a href="ban-tau/iphone-portrait/1-lobby.webp"><img src="ban-tau/iphone-portrait/1-lobby.webp" width="130" alt="1-lobby.webp"></a><br><sub>1-lobby</sub></td><td align="center" valign="top"><a href="ban-tau/iphone-portrait/2-room.webp"><img src="ban-tau/iphone-portrait/2-room.webp" width="130" alt="2-room.webp"></a><br><sub>2-room</sub></td><td align="center" valign="top"><a href="ban-tau/iphone-portrait/3-xep-tau.webp"><img src="ban-tau/iphone-portrait/3-xep-tau.webp" width="130" alt="3-xep-tau.webp"></a><br><sub>3-xep-tau</sub></td><td align="center" valign="top"><a href="ban-tau/iphone-portrait/4-dang-ban.webp"><img src="ban-tau/iphone-portrait/4-dang-ban.webp" width="130" alt="4-dang-ban.webp"></a><br><sub>4-dang-ban</sub></td><td align="center" valign="top"><a href="ban-tau/iphone-portrait/5-het-van.webp"><img src="ban-tau/iphone-portrait/5-het-van.webp" width="130" alt="5-het-van.webp"></a><br><sub>5-het-van</sub></td></tr></table>
+
+### iPhone 14 Plus ngang 926×428 · bộ B · `ban-tau/iphone-landscape/`
+
+<table><tr><td align="center" valign="top"><a href="ban-tau/iphone-landscape/1-lobby.webp"><img src="ban-tau/iphone-landscape/1-lobby.webp" width="260" alt="1-lobby.webp"></a><br><sub>1-lobby</sub></td><td align="center" valign="top"><a href="ban-tau/iphone-landscape/2-room.webp"><img src="ban-tau/iphone-landscape/2-room.webp" width="260" alt="2-room.webp"></a><br><sub>2-room</sub></td><td align="center" valign="top"><a href="ban-tau/iphone-landscape/3-xep-tau.webp"><img src="ban-tau/iphone-landscape/3-xep-tau.webp" width="260" alt="3-xep-tau.webp"></a><br><sub>3-xep-tau</sub></td><td align="center" valign="top"><a href="ban-tau/iphone-landscape/4-dang-ban.webp"><img src="ban-tau/iphone-landscape/4-dang-ban.webp" width="260" alt="4-dang-ban.webp"></a><br><sub>4-dang-ban</sub></td><td align="center" valign="top"><a href="ban-tau/iphone-landscape/5-het-van.webp"><img src="ban-tau/iphone-landscape/5-het-van.webp" width="260" alt="5-het-van.webp"></a><br><sub>5-het-van</sub></td></tr></table>
 
 ## Đào Vàng
 
