@@ -56,7 +56,7 @@ input.switch:disabled { opacity: .5; cursor: default; }
 .muted { font-size: 12px; }
 .join { display: flex; gap: 8px; }
 #code { text-transform: uppercase; letter-spacing: 3px; text-align: center; }
-.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 #home { height: 100%; display: grid; place-items: center; padding: 16px; }
 
 #room { height: 100%; display: flex; flex-direction: column; }

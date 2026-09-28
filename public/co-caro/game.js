@@ -102,7 +102,11 @@ $('#btnCopy').onclick = () => invite(`${location.origin}/co-caro/?r=${code}`, co
 $('#btnStart').onclick = () => send({ t: 'start' });
 $('#btnPeek').onclick = () => { peek = true; render(); };
 $('#btnResult').onclick = () => { peek = false; render(); };
-$('#sizePick').append(...SIZES.map((n, i) => el('button', { textContent: `${n}×${n}`, onclick: () => send({ t: 'config', size: i }) })));
+// Nút chọn bàn: XO 3×3 đứng đầu (chỉ số trong SIZES giữ nguyên để khớp server).
+const SIZE_ORDER = [2, 0, 1];
+$('#sizePick').append(...SIZE_ORDER.map((i) => el('button', {
+  textContent: SIZES[i] === 3 ? 'XO 3×3' : `${SIZES[i]}×${SIZES[i]}`, onclick: () => send({ t: 'config', size: i }),
+})));
 $('#blockPick input').onchange = (e) => send({ t: 'config', block: e.target.checked });
 $('#emoBar').append(...EMOS.map(([name, color], i) => {
   const b = el('button', { title: 'Gửi cảm xúc', onclick: () => send({ t: 'emo', e: i }) }, iconEl(name));
@@ -131,7 +135,7 @@ function emoFx(id, e) {
 function fit() {
   const n = SIZES[room?.size ?? 0];
   const w = $('#wrap');
-  const s = Math.max(14, Math.floor(Math.min(w.clientWidth, w.clientHeight) / n));
+  const s = Math.max(14, Math.min(120, Math.floor(Math.min(w.clientWidth, w.clientHeight) / n)));
   $('#board').style.gridTemplateColumns = `repeat(${n}, ${s}px)`;
   $('#board').style.gridAutoRows = `${s}px`;
 }
@@ -185,7 +189,8 @@ function render() {
   const ov = $('#overlay');
   const lobbyish = r && r.status !== 'playing';
   $('#sizePick').hidden = $('#blockPick').hidden = !lobbyish;
-  [...$('#sizePick').children].forEach((b, i) => { b.classList.toggle('on', i === r?.size); b.disabled = !isHost; });
+  [...$('#sizePick').children].forEach((b, k) => { b.classList.toggle('on', SIZE_ORDER[k] === r?.size); b.disabled = !isHost; });
+  if (SIZES[r?.size] === 3) $('#blockPick').hidden = true; // luật chặn 2 đầu chỉ cho bàn lớn
   $('#blockPick input').checked = !!r?.block;
   $('#blockPick input').disabled = !isHost;
   const players = r?.players ?? [];

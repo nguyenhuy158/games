@@ -1,6 +1,7 @@
 // Luật Cờ caro (thuần, dùng chung server + test). Bàn = mảng n*n: 0 trống, 1 = X (đi trước), 2 = O.
-export const SIZES = [15, 19];
-export const WIN = 5;
+// SIZES theo chỉ số phòng lưu (thêm mới thì nối cuối); 3×3 = XO / tic-tac-toe: nối 3 là thắng.
+export const SIZES = [15, 19, 3];
+export const winLen = (n) => (n === 3 ? 3 : 5);
 const DIRS = [[0, 1], [1, 0], [1, 1], [1, -1]];
 
 // Dãy quân cùng màu đi qua ô i theo hướng (dr, dc): danh sách ô + 2 đầu (ô kế tiếp ngoài dãy, -1 nếu ra ngoài bàn).
@@ -15,15 +16,15 @@ function run(board, n, i, dr, dc) {
   return { cells, ends: [walk(1), walk(-1)] };
 }
 
-// Nước vừa đi ở ô i có tạo 5 quân không? Trả về các ô thắng hoặc null.
-// block (luật "chặn 2 đầu"): dãy bị quân đối phương chặn cả 2 đầu thì không tính (mép bàn không tính là chặn).
+// Nước vừa đi ở ô i có tạo đủ quân (5, bàn 3×3 thì 3) không? Trả về các ô thắng hoặc null.
+// block (luật "chặn 2 đầu", chỉ bàn lớn): dãy bị quân đối phương chặn cả 2 đầu thì không tính (mép bàn không tính là chặn).
 export function winLine(board, n, i, block = false) {
   const me = board[i];
   if (!me) return null;
   for (const [dr, dc] of DIRS) {
     const { cells, ends } = run(board, n, i, dr, dc);
-    if (cells.length < WIN) continue;
-    if (block && ends.every((e) => e >= 0 && board[e] && board[e] !== me)) continue;
+    if (cells.length < winLen(n)) continue;
+    if (block && n > 3 && ends.every((e) => e >= 0 && board[e] && board[e] !== me)) continue;
     return cells.sort((a, b) => a - b);
   }
   return null;
@@ -35,6 +36,7 @@ export const full = (board) => board.every((v) => v);
 // ponytail: heuristic 1 nước (không tìm sâu) — đủ vui, người chơi kỹ thắng được; muốn khó hơn thì thêm minimax 2-3 tầng.
 const SCORE = [[0, 0, 0], [1, 5, 10], [10, 60, 200], [100, 800, 3000], [1000, 12000, 60000]]; // [độ dài][số đầu trống]
 export function botMove(board, n, me, rand = Math.random) {
+  if (n === 3) return perfect(board, me, rand);
   if (board.every((v) => !v)) return Math.floor(n / 2) * n + Math.floor(n / 2);
   const opp = 3 - me;
   let best = -1, bestScore = -1;
@@ -53,10 +55,30 @@ function value(board, n, i, who) {
   for (const [dr, dc] of DIRS) {
     const { cells, ends } = run(board, n, i, dr, dc);
     const open = ends.filter((e) => e >= 0 && !board[e]).length;
-    s += cells.length >= WIN ? 1e6 : SCORE[cells.length][open];
+    s += cells.length >= winLen(n) ? 1e6 : SCORE[cells.length][open];
   }
   board[i] = 0;
   return s;
+}
+
+// XO 3×3: minimax cả cây (rất nhỏ) -> máy không bao giờ thua; nhiều nước ngang điểm thì chọn ngẫu nhiên.
+// Điểm: thắng càng sớm càng cao (10 - độ sâu), hoà 0, thua âm.
+function perfect(board, me, rand) {
+  // Bàn trống: nước nào cũng hoà nếu đánh đúng -> chọn góc/tâm luôn, khỏi duyệt 9! nhánh.
+  if (board.every((v) => !v)) return [0, 2, 4, 6, 8][Math.floor(rand() * 5)];
+  const value = (i, who, depth) => {
+    board[i] = who;
+    let s;
+    if (winLine(board, 3, i)) s = 10 - depth;
+    else if (full(board)) s = 0;
+    else s = -Math.max(...board.map((v, j) => (v ? -Infinity : value(j, 3 - who, depth + 1))));
+    board[i] = 0;
+    return s;
+  };
+  const scores = board.map((v, i) => (v ? -Infinity : value(i, me, 0)));
+  const best = Math.max(...scores);
+  const moves = scores.flatMap((s, i) => (s === best ? [i] : []));
+  return moves[Math.floor(rand() * moves.length)];
 }
 
 function near(board, n, i) {

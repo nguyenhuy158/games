@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { winLine, botMove, full } from './public/co-caro/logic.js';
+import { winLine, botMove, full, SIZES } from './public/co-caro/logic.js';
 
 const n = 15;
 const at = (r, c) => r * n + c;
@@ -36,4 +36,24 @@ const b3 = put(empty(), 1, [9, 5], [9, 6], [9, 7]);
 put(b3, 2, [2, 2]);
 assert.ok([at(9, 4), at(9, 8), at(9, 3), at(9, 9)].includes(botMove(b3, n, 2)), 'bot blocks the open three');
 assert.equal(full(new Array(4).fill(1)), true);
+// XO 3×3: nối 3 thắng; máy thắng ngay / chặn; máy tự đánh với máy luôn hoà.
+assert.equal(SIZES[2], 3);
+assert.deepEqual(winLine([1, 1, 1, 0, 2, 2, 0, 0, 0], 3, 1), [0, 1, 2]);
+assert.deepEqual(winLine([1, 2, 0, 0, 1, 2, 0, 0, 1], 3, 8), [0, 4, 8]);
+assert.equal(winLine([1, 1, 0, 0, 0, 0, 0, 0, 0], 3, 1), null);
+assert.equal(winLine([2, 1, 1, 1, 0, 0, 0, 0, 0], 3, 2, true), null, 'no row wrap on 3x3');
+assert.deepEqual(winLine([2, 1, 2, 0, 1, 0, 0, 1, 0], 3, 7, true), [1, 4, 7], 'block rule ignored on 3x3');
+assert.equal(botMove([2, 2, 0, 1, 1, 0, 0, 0, 0], 3, 2), 2, 'bot wins');
+assert.equal(botMove([1, 1, 0, 0, 2, 0, 0, 0, 0], 3, 2), 2, 'bot blocks');
+for (let g = 0; g < 20; g++) {
+  const b = new Array(9).fill(0);
+  let who = 1, end = null;
+  while (!end) {
+    const i = botMove(b, 3, who);
+    b[i] = who;
+    end = winLine(b, 3, i) ? 'win' : full(b) ? 'draw' : null;
+    who = 3 - who;
+  }
+  assert.equal(end, 'draw', 'perfect play always draws');
+}
 console.log('co-caro ok');

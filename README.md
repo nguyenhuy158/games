@@ -7,7 +7,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 | Pikachu nối thú | `/pikachu/` | Multiplayer ẩn danh (định danh theo thiết bị) |
 | Đào Vàng | `/dao-vang/` | 1 người hoặc 2–4 người chung mỏ; luật thuần ở `public/dao-vang/logic.js` |
 | Bầu cua | `/bau-cua/` | 2–10 người đặt xu ảo, máy làm cái (mặc định) hoặc xoay vòng |
-| Cờ caro | `/co-caro/` | 1v1 hoặc với máy, người khác xem; luật chặn 2 đầu tuỳ chọn |
+| Cờ caro | `/co-caro/` | 1v1 hoặc với máy, người khác xem; XO 3×3; luật chặn 2 đầu tuỳ chọn |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |
 
 Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.html`, thêm file vào `CORE` trong `public/sw.js` (và tăng `CACHE`), test vào `<ten-game>.test.mjs` rồi import ở cuối `logic.test.mjs`.
@@ -69,7 +69,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 ## Cờ caro
 
 - `worker/co-caro.js` (DO `CaroRoom`, WebSocket `/api/cc/room/CODE`), luật + máy đánh ở `public/co-caro/logic.js`.
-- Bàn 15×15 / 19×19, nối 5 là thắng. Luật **chặn 2 đầu** (tuỳ chọn): 5 quân bị quân đối phương chặn cả 2 đầu thì không tính; mép bàn không tính là chặn.
+- Bàn 15×15 / 19×19 nối 5 là thắng, hoặc **XO 3×3** (tic-tac-toe) nối 3 — máy dùng minimax cả cây nên không bao giờ thua (đánh đúng thì hoà). Luật **chặn 2 đầu** (tuỳ chọn): 5 quân bị quân đối phương chặn cả 2 đầu thì không tính; mép bàn không tính là chặn.
 - 2 người vào đầu cầm X / O (X đi trước), còn lại xem + thả cảm xúc. Một mình thì đánh với máy (heuristic chấm điểm 1 nước: tấn công ×1.1 + phòng thủ). Ván mới đổi người đi trước; tỉ số tính theo cặp đấu.
 - Mỗi nước 30 giây, hết giờ thua (server hẹn giờ; `tick()` kiểm lại nếu DO bị tắt). Lịch sử lưu số nước; bảng vui có "Kỳ thủ caro" (số ván thắng người thật).
 
