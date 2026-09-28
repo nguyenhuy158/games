@@ -7,18 +7,18 @@ const BOT = 'bot';
 // Ván sau đổi người đi trước (người 1 luôn đi trước, nên hai người đổi phía).
 export default {
   max: 2,
+  page: '/nokia/bantumi/',
   cfg: { seeds: 4 },
   config(cfg, m) {
     return [3, 4, 5, 6].includes(m.seeds) ? { ...cfg, seeds: m.seeds } : null;
   },
-  tickMs: 500,
   start(ctx) {
     const g = ctx.g;
     const two = ctx.seats.length === 2 ? [...ctx.seats] : [ctx.seats[0], BOT];
     // Đổi bên mỗi ván: nhớ qua cfg (phòng giữ cfg giữa các ván).
     ctx.cfg.swap = !ctx.cfg.swap;
     Object.assign(g, { side: ctx.cfg.swap ? two : [two[1], two[0]], board: newBoard(ctx.cfg.seeds), turn: 1, last: null, moves: 0 });
-    g.deadline = Date.now() + (g.side[0] === BOT ? BOT_MS : TURN_MS);
+    arm(ctx);
   },
   msg(ctx, p, m) {
     const g = ctx.g;
@@ -47,7 +47,14 @@ function play(ctx, i) {
   g.last = { who: g.turn, from: i, path: r.path, captured: r.captured, again: r.again };
   if (r.over) return end(ctx, winner(g.board), 'done');
   if (!r.again) g.turn = 3 - g.turn;
+  arm(ctx);
+}
+
+// Hạn nước hiện tại (máy thì đánh sau BOT_MS); adapter gọi tick() đúng lúc đó bằng alarm.
+function arm(ctx) {
+  const g = ctx.g;
   g.deadline = Date.now() + (g.side[g.turn - 1] === BOT ? BOT_MS : TURN_MS);
+  ctx.wakeAt(g.deadline);
 }
 
 function end(ctx, w, why) {

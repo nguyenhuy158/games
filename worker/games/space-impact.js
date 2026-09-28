@@ -4,6 +4,7 @@ import { createWorld, step, DT } from '../../public/nokia/space-impact/logic.js'
 const KEYS = ['up', 'down', 'left', 'right', 'fire'];
 
 export default {
+  page: '/nokia/space-impact/',
   max: 4,
   cfg: {},
   volatile: true,

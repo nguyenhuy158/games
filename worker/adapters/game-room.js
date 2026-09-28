@@ -27,7 +27,7 @@ export function gameRoom(games) {
 
     // Gọi ra ngoài (Top: lịch sử, danh sách phòng) phải được chờ trước khi sự kiện kết thúc: DO ngủ đông sau khi
     // xử lý xong tin WebSocket sẽ huỷ lời gọi còn treo. io() ghi nhận, drain() chờ hết ở cuối fetch / tin / đóng / alarm.
-    io(p) { (this.pending ??= []).push(p.catch(() => {})); }
+    io(p) { (this.pending ??= []).push(p.catch((e) => console.error('game-room io', e))); }
     async drain() { while (this.pending?.length) await Promise.all(this.pending.splice(0)); }
 
     fresh(game, code) {
@@ -208,7 +208,7 @@ export function gameRoom(games) {
     // Báo lên Top khi thông tin đổi (số người, trạng thái, chủ phòng) hoặc tới nhịp; force = từ alarm.
     list(force = false, except) {
       const s = this.s;
-      if (!s?.pub || !s.code) return;
+      if (!s?.pub || !s.code || !this.mod.page) return;
       const host = s.players[this.hostId(except)]?.name ?? '';
       const row = {
         key: `${s.game}:${s.code}`, game: this.slug, code: s.code, path: this.mod.page, players: this.onlineIds(except).size, cap: this.mod.max,

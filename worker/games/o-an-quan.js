@@ -7,6 +7,7 @@ const DEPTH = [1, 3, 6];
 
 export default {
   max: 2,
+  page: '/o-an-quan/',
   cfg: { quanNon: true, level: 1 },
   config(cfg, m) {
     const next = { ...cfg };
@@ -14,13 +15,12 @@ export default {
     if (DEPTH[m.level] !== undefined) next.level = m.level;
     return next;
   },
-  tickMs: 300,
   start(ctx) {
     const g = ctx.g;
     const two = ctx.seats.length === 2 ? [...ctx.seats] : [ctx.seats[0], BOT];
     ctx.cfg.swap = !ctx.cfg.swap; // ván sau đổi người đi trước
     Object.assign(g, { side: ctx.cfg.swap ? two : [two[1], two[0]], s: newGame(ctx.cfg), last: null });
-    arm(g, 0);
+    arm(ctx, 0);
   },
   msg(ctx, p, m) {
     const g = ctx.g;
@@ -46,8 +46,11 @@ export default {
   },
 };
 
-function arm(g, steps) {
+// Hạn nước hiện tại; adapter gọi tick() đúng lúc đó bằng alarm.
+function arm(ctx, steps) {
+  const g = ctx.g;
   g.deadline = Date.now() + steps * STEP_MS + (g.side[g.s.turn - 1] === BOT ? BOT_MS : TURN_MS);
+  ctx.wakeAt(g.deadline);
 }
 
 function play(ctx, k, d) {
@@ -57,8 +60,8 @@ function play(ctx, k, d) {
   const steps = move(g.s, k, d);
   g.last = { p, k, d, from, steps };
   // Hết ván: chờ client diễn xong nước cuối rồi mới hiện kết quả.
-  if (g.s.over) g.deadline = Date.now() + steps.length * STEP_MS + 1200;
-  else arm(g, steps.length);
+  if (g.s.over) ctx.wakeAt(g.deadline = Date.now() + steps.length * STEP_MS + 1200);
+  else arm(ctx, steps.length);
 }
 
 function end(ctx, w, timeout) {

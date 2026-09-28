@@ -2,10 +2,10 @@
 // client tự chạy game của mình và gửi { at: [x, y], score } (vài lần/giây) + { done: true, score } khi chết / về đích;
 // server phát lại vị trí mọi người (bóng ma) và chốt xếp hạng khi ai cũng xong hoặc hết giờ.
 // ponytail: tin điểm client gửi (game vui, không có tiền thật); muốn chống gian lận thì server phải mô phỏng lại theo input.
-export function raceModule({ max = 6, timeMs, better = 'high', cfg = {}, config = null, countdownMs = 3000, extra = () => ({}) }) {
+export function raceModule({ page, max = 6, timeMs, better = 'high', cfg = {}, config = null, countdownMs = 3000, extra = () => ({}) }) {
   const rank = (a, b) => (better === 'high' ? b.score - a.score : a.score - b.score);
   return {
-    max, cfg, config, tickMs: 250, volatile: true,
+    page, max, cfg, config, tickMs: 250, volatile: true,
     start(ctx) {
       const at = Date.now() + countdownMs;
       Object.assign(ctx.g, { seed: Math.floor(ctx.rand() * 2 ** 31), startAt: at, endsAt: at + timeMs, runners: {}, ...extra(ctx) });

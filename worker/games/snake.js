@@ -8,6 +8,7 @@ const snakesOf = (g) => worlds(g).flatMap((w) => w.snakes);
 const pick = ({ id, body, alive, score, dir }) => ({ id, body, alive, score, dir });
 
 export default {
+  page: '/nokia/snake/',
   max: MAX,
   cfg: { speed: 2, walls: false, mode: 'arena' },
   config(cfg, m) {

@@ -3,6 +3,7 @@ import { newSecret, valid, score, SLOTS, MAX_GUESSES, TIME_MS } from '../../publ
 // Logic: mọi người đoán CÙNG một mã (chỉ ở server). Mỗi người thấy lượt đoán của mình, của người khác chỉ thấy tiến độ.
 // Xếp hạng: giải được trước, ít lượt hơn, nhanh hơn. Hết 10 lượt hoặc 5 phút là dừng.
 export default {
+  page: '/nokia/logic/',
   max: 6,
   cfg: {},
   tickMs: 1000,

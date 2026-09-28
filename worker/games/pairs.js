@@ -5,6 +5,7 @@ const TURN_MS = 20_000, SHOW_MS = 1200;
 // Pairs: cả phòng chung một bàn, lần lượt lật 2 lá; trúng cặp thì được điểm và lật tiếp.
 // Hình các lá úp chỉ ở server; view chỉ lộ lá đã ăn + lá đang mở. Hết giờ thì mất lượt.
 export default {
+  page: '/nokia/pairs/',
   max: 6,
   cfg: {},
   tickMs: 250,
