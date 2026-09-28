@@ -3,8 +3,13 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const ROOT = 'screenshots';
-const GAMES = { hub: 'Trang chủ', pikachu: 'Pikachu', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', 'dao-vang': 'Đào Vàng' };
-const URL = { hub: '/', pikachu: '/pikachu/', 'do-min': '/do-min/', 'bau-cua': '/bau-cua/', 'co-caro': '/co-caro/', 'noi-4': '/noi-4/', 'ban-tau': '/ban-tau/', 'dao-vang': '/dao-vang/' };
+const GAMES = {
+  hub: 'Trang chủ', phong: 'Phòng đang mở', pikachu: 'Pikachu', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'o-an-quan': 'Ô ăn quan', 'co-caro': 'Cờ caro',
+  'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', 'dao-vang': 'Đào Vàng', snake: 'Rắn săn mồi', bantumi: 'Bantumi', pairs: 'Lật hình', logic: 'Logic',
+  'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce',
+};
+const NOKIA = ['snake', 'bantumi', 'pairs', 'logic', 'rapid-roll', 'space-impact', 'bounce'];
+const URL = Object.fromEntries(Object.keys(GAMES).map((g) => [g, g === 'hub' ? '/' : NOKIA.includes(g) ? `/nokia/${g}/` : `/${g}/`]));
 // Thiết bị: tên thư mục -> [mô tả, bộ chụp, bề rộng ảnh nhỏ]
 const DEVICES = {
   desktop: ['Desktop 1280×800', 'A', 260],
@@ -23,8 +28,8 @@ Xem nhanh từng game theo thiết bị — bấm ảnh để mở ảnh gốc. 
 
 | Bộ | Chụp | Thiết bị |
 |---|---|---|
-| **A** (mới nhất) | Playwright + Chrome headless trên prod https://games.huyab.click, sau commit \`0d8c435\` (tên ngẫu nhiên, nút bốc tên, XO 3×3) | ${Object.entries(DEVICES).filter(([, d]) => d[1] === 'A').map(([k]) => `\`${k}\``).join(', ')} |
-| **B** | browser-use (Chrome CDP) trên \`wrangler dev\`, commit \`55fef44\`; có thử chạm thật, màn ngang, cỡ bàn khác | ${Object.entries(DEVICES).filter(([, d]) => d[1] === 'B').map(([k]) => `\`${k}\``).join(', ')} |
+| **A** | Playwright + Chrome headless trên prod https://games.huyab.click, sau commit \`0d8c435\` (tên ngẫu nhiên, nút bốc tên, XO 3×3) | ${Object.entries(DEVICES).filter(([, d]) => d[1] === 'A').map(([k]) => `\`${k}\``).join(', ')} |
+| **B** (mới nhất) | browser-use (Chrome CDP) trên prod https://games.huyab.click, sau commit \`2a72320\` (trang chủ chia nhóm, Nokia màn tràn, song ngữ, công tắc Công khai) — mọi game: sảnh → phòng chờ → đang chơi | ${Object.entries(DEVICES).filter(([, d]) => d[1] === 'B').map(([k]) => `\`${k}\``).join(', ')} |
 
 **Mục lục:** ${Object.entries(GAMES).map(([k, v]) => `[${v}](#${slug(v)})`).join(' · ')}
 `];
