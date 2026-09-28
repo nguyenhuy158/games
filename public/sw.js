@@ -1,10 +1,15 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v25';
+const CACHE = 'games-v26';
 const CORE = [
   '/', '/index.html', '/me.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/toast.js', '/nozoom.js', '/bfcache.js', '/public-switch.js', '/phong/', '/phong/index.html', '/phong/phong.js', '/i18n.js', '/names.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png',
   '/logos/hub.svg', '/logos/pikachu.svg', '/logos/dao-vang.svg', '/logos/do-min.svg', '/logos/bau-cua.svg', '/logos/co-caro.svg', '/logos/noi-4.svg', '/logos/ban-tau.svg',
   '/nokia/nokia.css', '/nokia/room.js', '/nokia/lcd.js',
+  '/nokia/snake/', '/nokia/snake/game.js', '/nokia/snake/index.html', '/nokia/snake/logic.js', '/logos/snake.svg', '/nokia/bantumi/', '/nokia/bantumi/game.js', '/nokia/bantumi/index.html',
+  '/nokia/bantumi/logic.js', '/logos/bantumi.svg', '/nokia/pairs/', '/nokia/pairs/game.js', '/nokia/pairs/index.html', '/nokia/pairs/logic.js', '/logos/pairs.svg', '/nokia/logic/',
+  '/nokia/logic/game.js', '/nokia/logic/index.html', '/nokia/logic/logic.js', '/logos/logic.svg', '/nokia/rapid-roll/', '/nokia/rapid-roll/game.js', '/nokia/rapid-roll/index.html', '/nokia/rapid-roll/logic.js',
+  '/logos/rapid-roll.svg', '/nokia/space-impact/', '/nokia/space-impact/game.js', '/nokia/space-impact/index.html', '/nokia/space-impact/logic.js', '/logos/space-impact.svg', '/nokia/bounce/', '/nokia/bounce/game.js',
+  '/nokia/bounce/index.html', '/nokia/bounce/logic.js', '/logos/bounce.svg',
   '/o-an-quan/', '/o-an-quan/index.html', '/o-an-quan/style.css', '/o-an-quan/game.js', '/o-an-quan/logic.js', '/logos/o-an-quan.svg',
   '/co-caro/', '/co-caro/index.html', '/co-caro/style.css', '/co-caro/game.js', '/co-caro/logic.js',
   '/noi-4/', '/noi-4/index.html', '/noi-4/style.css', '/noi-4/game.js', '/noi-4/logic.js',
@@ -13,10 +18,11 @@ const CORE = [
   '/do-min/', '/do-min/index.html', '/do-min/style.css', '/do-min/game.js', '/do-min/logic.js',
   '/do-min/skins/face/smileface.svg', '/do-min/skins/xp/cellup.svg', '/do-min/skins/xp/celldown.svg',
   '/pikachu/', '/pikachu/index.html', '/pikachu/style.css', '/pikachu/app.js', '/pikachu/logic.js',
-  '/pikachu/images/pieces-sprite.png', '/pikachu/images/animals-sprite.png',
+  '/pikachu/images/pieces-sprite.png', '/pikachu/images/animals-sprite.png', '/pikachu/images/thumb.webp',
   '/pikachu/sound/sound1.mp3', '/pikachu/sound/sound2.mp3', '/pikachu/sound/sound4.mp3', '/pikachu/sound/sound5.mp3',
   '/dao-vang/', '/dao-vang/index.html', '/dao-vang/style.css', '/dao-vang/game.js', '/dao-vang/logic.js',
   '/dao-vang/assets/atlas.webp', '/dao-vang/assets/atlas.json',
+  '/dao-vang/assets/audio/boom.m4a', '/dao-vang/assets/audio/down.m4a', '/dao-vang/assets/audio/goal.m4a', '/dao-vang/assets/audio/hvBad.m4a', '/dao-vang/assets/audio/hvCool.m4a', '/dao-vang/assets/audio/hvGood.m4a', '/dao-vang/assets/audio/scoreAdd.m4a', '/dao-vang/assets/audio/up.m4a', '/dao-vang/assets/audio/upfinish.m4a', '/dao-vang/assets/audio/win.m4a',
   '/dao-vang/assets/bg1.jpg', '/dao-vang/assets/bg2.jpg', '/dao-vang/assets/bg3.jpg', '/dao-vang/assets/bg4.jpg',
 ];
 
