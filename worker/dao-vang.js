@@ -52,6 +52,7 @@ export class MinerRoom extends DurableObject {
       s.order.push(id);
     }
     p.name = name;
+    p.user = JSON.parse(req.headers.get('X-User') || 'null'); // tài khoản SSO, null = khách
     for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) ws.close(4000, 'replaced');
     this.ctx.acceptWebSocket(server);
     server.serializeAttachment({ id });
@@ -174,6 +175,13 @@ export class MinerRoom extends DurableObject {
       const ranking = this.activeIds().map((id) => ({ id, name: s.players[id].name, money: s.players[id].money })).sort((a, b) => b.money - a.money);
       s.result = coop ? { win: false, level: s.level, team: s.team, target: teamTarget(s.level, n), ranking } : { win: true, winner: ranking[0]?.id, ranking };
       s.world = null;
+      // Lịch sử cá nhân cho người đã đăng nhập. coop: màn đạt được là thành tích (luôn "thua" ở màn cuối).
+      const plays = this.activeIds().filter((id) => s.players[id].user).map((id) => ({
+        sub: s.players[id].user.sub, game: 'dao-vang', mode: s.mode, score: s.players[id].money, level: s.level,
+        won: !coop && ranking[0]?.id === id,
+        detail: JSON.stringify({ team: coop ? s.team : undefined, rank: ranking.findIndex((x) => x.id === id) + 1, of: ranking.length }),
+      }));
+      try { if (plays.length) await this.env.TOP.get(this.env.TOP.idFromName('global')).addPlays(plays); } catch {}
     } else {
       s.status = 'shop';
       s.shopEndsAt = Date.now() + SHOP_MS;

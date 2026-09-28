@@ -106,3 +106,4 @@ for (const dir of SLIDES) {
 console.log('logic ok');
 
 await import('./dao-vang.test.mjs');
+await import('./sso.test.mjs');

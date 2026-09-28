@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 export { MinerRoom } from './dao-vang.js';
+import { userFrom } from './sso.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
 
 const MAX_PLAYERS = 4;
@@ -28,18 +29,48 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
     if (!api) return env.ASSETS.fetch(req);
+    const top = () => env.TOP.get(env.TOP.idFromName('global'));
+    if (url.pathname === '/api/me') {
+      const user = await userFrom(req);
+      const body = user ? { user, stats: await top().stats(user.sub) } : { user: null };
+      return Response.json(body, { headers: { 'Cache-Control': 'no-store' } });
+    }
+    if (url.pathname === '/api/me/history') {
+      const user = await userFrom(req);
+      if (!user) return Response.json({ error: 'login' }, { status: 401 });
+      if (req.method === 'POST') {
+        // Bắt buộc JSON: trang lạ muốn gửi kiểu này phải qua CORS preflight (Worker không cho) -> chặn CSRF.
+        if (!req.headers.get('Content-Type')?.startsWith('application/json')) return new Response('Unsupported', { status: 415 });
+        // Chỉ Đào Vàng chơi 1 người (chạy hết ở client) mới tự gửi kết quả lên; ván nhiều người
+        // do server ghi. Kết quả tự báo nên chỉ là lịch sử cá nhân, không vào bảng xếp hạng.
+        let b;
+        try { b = await req.json(); } catch { return new Response('Bad request', { status: 400 }); }
+        const score = Number(b?.score), level = Number(b?.level);
+        if (b?.game !== 'dao-vang' || !Number.isInteger(score) || score < 0 || score > 1e7 || !Number.isInteger(level) || level < 1 || level > 999) {
+          return new Response('Bad request', { status: 400 });
+        }
+        await top().addPlays([{ sub: user.sub, game: 'dao-vang', mode: 'solo', score, level, won: false, detail: '' }]);
+        return Response.json({ ok: true });
+      }
+      return Response.json(await top().history(user.sub), { headers: { 'Cache-Control': 'no-store' } });
+    }
     if (url.pathname === '/api/top') {
       const mode = url.searchParams.get('mode');
       const size = Number(url.searchParams.get('size'));
       if (!MODES.includes(mode) || !SIZES[size]) return new Response('Bad request', { status: 400 });
-      const rows = await env.TOP.get(env.TOP.idFromName('global')).list(mode, size);
+      const rows = await top().list(mode, size);
       return Response.json(rows, { headers: { 'Cache-Control': 'public, max-age=30' } });
     }
     // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng.
     const m = url.pathname.match(/^\/api\/(dv\/)?room\/([A-Z0-9]{4})$/);
     if (!m || req.headers.get('Upgrade') !== 'websocket') return new Response('Not found', { status: 404 });
     const ns = m[1] ? env.MINER : env.ROOM;
-    return ns.get(ns.idFromName(m[2])).fetch(req);
+    // Phòng tin header X-User vì chỉ Worker gọi được DO; header client tự gửi luôn bị xoá trước.
+    const headers = new Headers(req.headers);
+    headers.delete('X-User');
+    const user = await userFrom(req);
+    if (user) headers.set('X-User', JSON.stringify({ sub: user.sub, name: user.name }));
+    return ns.get(ns.idFromName(m[2])).fetch(new Request(req, { headers }));
   },
 };
 
@@ -52,6 +83,32 @@ export class Top extends DurableObject {
       mode TEXT NOT NULL, size INTEGER NOT NULL, names TEXT NOT NULL,
       score INTEGER NOT NULL, level INTEGER NOT NULL, cleared INTEGER NOT NULL, at INTEGER NOT NULL)`);
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS scores_top ON scores (mode, size, score DESC)');
+    // Lịch sử chơi của người đã đăng nhập (sub = id tài khoản SSO). Không lưu email.
+    ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS plays (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, sub TEXT NOT NULL, game TEXT NOT NULL, mode TEXT NOT NULL,
+      score INTEGER NOT NULL, level INTEGER NOT NULL, won INTEGER NOT NULL, detail TEXT NOT NULL, at INTEGER NOT NULL)`);
+    ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS plays_user ON plays (sub, at DESC)');
+  }
+
+  addPlays(rows) {
+    for (const r of rows) {
+      this.ctx.storage.sql.exec(
+        'INSERT INTO plays (sub, game, mode, score, level, won, detail, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        r.sub, r.game, r.mode, r.score, r.level, r.won ? 1 : 0, r.detail ?? '', Date.now(),
+      );
+    }
+  }
+
+  history(sub) {
+    return this.ctx.storage.sql
+      .exec('SELECT game, mode, score, level, won, detail, at FROM plays WHERE sub = ? ORDER BY at DESC LIMIT 30', sub)
+      .toArray();
+  }
+
+  stats(sub) {
+    return this.ctx.storage.sql
+      .exec('SELECT game, COUNT(*) AS plays, SUM(won) AS wins, MAX(score) AS best, MAX(level) AS maxLevel FROM plays WHERE sub = ? GROUP BY game', sub)
+      .toArray();
   }
 
   add(rows) {
@@ -126,6 +183,8 @@ export class Room extends DurableObject {
       s.order.push(id);
     }
     p.name = name;
+    // Tài khoản SSO (Worker đã xác thực và gắn header). Khách thì null -> ván không được lưu.
+    p.user = JSON.parse(req.headers.get('X-User') || 'null');
 
     // Cùng thiết bị mở tab mới -> tab cũ nhường chỗ.
     for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) ws.close(4000, 'replaced');
@@ -328,8 +387,21 @@ export class Room extends DurableObject {
         mode: s.mode, size: s.size, score: u.score, level: u.level, cleared: u.done === 'clear',
         names: this.membersOf(uid).map((id) => s.players[id].name).join(', ').slice(0, 100),
       }));
-    // Lỗi ghi bảng xếp hạng không được làm hỏng ván chơi.
-    try { if (rows.length) await this.env.TOP.get(this.env.TOP.idFromName('global')).add(rows); } catch {}
+    // Lịch sử cá nhân cho người đã đăng nhập.
+    const plays = s.order.filter((id) => s.players[id].user && this.unitOf(s.players[id])).map((id) => {
+      const p = s.players[id], uid = this.unitOf(p), u = s.units[uid];
+      return {
+        sub: p.user.sub, game: 'pikachu', mode: s.mode, score: p.score, level: u.level,
+        won: s.mode === 'coop' ? u.done === 'clear' : winner === uid,
+        detail: JSON.stringify({ size: s.size, team: u.score, with: this.membersOf(uid).filter((x) => x !== id).map((x) => s.players[x].name) }),
+      };
+    });
+    // Lỗi ghi bảng xếp hạng / lịch sử không được làm hỏng ván chơi.
+    try {
+      const top = this.env.TOP.get(this.env.TOP.idFromName('global'));
+      if (rows.length) await top.add(rows);
+      if (plays.length) await top.addPlays(plays);
+    } catch {}
   }
 
   unitOf(p) {

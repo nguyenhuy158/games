@@ -31,7 +31,8 @@ const ready = Promise.all([
     const list = Array.isArray(a.frames) ? a.frames : Object.entries(a.frames).map(([filename, v]) => ({ filename, ...v }));
     FRAMES = Object.fromEntries(list.map((f) => [f.filename.replace('.png', ''), f.frame]));
   }),
-  ...[atlasImg, ...bgs].map((img) => img.decode()),
+  // onload thay vì decode(): Chrome hoãn decode() tới khi tab hiện -> mở ở tab nền là treo menu.
+  ...[atlasImg, ...bgs].map((img) => (img.complete ? null : new Promise((ok, fail) => { img.onload = ok; img.onerror = fail; }))),
 ]);
 
 let soundOn = store.get('dv.sound') !== '0';
@@ -255,6 +256,11 @@ const solo = {
       return;
     }
     this.screen = 'over';
+    // Đã đăng nhập thì lưu vào lịch sử (khách: server trả 401, bỏ qua).
+    fetch('/api/me/history', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'dao-vang', score: this.money, level: this.level }),
+    }).catch(() => {});
     const isBest = this.money > best();
     if (isBest) store.set('dv.best', String(this.money));
     play(isBest ? 'win' : 'hvBad');

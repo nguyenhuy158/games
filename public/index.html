@@ -35,12 +35,35 @@
     .tags { display: flex; gap: 6px; flex-wrap: wrap; }
     .tags i { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--accent); }
     footer { color: var(--muted); font-size: 11px; text-align: center; }
+    #account { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    #account img { width: 28px; height: 28px; border-radius: 50%; }
+    #account a, .btn {
+      color: var(--text); text-decoration: none; padding: 6px 12px; border-radius: 999px;
+      background: var(--panel); border: 1px solid var(--line); display: inline-flex; align-items: center; gap: 6px;
+    }
+    #account a.primary { background: #fff; color: #1f1f1f; border-color: #fff; font-weight: 600; }
+    #account small { color: var(--muted); }
+    body { position: relative; }
+    #me { width: min(760px, 100%); display: grid; gap: 10px; }
+    #me h2, #me h3 { margin: 0; }
+    #me h3 { font-size: 15px; color: var(--muted); }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .stat { padding: 12px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); display: grid; gap: 2px; }
+    .stat b { font-size: 16px; }
+    .stat span { color: var(--muted); font-size: 13px; }
+    .stat strong { color: var(--accent); }
+    #history { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+    #history li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; }
+    #history .when { color: var(--muted); margin-left: auto; white-space: nowrap; }
+    #history .won { color: #7dff9a; }
+    #history .score { color: var(--accent); font-weight: 700; }
     footer a { color: inherit; }
   </style>
 </head>
 <body>
+  <div id="account"></div>
   <h1>⚡ Game Cổ Điển</h1>
-  <p class="sub">Chơi ngay trên trình duyệt, không cần đăng ký.</p>
+  <p class="sub">Chơi ngay trên trình duyệt, không cần đăng ký. Đăng nhập để lưu lịch sử các lần chơi.</p>
   <div class="games">
     <a class="game" href="/pikachu/">
       <div class="thumb" style="background-image:url(pikachu/images/pieces-sprite.png);background-size:auto 60%;background-repeat:repeat-x;background-position:left center"></div>
@@ -52,10 +75,17 @@
       <div class="thumb" style="background-image:url(dao-vang/assets/bg2.jpg);background-size:cover"></div>
       <b>Đào Vàng</b>
       <span>Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span>
-      <div class="tags"><i>1 người</i><i>Nhiều màn</i><i>Tiệm đồ</i></div>
+      <div class="tags"><i>1–4 người</i><i>Chung mỏ</i><i>Tranh vàng</i><i>Tiệm đồ</i></div>
     </a>
   </div>
+  <section id="me" hidden>
+    <h2>Thành tích của bạn</h2>
+    <div id="stats" class="stats"></div>
+    <h3>Các ván gần đây</h3>
+    <ol id="history"></ol>
+  </section>
   <footer>Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Icon: Lucide · Dự án học tập</footer>
+  <script type="module" src="me.js"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
 </body>
 </html>
