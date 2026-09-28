@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b1b2b">
   <title>Game Cổ Điển</title>
-  <link rel="icon" href="pwa-192.png">
-  <link rel="apple-touch-icon" href="pwa-192.png">
+  <link rel="icon" href="/logos/hub.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/hub-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/hub-192.png">
   <link rel="manifest" href="manifest.webmanifest">
   <script>
     // Link mời cũ của Pikachu (/?r=CODE) -> trang game mới.
@@ -16,12 +17,16 @@
   <style>
     :root { --bg: #0b1b2b; --panel: #13283d; --line: #23405c; --text: #e8f1fa; --muted: #8aa4bd; --accent: #ffd23f; }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body {
       margin: 0; min-height: 100vh; padding: 24px 16px; display: grid; align-content: safe center; justify-items: center; gap: 20px;
       background: radial-gradient(circle at 50% 0%, #17385a, var(--bg) 70%) fixed; color: var(--text);
       font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
-    h1 { margin: 0; font-size: 26px; }
+    h1 { margin: 0; font-size: 26px; display: flex; align-items: center; gap: 10px; }
+    h1 .logo { width: 44px; height: 44px; }
+    .game b { display: flex; align-items: center; gap: 8px; }
+    .game .logo { width: 32px; height: 32px; }
     .sub { margin: -12px 0 0; color: var(--muted); }
     .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; width: min(760px, 100%); }
     .game {
@@ -62,18 +67,18 @@
 </head>
 <body>
   <div id="account"></div>
-  <h1>⚡ Game Cổ Điển</h1>
+  <h1><img class="logo" src="/logos/hub.svg" alt=""> Game Cổ Điển</h1>
   <p class="sub">Chơi ngay trên trình duyệt, không cần đăng ký. Đăng nhập để lưu lịch sử các lần chơi.</p>
   <div class="games">
     <a class="game" href="/pikachu/">
       <div class="thumb" style="background-image:url(pikachu/images/pieces-sprite.png);background-size:auto 60%;background-repeat:repeat-x;background-position:left center"></div>
-      <b>Pikachu nối thú</b>
+      <b><img class="logo" src="/logos/pikachu.svg" alt=""> Pikachu nối thú</b>
       <span>Nối 2 hình giống nhau, tối đa 3 đoạn thẳng. 5 màn có ô trượt.</span>
       <div class="tags"><i>Nhiều người</i><i>Chơi chung</i><i>Đua</i><i>Đội 2v2</i></div>
     </a>
     <a class="game" href="/dao-vang/">
       <div class="thumb" style="background-image:url(dao-vang/assets/bg2.jpg);background-size:cover"></div>
-      <b>Đào Vàng</b>
+      <b><img class="logo" src="/logos/dao-vang.svg" alt=""> Đào Vàng</b>
       <span>Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span>
       <div class="tags"><i>1–4 người</i><i>Chung mỏ</i><i>Tranh vàng</i><i>Tiệm đồ</i></div>
     </a>

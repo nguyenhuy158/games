@@ -1,10 +1,11 @@
 // Sinh ảnh tĩnh bằng Chrome headless (chạy tay khi cần đổi, rồi commit PNG):
 //   - public/pikachu/images/animals-sprite.png: 36 con vật Twemoji (CC-BY 4.0), cùng bố cục
 //     với pieces-sprite.png (36 ô ngang, tỉ lệ 40x50) nên client chỉ cần đổi URL.
-//   - public/pwa-192.png, public/pwa-512.png: icon cài app.
+//   - public/logos/<game>.svg + -192/-512.png: logo kawaii từng game (scripts/logos.mjs);
+//     public/pwa-*.png lấy từ logo trang chủ.
 // Chạy: node scripts/render-assets.mjs   (cần Google Chrome; đổi CHROME nếu nằm chỗ khác)
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -44,10 +45,15 @@ shot(`<!doctype html><style>
 </style><body>${svgs.map((s) => `<div class="t">${s}</div>`).join('')}</body>`,
 'public/pikachu/images/animals-sprite.png', W * ANIMALS.length, H);
 
-// Icon app: tia sét lucide trên nền vàng, chừa lề cho maskable.
-const zap = '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>';
-for (const size of [192, 512]) {
-  shot(`<!doctype html><style>html,body{margin:0}body{width:${size}px;height:${size}px;display:grid;place-items:center;background:#ffd23f}</style>
-<body><svg width="${size * 0.55}" height="${size * 0.55}" viewBox="0 0 24 24" fill="#0b1b2b" stroke="#0b1b2b" stroke-width="1.5" stroke-linejoin="round">${zap}</svg></body>`,
-  `public/pwa-${size}.png`, size, size);
+// Logo kawaii từng game (scripts/logos.mjs): SVG làm favicon, PNG cho icon app / apple-touch.
+// Icon PWA của cả trang (public/pwa-*.png) dùng logo trang chủ.
+const { LOGOS } = await import('./logos.mjs');
+mkdirSync('public/logos', { recursive: true });
+for (const [name, svg] of Object.entries(LOGOS)) {
+  writeFileSync(`public/logos/${name}.svg`, svg);
+  for (const size of [192, 512]) {
+    const html = `<!doctype html><style>html,body{margin:0;background:transparent}svg{display:block;width:${size}px;height:${size}px}</style>${svg}`;
+    shot(html, `public/logos/${name}-${size}.png`, size, size);
+    if (name === 'hub') shot(html, `public/pwa-${size}.png`, size, size);
+  }
 }
