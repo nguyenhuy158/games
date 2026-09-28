@@ -1,6 +1,7 @@
 import { SIZES, HIDDEN, FLAG, BOOM, LIVES } from './logic.js';
-import { icon, hydrateIcons } from '../icons.js';
+import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
+import { toast } from '../toast.js';
 import { createPanel } from '../panel.js';
 
 hydrateIcons();
@@ -49,14 +50,6 @@ function play(k) { if (!soundOn) return; SND[k].currentTime = 0; SND[k].play().c
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('ms.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
-
-function toast(msg) {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.hidden = false;
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => { t.hidden = true; }, 2500);
-}
 
 // ---------- vào / rời phòng ----------
 function enter(c) {
@@ -116,7 +109,7 @@ function onMsg(m) {
       if (!g) return;
       for (const [i, v] of m.cells) g[i] = v;
       if (m.unit === view()) {
-        if (m.boom) { play('boom'); shake(); if (m.by !== deviceId) toast(`${nameOf(m.by)} đạp mìn!`); }
+        if (m.boom) { play('boom'); shake(); if (m.by !== deviceId) toast.error(`${nameOf(m.by)} đạp mìn!`, { icon: 'bomb' }); }
         else if (m.by === deviceId && m.cells.some(([, v]) => v >= 0)) play('open');
       }
       break;
@@ -139,12 +132,12 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast('Mã phòng gồm 4 ký tự');
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning('Mã phòng gồm 4 ký tự');
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
 $('#btnStart').onclick = () => send({ t: 'start' });
-$('#btnCopy').onclick = () => invite(`${location.origin}/do-min/?r=${code}`, code, toast);
+$('#btnCopy').onclick = () => invite(`${location.origin}/do-min/?r=${code}`, code);
 $('#btnSkin').onclick = () => {
   const keys = Object.keys(SKINS);
   skin = keys[(keys.indexOf(skin) + 1) % keys.length];
@@ -156,7 +149,7 @@ $('#btnSkin').onclick = () => {
 $('#btnPeek').onclick = () => { peek = true; render(); };
 $('#btnResult').onclick = () => { peek = false; render(); };
 $('#face').onclick = () => { if (room?.status === 'ended' && room.host === deviceId) send({ t: 'start' }); };
-$('#btnFlag').onclick = () => { flagMode = !flagMode; $('#btnFlag').classList.toggle('on', flagMode); toast(flagMode ? 'Chạm để cắm cờ' : 'Chạm để mở ô'); };
+$('#btnFlag').onclick = () => { flagMode = !flagMode; $('#btnFlag').classList.toggle('on', flagMode); toast(flagMode ? 'Chạm để cắm cờ' : 'Chạm để mở ô', { icon: 'flag' }); };
 for (const b of document.querySelectorAll('#modePick button')) b.onclick = () => send({ t: 'config', mode: b.dataset.mode });
 $('#sizePick').replaceChildren(...SIZES.map((z, i) => el('button', {
   textContent: `${z.name} ${z.cols}×${z.rows}`, title: `${z.mines} mìn`, onclick: () => send({ t: 'config', size: i }),
@@ -333,7 +326,7 @@ function renderPanel() {
       const pct = Math.floor((u.opened / u.total) * 100);
       tiles.push({
         key: p.id, name: p.name, color: colorOf(p.id), off: !p.online,
-        sub: `${pct}% · 💥${u.booms}`, badge: u.done === 'clear' ? '🏆' : '',
+        sub: `${pct}% · nổ ${u.booms}`, badge: u.done === 'clear' ? { icon: 'trophy' } : '',
         version: `${pct}|${u.booms}`,
         draw: (ctx, w, h) => {
           ctx.clearRect(0, 0, w, h);
@@ -352,7 +345,7 @@ function renderPanel() {
         },
       });
     } else {
-      tiles.push({ key: p.id, name: p.name, color: colorOf(p.id), off: !p.online, sub: `mở ${p.opened} · 💥${p.booms}` });
+      tiles.push({ key: p.id, name: p.name, color: colorOf(p.id), off: !p.online, sub: `mở ${p.opened} · nổ ${p.booms}` });
     }
   }
   panel.update(tiles);
@@ -368,14 +361,14 @@ function render() {
   led($('#ledMines'), z.mines - flags);
   renderFace();
   $('#lives').hidden = !(r?.status === 'playing' && r.mode === 'coop');
-  if (u) $('#lives').textContent = '❤️'.repeat(Math.max(0, u.lives)) + '🖤'.repeat(Math.max(0, LIVES - u.lives));
+  if (u) $('#lives').replaceChildren(...Array.from({ length: LIVES }, (_, i) => iconEl(i < u.lives ? 'heart' : 'heart-off')));
 
   const players = [...(r?.players ?? [])].filter((p) => !p.spec);
   $('#players').replaceChildren(...players.map((p) => {
     const li = el('li', { className: `${p.id === deviceId ? 'me' : ''} ${p.online ? '' : 'off'}` });
     li.style.setProperty('--c', colorOf(p.id));
     if (p.id === r.host) li.innerHTML = icon('crown');
-    li.append(`${p.name}${p.id === deviceId ? ' (bạn)' : ''} · `, el('b', { textContent: `mở ${p.opened}` }), p.booms ? ` · 💥${p.booms}` : '');
+    li.append(`${p.name}${p.id === deviceId ? ' (bạn)' : ''} · `, el('b', { textContent: `mở ${p.opened}` }), p.booms ? ` · nổ ${p.booms}` : '');
     return li;
   }));
 
@@ -394,7 +387,7 @@ function render() {
   } else if (r.status === 'playing') {
     ov.hidden = !me()?.spec && !u?.done;
     if (!ov.hidden) {
-      $('#ovTitle').textContent = me()?.spec ? 'Bạn đang xem' : '🏆 Xong bàn!';
+      $('#ovTitle').textContent = me()?.spec ? 'Bạn đang xem' : 'Xong bàn!';
       $('#ovText').textContent = me()?.spec ? 'Ván sau bạn sẽ được chơi.' : 'Chờ những người khác…';
       $('#btnStart').hidden = true;
       if (me()?.spec) ov.hidden = true;
@@ -409,7 +402,8 @@ function render() {
         : 'Cùng một đề mìn, mỗi người một bàn. Đạp mìn +10 giây. Ai mở hết trước thắng.') + (isHost ? '' : ' Chờ chủ phòng bắt đầu.');
     } else {
       const wu = r.units[r.winner];
-      $('#ovTitle').textContent = coop ? (r.winner ? '🏆 Cả đội dò sạch mìn!' : '💥 Hết mạng rồi…') : r.winner === me()?.unit ? '🏆 Bạn thắng!' : `🏆 ${nameOf(r.winner)} thắng`;
+      const t = coop ? (r.winner ? 'Cả đội dò sạch mìn!' : 'Hết mạng rồi…') : r.winner === me()?.unit ? 'Bạn thắng!' : `${nameOf(r.winner)} thắng`;
+      $('#ovTitle').replaceChildren(iconEl(r.winner ? 'trophy' : 'bomb'), ' ', t);
       $('#ovScore').hidden = false;
       $('#ovScore').textContent = wu ? `Thời gian ${fmt(wu.time)}${wu.penalty ? ` (gồm phạt ${wu.penalty / 1000}s)` : ''}` : `Đã mở ${u?.opened ?? 0}/${u?.total ?? 0} ô`;
       $('#ovText').textContent = isHost ? 'Ván mới?' : 'Chờ chủ phòng mở ván mới.';

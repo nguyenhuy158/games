@@ -1,6 +1,7 @@
 import { SYMBOLS, CHIPS, betTotal } from './logic.js';
-import { icon, hydrateIcons } from '../icons.js';
+import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
+import { toast } from '../toast.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -19,14 +20,14 @@ const myName = () => $('#name').value.trim() || 'Người chơi';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b', '#6bf0e0', '#ff9b9b', '#b8f07a', '#f0a6ff'];
 const CHIP_COLORS = { 10: '#2f7de1', 50: '#1d9a55', 100: '#d6452f', 500: '#1b1b1b' };
-const MODE_TEXT = { rotate: ['👑', ' Xoay cái'], house: ['🤖', ' Máy làm cái'] };
+const MODE_TEXT = { rotate: ['crown', ' Xoay cái'], house: ['bot', ' Máy làm cái'] };
 
 let ws, code = null, room = null, clockOffset = 0, shown = 0;
 let chip = Number(store.get('bc.chip')) || CHIPS[1];
 if (!CHIPS.includes(chip)) chip = CHIPS[1];
 
-// Hình cắt từ tờ bầu cua in dân gian (xem README); emoji chỉ để làm chữ thay thế.
-const pic = (s, cls) => el('img', { className: cls, src: `assets/${s.key}.webp`, alt: s.emoji, draggable: false });
+// Hình cắt từ tờ bầu cua in dân gian (xem README).
+const pic = (s, cls) => el('img', { className: cls, src: `assets/${s.key}.webp`, alt: s.name, draggable: false });
 const now = () => Date.now() + clockOffset;
 const me = () => room?.players.find((p) => p.id === deviceId);
 const colorOf = (id) => COLORS[Math.max(0, room?.players.findIndex((p) => p.id === id) ?? 0) % COLORS.length];
@@ -46,14 +47,6 @@ function play(k) { if (!soundOn) return; SND[k].currentTime = 0; SND[k].play().c
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('bc.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
-
-function toast(msg) {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.hidden = false;
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => { t.hidden = true; }, 2500);
-}
 
 // ---------- vào / rời phòng ----------
 function enter(c) {
@@ -92,7 +85,7 @@ const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
 function onMsg(m) {
   if (m.t === 'error') return leave(m.msg);
   if (m.t !== 'state') return;
-  if (room && room.mode !== m.mode) toast(m.mode === 'house' ? '🤖 Chủ phòng đổi: máy làm cái, ai cũng được đặt' : '👑 Chủ phòng đổi: làm cái xoay vòng');
+  if (room && room.mode !== m.mode) toast(m.mode === 'house' ? 'Chủ phòng đổi: máy làm cái, ai cũng được đặt' : 'Chủ phòng đổi: làm cái xoay vòng', { icon: m.mode === 'house' ? 'bot' : 'crown' });
   room = m;
   clockOffset = m.now - Date.now();
   // Ván vừa mở bát: lắc bát, hết giờ lắc thì lật bát + báo thắng thua.
@@ -103,7 +96,7 @@ function onMsg(m) {
     setTimeout(() => {
       render();
       const d = m.deltas?.[deviceId];
-      if (d) { play(d > 0 ? 'win' : 'lose'); toast(d > 0 ? `🎉 Bạn ăn ${xu(d)}` : `😢 Bạn mất ${xu(-d)}`); }
+      if (d) { play(d > 0 ? 'win' : 'lose'); d > 0 ? toast.success(`Bạn ăn ${xu(d)}`, { icon: 'party-popper' }) : toast.error(`Bạn mất ${xu(-d)}`, { icon: 'frown' }); }
     }, Math.max(0, wait));
   }
   render();
@@ -113,12 +106,12 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (!/^[A-Z0-9]{4}$/.test(c)) return toast('Mã phòng gồm 4 ký tự');
+  if (!/^[A-Z0-9]{4}$/.test(c)) return toast.warning('Mã phòng gồm 4 ký tự');
   enter(c);
 };
 $('#code').onkeydown = (e) => e.key === 'Enter' && $('#btnJoin').click();
 $('#btnLeave').onclick = () => leave();
-$('#btnCopy').onclick = () => invite(`${location.origin}/bau-cua/?r=${code}`, code, toast);
+$('#btnCopy').onclick = () => invite(`${location.origin}/bau-cua/?r=${code}`, code);
 $('#btnMode').onclick = () => send({ t: 'mode', mode: room?.mode === 'rotate' ? 'house' : 'rotate' });
 $('#btnClear').onclick = () => send({ t: 'unbet' });
 $('#btnRoll').onclick = () => send({ t: 'roll' });
@@ -141,9 +134,9 @@ $('#board').append(...SYMBOLS.map((s, i) => {
 function bet(i) {
   if (!room) return;
   if (room.phase !== 'bet') return toast('Đang mở bát, chờ ván sau nhé');
-  if (room.dealer === deviceId) return toast('Bạn đang làm cái — ngồi chờ ăn tiền thôi 😎');
+  if (room.dealer === deviceId) return toast('Bạn đang làm cái — ngồi chờ ăn tiền thôi', { icon: 'crown' });
   const left = (me()?.coins ?? 0) - betTotal(room.bets[deviceId]);
-  if (left < chip) return toast(`Không đủ xu (còn ${xu(left)})`);
+  if (left < chip) return toast.warning(`Không đủ xu (còn ${xu(left)})`);
   play('chip');
   send({ t: 'bet', s: i, amt: chip });
 }
@@ -155,10 +148,10 @@ function render() {
   const open = revealed();
   // Server cộng/trừ xu ngay lúc mở bát; đang lắc thì hiện số cũ để khỏi lộ kết quả.
   const coinsOf = (p) => (open ? p.coins : p.coins - (r.deltas?.[p.id] ?? 0) - betTotal(r.bets[p.id]));
-  $('#myCoins').textContent = m ? `🪙 ${xu(coinsOf(m))}` : '';
+  $('#myCoins').replaceChildren(...(m ? [iconEl('coins'), ` ${xu(coinsOf(m))}`] : []));
   const isHost = r?.host === deviceId;
   const [emo, txt] = MODE_TEXT[r?.mode ?? 'rotate'];
-  $('#btnMode').replaceChildren(emo, el('span', { className: 'lbl', textContent: txt }));
+  $('#btnMode').replaceChildren(iconEl(emo), el('span', { className: 'lbl', textContent: txt }));
   $('#btnMode').disabled = !isHost || r.phase !== 'bet';
   $('#btnMode').title = isHost ? 'Đổi: máy làm cái ⇄ xoay vòng' : 'Chỉ chủ phòng đổi được';
 
@@ -166,7 +159,7 @@ function render() {
     const li = el('li', { className: [p.id === deviceId && 'me', p.id === r.dealer && 'dealer'].filter(Boolean).join(' ') });
     li.style.setProperty('--c', colorOf(p.id));
     const d = open ? r.deltas?.[p.id] : 0;
-    li.append(p.id === r.dealer ? '👑 ' : '', `${p.name}${p.id === deviceId ? ' (bạn)' : ''} · `, el('b', { textContent: xu(coinsOf(p)) }));
+    li.append(p.id === r.dealer ? iconEl('crown') : '', `${p.name}${p.id === deviceId ? ' (bạn)' : ''} · `, el('b', { textContent: xu(coinsOf(p)) }));
     if (d) li.append(' ', el('span', { className: `d ${d > 0 ? 'up' : 'down'}`, textContent: signed(d) }));
     return li;
   }));
@@ -199,11 +192,11 @@ function render() {
   const betting = r?.phase === 'bet';
   $('#btnRoll').hidden = !r || !betting || !canRoll();
   $('#btnRoll').disabled = !anyBet();
-  $('#btnRoll').textContent = anyBet() ? '🥣 Mở bát' : 'Chờ đặt cược…';
+  $('#btnRoll').replaceChildren(...(anyBet() ? [iconEl('dices'), ' Mở bát'] : ['Chờ đặt cược…']));
   $('#btnClear').disabled = !betting || !betTotal(r?.bets[deviceId]);
   $('#chips').style.visibility = $('#btnClear').style.visibility = r?.dealer === deviceId ? 'hidden' : '';
   if (!r) st.textContent = 'Đang kết nối…';
-  else if (!betting && !open) st.replaceChildren('Đang lắc… 🎲');
+  else if (!betting && !open) st.replaceChildren(iconEl('dices'), ' Đang lắc…');
   else if (open) {
     const won = Object.values(r.deltas ?? {}).filter((d) => d > 0).length;
     st.replaceChildren('Ra ', el('b', { textContent: r.dice.map((d) => SYMBOLS[d].name).join(' · ') }), won ? ` — ${won} người ăn` : ' — không ai ăn');

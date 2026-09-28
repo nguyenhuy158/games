@@ -120,7 +120,7 @@ export class Top extends DurableObject {
       .toArray();
   }
 
-  // Bảng xếp hạng "cho vui" giữa người đã đăng nhập, top 5 mỗi hạng mục.
+  // Bảng xếp hạng "cho vui" (icon mỗi hạng mục chọn ở client theo key, xem public/me.js) giữa người đã đăng nhập, top 5 mỗi hạng mục.
   fun(period) {
     const since = period === 'week' ? Date.now() - 7 * 86400_000 : 0;
     // order 'ASC' cho hạng mục "càng nhỏ càng giỏi" (thời gian dò mìn).
@@ -134,15 +134,15 @@ export class Top extends DurableObject {
     // Giờ Việt Nam = UTC+7; "cú đêm" = ván kết thúc từ 0h tới trước 5h sáng.
     const vnHour = '((p.at / 3600000 + 7) % 24)';
     return [
-      q('plays', '🎮 Chiến thần cày game', 'ván', 'COUNT(*)'),
-      q('wins', '👑 Vua chiến thắng', 'lần thắng', 'SUM(p.won)'),
-      q('gold', '💰 Đại gia Đào Vàng', '$', 'MAX(p.score)', "p.game = 'dao-vang'"),
-      q('tiles', '⚡ Thánh nối thú', 'điểm', 'MAX(p.score)', "p.game = 'pikachu'"),
-      q('deep', '⛏️ Thợ mỏ lì đòn', 'màn', 'MAX(p.level)', "p.game = 'dao-vang'"),
-      q('mines', '💣 Thánh dò mìn', 'giây', 'MIN(p.score)', "p.game = 'do-min' AND p.won = 1", 'ASC'),
-      q('baucua', '🦀 Đại gia Bầu cua', 'xu lãi', 'SUM(p.score)', "p.game = 'bau-cua'"),
-    q('team', '🤝 Đồng đội quốc dân', 'ván chung', 'COUNT(*)', "p.mode IN ('coop', 'team')"),
-      q('night', '🌙 Cú đêm', 'ván lúc 0–5h', 'COUNT(*)', `${vnHour} < 5`),
+      q('plays', 'Chiến thần cày game', 'ván', 'COUNT(*)'),
+      q('wins', 'Vua chiến thắng', 'lần thắng', 'SUM(p.won)'),
+      q('gold', 'Đại gia Đào Vàng', '$', 'MAX(p.score)', "p.game = 'dao-vang'"),
+      q('tiles', 'Thánh nối thú', 'điểm', 'MAX(p.score)', "p.game = 'pikachu'"),
+      q('deep', 'Thợ mỏ lì đòn', 'màn', 'MAX(p.level)', "p.game = 'dao-vang'"),
+      q('mines', 'Thánh dò mìn', 'giây', 'MIN(p.score)', "p.game = 'do-min' AND p.won = 1", 'ASC'),
+      q('baucua', 'Đại gia Bầu cua', 'xu lãi', 'SUM(p.score)', "p.game = 'bau-cua'"),
+    q('team', 'Đồng đội quốc dân', 'ván chung', 'COUNT(*)', "p.mode IN ('coop', 'team')"),
+      q('night', 'Cú đêm', 'ván lúc 0–5h', 'COUNT(*)', `${vnHour} < 5`),
     ];
   }
 

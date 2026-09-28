@@ -2,8 +2,10 @@
 // Màn ngang: cột bên phải; màn dọc: hàng trên cùng (CSS quyết định qua .arena, xem style.css
 // từng game). Có nút ẩn/hiện, nhớ lựa chọn trong localStorage.
 //
-// tiles: [{ key, name, sub, color, badge?, me?, off?, version?, draw? }]
+// tiles: [{ key, name, sub, color, badge?, me?, off?, version?, draw? }]  (badge: chữ hoặc { icon: 'tên lucide' })
 //   draw(ctx, w, h): vẽ bàn thu nhỏ (chỉ gọi lại khi version / cỡ ô đổi); không có draw -> thẻ "avatar".
+
+import { icon } from './icons.js';
 
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 
@@ -41,7 +43,8 @@ export function createPanel({ root, toggle, storeKey }) {
     c.node.classList.toggle('off', !!t.off);
     c.nameEl.textContent = t.name;
     c.subEl.textContent = t.sub ?? '';
-    c.badgeEl.textContent = t.badge ?? '';
+    const bk = t.badge?.icon ? `i:${t.badge.icon}` : t.badge ?? '';
+    if (c.bk !== bk) { c.bk = bk; if (t.badge?.icon) c.badgeEl.innerHTML = icon(t.badge.icon); else c.badgeEl.textContent = bk; }
     c.badgeEl.hidden = !t.badge;
     if (c.avatar) c.avatar.textContent = (t.name || '?').trim().charAt(0).toUpperCase();
     // Vẽ lại bàn khi dữ liệu đổi hoặc kích thước ô đổi.

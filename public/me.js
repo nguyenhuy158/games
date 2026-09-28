@@ -1,4 +1,8 @@
 // Đăng nhập Google qua SSO auth.huyab.click (dùng chung với chia-keo) + lịch sử chơi ở trang chủ.
+import { iconEl, hydrateIcons } from './icons.js';
+
+hydrateIcons();
+
 const SSO = 'https://auth.huyab.click';
 const $ = (s) => document.querySelector(s);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
@@ -47,12 +51,12 @@ async function load() {
   const hist = await (await fetch('/api/me/history')).json();
   $('#history').replaceChildren(...hist.map((h) => {
     const d = (() => { try { return JSON.parse(h.detail || '{}'); } catch { return {}; } })();
-    const extra = d.with?.length ? ` · cùng ${d.with.join(', ')}` : d.rank ? ` · hạng ${d.rank}/${d.of}` : d.size ? ` · ${d.size}, mở ${d.opened} ô, 💥${d.booms}` : '';
+    const extra = d.with?.length ? ` · cùng ${d.with.join(', ')}` : d.rank ? ` · hạng ${d.rank}/${d.of}` : d.size ? ` · ${d.size}, mở ${d.opened} ô, nổ ${d.booms}` : '';
     return el('li', {},
       el('b', { textContent: GAMES[h.game] ?? h.game }),
       el('span', { textContent: `${MODES[h.mode] ?? h.mode}${h.game === 'do-min' ? '' : h.game === 'bau-cua' ? ` · ${h.level} ván` : ` · màn ${h.level}`}${extra}` }),
       el('span', { className: 'score', textContent: scoreText(h.game, h.score) }),
-      h.won ? el('span', { className: 'won', textContent: '🏆 thắng' }) : '',
+      h.won ? el('span', { className: 'won' }, iconEl('trophy'), ' thắng') : '',
       el('span', { className: 'when', textContent: ago(h.at) }),
     );
   }));
@@ -60,17 +64,25 @@ async function load() {
 load();
 
 // ---------- bảng xếp hạng vui ----------
-const MEDALS = ['🥇', '🥈', '🥉', '4', '5'];
+// Top 3 = huy chương vàng/bạc/đồng (icon medal tô màu), còn lại ghi số.
+const MEDALS = ['#ffd23f', '#cfd8e3', '#e39a5b'];
+const rank = (i) => {
+  if (!MEDALS[i]) return String(i + 1);
+  const m = iconEl('medal');
+  m.setAttribute('style', `color:${MEDALS[i]}`);
+  return m;
+};
+const FUN_ICONS = { plays: 'gamepad-2', wins: 'crown', gold: 'coins', tiles: 'zap', deep: 'pickaxe', mines: 'bomb', baucua: 'dices', team: 'handshake', night: 'moon' };
 let period = 'week';
 async function loadFun() {
   for (const b of document.querySelectorAll('#funPeriod button')) b.classList.toggle('on', b.dataset.period === period);
   let cats;
   try { cats = await (await fetch(`/api/fun?period=${period}`)).json(); } catch { return; }
   $('#funList').replaceChildren(...cats.map((c) => el('div', { className: 'fun-card' },
-    el('b', { textContent: c.title }),
+    el('b', {}, iconEl(FUN_ICONS[c.key] ?? 'trophy'), ` ${c.title}`),
     c.rows.length
       ? el('ol', {}, ...c.rows.map((r, i) => el('li', {},
-        el('span', { className: 'rank', textContent: MEDALS[i] }),
+        el('span', { className: 'rank' }, rank(i)),
         el('span', { className: 'name', textContent: r.name }),
         el('span', { className: 'val', textContent: c.unit === '$' ? `$${r.value}` : c.unit === 'giây' ? mmss(r.value) : `${r.value} ${c.unit}` }),
       )))

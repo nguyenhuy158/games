@@ -21,10 +21,10 @@
     <span class="stat"><small>Tiền</small> <b id="hMoney">$0</b></span>
     <span class="stat" id="hTargetBox"><small>Mục tiêu</small><small class="short">/</small> <b id="hTarget">$650</b></span>
     <span class="stat"><small>Màn</small><small class="short">M</small> <b id="hLevel">1</b></span>
-    <span class="stat"><small>Giờ</small><small class="short">⏱</small> <b id="hTime">60</b></span>
-    <button id="btnDyn" title="Thuốc nổ (↑)">🧨 <span id="dynCount">0</span></button>
+    <span class="stat"><small>Giờ</small><small class="short"><i data-icon="timer"></i></small> <b id="hTime">60</b></span>
+    <button id="btnDyn" title="Thuốc nổ (↑)"><i data-icon="bomb"></i> <span id="dynCount">0</span></button>
     <button id="btnPanel" title="Ẩn màn hình người chơi khác" hidden><i data-icon="users"></i></button>
-    <button id="btnMenu" title="Tạm dừng">❚❚</button>
+    <button id="btnMenu" title="Tạm dừng"><i data-icon="pause"></i></button>
     <button id="btnSound" title="Âm thanh"></button>
   </header>
   <ul id="scores" hidden></ul>
@@ -35,7 +35,6 @@
       <div id="overlay" hidden></div>
     </main>
   </div>
-  <div id="toast" hidden></div>
   <script type="module" src="game.js"></script>
 </body>
 </html>

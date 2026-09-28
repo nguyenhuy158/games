@@ -1,6 +1,7 @@
 import { SIZES, LEVELS, SLIDES, SLIDE_ICON, slide, findPath, findPair } from './logic.js';
-import { icon, hydrateIcons } from '../icons.js';
+import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
+import { toast } from '../toast.js';
 import { createPanel, drawGrid } from '../panel.js';
 
 hydrateIcons();
@@ -20,7 +21,8 @@ const myName = () => $('#name').value.trim() || 'Pika';
 
 const HINTS = 3;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const EMOJIS = ['👍', '😂', '😱', '🔥', '❤️']; // số lượng khớp EMOJI_COUNT ở worker
+// Cảm xúc = icon lucide + màu; số lượng khớp EMOJI_COUNT ở worker (gửi theo chỉ số).
+const EMOJIS = [['thumbs-up', '#5cc8ff'], ['laugh', '#ffd23f'], ['frown', '#c49bff'], ['flame', '#ff7a3d'], ['heart', '#ff5d7a']];
 const MODE_NAMES = { coop: 'Chơi chung', race: 'Đua nhau', team: 'Đội 2v2' };
 const MODE_ICONS = { coop: 'users', race: 'swords', team: 'flag' };
 const TEAM_COLORS = { A: '#ff7a59', B: '#5cc8ff' };
@@ -67,14 +69,6 @@ function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('pk.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
 
-function toast(msg) {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.hidden = false;
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => { t.hidden = true; }, 2500);
-}
-
 // ---------- vào / rời phòng ----------
 function enter(c) {
   code = c.toUpperCase();
@@ -115,7 +109,7 @@ function connect() {
   };
 }
 const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
-addEventListener('offline', () => toast('Mất mạng — sẽ tự kết nối lại'));
+addEventListener('offline', () => toast.error('Mất mạng — sẽ tự kết nối lại'));
 
 function onMsg(m) {
   switch (m.t) {
@@ -145,8 +139,8 @@ function onMsg(m) {
         banner(`Màn ${lv}/${LEVELS}`, SLIDE_ICON[SLIDES[lv - 1]] ? `Ô dồn ${SLIDE_ICON[SLIDES[lv - 1]]}` : '');
         play('start');
       }
-      if (m.why === 'stuck') toast('Hết nước — tự xáo lại, +10 giây');
-      if (m.why === 'shuffle' && m.by !== deviceId) toast(`${nameOf(m.by)} vừa đổi vị trí`);
+      if (m.why === 'stuck') toast.warning('Hết nước — tự xáo lại, +10 giây', { icon: 'shuffle' });
+      if (m.why === 'shuffle' && m.by !== deviceId) toast(`${nameOf(m.by)} vừa đổi vị trí`, { icon: 'shuffle' });
       break;
     case 'match': {
       if (m.unit !== view()) return;
@@ -181,7 +175,7 @@ function onMsg(m) {
     case 'ping':
       return pingFx(m.a, colorOf(m.id), nameOf(m.id));
     case 'emo':
-      return emoFx(m.id, EMOJIS[m.e]);
+      return EMOJIS[m.e] && emoFx(m.id, m.e);
     default:
       return;
   }
@@ -192,7 +186,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast('Mã phòng gồm 4 ký tự');
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning('Mã phòng gồm 4 ký tự');
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
@@ -202,7 +196,7 @@ for (const b of document.querySelectorAll('#tilesPick button')) b.onclick = () =
 $('#sizePick').replaceChildren(...SIZES.map(([c, r], i) => el('button', {
   textContent: `${c}×${r}`, title: `${(c * r) / 2} cặp`, onclick: () => send({ t: 'config', size: i }),
 })));
-$('#btnCopy').onclick = () => invite(`${location.origin}/pikachu/?r=${code}`, code, toast);
+$('#btnCopy').onclick = () => invite(`${location.origin}/pikachu/?r=${code}`, code);
 $('#btnShuffle').onclick = () => send({ t: 'shuffle' });
 $('#btnHint').onclick = () => {
   if (!playing() || hints <= 0) return;
@@ -212,10 +206,11 @@ $('#btnHint').onclick = () => {
   render();
   for (const [r, c] of p) cellEl(r, c)?.classList.add('hint');
 };
-$('#emoBar').replaceChildren(...EMOJIS.map((e, i) => el('button', {
-  textContent: e, title: 'Gửi cảm xúc',
-  onclick: () => { send({ t: 'emo', e: i }); emoFx(deviceId, e); },
-})));
+$('#emoBar').replaceChildren(...EMOJIS.map(([name, color], i) => {
+  const b = el('button', { title: 'Gửi cảm xúc', onclick: () => { send({ t: 'emo', e: i }); emoFx(deviceId, i); } }, iconEl(name));
+  b.style.color = color;
+  return b;
+}));
 
 // ---------- bàn chơi ----------
 let geo = { w: 40, h: 50, portrait: false };
@@ -310,12 +305,13 @@ function banner(title, sub) {
 }
 
 // Cảm xúc bay lên từ chip tên người gửi (luôn thấy được kể cả khác bàn).
-function emoFx(id, e) {
+function emoFx(id, i) {
   const chip = $(`#players [data-id="${CSS.escape(id)}"]`);
   if (!chip) return;
   const r = chip.getBoundingClientRect();
-  const n = el('div', { className: 'emo-fly', textContent: e });
-  n.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top}px`;
+  const [name, color] = EMOJIS[i];
+  const n = el('div', { className: 'emo-fly' }, iconEl(name));
+  n.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top}px;color:${color}`;
   document.body.append(n);
   setTimeout(() => n.remove(), 1600);
 }
@@ -431,7 +427,7 @@ function renderPanel() {
     tiles.push({
       key: `u:${uid}`, name: unitName(uid), color: colorOf(members[0]?.id ?? uid),
       sub: `${u.score}đ · M${u.level} · còn ${u.left}`,
-      badge: u.done === 'clear' ? '🏆' : u.done ? '⌛' : u.combo > 1 ? `x${u.combo}` : '',
+      badge: u.done === 'clear' ? { icon: 'trophy' } : u.done ? { icon: 'hourglass' } : u.combo > 1 ? `x${u.combo}` : '',
       off: members.length > 0 && members.every((p) => !p.online),
       version: `${miniVer[uid] ?? 0}|${room.tiles}|${spriteImg().complete}`, // sprite tải xong -> vẽ lại
       draw: (ctx, w, h) => drawGrid(ctx, w, h, minis[uid], spriteImg()),

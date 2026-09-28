@@ -11,6 +11,8 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 
 Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.html`, thêm file vào `CORE` trong `public/sw.js` (và tăng `CACHE`), test vào `<ten-game>.test.mjs` rồi import ở cuối `logic.test.mjs`.
 
+Giao diện không dùng emoji: icon lấy từ lucide (`public/icons.js`, sinh bởi `scripts/icons.mjs`; `iconEl(tên)` cho DOM), toast dùng chung `public/toast.js` bắt chước sonner như chia-keo (`toast()`, `toast.success/.error/.warning`, `{ icon }`).
+
 Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) MIT chép ở `public/vendor/`) — quét bằng camera là vào phòng; kèm sao chép / chia sẻ link.
 
 ## Tài khoản & lịch sử

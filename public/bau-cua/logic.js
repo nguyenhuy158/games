@@ -1,12 +1,12 @@
 // Luật Bầu cua (thuần, dùng chung cho server + test).
 // Đặt x xu vào một con: ra k mặt con đó (k = 1..3) thì ăn x*k, không ra thì mất x. Nhà cái chung/nhận phần ngược lại.
 export const SYMBOLS = [
-  { key: 'nai', name: 'Nai', emoji: '🦌' },
-  { key: 'bau', name: 'Bầu', emoji: '🍐' },
-  { key: 'ga', name: 'Gà', emoji: '🐓' },
-  { key: 'ca', name: 'Cá', emoji: '🐟' },
-  { key: 'cua', name: 'Cua', emoji: '🦀' },
-  { key: 'tom', name: 'Tôm', emoji: '🦐' },
+  { key: 'nai', name: 'Nai' },
+  { key: 'bau', name: 'Bầu' },
+  { key: 'ga', name: 'Gà' },
+  { key: 'ca', name: 'Cá' },
+  { key: 'cua', name: 'Cua' },
+  { key: 'tom', name: 'Tôm' },
 ];
 export const CHIPS = [10, 50, 100, 500];
 export const START_COINS = 1000;

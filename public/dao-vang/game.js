@@ -2,8 +2,9 @@ import {
   W, H, GROUND, PIVOT, LEVEL_TIME, ITEMS, SHOP,
   targetOf, shopOffer, createWorld, step, shoot, dynamite, tipOf, mouseX, mouseDir,
 } from './logic.js';
-import { icon, hydrateIcons } from '../icons.js';
+import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
+import { toast } from '../toast.js';
 import { createPanel } from '../panel.js';
 
 hydrateIcons();
@@ -51,14 +52,6 @@ const stop = (n) => SND[n].pause();
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('dv.sound', soundOn ? '1' : '0'); if (!soundOn) stop('up'); renderSound(); };
 renderSound();
-
-function toast(msg) {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.hidden = false;
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => { t.hidden = true; }, 2500);
-}
 
 // Khung trong atlas dùng làm ảnh CSS (tiệm, menu).
 function spriteEl(name, scale = 1) {
@@ -271,7 +264,7 @@ const solo = {
     showOverlay(el('div', { className: 'card' },
       el('h2', { textContent: 'Hết giờ!' }),
       el('p', { textContent: `Bạn kiếm được $${this.money} / cần $${target} ở màn ${this.level}.` }),
-      el('p', { className: 'muted', textContent: isBest ? '🏆 Kỷ lục mới!' : `Kỷ lục: $${best()}` }),
+      el('p', { className: 'muted' }, ...(isBest ? [iconEl('trophy'), ' Kỷ lục mới!'] : [`Kỷ lục: $${best()}`])),
       el('button', { className: 'primary', textContent: 'Chơi lại', onclick: () => this.start() }),
       el('button', { textContent: 'Về menu', onclick: menu }),
     ));
@@ -464,8 +457,8 @@ const net = {
       const m = live[p.id];
       return {
         key: p.id, name: p.name, color: this.color(p.id), off: !p.online,
-        sub: `$${this.money?.players?.[p.id] ?? p.money} · 🧨${m?.dynamite ?? p.dynamite}`,
-        badge: m?.mode === 'in' && m.held ? '⛏️' : m?.mode === 'out' ? '⬇️' : '',
+        sub: `$${this.money?.players?.[p.id] ?? p.money} · nổ ${m?.dynamite ?? p.dynamite}`,
+        badge: m?.mode === 'in' && m.held ? { icon: 'pickaxe' } : m?.mode === 'out' ? { icon: 'arrow-down' } : '',
       };
     }));
   },
@@ -486,7 +479,7 @@ const net = {
       li.style.setProperty('--c', this.color(p.id));
       if (!p.online) li.classList.add('off');
       return li;
-    }), ...(this.me()?.spec ? [el('li', { className: 'spec', textContent: '👁 Bạn đang xem' })] : []));
+    }), ...(this.me()?.spec ? [el('li', { className: 'spec' }, iconEl('eye'), ' Bạn đang xem')] : []));
   },
 
   renderOverlay() {
@@ -495,11 +488,10 @@ const net = {
     const isHost = r.host === deviceId;
     const players = r.players.filter((p) => !p.spec);
     const playerList = el('ul', { className: 'plist' }, ...r.players.map((p) => el('li', { className: p.online ? '' : 'off' },
-      `${p.id === r.host ? '👑 ' : ''}${p.spec ? '👁 ' : ''}${p.name}${p.id === deviceId ? ' (bạn)' : ''}`)));
+      p.id === r.host ? iconEl('crown') : '', p.spec ? iconEl('eye') : '', ` ${p.name}${p.id === deviceId ? ' (bạn)' : ''}`)));
     const copy = el('button', {
-      textContent: `📱 Mời (QR): phòng ${this.code}`,
-      onclick: () => invite(`${location.origin}/dao-vang/?r=${this.code}`, this.code, toast),
-    });
+      onclick: () => invite(`${location.origin}/dao-vang/?r=${this.code}`, this.code),
+    }, iconEl('qr-code'), ` Mời: phòng ${this.code}`);
     const leave = el('button', { textContent: 'Rời phòng', onclick: () => this.leave() });
 
     if (r.status === 'playing') return showOverlay(null);
@@ -511,7 +503,7 @@ const net = {
         ? 'Cả phòng chung một mỏ, gom chung tiền. Mục tiêu tăng theo số người — không đủ là thua cả đội.'
         : `Chung một mỏ, ví riêng. Tranh nhau vàng trong ${r.versusLevels} màn, ai nhiều tiền nhất thắng.`;
       const result = r.status === 'ended' && r.result ? el('div', { className: 'result' },
-        el('h2', { textContent: r.result.winner ? (r.result.winner === deviceId ? '🏆 Bạn thắng!' : `🏆 ${this.name(r.result.winner)} thắng`) : `Thua ở màn ${r.result.level}` }),
+        el('h2', {}, ...(r.result.winner ? [iconEl('trophy'), r.result.winner === deviceId ? ' Bạn thắng!' : ` ${this.name(r.result.winner)} thắng`] : [`Thua ở màn ${r.result.level}`])),
         r.result.target ? el('p', { className: 'muted', textContent: `Quỹ chung $${r.result.team} / cần $${r.result.target}` }) : '',
         el('ol', {}, ...r.result.ranking.map((x) => el('li', { textContent: `${x.name}: $${x.money}` }))),
       ) : '';
@@ -541,7 +533,7 @@ const net = {
           ...offer.map((o) => shopItem(o, me.bought?.[o.key], wallet >= o.price, () => { play('scoreAdd'); this.send({ t: 'buy', key: o.key }); }))),
         el('p', {}, 'Màn tiếp theo bắt đầu sau ', left, ' giây'),
         readyList,
-        me && !me.spec ? el('button', { className: 'primary', textContent: me.ready ? 'Đã sẵn sàng ✓' : 'Sẵn sàng', disabled: me.ready, onclick: () => this.send({ t: 'ready' }) }) : '',
+        me && !me.spec ? el('button', { className: 'primary', textContent: me.ready ? 'Đã sẵn sàng' : 'Sẵn sàng', disabled: me.ready, onclick: () => this.send({ t: 'ready' }) }) : '',
       ));
     }
   },
@@ -560,7 +552,7 @@ function menu() {
   const code = el('input', { maxLength: 4, placeholder: 'MÃ PHÒNG', className: 'code' });
   const joinCode = () => {
     const c = code.value.trim().toUpperCase();
-    if (!/^[A-Z0-9]{4}$/.test(c)) return toast('Mã phòng gồm 4 ký tự');
+    if (!/^[A-Z0-9]{4}$/.test(c)) return toast.warning('Mã phòng gồm 4 ký tự');
     saveName();
     startNet(c);
   };
@@ -571,7 +563,7 @@ function menu() {
     el('p', { className: 'muted', textContent: 'Bấm / chạm (hoặc ↓, Space) để thả móc. Có thuốc nổ thì bấm ↑ để phá vật đang kéo.' }),
     el('button', { className: 'primary', textContent: 'Chơi một mình', onclick: () => { saveName(); driver = solo; solo.start(); } }),
     el('label', { className: 'field' }, 'Tên của bạn', name),
-    el('button', { textContent: '👥 Tạo phòng chơi nhiều người', onclick: () => { saveName(); startNet(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')); } }),
+    el('button', { onclick: () => { saveName(); startNet(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')); } }, iconEl('users'), ' Tạo phòng chơi nhiều người'),
     el('div', { className: 'row' }, code, el('button', { textContent: 'Vào phòng', onclick: joinCode })),
     el('p', { className: 'muted', textContent: best() ? `Kỷ lục chơi một mình: $${best()}` : '' }),
     el('a', { className: 'link', href: '/', textContent: '← Các game khác' }),

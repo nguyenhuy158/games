@@ -1,6 +1,7 @@
 // Hộp mời vào phòng dùng chung các game: mã QR để quét bằng camera điện thoại + sao chép / chia sẻ link.
 import qrcode from './vendor/qrcode.mjs';
 import { icon } from './icons.js';
+import { toast } from './toast.js';
 
 const CSS = `
 #invite { border: 0; padding: 0; background: none; color: #1b1b1b; max-width: calc(100vw - 32px); }
@@ -17,7 +18,7 @@ const CSS = `
 #invite .ic { width: 1.1em; height: 1.1em; }`;
 
 let dlg;
-export function invite(link, code, toast = () => {}) {
+export function invite(link, code) {
   if (!dlg) {
     document.head.append(Object.assign(document.createElement('style'), { textContent: CSS }));
     dlg = Object.assign(document.createElement('dialog'), { id: 'invite' });
@@ -37,7 +38,7 @@ export function invite(link, code, toast = () => {}) {
   const btn = (html, cls, onclick) => Object.assign(document.createElement('button'), { innerHTML: html, className: cls, onclick });
   const row = box.querySelector('.row');
   row.append(btn(`${icon('copy')} Sao chép link`, 'primary', async () => {
-    try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời'); } catch { toast(link); }
+    try { await navigator.clipboard.writeText(link); toast.success('Đã sao chép link mời'); } catch { toast(link); }
   }));
   if (navigator.share) row.append(btn(`${icon('share-2')} Chia sẻ`, '', () => navigator.share({ title: `Vào phòng ${code}`, url: link }).catch(() => {})));
   row.append(btn('Đóng', '', () => dlg.close()));

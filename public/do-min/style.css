@@ -75,10 +75,12 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 }
 .m:hover { filter: brightness(1.08); }
 .m.o { background: var(--open); box-shadow: none; cursor: default; }
-.m.f::after { content: '🚩'; font-size: calc(var(--s) * .55); }
+/* Cờ / mìn / nổ: icon lucide (flag, bomb, flame) làm mask để tô màu. */
+.m.f::after, .m.x::after, .m.b::after { content: ''; width: 62%; aspect-ratio: 1; background: var(--ic); mask: var(--mk) center / contain no-repeat; }
+.m.f::after { --ic: #e0312f; --mk: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M4%2015s1-1%204-1%205%202%208%202%204-1%204-1V3s-1%201-4%201-5-2-8-2-4%201-4%201z'%2F%3E%3Cline%20x1%3D'4'%20x2%3D'4'%20y1%3D'22'%20y2%3D'15'%2F%3E%3C%2Fsvg%3E"); }
+.m.x::after { --ic: #1b2233; --mk: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Ccircle%20cx%3D'11'%20cy%3D'13'%20r%3D'9'%2F%3E%3Cpath%20d%3D'M14.35%204.65%2016.3%202.7a2.41%202.41%200%200%201%203.4%200l1.6%201.6a2.4%202.4%200%200%201%200%203.4l-1.95%201.95'%2F%3E%3Cpath%20d%3D'm22%202-1.5%201.5'%2F%3E%3C%2Fsvg%3E"); }
 .m.b { background: #ff8a8a; }
-.m.b::after { content: '💥'; font-size: calc(var(--s) * .6); }
-.m.x::after { content: '💣'; font-size: calc(var(--s) * .55); }
+.m.b::after { --ic: #7a0000; --mk: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M8.5%2014.5A2.5%202.5%200%200%200%2011%2012c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054%202-6%20.5%202.5%202%204.9%204%206.5%202%201.6%203%203.5%203%205.5a7%207%200%201%201-14%200c0-1.153.433-2.294%201-3a2.5%202.5%200%200%200%202.5%202.5z'%2F%3E%3C%2Fsvg%3E"); }
 .m.wf { background: #ffd0d0; }
 .n1 { color: #1c5fd6; } .n2 { color: #1d8a3a; } .n3 { color: #d62828; } .n4 { color: #182c8f; }
 .n5 { color: #8a1d1d; } .n6 { color: #0d8a8a; } .n7 { color: #222; } .n8 { color: #666; }
@@ -96,7 +98,6 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 #overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #1b2233b0; z-index: 5; }
 #ovScore { margin: 0; color: var(--accent); font-weight: 600; }
 #btnResult { position: absolute; left: 50%; bottom: 8px; translate: -50% 0; z-index: 6; box-shadow: 0 6px 20px #0008; }
-#toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: #000c; padding: 8px 16px; border-radius: 20px; z-index: 10; }
 
 
 /* ---------- Skin cổ điển: ảnh từ MS-Texture (MIT, xem skins/LICENSE) ---------- */
@@ -129,8 +130,7 @@ body.skin-choco .m.n6 { background-image: url(skins/choco/cell6.png); }
 body.skin-choco .m.n7 { background-image: url(skins/choco/cell7.png); }
 body.skin-choco .m.n8 { background-image: url(skins/choco/cell8.png); }
 body.skin-choco .m.b, body.skin-choco .m.wf { background-image: url(skins/choco/celldown.png); }
-/* Socola không có ảnh cờ/mìn -> dùng emoji; ô đang để chữ trong suốt (giấu số) nên emoji phải có màu riêng. */
-body.skin-choco .m::after { color: #000; }
+/* Socola không có ảnh cờ/mìn -> dùng icon mask như skin Hiện đại. */
 /* Skin cổ điển: khung xám nổi kiểu Windows, mặt cười + đồng hồ LED. */
 body.skin-xp #board, body.skin-choco #board { outline: 6px solid #bdbdbd; box-shadow: 0 0 0 9px #7b7b7b; }
 #face { display: none; padding: 2px; background: none; border: 0; }
