@@ -75,6 +75,10 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 - 2 người vào đầu cầm X / O (X đi trước), còn lại xem + thả cảm xúc. Một mình thì đánh với máy (heuristic chấm điểm 1 nước: tấn công ×1.1 + phòng thủ). Ván mới đổi người đi trước; tỉ số tính theo cặp đấu.
 - Mỗi nước 30 giây, hết giờ thua (server hẹn giờ; `tick()` kiểm lại nếu DO bị tắt). Lịch sử lưu số nước; bảng vui có "Kỳ thủ caro" (số ván thắng người thật).
 
+## Ảnh chụp màn hình
+
+[`screenshots/`](screenshots/README.md): mỗi game một thư mục, trong đó mỗi thiết bị một thư mục con (desktop / tablet / phone / iPhone dọc, ngang). README trong đó có ảnh nhỏ để xem nhanh; chụp lại xong chạy `node scripts/screenshots-readme.mjs`.
+
 ## Chạy
 
 ```bash

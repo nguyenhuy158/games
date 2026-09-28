@@ -182,7 +182,7 @@ function render() {
     c.querySelector('.x').hidden = !hits[s];
     c.querySelector('.x').textContent = `×${hits[s]}`;
     c.querySelector('.stack').replaceChildren(...Object.entries(r?.bets ?? {}).filter(([, b]) => b[s]).map(([id, b]) => {
-      const sp = el('span', { className: id === deviceId ? 'me' : '', textContent: `${nameOf(id).split(' ').pop()} ${b[s]}` });
+      const sp = el('span', { className: id === deviceId ? 'me' : '', textContent: `${nameOf(id)} ${b[s]}`, title: nameOf(id) });
       sp.style.setProperty('--c', colorOf(id));
       return sp;
     }));
