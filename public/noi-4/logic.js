@@ -27,12 +27,15 @@ export function winLine(board, i) {
 
 export const full = (board) => board.every((v) => v);
 
-// Máy: negamax cắt tỉa alpha-beta DEPTH tầng, xét cột giữa trước; lá chấm điểm theo mọi "cửa sổ" 4 ô.
-// ponytail: độ sâu cố định 4 (vài ms CPU mỗi nước, hợp gói free) — người chơi kỹ thắng được; muốn khó hơn thì tăng DEPTH.
-const DEPTH = 4;
+// Máy: negamax cắt tỉa alpha-beta, xét cột giữa trước; lá chấm điểm theo mọi "cửa sổ" 4 ô.
+// Độ khó (chỉ số trong LEVELS, phòng lưu theo chỉ số): Dễ nhìn 1 nước + 40% đánh bừa, Thường 4 tầng (~3 ms), Khó 6 tầng (~15 ms).
+export const LEVELS = [{ name: 'Dễ', depth: 1, noise: 0.4 }, { name: 'Thường', depth: 4, noise: 0 }, { name: 'Khó', depth: 6, noise: 0 }];
 const ORDER = [3, 2, 4, 1, 5, 0, 6];
-export function botMove(board, me, rand = Math.random) {
+export function botMove(board, me, rand = Math.random, level = 1) {
+  const { depth: DEPTH, noise } = LEVELS[level] ?? LEVELS[1];
   const b = [...board];
+  const open = ORDER.filter((c) => drop(b, c) >= 0);
+  if (noise && rand() < noise) return open[Math.floor(rand() * open.length)];
   let best = -Infinity, moves = [];
   for (const c of ORDER) {
     const i = drop(b, c);

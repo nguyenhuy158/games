@@ -23,8 +23,8 @@ const RULES = {
     cells: () => C4.ROWS * C4.COLS,
     place: (s, c) => (Number.isInteger(c) && c >= 0 && c < C4.COLS ? C4.drop(s.board, c) : -1),
     win: (s, i) => C4.winLine(s.board, i),
-    bot: (s) => C4.drop(s.board, C4.botMove(s.board, s.turn)),
-    history: () => ({ game: 'noi-4', level: 0 }),
+    bot: (s) => C4.drop(s.board, C4.botMove(s.board, s.turn, Math.random, s.level)),
+    history: (s) => ({ game: 'noi-4', level: s.level }),
   },
 };
 
@@ -32,7 +32,7 @@ const RULES = {
 // 2 người đầu (theo thứ tự vào) cầm quân 1 / 2, còn lại xem. Ở một mình thì đánh với máy.
 // Mỗi ván mới đổi người đi trước (quân 1 luôn đi trước, nên hai người đổi quân cho nhau).
 const fresh = () => ({
-  game: '', status: 'lobby', size: 0, block: false, order: [], players: {}, seats: [null, null], score: {},
+  game: '', status: 'lobby', size: 0, block: false, level: 1, order: [], players: {}, seats: [null, null], score: {},
   board: null, turn: 1, last: -1, moves: 0, line: null, winner: 0, why: '', deadline: 0, swap: false,
 });
 
@@ -89,7 +89,8 @@ export class CaroRoom extends DurableObject {
 
     switch (m.t) {
       case 'config':
-        if (!isHost || !lobby || s.game !== 'caro') return;
+        if (!isHost || !lobby) return;
+        if (s.game === 'c4') { if (Number.isInteger(m.level) && C4.LEVELS[m.level]) s.level = m.level; break; }
         if (Number.isInteger(m.size) && SIZES[m.size]) s.size = m.size;
         if (typeof m.block === 'boolean') s.block = m.block;
         break;
@@ -228,7 +229,7 @@ export class CaroRoom extends DurableObject {
     const s = this.s;
     const online = this.onlineIds(except);
     this.sendAll({
-      t: 'state', status: s.status, size: s.size, block: s.block, board: s.board, turn: s.turn, last: s.last, moves: s.moves,
+      t: 'state', status: s.status, size: s.size, block: s.block, level: s.level, board: s.board, turn: s.turn, last: s.last, moves: s.moves,
       line: s.line, winner: s.winner, why: s.why, deadline: s.deadline, now: Date.now(), turnMs: TURN_MS,
       host: this.hostId(except), seats: s.seats, score: s.score,
       // Tên người cầm quân (kể cả khi họ vừa rớt mạng giữa ván).

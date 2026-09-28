@@ -38,6 +38,16 @@ function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('cc.sound', soundOn ? '1' : '0'); renderSound(); };
 renderSound();
 
+// Kiểu quân (riêng từng máy): giấy X/O hoặc "đá" tròn kiểu papergames.
+const applySkin = (s) => document.body.classList.toggle('skin-stone', s === 'stone');
+applySkin(store.get('cc.skin'));
+$('#btnSkin').onclick = () => {
+  const s = document.body.classList.contains('skin-stone') ? 'paper' : 'stone';
+  store.set('cc.skin', s);
+  applySkin(s);
+  toast(s === 'stone' ? 'Quân tròn' : 'Quân X / O trên giấy', { icon: 'layers' });
+};
+
 // ---------- vào / rời phòng ----------
 function enter(c) {
   code = c.toUpperCase();

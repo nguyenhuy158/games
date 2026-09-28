@@ -1,4 +1,4 @@
-import { ROWS, COLS, drop } from './logic.js';
+import { ROWS, COLS, drop, LEVELS } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
@@ -103,6 +103,7 @@ $('#btnCopy').onclick = () => invite(`${location.origin}/noi-4/?r=${code}`, code
 $('#btnStart').onclick = () => send({ t: 'start' });
 $('#btnPeek').onclick = () => { peek = true; render(); };
 $('#btnResult').onclick = () => { peek = false; render(); };
+$('#levelPick').append(...LEVELS.map((l, i) => el('button', { textContent: `Máy ${l.name.toLowerCase()}`, onclick: () => send({ t: 'config', level: i }) })));
 $('#emoBar').append(...EMOS.map(([name, color], i) => {
   const b = el('button', { title: 'Gửi cảm xúc', onclick: () => send({ t: 'emo', e: i }) }, iconEl(name));
   b.style.color = color;
@@ -192,6 +193,10 @@ function render(was) {
   const isHost = r?.host === deviceId;
   const ov = $('#overlay');
   const players = r?.players ?? [];
+  // Độ khó chỉ có nghĩa khi đánh với máy (phòng 1 người), chủ phòng chọn ở sảnh.
+  const vsBot = r?.status === 'lobby' ? players.length < 2 : !!r?.seats?.includes('bot');
+  $('#levelPick').hidden = !r || r.status === 'playing' || !vsBot;
+  [...$('#levelPick').children].forEach((b, k) => { b.classList.toggle('on', k === (r?.level ?? 1)); b.disabled = !isHost; });
   if (!r) {
     ov.hidden = false;
     $('#ovTitle').textContent = 'Đang kết nối…';

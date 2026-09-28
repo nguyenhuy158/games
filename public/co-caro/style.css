@@ -107,3 +107,15 @@ header .grow { flex: 1; }
 .emo-fly { position: fixed; translate: -50% -100%; font-size: 34px; pointer-events: none; z-index: 20; animation: emo 1.6s ease-out forwards; }
 .emo-fly .ic { filter: drop-shadow(0 2px 3px #0005); }
 @keyframes emo { to { transform: translateY(-80px) scale(1.4); opacity: 0; } }
+
+/* Kiểu "đá": nền xám nhạt, lưới mảnh, quân tròn đen / xanh ngọc, nước vừa đi có chấm trắng (tham khảo bố cục papergames). */
+body.skin-stone { --bg: #f4f6f9; --paper: #fbfcfd; --grid: #e2e7ee; --x: #2c3e50; --o: #1abc9c; --accent: #1abc9c; }
+body.skin-stone #board { border-color: #d5dce5; box-shadow: 0 8px 24px #2c3e5018; }
+body.skin-stone .c .ic, body.skin-stone .pc .ic { display: none; }
+body.skin-stone .c.x::after, body.skin-stone .c.o::after, body.skin-stone .pc::after {
+  content: ''; width: 76%; height: 76%; border-radius: 50%; background: currentColor; box-shadow: inset 0 -2px #0002;
+}
+body.skin-stone .c.last { background: none; }
+body.skin-stone .c.last::after { background: radial-gradient(circle, #fff 0 14%, currentColor 16%); }
+body.skin-stone .c.win { background: #d9f5ee; }
+body.skin-stone .side.turn { background: #fff; }
