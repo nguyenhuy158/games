@@ -29,6 +29,13 @@ export const ITEMS = {
 };
 
 export const TNT_RADIUS = 100;
+export const MIN_LEN = 20; // độ dài dây lúc móc nằm yên
+export const MAX_PLAYERS = 4;
+export const VERSUS_LEVELS = 5; // "Tranh vàng" chơi cố định 5 màn
+
+// Nhiều người chung mỏ: mục tiêu (chế độ chung) và số vật đều tăng theo số người.
+export const crowd = (n) => 1 + 0.6 * (n - 1);
+export const teamTarget = (lv, n) => Math.round(targetOf(lv) * crowd(n));
 
 // Mục tiêu tiền (cộng dồn) như bản gốc: 650, 1195, 2010, 3095, ...
 export const targetOf = (lv) => 650 + (lv - 1) * 545 + ((lv - 1) * (lv - 2) / 2) * 270;
@@ -61,9 +68,9 @@ export function recipe(lv, rand) {
 }
 
 // Rải vật không chồng nhau. Bảo đảm tổng tiền (không tính túi) >= 1.3 x số tiền cần kiếm thêm màn này.
-export function genLevel(lv, rand = Math.random) {
+export function genLevel(lv, rand = Math.random, players = 1) {
   const items = [];
-  const need = (targetOf(lv) - (lv > 1 ? targetOf(lv - 1) : 0)) * 1.3;
+  const need = (targetOf(lv) - (lv > 1 ? targetOf(lv - 1) : 0)) * 1.3 * crowd(players);
   const place = (type) => {
     const def = ITEMS[type], [d0, d1] = DEPTH[type];
     const top = GROUND + 50, bottom = H - def.r - 6;
@@ -72,14 +79,17 @@ export function genLevel(lv, rand = Math.random) {
       const y = Math.round(top + (bottom - top) * (d0 + (d1 - d0) * rand()));
       if (items.every((o) => Math.hypot(o.x - x, o.y - y) > ITEMS[o.type].r + def.r + 6)) {
         const it = { id: items.length, type, x, y };
-        if (def.moves) Object.assign(it, { x0: x, vx: (rand() < 0.5 ? -1 : 1) * int(rand, 30, 50) });
+        // Chuột chạy qua lại theo hàm của thời gian (không cần lưu vận tốc) -> client tự tính được vị trí.
+        if (def.moves) Object.assign(it, { x0: x, amp: Math.min(70, x - 20 - def.r, W - 20 - def.r - x), speed: int(rand, 30, 50), ph: rand() });
         items.push(it);
         return true;
       }
     }
     return false;
   };
-  for (const [type, n] of Object.entries(recipe(lv, rand))) for (let i = 0; i < n; i++) place(type);
+  for (const [type, n] of Object.entries(recipe(lv, rand))) {
+    for (let i = 0; i < Math.round(n * crowd(players)); i++) place(type);
+  }
   const worth = () => items.reduce((s, o) => s + ITEMS[o.type].value, 0);
   for (let i = 0; i < 20 && worth() < need; i++) place('goldMed');
   return items;
@@ -128,4 +138,103 @@ export function seeded(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+// ---------- thế giới: dùng chung cho chơi 1 người (client) và nhiều người (server) ----------
+
+// Sóng tam giác chu kỳ 1, giá trị [-1, 1].
+const tri = (u) => 1 - 4 * Math.abs((((u + 0.25) % 1) + 1) % 1 - 0.5);
+export function mouseX(o, t) {
+  return o.amp > 0 ? o.x0 + o.amp * tri(o.ph + (t * o.speed) / (4 * o.amp)) : o.x0;
+}
+export const mouseDir = (o, t) => Math.sign(mouseX(o, t + 0.01) - mouseX(o, t)) || 1;
+
+// Thợ mỏ đứng cách đều trên mặt đất.
+export const minerX = (i, n) => Math.round((W * (i + 1)) / (n + 1));
+export const tipOf = (m) => [m.x + m.len * Math.sin(m.angle), PIVOT[1] + m.len * Math.cos(m.angle)];
+
+// players: [{ id, dynamite, buffs: { strength, clover, rockBook, polish } }]
+export function createWorld(lv, players, rand = Math.random) {
+  const n = players.length;
+  return {
+    level: lv, time: LEVEL_TIME, t: 0,
+    items: genLevel(lv, rand, n),
+    miners: players.map((p, i) => ({
+      id: p.id, x: minerX(i, n), phase: i * 1.3, angle: 0, len: MIN_LEN, mode: 'swing', held: null, anim: null,
+      dynamite: p.dynamite ?? 0, buffs: { ...(p.buffs ?? {}) },
+    })),
+  };
+}
+
+export function shoot(world, id) {
+  const m = world.miners.find((x) => x.id === id);
+  if (!m || m.mode !== 'swing' || world.time <= 0) return false;
+  m.mode = 'out';
+  m.anim = { name: 'down', t: 0 };
+  return true;
+}
+
+// Phá vật đang kéo. Trả về sự kiện nổ để phát hiệu ứng/âm thanh, hoặc null.
+export function dynamite(world, id) {
+  const m = world.miners.find((x) => x.id === id);
+  if (!m || m.mode !== 'in' || !m.held || m.dynamite <= 0) return null;
+  m.dynamite--;
+  m.held = null;
+  m.anim = { name: 'dyn', t: 0 };
+  const [x, y] = tipOf(m);
+  return { k: 'boom', id, x, y };
+}
+
+// Tiến thế giới dt giây. Trả về danh sách sự kiện: grab, collect, tnt, end.
+// Tiền không nằm trong world: bên gọi cộng theo sự kiện collect (quỹ chung hay ví riêng).
+export function step(world, dt, rand = Math.random) {
+  const ev = [];
+  world.t += dt;
+  world.time = Math.max(0, world.time - dt);
+  for (const o of world.items) if (ITEMS[o.type].moves) o.x = mouseX(o, world.t);
+
+  for (const m of world.miners) {
+    if (m.anim && (m.anim.t += dt) > 0.4) m.anim = null;
+    if (m.mode === 'swing') {
+      m.phase += SWING_SPEED * dt;
+      m.angle = SWING_MAX * Math.sin(m.phase);
+    } else if (m.mode === 'out') {
+      m.len += SHOOT_SPEED * dt;
+      const [x, y] = tipOf(m);
+      const hit = world.items.find((o) => Math.hypot(o.x - x, o.y - y) < ITEMS[o.type].r * (ITEMS[o.type].scale ?? 1) + 5);
+      if (hit && ITEMS[hit.type].tnt) {
+        const removed = world.items.filter((o) => o === hit || Math.hypot(o.x - hit.x, o.y - hit.y) <= TNT_RADIUS).map((o) => o.id);
+        world.items = world.items.filter((o) => !removed.includes(o.id));
+        ev.push({ k: 'tnt', id: m.id, x: hit.x, y: hit.y, removed });
+        m.mode = 'in';
+      } else if (hit) {
+        m.held = hit;
+        world.items = world.items.filter((o) => o !== hit);
+        ev.push({ k: 'grab', id: m.id, item: hit.id, type: hit.type });
+        m.mode = 'in';
+      } else if (x < 4 || x > W - 4 || y > H - 4) m.mode = 'in';
+    } else if (m.mode === 'in') {
+      const speed = m.held ? (PULL / ITEMS[m.held.type].weight) * (m.buffs.strength ? STRENGTH : 1) : EMPTY_SPEED;
+      m.len -= speed * dt;
+      if (m.len <= MIN_LEN) {
+        m.len = MIN_LEN;
+        m.mode = 'swing';
+        if (m.held) {
+          const type = m.held.type;
+          const e = { k: 'collect', id: m.id, type, value: 0 };
+          if (ITEMS[type].bag) {
+            const o = bagOutcome(world.level, rand, m.buffs.clover);
+            if (o.money) e.value = o.money;
+            if (o.dynamite) { m.dynamite++; e.dynamite = 1; }
+            if (o.strength) { m.buffs.strength = true; e.strength = true; }
+          } else e.value = valueOf(type, m.buffs);
+          ev.push(e);
+          m.held = null;
+        }
+      }
+    }
+  }
+  // Hết giờ, hoặc mỏ trống và mọi móc đã về -> hết màn.
+  if (world.time <= 0 || (!world.items.length && world.miners.every((m) => m.mode === 'swing'))) ev.push({ k: 'end' });
+  return ev;
 }

@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+export { MinerRoom } from './dao-vang.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
 
 const MAX_PLAYERS = 4;
@@ -23,9 +24,11 @@ export default {
       const rows = await env.TOP.get(env.TOP.idFromName('global')).list(mode, size);
       return Response.json(rows, { headers: { 'Cache-Control': 'public, max-age=30' } });
     }
-    const m = url.pathname.match(/^\/api\/room\/([A-Z0-9]{4})$/);
+    // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng.
+    const m = url.pathname.match(/^\/api\/(dv\/)?room\/([A-Z0-9]{4})$/);
     if (!m || req.headers.get('Upgrade') !== 'websocket') return new Response('Not found', { status: 404 });
-    return env.ROOM.get(env.ROOM.idFromName(m[1])).fetch(req);
+    const ns = m[1] ? env.MINER : env.ROOM;
+    return ns.get(ns.idFromName(m[2])).fetch(req);
   },
 };
 

@@ -13,17 +13,19 @@
   <header id="hud" hidden>
     <a href="/" class="btn" title="Các game khác"><i data-icon="arrow-left"></i></a>
     <span class="stat"><small>Tiền</small> <b id="hMoney">$0</b></span>
-    <span class="stat"><small>Mục tiêu</small><small class="short">/</small> <b id="hTarget">$650</b></span>
+    <span class="stat" id="hTargetBox"><small>Mục tiêu</small><small class="short">/</small> <b id="hTarget">$650</b></span>
     <span class="stat"><small>Màn</small><small class="short">M</small> <b id="hLevel">1</b></span>
     <span class="stat"><small>Giờ</small><small class="short">⏱</small> <b id="hTime">60</b></span>
     <button id="btnDyn" title="Thuốc nổ (↑)">🧨 <span id="dynCount">0</span></button>
     <button id="btnMenu" title="Tạm dừng">❚❚</button>
     <button id="btnSound" title="Âm thanh"></button>
   </header>
+  <ul id="scores" hidden></ul>
   <main id="stage">
     <canvas id="game"></canvas>
     <div id="overlay" hidden></div>
   </main>
+  <div id="toast" hidden></div>
   <script type="module" src="game.js"></script>
 </body>
 </html>

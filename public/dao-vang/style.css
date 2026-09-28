@@ -63,6 +63,31 @@ button.primary { background: var(--gold); color: #2b1600; border-color: var(--go
 .muted { color: var(--muted); font-size: 13px; }
 .link { color: var(--muted); font-size: 13px; }
 
+.row { display: flex; gap: 8px; width: 100%; justify-content: center; flex-wrap: wrap; }
+.field { display: grid; gap: 4px; width: 100%; text-align: left; color: var(--muted); font-size: 13px; }
+input {
+  font: inherit; color: inherit; background: #1a1008; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; width: 100%;
+}
+input.code { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 3px; text-align: center; }
+.card > button:not(.primary) { width: 100%; justify-content: center; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+.seg button { justify-content: center; }
+.seg button.on { border-color: var(--gold); color: var(--gold); }
+.seg button:disabled { opacity: 1; }
+.plist { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.plist li { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; }
+.plist li.off { opacity: .45; }
+.result { display: grid; gap: 6px; width: 100%; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.result ol { margin: 0; padding-left: 20px; text-align: left; }
+#scores { list-style: none; margin: 0; padding: 0 12px 6px; display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; }
+#scores li { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
+#scores li b { color: var(--c); }
+#scores li.off { opacity: .45; }
+#scores .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); font-style: normal; }
+#toast {
+  position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: #000c; padding: 8px 16px; border-radius: 20px; z-index: 10;
+}
 .sprite { display: inline-block; background-image: url("assets/atlas.png"); background-repeat: no-repeat; flex: none; }
 .menu .sprite:first-child { max-width: 100%; }
 

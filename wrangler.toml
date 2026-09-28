@@ -18,6 +18,10 @@ class_name = "Room"
 name = "TOP"
 class_name = "Top"
 
+[[durable_objects.bindings]]
+name = "MINER"
+class_name = "MinerRoom"
+
 # SQLite-backed DO: dung duoc o goi free.
 [[migrations]]
 tag = "v1"
@@ -27,6 +31,11 @@ new_sqlite_classes = ["Room"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["Top"]
+
+# Phong Dao Vang nhieu nguoi.
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["MinerRoom"]
 
 [observability]
 enabled = true
