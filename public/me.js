@@ -6,7 +6,7 @@ hydrateIcons();
 const SSO = 'https://auth.huyab.click';
 const $ = (s) => document.querySelector(s);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', snake: 'Rắn săn mồi', bantumi: 'Bantumi', pairs: 'Lật hình', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce' };
+const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', snake: 'Rắn săn mồi', bantumi: 'Bantumi', pairs: 'Lật hình', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'Ô ăn quan' };
 const MODES = { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình', rotate: 'Xoay cái', house: 'Máy làm cái', pvp: 'Đối kháng', bot: 'Với máy', multi: 'Nhiều người' };
 const back = () => encodeURIComponent(location.origin + '/');
 const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -14,12 +14,12 @@ const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const moves = (v) => `${v} nước`;
 const SCORE = {
   'dao-vang': (v) => `$${v}`, 'do-min': mmss, 'bau-cua': (v) => `${v > 0 ? '+' : ''}${v} xu`, 'co-caro': moves, 'noi-4': moves,
-  'ban-tau': (v) => `${v} phát`, snake: (v) => `${v} điểm`, bantumi: (v) => `${v} sỏi`, 'rapid-roll': (v) => `${v} m`, bounce: (v) => `${v} giây`, 'space-impact': (v) => `${v} điểm`, logic: (v) => (v ? `${v} lượt` : 'chưa giải'),
+  'ban-tau': (v) => `${v} phát`, snake: (v) => `${v} điểm`, bantumi: (v) => `${v} sỏi`, 'rapid-roll': (v) => `${v} m`, bounce: (v) => `${v} giây`, 'space-impact': (v) => `${v} điểm`, logic: (v) => (v ? `${v} lượt` : 'chưa giải'), 'o-an-quan': (v) => `${v} điểm`,
 };
 const scoreText = (game, v) => (SCORE[game] ?? String)(v);
 // "level" mỗi game mang nghĩa khác nhau.
 const LEVEL = { 'do-min': () => '', 'bau-cua': (l) => ` · ${l} ván`, 'co-caro': (l) => ` · bàn ${l}×${l}`, 'noi-4': () => '', 'ban-tau': () => '',
-  snake: (l) => ` · tốc độ ${l}`, bantumi: (l) => ` · ${l} sỏi/hố`, pairs: () => '', logic: () => '', 'rapid-roll': () => '' };
+  snake: (l) => ` · tốc độ ${l}`, bantumi: (l) => ` · ${l} sỏi/hố`, pairs: () => '', logic: () => '', 'rapid-roll': () => '', 'o-an-quan': () => '' };
 const levelText = (game, l) => (LEVEL[game] ?? ((x) => ` · màn ${x}`))(l);
 
 const ago = (t) => {

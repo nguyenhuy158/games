@@ -7,14 +7,15 @@ import logic from './nokia/logic.js';
 import rapid from './nokia/rapid-roll.js';
 import space from './nokia/space-impact.js';
 import bounce from './nokia/bounce.js';
+import oAnQuan from './nokia/o-an-quan.js';
 
-// Một DO cho mọi game Nokia: /api/nk/<game>/room/CODE -> NokiaRoom tên "<game>:<CODE>".
+// Một DO cho mọi game Nokia (và các game lượt 1v1 khác như Ô ăn quan): /api/nk/<game>/room/CODE -> NokiaRoom tên "<game>:<CODE>".
 // Phòng lo phần chung (người chơi, chủ phòng, sảnh chờ, gửi trạng thái, lưu lịch sử); mỗi game chỉ là một module:
 //   { name, max, cfg: {mặc định}, config(cfg, m) -> cfg mới | null, start(ctx), msg(ctx, p, m) -> true nếu đổi,
 //     tickMs? (số hoặc hàm của cfg), tick?(ctx) -> true nếu đổi, view(ctx, id) -> dữ liệu gửi người id, volatile? (không lưu g lúc chơi) }
 // ctx = { g (trạng thái game), cfg, seats (id người chơi), players, now(), rand(), end(result), send(id, msg) }
 // end({ ranks: [{ id, score, won }], level?, mode? }) -> kết thúc ván, lưu lịch sử người đã đăng nhập.
-export const GAMES = Object.fromEntries(Object.entries({ snake, bantumi, pairs, logic, 'rapid-roll': rapid, 'space-impact': space, bounce }).filter(([, m]) => m));
+export const GAMES = Object.fromEntries(Object.entries({ snake, bantumi, pairs, logic, 'rapid-roll': rapid, 'space-impact': space, bounce, 'o-an-quan': oAnQuan }).filter(([, m]) => m));
 const MAX_ONLINE = 12;
 
 export class NokiaRoom extends DurableObject {

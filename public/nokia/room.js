@@ -2,6 +2,7 @@
 // sảnh chờ / kết quả. Mỗi game chỉ cần vẽ LCD và xử lý phím:
 //   nokiaApp({ game, title, help, lobby?(box, room, isHost, setCfg), draw(lcd, room, now), onKey?(k, down, room),
 //              onState?(room, prev), onMsg?(m), badge?(player, room), onTap?(x, y, room, app) })
+// Game không dùng LCD (vd Ô ăn quan): truyền mount(stage, app) + render(room, app) thay cho draw, path = đường dẫn trang.
 // Server: /api/nk/<game>/room/CODE (worker/nokia.js). Tin game gửi qua app.send({...}) -> { t: 'g', ... }.
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
@@ -47,17 +48,18 @@ export function nokiaApp(opt) {
   const roomEl = el('section', { id: 'room', hidden: true },
     el('header', {},
       el('button', { title: 'Rời phòng', innerHTML: icon('arrow-left'), onclick: () => leave() }),
-      el('button', { title: 'Mời bạn: mã QR / link', onclick: () => invite(`${location.origin}/nokia/${opt.game}/?r=${code}`, code) },
+      el('button', { title: 'Mời bạn: mã QR / link', onclick: () => invite(`${location.origin}${opt.path ?? `/nokia/${opt.game}/`}?r=${code}`, code) },
         el('span', { className: 'lbl', textContent: 'Phòng ' }), roomCode, iconEl('qr-code')),
       conn, el('span', { className: 'grow' }), btnSound),
     players,
     el('main', { className: 'stage' },
-      el('div', { className: 'phone' }, el('div', { className: 'brand', textContent: 'NOKIA' }), el('div', { className: 'screen' }, canvas), pad),
+      opt.mount ? el('div', { className: 'board-stage' })
+        : el('div', { className: 'phone' }, el('div', { className: 'brand', textContent: 'NOKIA' }), el('div', { className: 'screen' }, canvas), pad),
       ov),
   );
   document.body.append(home, roomEl);
   hydrateIcons();
-  const lcd = createLCD(canvas);
+  const lcd = opt.draw && createLCD(canvas);
 
   // ---------- âm thanh: tiếng bíp kiểu Nokia (WebAudio, không cần file) ----------
   let soundOn = store.get('nk.sound') !== '0';
@@ -130,13 +132,14 @@ export function nokiaApp(opt) {
     render();
   }
 
-  bindKeys(pad, (k, down) => opt.onKey?.(k, down, room, app), () => !!room && roomEl.hidden === false);
+  if (opt.draw) bindKeys(pad, (k, down) => opt.onKey?.(k, down, room, app), () => !!room && roomEl.hidden === false);
   canvas.onpointerdown = (e) => { if (room && opt.onTap) { e.preventDefault(); opt.onTap(...app.lcdPoint(e), room, app); } };
 
   // ---------- vẽ ----------
   const colorOf = (id) => COLORS[Math.max(0, room?.seats.indexOf(id) ?? 0) % COLORS.length];
   function render() {
     const r = room;
+    if (r) opt.render?.(r, app);
     players.replaceChildren(...(r?.players ?? []).map((p) => {
       const li = el('li', { className: p.id === deviceId ? 'me' : '' });
       li.style.setProperty('--c', r.seats.includes(p.id) ? colorOf(p.id) : 'transparent');
@@ -168,7 +171,7 @@ export function nokiaApp(opt) {
     }
     requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  if (opt.draw) requestAnimationFrame(frame);
 
   const app = {
     get id() { return deviceId; }, get room() { return room; }, lcd, canvas, beep, toast, colorOf,
@@ -177,6 +180,7 @@ export function nokiaApp(opt) {
     send: (m) => raw({ t: 'g', ...m }), now: () => Date.now() + clockOffset,
   };
   window.nk = app; // cho test tự động
+  if (opt.mount) opt.mount(roomEl.querySelector('.board-stage'), app);
   const initial = new URLSearchParams(location.search).get('r');
   if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
   return app;

@@ -8,6 +8,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 | Đào Vàng | `/dao-vang/` | 1 người hoặc 2–4 người chung mỏ; luật thuần ở `public/dao-vang/logic.js` |
 | Bầu cua | `/bau-cua/` | 2–10 người đặt xu ảo, máy làm cái (mặc định) hoặc xoay vòng |
 | Cờ caro | `/co-caro/` | 1v1 hoặc với máy, người khác xem; XO 3×3; luật chặn 2 đầu tuỳ chọn |
+| Ô ăn quan | `/o-an-quan/` | 1v1 hoặc với máy (3 mức), người khác xem; quan non tuỳ chọn, vay dân khi hết quân |
 | Nối 4 | `/noi-4/` | Connect 4: 1v1 hoặc với máy, người khác xem |
 | Bắn tàu | `/ban-tau/` | Battleship: 1v1 hoặc với máy; tàu chỉ gửi cho chủ hạm đội |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |
@@ -82,6 +83,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 Làm theo lối chơi của papergames.io (tham khảo cách bố trí / luật để học), hình vẽ tự làm bằng CSS + logo trong `scripts/logos.mjs`, không lấy ảnh của họ.
 
 - **Nối 4** (`public/noi-4/`): dùng chung DO `CaroRoom` với caro — bảng `RULES` trong `worker/co-caro.js` giữ phần khác nhau (cỡ bàn, nước đi hợp lệ, thắng, máy). Worker gửi `/api/c4/room/CODE` tới id `c4:CODE` kèm header `X-Game: c4`. Bàn 7×6, bấm ô nào trong cột là thả vào cột đó; máy dùng negamax alpha-beta 4 tầng (~2.5 ms/nước).
+- **Ô ăn quan** (`public/o-an-quan/`): luật + máy (minimax) ở `logic.js`, server là module `worker/nokia/o-an-quan.js` chạy trong DO `NokiaRoom` (`/api/nk/o-an-quan/room/CODE`), giao diện DOM qua `nokiaApp({ mount, render })` thay cho LCD. Mỗi nước server gửi kèm các bước rải (`last.steps`) để client diễn lại từng viên; hạn giờ cộng thêm thời gian diễn.
 - **Bắn tàu** (`worker/ban-tau.js`, DO `ShipRoom`, `/api/bt/room/CODE`, luật ở `public/ban-tau/logic.js`): biển 10×10, tàu 5-4-3-3-2 không chạm nhau. Xếp ngẫu nhiên (*Xếp lại*) hoặc tự xếp — chạm tàu để chọn, chạm ô trống để dời, chạm lại / *Xoay* để đổi chiều; server kiểm lại bằng `validFleet` (60 giây) → cả hai *Sẵn sàng* → bắn luân phiên, trúng được bắn tiếp; chìm tàu thì tự đánh dấu các ô xung quanh. Server gửi mỗi người một bản state: chỉ thấy hạm đội của mình tới khi hết ván. Hết 30 giây thì bắn giùm 1 phát ngẫu nhiên, 3 lượt liền như vậy thì thua. Máy: săn quanh ô trúng, không có thì bắn ô "bàn cờ" ngẫu nhiên. Dưới mỗi biển có hàng tàu (chìm thì mờ) — server gửi `sunk` theo thứ tự FLEET, không lộ vị trí.
 - Bảng vui: "Vua Nối 4" (ván thắng người thật), "Xạ thủ Bắn tàu" (thắng bằng ít phát nhất).
 

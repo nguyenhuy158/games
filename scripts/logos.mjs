@@ -124,4 +124,17 @@ export const LOGOS = {
     <rect x="232" y="150" width="48" height="30" rx="12" fill="#c7d0da" stroke="${INK}" stroke-width="8"/>
     ${face(256, 290, 0.8, 'open')}
     ${sparkle(96, 110, 30)}${sparkle(420, 120, 24, '#ffe066')}${sparkle(440, 300, 18)}${sparkle(80, 330, 16, '#ffe066')}`),
+
+  // Ô ăn quan: bàn kẻ phấn (2 hàng ô + 2 quan bán nguyệt) trên nền gạch, hòn quan mặt cười ở giữa, sỏi xung quanh.
+  'o-an-quan': frame('q', '#ffe6d6', '#e98a6a', `
+    ${sticker(`<path d="M150 150H362A106 106 0 0 1 362 362H150A106 106 0 0 1 150 150Z" fill="#b5513a" stroke="${INK}" stroke-width="12" stroke-linejoin="round"/>`)}
+    <path d="M150 150V362M362 150V362M150 256H362M221 150V362M291 150V362" stroke="#fff6e6" stroke-width="9" stroke-linecap="round" opacity=".9"/>
+    <g stroke="${INK}" stroke-width="5">
+      <circle cx="186" cy="196" r="13" fill="#d9d3c4"/><circle cx="198" cy="222" r="11" fill="#a8957c"/><circle cx="252" cy="304" r="13" fill="#ebe5d6"/>
+      <circle cx="326" cy="200" r="12" fill="#b8b0a0"/><circle cx="330" cy="316" r="13" fill="#c9b99c"/><circle cx="118" cy="256" r="16" fill="#ebe5d6"/>
+    </g>
+    ${sticker(`<path d="M348 206C392 178 448 204 452 256C456 312 404 340 364 318C326 300 312 232 348 206Z" fill="#4a525e" stroke="${INK}" stroke-width="12" stroke-linejoin="round"/>`)}
+    <ellipse cx="370" cy="226" rx="18" ry="10" fill="#fff" opacity=".45" transform="rotate(-30 370 226)"/>
+    ${face(392, 262, 0.5, 'w', '#fff')}
+    ${sparkle(92, 104, 28, '#ffd23f')}${sparkle(420, 94, 20)}${sparkle(96, 420, 18)}${sparkle(430, 440, 24, '#ffd23f')}`),
 };

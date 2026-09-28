@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script src="/nozoom.js"></script>
+  <script src="/bfcache.js"></script>
+  <meta name="theme-color" content="#9a4330">
+  <title>Ô ăn quan</title>
+  <link rel="icon" href="/logos/o-an-quan.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/o-an-quan-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/o-an-quan-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="../nokia/nokia.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Nét phấn: làm nhoè cạnh đường kẻ trên nền gạch. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="chalk" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.5" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feComposite in="d" in2="n" operator="arithmetic" k1="0" k2="1" k3="-0.25" k4="0"/>
+    </filter>
+  </svg>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
