@@ -89,6 +89,30 @@ export const LOGOS = {
     ${face(330, 312, 0.62)}
     ${sparkle(430, 100, 26, '#ffd23f')}${sparkle(90, 420, 22)}${sparkle(440, 440, 16, '#ff9ec4')}`),
 
+  // Nối 4: khung xanh lỗ tròn, quân đỏ mặt cười đang rơi vào cột, quân vàng nằm dưới đáy.
+  'noi-4': frame('n', '#eef4ff', '#9ec0ff', `
+    ${sticker(`<rect x="70" y="170" width="372" height="290" rx="36" fill="#2456c9" stroke="${INK}" stroke-width="12"/>`)}
+    ${[[130, 230], [214, 230], [298, 230], [382, 230], [130, 312], [214, 312], [298, 312], [382, 312], [298, 394], [382, 394]]
+      .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="30" fill="#eef3fb" stroke="${INK}" stroke-width="6"/>`).join('')}
+    <circle cx="130" cy="394" r="32" fill="#ffc62e" stroke="${INK}" stroke-width="8"/>
+    <circle cx="214" cy="394" r="32" fill="#e0312f" stroke="${INK}" stroke-width="8"/>
+    ${sticker(`<circle cx="256" cy="116" r="78" fill="#e0312f" stroke="${INK}" stroke-width="12"/>`)}
+    <ellipse cx="226" cy="84" rx="22" ry="12" fill="#fff" opacity=".5" transform="rotate(-25 226 84)"/>
+    ${face(256, 112, 0.6, 'w', '#fff')}
+    ${sparkle(80, 90, 24, '#ffd23f')}${sparkle(440, 86, 20)}${sparkle(462, 470, 14, '#ff9ec4')}`),
+
+  // Bắn tàu: con tàu nhỏ mặt cười trên sóng, bên cạnh hồng tâm.
+  'ban-tau': frame('t', '#e9fbfb', '#8fd6d8', `
+    <path d="M8 380Q72 350 136 380T264 380T392 380T504 380V504H8Z" fill="#4fb3ea" opacity=".6"/>
+    ${sticker(`<path d="M92 300H420L380 390Q372 408 352 408H160Q140 408 132 390Z" fill="#e8716f" stroke="${INK}" stroke-width="12" stroke-linejoin="round"/>`)}
+    ${sticker(`<rect x="170" y="210" width="170" height="92" rx="22" fill="#fff" stroke="${INK}" stroke-width="12"/>`)}
+    <rect x="236" y="150" width="40" height="64" rx="10" fill="#7c83d6" stroke="${INK}" stroke-width="10"/>
+    ${face(256, 248, 0.55)}
+    <path d="M8 420Q72 392 136 420T264 420T392 420T504 420V504H8Z" fill="#2f9fd9"/>
+    ${sticker(`<circle cx="410" cy="130" r="62" fill="#fff" stroke="${INK}" stroke-width="10"/>`)}
+    <circle cx="410" cy="130" r="38" fill="none" stroke="#d6336c" stroke-width="12"/><circle cx="410" cy="130" r="12" fill="#d6336c"/>
+    ${sparkle(96, 110, 28, '#ffd23f')}${sparkle(170, 70, 16)}${sparkle(452, 250, 16, '#ffd23f')}`),
+
   // Đào Vàng: cục vàng mặt cười bị móc câu gắp lên.
   'dao-vang': frame('d', '#fff1d6', '#f7b267', `
     <path d="M8 400C120 372 190 392 256 380S420 360 504 392V384 504H8Z" fill="#c98a55" opacity=".55"/>

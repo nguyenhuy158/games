@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script src="/nozoom.js"></script>
+  <meta name="theme-color" content="#e4f3f6">
+  <title>Bắn tàu</title>
+  <link rel="icon" href="/logos/ban-tau.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/ban-tau-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/ban-tau-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="home">
+    <div class="card">
+      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/ban-tau.svg" alt=""> Bắn tàu</h1>
+      <p class="sub">Mỗi bên giấu 5 chiếc tàu trên biển 10×10, thay phiên bắn vào biển đối thủ. Ai đánh chìm hết tàu bên kia trước là thắng.</p>
+      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <div class="join">
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
+        <button id="btnJoin">Vào phòng</button>
+      </div>
+      <p class="muted">Ở một mình: tạo phòng rồi bấm Bắt đầu để đấu với máy. Tàu dài 5, 4, 3, 3, 2 ô, không nằm sát nhau. Bắn trúng được bắn tiếp; mỗi lượt 30 giây.</p>
+    </div>
+  </section>
+
+  <section id="room" hidden>
+    <header>
+      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" title="Kết nối"></span>
+      <span class="grow"></span>
+      <button id="btnSound" title="Âm thanh"></button>
+    </header>
+    <div id="vs">
+      <div class="side" data-seat="1"><b></b><span class="sc"></span></div>
+      <div id="clock"></div>
+      <div class="side" data-seat="2"><span class="sc"></span><b></b></div>
+    </div>
+    <div id="placeBar" hidden>
+      <span id="placeText"></span>
+      <button id="btnReroll"><i data-icon="shuffle"></i> Xếp lại</button>
+      <button id="btnReady" class="primary"><i data-icon="circle-check"></i> Sẵn sàng</button>
+    </div>
+    <main id="wrap">
+      <div id="seas">
+        <figure class="sea" id="seaA"><figcaption></figcaption><div class="grid"></div></figure>
+        <figure class="sea" id="seaB"><figcaption></figcaption><div class="grid"></div></figure>
+      </div>
+      <div id="overlay" hidden>
+        <div class="card">
+          <h2 id="ovTitle"></h2>
+          <p id="ovText" class="sub"></p>
+          <button id="btnStart" class="primary" hidden>Bắt đầu</button>
+          <button id="btnPeek" hidden><i data-icon="eye"></i> Xem biển</button>
+        </div>
+      </div>
+      <button id="btnResult" hidden><i data-icon="trophy"></i> Kết quả</button>
+    </main>
+    <footer id="emoBar"></footer>
+  </section>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>

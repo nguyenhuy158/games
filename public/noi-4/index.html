@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script src="/nozoom.js"></script>
+  <meta name="theme-color" content="#e6eefa">
+  <title>Nối 4</title>
+  <link rel="icon" href="/logos/noi-4.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/noi-4-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/noi-4-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="home">
+    <div class="card">
+      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/noi-4.svg" alt=""> Nối 4</h1>
+      <p class="sub">Thả quân vào cột, ai nối được 4 quân liền (ngang, dọc, chéo) trước là thắng. Đấu 1v1 với bạn hoặc với máy.</p>
+      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <div class="join">
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
+        <button id="btnJoin">Vào phòng</button>
+      </div>
+      <p class="muted">Ở một mình: tạo phòng rồi bấm Bắt đầu để đánh với máy. 2 người đầu vào phòng cầm quân, người sau được xem.<br>Mỗi nước tối đa 30 giây. Ván sau đổi người đi trước.</p>
+    </div>
+  </section>
+
+  <section id="room" hidden>
+    <header>
+      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" title="Kết nối"></span>
+      <span class="grow"></span>
+      <button id="btnSound" title="Âm thanh"></button>
+    </header>
+    <div id="vs">
+      <div class="side" data-seat="1"><span class="pc p1"></span><b></b><span class="sc"></span></div>
+      <div id="clock"></div>
+      <div class="side" data-seat="2"><span class="sc"></span><b></b><span class="pc p2"></span></div>
+    </div>
+    <main id="wrap">
+      <div id="board"></div>
+      <div id="overlay" hidden>
+        <div class="card">
+          <h2 id="ovTitle"></h2>
+          <p id="ovText" class="sub"></p>
+          <button id="btnStart" class="primary" hidden>Bắt đầu</button>
+          <button id="btnPeek" hidden><i data-icon="eye"></i> Xem bàn</button>
+        </div>
+      </div>
+      <button id="btnResult" hidden><i data-icon="trophy"></i> Kết quả</button>
+    </main>
+    <footer id="emoBar"></footer>
+  </section>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>

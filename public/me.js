@@ -6,14 +6,14 @@ hydrateIcons();
 const SSO = 'https://auth.huyab.click';
 const $ = (s) => document.querySelector(s);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro' };
+const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu' };
 const MODES = { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình', rotate: 'Xoay cái', house: 'Máy làm cái', pvp: 'Đối kháng', bot: 'Với máy' };
 const back = () => encodeURIComponent(location.origin + '/');
 const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 // Điểm hiển thị theo game: Đào Vàng = tiền, Dò mìn = thời gian (giây), còn lại = điểm.
-const scoreText = (game, v) => (game === 'dao-vang' ? `$${v}` : game === 'do-min' ? mmss(v) : game === 'bau-cua' ? `${v > 0 ? '+' : ''}${v} xu` : game === 'co-caro' ? `${v} nước` : v);
+const scoreText = (game, v) => (game === 'dao-vang' ? `$${v}` : game === 'do-min' ? mmss(v) : game === 'bau-cua' ? `${v > 0 ? '+' : ''}${v} xu` : game === 'co-caro' || game === 'noi-4' ? `${v} nước` : game === 'ban-tau' ? `${v} phát` : v);
 // "level" mỗi game mang nghĩa khác nhau.
-const LEVEL = { 'do-min': () => '', 'bau-cua': (l) => ` · ${l} ván`, 'co-caro': (l) => ` · bàn ${l}×${l}` };
+const LEVEL = { 'do-min': () => '', 'bau-cua': (l) => ` · ${l} ván`, 'co-caro': (l) => ` · bàn ${l}×${l}`, 'noi-4': () => '', 'ban-tau': () => '' };
 const levelText = (game, l) => (LEVEL[game] ?? ((x) => ` · màn ${x}`))(l);
 
 const ago = (t) => {
@@ -45,7 +45,7 @@ async function load() {
   $('#stats').replaceChildren(...(stats.length ? stats.map((s) => el('div', { className: 'stat' },
     el('b', { textContent: GAMES[s.game] ?? s.game }),
     el('span', {}, 'Số ván: ', el('strong', { textContent: s.plays }), s.wins ? ` · thắng ${s.wins}` : ''),
-    s.game === 'do-min' || s.game === 'co-caro'
+    ['do-min', 'co-caro', 'noi-4', 'ban-tau'].includes(s.game)
       ? el('span', {}, 'Thắng nhanh nhất: ', el('strong', { textContent: s.fastest != null ? scoreText(s.game, s.fastest) : '—' }))
       : s.game === 'bau-cua'
       ? el('span', {}, 'Lãi đậm nhất: ', el('strong', { textContent: scoreText(s.game, s.best) }))

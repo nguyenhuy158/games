@@ -3,6 +3,7 @@ export { MinerRoom } from './dao-vang.js';
 export { MineRoom } from './do-min.js';
 export { DiceRoom } from './bau-cua.js';
 export { CaroRoom } from './co-caro.js';
+export { ShipRoom } from './ban-tau.js';
 import { userFrom } from './sso.js';
 import { uniqueName, otherNames } from './names.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
@@ -69,16 +70,19 @@ export default {
       const rows = await top().list(mode, size);
       return Response.json(rows, { headers: { 'Cache-Control': 'public, max-age=30' } });
     }
-    // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng, /api/ms/room/CODE = Dò mìn, /api/bc/room/CODE = Bầu cua, /api/cc/room/CODE = Cờ caro.
-    const m = url.pathname.match(/^\/api\/(dv\/|ms\/|bc\/|cc\/)?room\/([A-Z0-9]{4})$/);
+    // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng, /api/ms/room/CODE = Dò mìn, /api/bc/room/CODE = Bầu cua,
+    // /api/cc/room/CODE = Cờ caro, /api/c4/room/CODE = Nối 4 (chung class phòng với caro), /api/bt/room/CODE = Bắn tàu.
+    const m = url.pathname.match(/^\/api\/(dv\/|ms\/|bc\/|cc\/|c4\/|bt\/)?room\/([A-Z0-9]{4})$/);
     if (!m || req.headers.get('Upgrade') !== 'websocket') return new Response('Not found', { status: 404 });
-    const ns = { 'dv/': env.MINER, 'ms/': env.MINES, 'bc/': env.DICE, 'cc/': env.CARO }[m[1]] ?? env.ROOM;
-    // Phòng tin header X-User vì chỉ Worker gọi được DO; header client tự gửi luôn bị xoá trước.
+    const ns = { 'dv/': env.MINER, 'ms/': env.MINES, 'bc/': env.DICE, 'cc/': env.CARO, 'c4/': env.CARO, 'bt/': env.SHIPS }[m[1]] ?? env.ROOM;
+    // Phòng tin header X-User / X-Game vì chỉ Worker gọi được DO; header client tự gửi luôn bị xoá trước.
     const headers = new Headers(req.headers);
     headers.delete('X-User');
+    headers.delete('X-Game');
+    if (m[1] === 'c4/') headers.set('X-Game', 'c4');
     const user = await userFrom(req);
     if (user) headers.set('X-User', JSON.stringify({ sub: user.sub, name: user.name }));
-    return ns.get(ns.idFromName(m[2])).fetch(new Request(req, { headers }));
+    return ns.get(ns.idFromName(m[1] === 'c4/' ? `c4:${m[2]}` : m[2])).fetch(new Request(req, { headers }));
   },
 };
 

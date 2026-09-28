@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import { ROWS, COLS, drop, winLine, full, botMove } from './public/noi-4/logic.js';
+
+const at = (r, c) => r * COLS + c;
+const empty = () => new Array(ROWS * COLS).fill(0);
+// Thả lần lượt các cột, người đi luân phiên từ 1.
+const play = (...cols) => { const b = empty(); cols.forEach((c, k) => { b[drop(b, c)] = (k % 2) + 1; }); return b; };
+
+// Rơi xuống đáy, chồng lên nhau, cột đầy thì -1
+const b0 = empty();
+assert.equal(drop(b0, 3), at(5, 3));
+b0[at(5, 3)] = 1;
+assert.equal(drop(b0, 3), at(4, 3));
+const tall = play(0, 0, 0, 0, 0, 0);
+assert.equal(drop(tall, 0), -1, 'full column');
+
+// Ngang, dọc, 2 đường chéo
+assert.ok(winLine(play(0, 0, 1, 1, 2, 2, 3), at(5, 3)), 'horizontal');
+assert.ok(winLine(play(0, 1, 0, 1, 0, 1, 0), at(2, 0)), 'vertical');
+// Chéo "/": 1 ở (5,0) (4,1) (3,2) (2,3)
+const d = empty();
+for (const [r, c] of [[5, 0], [4, 1], [3, 2], [2, 3]]) d[at(r, c)] = 1;
+assert.deepEqual(winLine(d, at(3, 2)), [at(2, 3), at(3, 2), at(4, 1), at(5, 0)]);
+const e = empty();
+for (const [r, c] of [[2, 3], [3, 4], [4, 5], [5, 6]]) e[at(r, c)] = 2;
+assert.ok(winLine(e, at(5, 6)), 'diagonal \\');
+assert.equal(winLine(play(0, 0, 1, 1, 2), at(5, 2)), null, 'three is not enough');
+// Không nối vòng từ mép phải sang hàng trên
+const w = empty();
+for (const c of [5, 6]) w[at(4, c)] = 1;
+for (const c of [0, 1]) w[at(3, c)] = 1;
+assert.equal(winLine(w, at(4, 6)), null, 'no row wrap');
+assert.ok(!full(empty()) && full(new Array(ROWS * COLS).fill(1)));
+
+// Máy thắng ngay nếu được, chặn nếu đối thủ sắp thắng, bàn trống vào giữa
+const winNow = empty();
+for (const c of [0, 1, 2]) winNow[at(5, c)] = 2;
+assert.equal(botMove(winNow, 2), 3, 'bot takes the win');
+const block = empty();
+for (const c of [1, 2, 3]) block[at(5, c)] = 1;
+block[at(5, 0)] = 2; block[at(4, 1)] = 2;
+assert.equal(botMove(block, 2), 4, 'bot blocks a horizontal three');
+const stack = empty();
+for (const r of [5, 4, 3]) stack[at(r, 6)] = 1;
+assert.equal(botMove(stack, 2), 6, 'bot blocks a vertical three');
+assert.equal(botMove(empty(), 1, () => 0), 3, 'opening in the centre');
+
+console.log('noi-4 ok');

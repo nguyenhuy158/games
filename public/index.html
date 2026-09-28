@@ -34,7 +34,7 @@
     .sub { margin: -12px 0 0; color: var(--muted); }
     .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; width: min(760px, 100%); }
     .game {
-      display: grid; gap: 8px; padding: 14px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line);
+      display: grid; align-content: start; gap: 8px; padding: 14px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line);
       color: inherit; text-decoration: none; transition: transform .12s, border-color .12s;
     }
     .game:hover { transform: translateY(-3px); border-color: var(--accent); }
@@ -89,6 +89,14 @@
     .thumb.bc { background: radial-gradient(circle, #c62a2f, #6d0f13); display: grid; grid-template-columns: repeat(3, 44px); justify-content: center; align-content: center; gap: 6px; }
     .thumb.bc img { width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 0 0 2px #f3d27a; }
     .fun-card li .rank .ic { width: 1.2em; height: 1.2em; }
+    .thumb.c4 { background: #e6eefa; display: grid; place-items: center; }
+    .thumb.c4 div { display: grid; grid-template-columns: repeat(7, 16px); gap: 4px; padding: 8px; border-radius: 10px; background: #2456c9; }
+    .thumb.c4 i { width: 16px; height: 16px; border-radius: 50%; background: #eef3fb; }
+    .thumb.c4 i.r { background: #e0312f; } .thumb.c4 i.y { background: #ffc62e; }
+    .thumb.bt { background: #bfe6e8 radial-gradient(circle, #7cc4c6 2px, transparent 2.5px) 0 0 / 20px 20px; display: grid; place-items: center; }
+    .thumb.bt div { display: grid; grid-template-columns: repeat(6, 18px); gap: 4px; }
+    .thumb.bt i { width: 18px; height: 18px; border-radius: 6px; }
+    .thumb.bt i.s { background: #e8716f; } .thumb.bt i.t { background: #7c83d6; } .thumb.bt i.h { background: #5a6b78; box-shadow: inset 0 0 0 5px #5a6b78, inset 0 0 0 9px #e0312f; }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
     @media (max-width: 640px) { #account { position: static; justify-self: end; margin-bottom: -8px; } }
   </style>
@@ -121,6 +129,18 @@
       <b><img class="logo" src="/logos/co-caro.svg" alt=""> Cờ caro</b>
       <span>Nối 5 quân là thắng, hoặc XO 3×3 nối 3. Đấu 1v1 với bạn bè hoặc với máy.</span>
       <div class="tags"><i>1v1</i><i>Đánh với máy</i><i>XO 3×3</i><i>Chặn 2 đầu</i></div>
+    </a>
+    <a class="game" href="/noi-4/">
+      <div class="thumb c4"><div><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="r"></i><i></i><i></i><i></i><i></i><i></i><i class="y"></i><i class="r"></i><i class="y"></i><i></i><i></i></div></div>
+      <b><img class="logo" src="/logos/noi-4.svg" alt=""> Nối 4</b>
+      <span>Thả quân vào cột, nối 4 quân liền ngang, dọc hoặc chéo là thắng.</span>
+      <div class="tags"><i>1v1</i><i>Đánh với máy</i><i>Connect 4</i></div>
+    </a>
+    <a class="game" href="/ban-tau/">
+      <div class="thumb bt"><div><i class="s"></i><i class="s"></i><i class="h"></i><i class="s"></i><i></i><i class="t"></i><i></i><i></i><i></i><i></i><i></i><i class="t"></i></div></div>
+      <b><img class="logo" src="/logos/ban-tau.svg" alt=""> Bắn tàu</b>
+      <span>Giấu 5 chiếc tàu, thay phiên bắn vào biển đối thủ. Chìm hết tàu bên kia là thắng.</span>
+      <div class="tags"><i>1v1</i><i>Đánh với máy</i><i>Battleship</i></div>
     </a>
     <a class="game" href="/dao-vang/">
       <div class="thumb" style="background-image:url(dao-vang/assets/bg2.jpg);background-size:cover"></div>

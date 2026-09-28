@@ -39,6 +39,10 @@ class_name = "DiceRoom"
 name = "CARO"
 class_name = "CaroRoom"
 
+[[durable_objects.bindings]]
+name = "SHIPS"
+class_name = "ShipRoom"
+
 # SQLite-backed DO: dung duoc o goi free.
 [[migrations]]
 tag = "v1"
@@ -64,10 +68,15 @@ new_sqlite_classes = ["MineRoom"]
 tag = "v5"
 new_sqlite_classes = ["DiceRoom"]
 
-# Phong Co caro.
+# Phong Co caro (Noi 4 dung chung class nay).
 [[migrations]]
 tag = "v6"
 new_sqlite_classes = ["CaroRoom"]
+
+# Phong Ban tau.
+[[migrations]]
+tag = "v7"
+new_sqlite_classes = ["ShipRoom"]
 
 [observability]
 enabled = true
