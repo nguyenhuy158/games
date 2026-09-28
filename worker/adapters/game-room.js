@@ -255,6 +255,8 @@ export function gameRoom(games) {
       if (!s?.pub || !s.code || !this.mod.page) return;
       const host = s.players[this.hostId(except)]?.name ?? '';
       const players = this.onlineIds(except).size, cap = this.mod.max;
+      // Cả phòng rớt mạng giữa ván (game persist giữ ván chờ quay lại): gỡ khỏi danh sách, khỏi mời người vào xem phòng trống.
+      if (!players) { if (this.listed) this.unlist(); return; }
       // Game không có sảnh (Bầu cua): còn chỗ là người vào chơi được ngay -> "đang chờ", không phải "vào xem".
       const playing = s.status === 'playing' && !(this.mod.autostart && players < cap);
       const row = {
