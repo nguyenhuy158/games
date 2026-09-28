@@ -228,8 +228,10 @@ export class Room extends DurableObject {
     server.serializeAttachment({ id });
 
     await this.save();
-    this.sendBoardTo(server);
+    // state trước, board sau: client cần biết mình thuộc bàn nào mới nhận được board.
     this.broadcast();
+    this.sendBoardTo(server);
+    this.sendMinis(server);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -387,7 +389,7 @@ export class Room extends DurableObject {
     this.watch = {};
     await this.save();
     await this.ctx.storage.setAlarm(endAt);
-    for (const ws of this.sockets()) this.sendBoardTo(ws, 'start');
+    for (const ws of this.sockets()) { this.sendBoardTo(ws, 'start'); this.sendMinis(ws); }
     this.broadcast();
   }
 
@@ -471,11 +473,22 @@ export class Room extends DurableObject {
     ws.send(JSON.stringify({ t: 'board', unit: uid, board: this.s.units[uid].board, why }));
   }
 
+  // Gửi cho người đang xem bàn uid. Message có kèm bàn (ăn cặp, qua màn, xáo...) thì những
+  // người còn lại nhận bản "mini" để vẽ ô xem trước kiểu Google Meet ở khung bên cạnh.
   toViewers(uid, msg, except) {
     const data = JSON.stringify(msg);
+    const mini = msg.board ? JSON.stringify({ t: 'mini', unit: uid, board: msg.board }) : null;
     for (const ws of this.sockets(except)) {
-      if (this.viewOf(ws) === uid) try { ws.send(data); } catch {}
+      const mine = this.viewOf(ws) === uid;
+      try { if (mine) ws.send(data); else if (mini) ws.send(mini); } catch {}
     }
+  }
+
+  // Đủ bàn của mọi đơn vị (lúc vào phòng / bắt đầu ván) cho khung xem trước.
+  sendMinis(ws) {
+    if (this.s.status === 'lobby') return;
+    const boards = Object.fromEntries(Object.entries(this.s.units).map(([uid, u]) => [uid, u.board]));
+    ws.send(JSON.stringify({ t: 'minis', boards }));
   }
 
   allow(id, kind, ms) {

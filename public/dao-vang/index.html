@@ -10,6 +10,7 @@
   <link rel="apple-touch-icon" href="/logos/dao-vang-192.png">
   <link rel="manifest" href="../manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../panel.css">
 </head>
 <body>
   <header id="hud" hidden>
@@ -19,14 +20,18 @@
     <span class="stat"><small>Màn</small><small class="short">M</small> <b id="hLevel">1</b></span>
     <span class="stat"><small>Giờ</small><small class="short">⏱</small> <b id="hTime">60</b></span>
     <button id="btnDyn" title="Thuốc nổ (↑)">🧨 <span id="dynCount">0</span></button>
+    <button id="btnPanel" title="Ẩn màn hình người chơi khác" hidden><i data-icon="users"></i></button>
     <button id="btnMenu" title="Tạm dừng">❚❚</button>
     <button id="btnSound" title="Âm thanh"></button>
   </header>
   <ul id="scores" hidden></ul>
-  <main id="stage">
-    <canvas id="game"></canvas>
-    <div id="overlay" hidden></div>
-  </main>
+  <div class="arena">
+    <aside id="panel"></aside>
+    <main id="stage">
+      <canvas id="game"></canvas>
+      <div id="overlay" hidden></div>
+    </main>
+  </div>
   <div id="toast" hidden></div>
   <script type="module" src="game.js"></script>
 </body>

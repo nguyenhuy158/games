@@ -1,8 +1,8 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v4';
+const CACHE = 'games-v5';
 const CORE = [
-  '/', '/index.html', '/me.js', '/icons.js', '/manifest.webmanifest', '/pwa-192.png',
+  '/', '/index.html', '/me.js', '/icons.js', '/panel.js', '/panel.css', '/manifest.webmanifest', '/pwa-192.png',
   '/logos/hub.svg', '/logos/pikachu.svg', '/logos/dao-vang.svg',
   '/pikachu/', '/pikachu/index.html', '/pikachu/style.css', '/pikachu/app.js', '/pikachu/logic.js',
   '/pikachu/images/pieces-sprite.png', '/pikachu/images/animals-sprite.png',

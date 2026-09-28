@@ -1,0 +1,43 @@
+/* Khung màn hình người chơi khác (public/panel.js). Game đặt #panel + khu chơi chính trong .arena.
+   Ngang: khu chơi bên trái, khung cột bên phải. Dọc: khung thành hàng trên cùng, vuốt ngang. */
+.arena { flex: 1; min-height: 0; display: flex; gap: 8px; }
+.arena > :not(#panel) { flex: 1; min-width: 0; min-height: 0; }
+#panel {
+  order: 2; flex: 0 0 clamp(170px, 22vw, 260px); display: flex; flex-direction: column; gap: 8px;
+  overflow-y: auto; padding: 8px 8px 8px 0; scrollbar-width: thin;
+}
+body.panel-off #panel, body.panel-empty #panel { display: none; }
+
+@media (max-aspect-ratio: 5/6) {
+  .arena { flex-direction: column; gap: 4px; }
+  #panel { order: -1; flex: 0 0 auto; flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 6px 8px 0; }
+  #panel .tile { flex: 0 0 clamp(120px, 34vw, 170px); }
+  /* Ô nhỏ: nhãn 2 dòng (tên / thông số) cho khỏi bị cắt. */
+  #panel .tile-label { height: 30px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; line-height: 1.2; font-size: 10px; }
+  #panel .tile-label span { margin-left: 0; }
+  #panel .tile-board { inset: 0 0 30px; height: calc(100% - 30px); }
+}
+
+.tile {
+  position: relative; flex: none; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden;
+  background: #0a1724; border: 2px solid color-mix(in srgb, var(--c, #888) 70%, transparent);
+  box-shadow: 0 4px 14px #0006;
+}
+.tile.off { opacity: .45; }
+.tile-board { position: absolute; inset: 0 0 22px; width: 100%; height: calc(100% - 22px); }
+.tile-avatar {
+  position: absolute; left: 50%; top: calc(50% - 11px); translate: -50% -50%;
+  width: 46%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: var(--c, #888); color: #0b1b2b; font: 800 clamp(18px, 3vw, 30px) / 1 system-ui, sans-serif;
+}
+.tile-label {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 22px; display: flex; gap: 6px; align-items: center;
+  padding: 0 8px; font-size: 11px; background: #000a; color: #fff; white-space: nowrap; overflow: hidden;
+}
+.tile-label b { color: var(--c, #fff); overflow: hidden; text-overflow: ellipsis; }
+.tile-label span { opacity: .85; margin-left: auto; }
+.tile-badge {
+  position: absolute; top: 6px; right: 6px; font-style: normal; font-size: 16px; line-height: 1;
+  padding: 3px 6px; border-radius: 8px; background: #000a;
+}
+#btnPanel.on { border-color: var(--accent, #ffd23f); }

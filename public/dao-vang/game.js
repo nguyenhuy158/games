@@ -3,6 +3,7 @@ import {
   targetOf, shopOffer, createWorld, step, shoot, dynamite, tipOf, mouseX, mouseDir,
 } from './logic.js';
 import { icon, hydrateIcons } from '../icons.js';
+import { createPanel } from '../panel.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -71,6 +72,8 @@ function showOverlay(node) {
   ov.hidden = !node;
   ov.replaceChildren(...(node ? [node] : []));
 }
+
+const panel = createPanel({ root: $('#panel'), toggle: $('#btnPanel'), storeKey: 'dv.panel' });
 
 // ---------- canvas ----------
 const canvas = $('#game');
@@ -435,7 +438,7 @@ const net = {
 
   hud(view) {
     const r = this.room;
-    if (!r || (r.status !== 'playing' && r.status !== 'shop')) { $('#hud').hidden = true; $('#scores').hidden = true; return; }
+    if (!r || (r.status !== 'playing' && r.status !== 'shop')) { $('#hud').hidden = true; $('#scores').hidden = true; panel.update([]); return; }
     const mine = view?.miners.find((m) => m.me);
     const coop = r.mode === 'coop';
     const myMoney = this.money?.players?.[deviceId] ?? this.me()?.money ?? 0;
@@ -448,6 +451,22 @@ const net = {
       canDyn: mine && mine.mode === 'in' && mine.held && mine.dynamite > 0,
     });
     this.renderScores(coop);
+    this.renderPanel(view);
+  },
+
+  // Khung kiểu Google Meet: thẻ từng thợ mỏ khác (chung một mỏ nên không cần bàn thu nhỏ).
+  renderPanel(view) {
+    const r = this.room;
+    if (!r || r.status !== 'playing') return panel.update([]);
+    const live = Object.fromEntries((view?.miners ?? []).map((m) => [m.id, m]));
+    panel.update(r.players.filter((p) => !p.spec && p.id !== deviceId).map((p) => {
+      const m = live[p.id];
+      return {
+        key: p.id, name: p.name, color: this.color(p.id), off: !p.online,
+        sub: `$${this.money?.players?.[p.id] ?? p.money} · 🧨${m?.dynamite ?? p.dynamite}`,
+        badge: m?.mode === 'in' && m.held ? '⛏️' : m?.mode === 'out' ? '⬇️' : '',
+      };
+    }));
   },
 
   renderScores(coop) {
@@ -536,6 +555,7 @@ function menu() {
   driver = null;
   $('#hud').hidden = true;
   $('#scores').hidden = true;
+  panel.update([]);
   stop('up');
   const name = el('input', { value: myName(), maxLength: 20, placeholder: 'Tên của bạn' });
   const saveName = () => store.set('pk.name', name.value.trim() || 'Thợ mỏ');

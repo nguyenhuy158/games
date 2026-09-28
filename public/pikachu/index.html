@@ -10,6 +10,7 @@
   <link rel="apple-touch-icon" href="/logos/pikachu-192.png">
   <link rel="manifest" href="../manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../panel.css">
 </head>
 <body>
   <section id="home">
@@ -44,11 +45,14 @@
       <span id="clock">--:--</span>
       <button id="btnHint" title="Gợi ý"><i data-icon="lightbulb"></i> <span id="hintLeft">3</span></button>
       <button id="btnShuffle" title="Đổi vị trí"><i data-icon="shuffle"></i> <span id="shuffleLeft">5</span></button>
+      <button id="btnPanel" title="Ẩn màn hình người chơi khác" hidden><i data-icon="users"></i></button>
       <button id="btnSound" title="Âm thanh"></button>
     </header>
     <div id="timeTrack"><div id="timebar"></div></div>
     <ul id="players"></ul>
     <div id="specBar" hidden></div>
+    <div class="arena">
+    <aside id="panel"></aside>
     <main id="boardWrap">
       <div id="board"><div id="cells"></div><div id="fx"></div></div>
       <div id="overlay" hidden>
@@ -71,6 +75,7 @@
         </div>
       </div>
     </main>
+    </div>
     <footer id="emoBar"></footer>
   </section>
 

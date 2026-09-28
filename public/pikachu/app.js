@@ -1,5 +1,6 @@
 import { SIZES, LEVELS, SLIDES, SLIDE_ICON, slide, findPath, findPair } from './logic.js';
 import { icon, hydrateIcons } from '../icons.js';
+import { createPanel, drawGrid } from '../panel.js';
 
 hydrateIcons();
 
@@ -30,6 +31,14 @@ let ws, code = null, room = null, board = null, sel = null, hints = HINTS, clock
 let watchUnit = null; // khán giả: bàn đang xem
 let peers = {}; // id đồng đội -> ô họ đang chọn
 let cursors = {}; // id đồng đội -> [r, c] chuột (đơn vị ô, số thực)
+let minis = {}, miniVer = {}; // bàn thu nhỏ của các đơn vị khác (khung kiểu Google Meet)
+const panel = createPanel({ root: $('#panel'), toggle: $('#btnPanel'), storeKey: 'pk.panel' });
+const spriteImgs = {};
+const spriteImg = () => {
+  const src = SPRITES[room?.tiles] ?? SPRITES.poke;
+  if (!spriteImgs[src]) { spriteImgs[src] = new Image(); spriteImgs[src].src = src; spriteImgs[src].onload = () => render(); }
+  return spriteImgs[src];
+};
 
 const me = () => room?.players.find((p) => p.id === deviceId);
 const view = () => me()?.unit ?? (room?.units[watchUnit] ? watchUnit : Object.keys(room?.units ?? {})[0] ?? null);
@@ -76,6 +85,8 @@ function enter(c) {
   room = board = sel = watchUnit = null;
   peers = {};
   cursors = {};
+  minis = {};
+  miniVer = {};
   render();
   connect();
 }
@@ -122,7 +133,8 @@ function onMsg(m) {
       break;
     }
     case 'board':
-      if (m.unit !== view()) return;
+      // Chưa có state (vừa vào lại phòng) thì vẫn nhận: server chỉ gửi board của bàn mình xem.
+      if (room && m.unit !== view()) return;
       board = m.board;
       sel = null;
       peers = {};
@@ -151,6 +163,14 @@ function onMsg(m) {
       floatText(m.b, `+${m.pts}`, m.combo > 1 ? `x${m.combo}` : '', colorOf(m.id));
       break;
     }
+    case 'minis':
+      minis = m.boards;
+      for (const k of Object.keys(minis)) miniVer[k] = (miniVer[k] ?? 0) + 1;
+      break;
+    case 'mini':
+      minis[m.unit] = m.board;
+      miniVer[m.unit] = (miniVer[m.unit] ?? 0) + 1;
+      return renderPanel();
     case 'cur':
       if (m.p) cursors[m.id] = m.p; else delete cursors[m.id];
       return renderCursors();
@@ -399,11 +419,41 @@ addEventListener('pointerup', () => {
   if (playing() && board[r]?.[c]) pick(r, c);
 });
 addEventListener('pointercancel', () => { clearTimeout(press?.timer); press = null; });
-addEventListener('resize', () => renderBoard());
+// Theo dõi khung bàn (không chỉ cửa sổ): ẩn/hiện khung người chơi cũng làm bàn đổi cỡ.
+new ResizeObserver(() => { renderBoard(); renderPanel(); }).observe($('#boardWrap'));
+
+// Khung kiểu Google Meet: bàn thu nhỏ của đơn vị khác (đua / đội đối thủ) + thẻ đồng đội cùng bàn.
+function renderPanel() {
+  if (room?.status !== 'playing') return panel.update([]);
+  const mine = view();
+  const tiles = [];
+  for (const [uid, u] of Object.entries(room.units)) {
+    if (uid === mine) continue;
+    const members = room.players.filter((p) => p.unit === uid);
+    tiles.push({
+      key: `u:${uid}`, name: unitName(uid), color: colorOf(members[0]?.id ?? uid),
+      sub: `${u.score}đ · M${u.level} · còn ${u.left}`,
+      badge: u.done === 'clear' ? '🏆' : u.done ? '⌛' : u.combo > 1 ? `x${u.combo}` : '',
+      off: members.length > 0 && members.every((p) => !p.online),
+      version: `${miniVer[uid] ?? 0}|${room.tiles}|${spriteImg().complete}`, // sprite tải xong -> vẽ lại
+      draw: (ctx, w, h) => drawGrid(ctx, w, h, minis[uid], spriteImg()),
+    });
+  }
+  // Đồng đội cùng bàn với mình (chơi chung / cùng đội): thẻ avatar.
+  for (const p of room.players) {
+    if (p.spec || p.id === deviceId || p.unit !== mine) continue;
+    tiles.push({
+      key: `p:${p.id}`, name: p.name, color: colorOf(p.id), off: !p.online,
+      sub: `${p.score}đ${peers[p.id] ? ' · đang chọn' : ''}`,
+    });
+  }
+  panel.update(tiles);
+}
 
 // ---------- HUD ----------
 function render() {
   renderBoard();
+  renderPanel();
   const u = unit(), mine = me(), isHost = room?.host === deviceId;
   const lobby = room && room.status !== 'playing';
   $('#hintLeft').textContent = hints;
@@ -414,7 +464,9 @@ function render() {
   $('#modeTag').hidden = !room;
   if (room) $('#modeTag').innerHTML = icon(MODE_ICONS[room.mode]) + `<span class="lbl">${MODE_NAMES[room.mode]}</span>`;
   $('#levelTag').hidden = !(room?.status === 'playing' && u);
-  if (u) $('#levelTag').textContent = `Màn ${u.level}/${LEVELS}${SLIDE_ICON[SLIDES[u.level - 1]] ? ' ' + SLIDE_ICON[SLIDES[u.level - 1]] : ''}`;
+  if (u) {
+    $('#levelTag').replaceChildren(el('span', { className: 'lbl', textContent: 'Màn ' }), `${u.level}/${LEVELS}${SLIDE_ICON[SLIDES[u.level - 1]] ? ' ' + SLIDE_ICON[SLIDES[u.level - 1]] : ''}`);
+  }
 
   // Chip người chơi
   const byTeam = (a, b) => (room.mode !== 'team' || a.team === b.team ? 0 : a.team > b.team ? 1 : -1);

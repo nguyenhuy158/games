@@ -83,6 +83,9 @@ input.code { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 3
 #scores li { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
 #scores li b { color: var(--c); }
 #scores li.off { opacity: .45; }
+/* Khung người chơi (panel.css) thay dải điểm; ẩn khung thì dải điểm gọn hiện lại. */
+body:not(.panel-off):not(.panel-empty) #scores { display: none; }
+.arena #stage { padding: 0 8px 8px; }
 #scores .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); font-style: normal; }
 #toast {
   position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%);
