@@ -56,7 +56,11 @@ export function nokiaApp(opt) {
     players,
     el('main', { className: 'stage' },
       opt.mount ? el('div', { className: 'board-stage' })
-        : el('div', { className: 'phone' }, el('div', { className: 'brand', textContent: 'NOKIA' }), el('div', { className: 'screen' }, canvas), pad),
+        : el('div', { className: 'phone' }, el('div', { className: 'screen' }, canvas),
+          el('div', { className: 'hint' },
+            el('span', { className: 'touch', textContent: t('Vuốt ở đây hoặc bấm phím bên dưới', 'Swipe here or use the keys below') }),
+            el('span', { className: 'keys', textContent: t('Phím mũi tên / WASD · Enter hoặc 5 = OK', 'Arrow keys / WASD · Enter or 5 = OK') })),
+          pad),
       ov),
   );
   document.body.append(home, roomEl);
@@ -136,6 +140,25 @@ export function nokiaApp(opt) {
 
   if (opt.draw) bindKeys(pad, (k, down) => opt.onKey?.(k, down, room, app), () => !!room && roomEl.hidden === false);
   canvas.onpointerdown = (e) => { if (room && opt.onTap) { e.preventDefault(); opt.onTap(...app.lcdPoint(e), room, app); } };
+  // Vuốt = bấm 1 mũi tên (nhấn + nhả). Vùng trống quanh màn luôn vuốt được; trên màn LCD thì chỉ khi game không dùng chạm
+  // (Lật hình, Logic, Bantumi, Bounce chạm thẳng lên màn nên vuốt ở đó sẽ lẫn với chạm).
+  if (opt.draw) {
+    let from = null;
+    const stage = roomEl.querySelector('.stage');
+    stage.addEventListener('pointerdown', (e) => {
+      from = !room || e.target.closest('.pad, #overlay') || (opt.onTap && e.target === canvas) ? null : [e.clientX, e.clientY];
+    });
+    stage.addEventListener('pointercancel', () => { from = null; });
+    stage.addEventListener('pointerup', (e) => {
+      if (!from) return;
+      const dx = e.clientX - from[0], dy = e.clientY - from[1];
+      from = null;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+      const k = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      opt.onKey?.(k, true, room, app);
+      setTimeout(() => opt.onKey?.(k, false, room, app), 60);
+    });
+  }
 
   // ---------- vẽ ----------
   const colorOf = (id) => COLORS[Math.max(0, room?.seats.indexOf(id) ?? 0) % COLORS.length];
