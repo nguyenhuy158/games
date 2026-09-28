@@ -81,4 +81,23 @@ const r0 = () => 0; // mồi luôn rơi vào ô trống đầu tiên -> dễ đo
   assert.ok(g.bug, 'bug spawned');
   assert.ok(g.bug.at[0] >= 0 && g.bug.at[1] < ROWS);
 }
+// Module server, sân riêng: mỗi người 1 thế giới, hết khi tất cả chết, xếp theo điểm
+{
+  const mod = (await import('./worker/nokia/snake.js')).default;
+  let result = null;
+  const ctx = { g: {}, seats: ['a', 'b'], cfg: mod.config(mod.cfg, { mode: 'solo', walls: true }), rand: r0, end: (r) => { result = r; } };
+  mod.start(ctx);
+  assert.equal(ctx.g.worlds.length, 2);
+  const [wa, wb] = ctx.g.worlds;
+  assert.notEqual(wa.food, wb.food, 'separate food');
+  wb.snakes[0].score = 7;
+  assert.equal(mod.view(ctx, 'a').snakes.length, 1, 'sees only own snake');
+  assert.equal(mod.view(ctx, 'a').board.length, 2, 'board has everyone');
+  assert.equal(mod.view(ctx, 'x').snakes[0].id, 'b', 'spectator watches the leader');
+  for (let i = 0; i < 60 && !result; i++) mod.tick(ctx);
+  assert.ok(result, 'ends when all crash into walls');
+  assert.equal(result.mode, 'race');
+  assert.equal(result.ranks[0].id, 'b');
+  assert.equal(result.ranks[0].won, true);
+}
 console.log('nokia-snake ok');
