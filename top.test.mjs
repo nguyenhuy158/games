@@ -41,7 +41,7 @@ assert.deepEqual(all.night, [{ name: 'An Mới', value: 1 }], 'only the 2am VN p
 
 const week = Object.fromEntries(top.fun('week').map((c) => [c.key, c.rows]));
 assert.deepEqual(week.tiles, [{ name: 'An Mới', value: 300 }], 'old play excluded from this week');
-assert.equal(top.fun('all').length, 11);
+assert.equal(top.fun('all').length, 13);
 // Bầu cua: tổng lãi các buổi, buổi lỗ kéo tổng xuống, tổng âm thì không lên bảng.
 play('a', 'An Mới', 'bau-cua', 'rotate', 500, 6, true, now - H);
 play('a', 'An Mới', 'bau-cua', 'rotate', -200, 3, false, now - H);
@@ -60,5 +60,15 @@ assert.equal(sa.pikachu.wins, 1);
 assert.equal(sa['dao-vang'].best, 900);
 assert.equal(top.history('b').length, 5); // 2 ván cũ + 2 ván dò mìn + 1 buổi bầu cua ở trên
 assert.equal(top.history('nobody').length, 0);
+
+// Nối 4: chỉ ván thắng người thật. Bắn tàu: thắng bằng ít phát nhất lên đầu, ván thua không tính.
+play('a', 'An Mới', 'noi-4', 'pvp', 21, 0, true, now - H);
+play('b', 'Bình', 'noi-4', 'bot', 15, 0, true, now - H);
+play('a', 'An Mới', 'ban-tau', 'bot', 48, 0, true, now - H);
+play('b', 'Bình', 'ban-tau', 'pvp', 39, 0, true, now - H);
+play('b', 'Bình', 'ban-tau', 'pvp', 20, 0, false, now - H);
+const fun2 = Object.fromEntries(top.fun('all').map((c) => [c.key, c.rows]));
+assert.deepEqual(fun2.c4, [{ name: 'An Mới', value: 1 }], 'vs-bot wins do not count');
+assert.deepEqual(fun2.ships, [{ name: 'Bình', value: 39 }, { name: 'An Mới', value: 48 }]);
 console.log('top ok');
 }

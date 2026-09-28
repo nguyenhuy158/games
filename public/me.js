@@ -81,7 +81,7 @@ const rank = (i) => {
   m.setAttribute('style', `color:${MEDALS[i]}`);
   return m;
 };
-const FUN_ICONS = { plays: 'gamepad-2', wins: 'crown', gold: 'coins', tiles: 'zap', deep: 'pickaxe', mines: 'bomb', baucua: 'dices', caro: 'grid-3x3', team: 'handshake', night: 'moon', nokia: 'smartphone' };
+const FUN_ICONS = { plays: 'gamepad-2', wins: 'crown', gold: 'coins', tiles: 'zap', deep: 'pickaxe', mines: 'bomb', baucua: 'dices', caro: 'grid-3x3', c4: 'circle', ships: 'swords', team: 'handshake', night: 'moon', nokia: 'smartphone' };
 let period = 'week';
 async function loadFun() {
   for (const b of document.querySelectorAll('#funPeriod button')) b.classList.toggle('on', b.dataset.period === period);

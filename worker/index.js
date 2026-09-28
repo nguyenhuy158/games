@@ -160,6 +160,8 @@ export class Top extends DurableObject {
       q('mines', 'Thánh dò mìn', 'giây', 'MIN(p.score)', "p.game = 'do-min' AND p.won = 1", 'ASC'),
       q('baucua', 'Đại gia Bầu cua', 'xu lãi', 'SUM(p.score)', "p.game = 'bau-cua'"),
     q('caro', 'Kỳ thủ caro', 'ván thắng', 'SUM(p.won)', "p.game = 'co-caro' AND p.mode = 'pvp'"),
+    q('c4', 'Vua Nối 4', 'ván thắng', 'SUM(p.won)', "p.game = 'noi-4' AND p.mode = 'pvp'"),
+    q('ships', 'Xạ thủ Bắn tàu', 'phát', 'MIN(p.score)', "p.game = 'ban-tau' AND p.won = 1", 'ASC'),
     q('nokia', 'Huyền thoại Nokia', 'ván', 'COUNT(*)', "p.game IN ('snake', 'bantumi', 'pairs', 'logic', 'rapid-roll', 'space-impact', 'bounce')"),
     q('team', 'Đồng đội quốc dân', 'ván chung', 'COUNT(*)', "p.mode IN ('coop', 'team')"),
       q('night', 'Cú đêm', 'ván lúc 0–5h', 'COUNT(*)', `${vnHour} < 5`),

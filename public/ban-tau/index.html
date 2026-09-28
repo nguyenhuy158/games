@@ -26,7 +26,7 @@
         <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
         <button id="btnJoin">Vào phòng</button>
       </div>
-      <p class="muted">Ở một mình: tạo phòng rồi bấm Bắt đầu để đấu với máy. Tàu dài 5, 4, 3, 3, 2 ô, không nằm sát nhau. Bắn trúng được bắn tiếp; mỗi lượt 30 giây.</p>
+      <p class="muted">Ở một mình: tạo phòng rồi bấm Bắt đầu để đấu với máy. Tàu dài 5, 4, 3, 3, 2 ô, không nằm sát nhau — xếp ngẫu nhiên hoặc tự dời, xoay từng chiếc. Bắn trúng được bắn tiếp; mỗi lượt 30 giây.</p>
     </div>
   </section>
 
@@ -45,13 +45,14 @@
     </div>
     <div id="placeBar" hidden>
       <span id="placeText"></span>
+      <button id="btnRotate" disabled><i data-icon="rotate-ccw"></i> Xoay</button>
       <button id="btnReroll"><i data-icon="shuffle"></i> Xếp lại</button>
       <button id="btnReady" class="primary"><i data-icon="circle-check"></i> Sẵn sàng</button>
     </div>
     <main id="wrap">
       <div id="seas">
-        <figure class="sea" id="seaA"><figcaption></figcaption><div class="grid"></div></figure>
-        <figure class="sea" id="seaB"><figcaption></figcaption><div class="grid"></div></figure>
+        <figure class="sea" id="seaA"><figcaption></figcaption><div class="grid"></div><div class="fleet"></div></figure>
+        <figure class="sea" id="seaB"><figcaption></figcaption><div class="grid"></div><div class="fleet"></div></figure>
       </div>
       <div id="overlay" hidden>
         <div class="card">

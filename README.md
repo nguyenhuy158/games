@@ -82,7 +82,8 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 Làm theo lối chơi của papergames.io (tham khảo cách bố trí / luật để học), hình vẽ tự làm bằng CSS + logo trong `scripts/logos.mjs`, không lấy ảnh của họ.
 
 - **Nối 4** (`public/noi-4/`): dùng chung DO `CaroRoom` với caro — bảng `RULES` trong `worker/co-caro.js` giữ phần khác nhau (cỡ bàn, nước đi hợp lệ, thắng, máy). Worker gửi `/api/c4/room/CODE` tới id `c4:CODE` kèm header `X-Game: c4`. Bàn 7×6, bấm ô nào trong cột là thả vào cột đó; máy dùng negamax alpha-beta 4 tầng (~2.5 ms/nước).
-- **Bắn tàu** (`worker/ban-tau.js`, DO `ShipRoom`, `/api/bt/room/CODE`, luật ở `public/ban-tau/logic.js`): biển 10×10, tàu 5-4-3-3-2 không chạm nhau. Xếp ngẫu nhiên (bấm *Xếp lại* tuỳ ý, 60 giây) → cả hai *Sẵn sàng* → bắn luân phiên, trúng được bắn tiếp; chìm tàu thì tự đánh dấu các ô xung quanh. Server gửi mỗi người một bản state: chỉ thấy hạm đội của mình tới khi hết ván. Hết 30 giây thì bắn giùm 1 phát ngẫu nhiên, 3 lượt liền như vậy thì thua. Máy: săn quanh ô trúng, không có thì bắn ô "bàn cờ" ngẫu nhiên.
+- **Bắn tàu** (`worker/ban-tau.js`, DO `ShipRoom`, `/api/bt/room/CODE`, luật ở `public/ban-tau/logic.js`): biển 10×10, tàu 5-4-3-3-2 không chạm nhau. Xếp ngẫu nhiên (*Xếp lại*) hoặc tự xếp — chạm tàu để chọn, chạm ô trống để dời, chạm lại / *Xoay* để đổi chiều; server kiểm lại bằng `validFleet` (60 giây) → cả hai *Sẵn sàng* → bắn luân phiên, trúng được bắn tiếp; chìm tàu thì tự đánh dấu các ô xung quanh. Server gửi mỗi người một bản state: chỉ thấy hạm đội của mình tới khi hết ván. Hết 30 giây thì bắn giùm 1 phát ngẫu nhiên, 3 lượt liền như vậy thì thua. Máy: săn quanh ô trúng, không có thì bắn ô "bàn cờ" ngẫu nhiên. Dưới mỗi biển có hàng tàu (chìm thì mờ) — server gửi `sunk` theo thứ tự FLEET, không lộ vị trí.
+- Bảng vui: "Vua Nối 4" (ván thắng người thật), "Xạ thủ Bắn tàu" (thắng bằng ít phát nhất).
 
 ## Góc Nokia
 

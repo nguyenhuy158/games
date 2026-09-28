@@ -62,7 +62,15 @@ header .grow { flex: 1; }
 @keyframes blink { to { opacity: .4; } }
 
 #placeBar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px 0; }
-#placeText { color: var(--muted); font-size: 14px; }
+#placeText { color: var(--muted); font-size: 14px; text-align: center; flex-basis: 100%; }
+/* Đang xếp tàu: tàu chạm vào được, tàu đang chọn có viền. */
+.sea.edit .c { cursor: pointer; }
+.c.ship.sel { box-shadow: 0 0 0 3px var(--accent); filter: brightness(1.08); }
+/* Hàng tàu dưới mỗi biển: tàu đã chìm mờ + gạch ngang. */
+.fleet { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; min-height: 10px; }
+.fleet .pip { display: flex; gap: 2px; }
+.fleet .pip i { width: 8px; height: 8px; border-radius: 3px; background: var(--ship); }
+.fleet .pip.sunk { opacity: .35; } .fleet .pip.sunk i { background: var(--sunk); }
 
 #wrap { position: relative; flex: 1; min-height: 0; margin: 8px; display: grid; place-items: center; }
 /* Ngang / máy tính: 2 biển cạnh nhau. Dọc: biển của mình nhỏ ở trên, biển đối thủ (chỗ bắn) to ở dưới. */

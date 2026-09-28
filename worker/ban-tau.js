@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { N, randomFleet, shoot, botShot } from '../public/ban-tau/logic.js';
+import { N, SUNK, randomFleet, validFleet, shoot, botShot } from '../public/ban-tau/logic.js';
 import { uniqueName, otherNames } from './names.js';
 
 const MAX_ONLINE = 12;
@@ -11,7 +11,7 @@ const EMO_COUNT = 5;
 const BOT = 'bot';
 
 // Phòng Bắn tàu. 2 người đầu vào cầm hạm đội, còn lại xem; ở một mình thì đấu với máy.
-// Mỗi ván: xếp tàu (ngẫu nhiên, bấm xếp lại tuỳ ý) -> cả hai sẵn sàng -> bắn luân phiên, trúng thì bắn tiếp.
+// Mỗi ván: xếp tàu (ngẫu nhiên, xếp lại hoặc tự dời / xoay từng chiếc) -> cả hai sẵn sàng -> bắn luân phiên, trúng thì bắn tiếp.
 // Vị trí tàu chỉ gửi cho chủ hạm đội (người xem / đối thủ chỉ thấy ô đã bắn) tới khi hết ván.
 const fresh = () => ({
   status: 'lobby', order: [], players: {}, seats: [null, null], score: {}, pair: '', swap: false,
@@ -76,6 +76,11 @@ export class ShipRoom extends DurableObject {
       case 'reroll':
         if (s.status !== 'placing' || !seat || s.ready[seat - 1] || !this.allow(p.id, 250)) return;
         s.fleets[seat - 1] = randomFleet();
+        break;
+      case 'place':
+        // Tự xếp: client gửi cả hạm đội, server kiểm lại luật (không tin client).
+        if (s.status !== 'placing' || !seat || s.ready[seat - 1] || !validFleet(m.ships)) return;
+        s.fleets[seat - 1] = m.ships.map((ship) => [...ship]);
         break;
       case 'ready':
         if (s.status !== 'placing' || !seat) return;
@@ -229,6 +234,8 @@ export class ShipRoom extends DurableObject {
       t: 'state', status: s.status, turn: s.turn, last: s.last, winner: s.winner, why: s.why, deadline: s.deadline,
       now: Date.now(), turnMs: TURN_MS, placeMs: PLACE_MS, host: this.hostId(except), seats: s.seats, score: s.score,
       ready: s.ready, shots: s.shots, fired: s.fired,
+      // Tàu nào của mỗi bên đã chìm (theo thứ tự FLEET) — ai cũng biết, không lộ vị trí tàu còn nổi.
+      sunk: s.fleets.map((f, k) => (f ?? []).map((ship) => !!s.shots[1 - k] && ship.every((i) => s.shots[1 - k][i] === SUNK))),
       names: s.seats.map((id) => (id === BOT ? 'Máy' : s.players[id]?.name ?? '')),
       players: s.order.filter((id) => online.has(id)).map((id) => ({ id, name: s.players[id].name })),
     };

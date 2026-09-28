@@ -34,6 +34,30 @@ export function randomFleet(rand = Math.random) {
   }
 }
 
+// Các ô của tàu dài len, đầu ở ô head, nằm dọc (down) hay ngang; null nếu tràn ra ngoài biển.
+export function shipAt(head, len, down) {
+  const r = Math.floor(head / N), c = head % N;
+  if ((down ? r : c) + len > N) return null;
+  return Array.from({ length: len }, (_, k) => head + k * (down ? N : 1));
+}
+
+// Hạm đội người chơi tự xếp có hợp lệ không: đúng số tàu + độ dài theo FLEET, mỗi tàu thẳng hàng liền nhau, không chạm nhau.
+export function validFleet(ships) {
+  if (!Array.isArray(ships) || ships.length !== FLEET.length) return false;
+  const owner = new Map();
+  for (let k = 0; k < ships.length; k++) {
+    const s = ships[k];
+    if (!Array.isArray(s) || s.length !== FLEET[k] || !s.every((i) => Number.isInteger(i) && i >= 0 && i < N * N)) return false;
+    const down = s.length > 1 && s[1] - s[0] === N;
+    const want = shipAt(s[0], s.length, down);
+    if (!want || want.some((i, j) => i !== s[j])) return false;
+    for (const i of s) owner.set(i, k);
+  }
+  if (owner.size !== FLEET.reduce((a, b) => a + b)) return false;
+  for (const [i, k] of owner) if (around(i).some((j) => owner.has(j) && owner.get(j) !== k)) return false;
+  return true;
+}
+
 // Bắn ô i vào hạm đội `ships`, ghi lên bản đồ bắn `shots` (sửa tại chỗ).
 // Tàu chìm: đánh dấu SUNK cả tàu + các ô xung quanh thành trượt (luật không chạm nên chắc chắn trống).
 // Trả về { hit, sunk (chỉ số tàu hoặc -1), done (hết tàu) } hoặc null nếu ô đã bắn / ngoài biển.

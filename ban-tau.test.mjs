@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { N, FLEET, MISS, HIT, SUNK, randomFleet, shoot, botShot } from './public/ban-tau/logic.js';
+import { N, FLEET, MISS, HIT, SUNK, randomFleet, shoot, botShot, shipAt, validFleet } from './public/ban-tau/logic.js';
 
 // Xếp ngẫu nhiên: đủ tàu, đúng độ dài, thẳng hàng liền nhau, không chồng / không chạm nhau (kể cả chéo).
 for (let k = 0; k < 200; k++) {
@@ -23,6 +23,21 @@ for (let k = 0; k < 200; k++) {
     }
   }
 }
+
+// Tự xếp tàu: hợp lệ / sai độ dài / cong / tràn mép / chạm nhau (cả chéo) / sai kiểu dữ liệu
+const good = [shipAt(0, 5, false), shipAt(20, 4, true), shipAt(22, 3, false), shipAt(66, 3, false), shipAt(88, 2, true)];
+assert.ok(good.every(Boolean) && validFleet(good), 'valid manual fleet');
+assert.equal(shipAt(8, 3, false), null, 'overflows right edge');
+assert.equal(shipAt(90, 2, true), null, 'overflows bottom edge');
+assert.ok(validFleet(randomFleet()));
+assert.ok(!validFleet(good.slice(0, 4)), 'missing ship');
+assert.ok(!validFleet([good[1], good[0], ...good.slice(2)]), 'lengths out of order');
+assert.ok(!validFleet([[0, 1, 2, 3, 13], ...good.slice(1)]), 'bent ship');
+assert.ok(!validFleet([[6, 7, 8, 9, 10], ...good.slice(1)]), 'wraps to next row');
+assert.ok(!validFleet([good[0], shipAt(10, 4, false), ...good.slice(2)]), 'touching side by side');
+assert.ok(!validFleet([good[0], good[1], shipAt(31, 3, false), ...good.slice(3)]), 'touching diagonally');
+assert.ok(!validFleet([good[0], good[1], good[2], good[2], good[4]]), 'overlap');
+assert.ok(!validFleet([['0', 1, 2, 3, 4], ...good.slice(1)]) && !validFleet(null) && !validFleet('x'), 'bad types');
 
 // Bắn: trượt, trúng, chìm (đánh dấu cả tàu + ô xung quanh), hết tàu, không bắn lại ô cũ
 const ships = [[0, 1], [22, 32, 42]];

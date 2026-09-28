@@ -1,4 +1,4 @@
-import { N, FLEET } from './logic.js';
+import { N, FLEET, shipAt, validFleet } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
@@ -24,7 +24,7 @@ const SHIP_COLORS = ['#e8716f', '#7c83d6', '#4fb3ea', '#4aa89a', '#b06ad6'];
 // Cảm xúc = icon lucide + màu; số lượng khớp EMO_COUNT ở worker (gửi theo chỉ số).
 const EMOS = [['thumbs-up', '#1f6fd6'], ['laugh', '#e0a100'], ['frown', '#8a5cd6'], ['flame', '#ff7a3d'], ['heart', '#e0312f']];
 
-let ws, code = null, room = null, clockOffset = 0, peek = false;
+let ws, code = null, room = null, clockOffset = 0, peek = false, sel = -1;
 const mySeat = () => (room?.seats.indexOf(deviceId) ?? -1) + 1;
 const myTurn = () => room?.status === 'playing' && mySeat() === room.turn;
 const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
@@ -111,7 +111,8 @@ $('#code').onkeydown = (e) => e.key === 'Enter' && $('#btnJoin').click();
 $('#btnLeave').onclick = () => leave();
 $('#btnCopy').onclick = () => invite(`${location.origin}/ban-tau/?r=${code}`, code);
 $('#btnStart').onclick = () => send({ t: 'start' });
-$('#btnReroll').onclick = () => send({ t: 'reroll' });
+$('#btnReroll').onclick = () => { sel = -1; send({ t: 'reroll' }); };
+$('#btnRotate').onclick = () => rotate(sel);
 $('#btnReady').onclick = () => send({ t: 'ready' });
 $('#btnPeek').onclick = () => { peek = true; render(); };
 $('#btnResult').onclick = () => { peek = false; render(); };
@@ -129,6 +130,30 @@ for (const g of document.querySelectorAll('.grid')) {
     return c;
   }));
 }
+// Tự xếp tàu (biển của mình, lúc xếp): chạm tàu để chọn, chạm lại để xoay, chạm ô trống để dời tàu đang chọn tới đó (ô chạm = đầu tàu).
+const canEdit = () => room?.status === 'placing' && mySeat() && !room.ready[mySeat() - 1];
+const myFleet = () => room.fleets[mySeat() - 1];
+const isDown = (ship) => ship.length > 1 && ship[1] - ship[0] === N;
+function tryPlace(k, cells) {
+  const ships = myFleet().map((s, j) => (j === k ? cells : s));
+  if (cells && validFleet(ships)) return send({ t: 'place', ships });
+  toast.warning('Không đặt được — tàu phải nằm trong biển và không sát tàu khác');
+}
+function rotate(k) {
+  if (!canEdit() || k < 0) return;
+  const ship = myFleet()[k], down = !isDown(ship), len = ship.length;
+  // Xoay quanh đầu tàu; chạm mép thì lùi đầu tàu vào trong cho vừa.
+  const r = Math.floor(ship[0] / N), c = ship[0] % N;
+  tryPlace(k, shipAt(down ? Math.min(r, N - len) * N + c : r * N + Math.min(c, N - len), len, down));
+}
+$('#seaA .grid').onclick = (e) => {
+  const c = e.target.closest('.c');
+  if (!c || !canEdit()) return;
+  const i = Number(c.dataset.i);
+  const k = myFleet().findIndex((s) => s.includes(i));
+  if (k >= 0) { if (k === sel) rotate(k); else { sel = k; render(); } return; }
+  if (sel >= 0) tryPlace(sel, shipAt(i, FLEET[sel], isDown(myFleet()[sel])));
+};
 $('#seaB .grid').onclick = (e) => {
   const c = e.target.closest('.c');
   const me = mySeat();
@@ -150,7 +175,7 @@ function emoFx(id, e) {
 
 // ---------- vẽ ----------
 // Cỡ ô: xếp tàu thì chỉ 1 biển to; ngang thì 2 biển bằng nhau; dọc thì biển bắn to, biển mình nhỏ.
-const CAP = 22 + 8; // chú thích + khoảng cách mỗi biển
+const CAP = 22 + 14 + 12; // chú thích + hàng tàu + khoảng cách mỗi biển
 function fit() {
   const w = $('#wrap');
   const W = w.clientWidth - 8, H = w.clientHeight - 8;
@@ -164,14 +189,14 @@ function fit() {
 new ResizeObserver(fit).observe($('#wrap'));
 
 // Vẽ biển của ghế `seat`: tàu (nếu được thấy) + các phát đối thủ đã bắn vào.
-function drawSea(sel, seat) {
+function drawSea(root, seat) {
   const r = room;
   const fleet = r?.fleets?.[seat - 1] ?? null;
   const incoming = r?.shots?.[2 - seat] ?? [];
   const owner = new Map();
   fleet?.forEach((ship, k) => ship.forEach((i) => owner.set(i, k)));
   const last = r?.last && r.last.by !== seat ? r.last.i : -1;
-  for (const c of $(`${sel} .grid`).children) {
+  for (const c of $(`${root} .grid`).children) {
     const i = Number(c.dataset.i), v = incoming[i] ?? 0;
     if (v) c.dataset.v = v; else delete c.dataset.v;
     const k = owner.get(i);
@@ -179,7 +204,16 @@ function drawSea(sel, seat) {
     c.classList.toggle('hitme', k !== undefined && v === 2);
     c.style.setProperty('--ship', k !== undefined ? SHIP_COLORS[k] : '');
     c.classList.toggle('last', i === last);
+    c.classList.toggle('sel', sel >= 0 && k === sel && seat === mySeat() && canEdit());
   }
+  // Hàng tàu: tàu nào đã chìm (ai cũng biết, không lộ vị trí).
+  const sunk = r?.sunk?.[seat - 1] ?? [];
+  $(`${root} .fleet`).replaceChildren(...(r && r.status !== 'lobby' ? FLEET.map((len, k) => {
+    const pip = el('span', { className: `pip${sunk[k] ? ' sunk' : ''}`, title: `Tàu ${len} ô${sunk[k] ? ' — đã chìm' : ''}` },
+      ...Array.from({ length: len }, () => el('i')));
+    pip.style.setProperty('--ship', SHIP_COLORS[k]);
+    return pip;
+  }) : []));
 }
 
 function render() {
@@ -200,11 +234,15 @@ function render() {
 
   // Xếp tàu
   $('#placeBar').hidden = !placing;
+  if (!canEdit()) sel = -1;
+  $('#seaA').classList.toggle('edit', canEdit());
+  $('#btnRotate').disabled = sel < 0;
   if (placing) {
     const ready = me && r.ready[me - 1];
     const other = r.ready[(me || 1) % 2];
-    $('#btnReroll').hidden = $('#btnReady').hidden = !me || ready;
-    $('#placeText').textContent = !me ? 'Hai bên đang xếp tàu…' : ready ? (other ? '' : `Chờ ${nm(3 - me)} xếp tàu…`) : 'Xếp tàu:';
+    $('#btnReroll').hidden = $('#btnReady').hidden = $('#btnRotate').hidden = !me || ready;
+    $('#placeText').textContent = !me ? 'Hai bên đang xếp tàu…' : ready ? (other ? '' : `Chờ ${nm(3 - me)} xếp tàu…`)
+      : 'Chạm tàu để chọn · chạm ô trống để dời · chạm lại để xoay';
   }
 
   // Thanh đối đầu
