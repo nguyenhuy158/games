@@ -41,14 +41,19 @@ assert.deepEqual(all.night, [{ name: 'An Mới', value: 1 }], 'only the 2am VN p
 
 const week = Object.fromEntries(top.fun('week').map((c) => [c.key, c.rows]));
 assert.deepEqual(week.tiles, [{ name: 'An Mới', value: 300 }], 'old play excluded from this week');
-assert.equal(top.fun('all').length, 7);
+assert.equal(top.fun('all').length, 8);
+play('a', 'An Mới', 'do-min', 'coop', 95, 1, true, now - H);
+play('b', 'Bình', 'do-min', 'race', 60, 2, true, now - H);
+play('b', 'Bình', 'do-min', 'race', 30, 2, false, now - H); // thua: không tính
+assert.deepEqual(Object.fromEntries(top.fun('all').map((c) => [c.key, c.rows])).mines, [{ name: 'Bình', value: 60 }, { name: 'An Mới', value: 95 }], 'nhanh nhất lên đầu, chỉ ván thắng');
+assert.equal(Object.fromEntries(top.stats('b').map((s) => [s.game, s]))['do-min'].fastest, 60);
 
 // stats / history theo người
 const sa = Object.fromEntries(top.stats('a').map((s) => [s.game, s]));
 assert.equal(sa.pikachu.plays, 2);
 assert.equal(sa.pikachu.wins, 1);
 assert.equal(sa['dao-vang'].best, 900);
-assert.equal(top.history('b').length, 2);
+assert.equal(top.history('b').length, 4); // 2 ván cũ + 2 ván dò mìn thêm ở trên
 assert.equal(top.history('nobody').length, 0);
 console.log('top ok');
 }

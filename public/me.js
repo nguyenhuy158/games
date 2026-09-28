@@ -2,9 +2,12 @@
 const SSO = 'https://auth.huyab.click';
 const $ = (s) => document.querySelector(s);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng' };
+const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn' };
 const MODES = { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình' };
 const back = () => encodeURIComponent(location.origin + '/');
+const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+// Điểm hiển thị theo game: Đào Vàng = tiền, Dò mìn = thời gian (giây), còn lại = điểm.
+const scoreText = (game, v) => (game === 'dao-vang' ? `$${v}` : game === 'do-min' ? mmss(v) : v);
 
 const ago = (t) => {
   const s = (Date.now() - t) / 1000;
@@ -35,16 +38,18 @@ async function load() {
   $('#stats').replaceChildren(...(stats.length ? stats.map((s) => el('div', { className: 'stat' },
     el('b', { textContent: GAMES[s.game] ?? s.game }),
     el('span', {}, 'Số ván: ', el('strong', { textContent: s.plays }), s.wins ? ` · thắng ${s.wins}` : ''),
-    el('span', {}, 'Điểm cao nhất: ', el('strong', { textContent: s.game === 'dao-vang' ? `$${s.best}` : s.best }), ` · màn xa nhất ${s.maxLevel}`),
+    s.game === 'do-min'
+      ? el('span', {}, 'Thắng nhanh nhất: ', el('strong', { textContent: s.fastest != null ? mmss(s.fastest) : '—' }))
+      : el('span', {}, 'Điểm cao nhất: ', el('strong', { textContent: scoreText(s.game, s.best) }), ` · màn xa nhất ${s.maxLevel}`),
   )) : [el('p', { className: 'sub', textContent: 'Chưa có ván nào — chơi thử một ván đi!' })]));
   const hist = await (await fetch('/api/me/history')).json();
   $('#history').replaceChildren(...hist.map((h) => {
     const d = (() => { try { return JSON.parse(h.detail || '{}'); } catch { return {}; } })();
-    const extra = d.with?.length ? ` · cùng ${d.with.join(', ')}` : d.rank ? ` · hạng ${d.rank}/${d.of}` : '';
+    const extra = d.with?.length ? ` · cùng ${d.with.join(', ')}` : d.rank ? ` · hạng ${d.rank}/${d.of}` : d.size ? ` · ${d.size}, mở ${d.opened} ô, 💥${d.booms}` : '';
     return el('li', {},
       el('b', { textContent: GAMES[h.game] ?? h.game }),
-      el('span', { textContent: `${MODES[h.mode] ?? h.mode} · màn ${h.level}${extra}` }),
-      el('span', { className: 'score', textContent: h.game === 'dao-vang' ? `$${h.score}` : h.score }),
+      el('span', { textContent: `${MODES[h.mode] ?? h.mode}${h.game === 'do-min' ? '' : ` · màn ${h.level}`}${extra}` }),
+      el('span', { className: 'score', textContent: scoreText(h.game, h.score) }),
       h.won ? el('span', { className: 'won', textContent: '🏆 thắng' }) : '',
       el('span', { className: 'when', textContent: ago(h.at) }),
     );
@@ -65,7 +70,7 @@ async function loadFun() {
       ? el('ol', {}, ...c.rows.map((r, i) => el('li', {},
         el('span', { className: 'rank', textContent: MEDALS[i] }),
         el('span', { className: 'name', textContent: r.name }),
-        el('span', { className: 'val', textContent: c.unit === '$' ? `$${r.value}` : `${r.value} ${c.unit}` }),
+        el('span', { className: 'val', textContent: c.unit === '$' ? `$${r.value}` : c.unit === 'giây' ? mmss(r.value) : `${r.value} ${c.unit}` }),
       )))
       : el('span', { className: 'empty', textContent: 'Chưa ai giành — cơ hội của bạn!' }),
   )));

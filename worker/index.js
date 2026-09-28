@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 export { MinerRoom } from './dao-vang.js';
+export { MineRoom } from './do-min.js';
 import { userFrom } from './sso.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
 
@@ -65,10 +66,10 @@ export default {
       const rows = await top().list(mode, size);
       return Response.json(rows, { headers: { 'Cache-Control': 'public, max-age=30' } });
     }
-    // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng.
-    const m = url.pathname.match(/^\/api\/(dv\/)?room\/([A-Z0-9]{4})$/);
+    // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng, /api/ms/room/CODE = Dò mìn.
+    const m = url.pathname.match(/^\/api\/(dv\/|ms\/)?room\/([A-Z0-9]{4})$/);
     if (!m || req.headers.get('Upgrade') !== 'websocket') return new Response('Not found', { status: 404 });
-    const ns = m[1] ? env.MINER : env.ROOM;
+    const ns = { 'dv/': env.MINER, 'ms/': env.MINES }[m[1]] ?? env.ROOM;
     // Phòng tin header X-User vì chỉ Worker gọi được DO; header client tự gửi luôn bị xoá trước.
     const headers = new Headers(req.headers);
     headers.delete('X-User');
@@ -121,11 +122,12 @@ export class Top extends DurableObject {
   // Bảng xếp hạng "cho vui" giữa người đã đăng nhập, top 5 mỗi hạng mục.
   fun(period) {
     const since = period === 'week' ? Date.now() - 7 * 86400_000 : 0;
-    const q = (key, title, unit, agg, where = '1') => ({
+    // order 'ASC' cho hạng mục "càng nhỏ càng giỏi" (thời gian dò mìn).
+    const q = (key, title, unit, agg, where = '1', order = 'DESC') => ({
       key, title, unit,
       rows: this.ctx.storage.sql.exec(
         `SELECT COALESCE(u.name, 'Ẩn danh') AS name, ${agg} AS value FROM plays p LEFT JOIN users u ON u.sub = p.sub
-         WHERE p.at >= ? AND (${where}) GROUP BY p.sub HAVING value > 0 ORDER BY value DESC, MIN(p.at) ASC LIMIT 5`, since,
+         WHERE p.at >= ? AND (${where}) GROUP BY p.sub HAVING value > 0 ORDER BY value ${order}, MIN(p.at) ASC LIMIT 5`, since,
       ).toArray(),
     });
     // Giờ Việt Nam = UTC+7; "cú đêm" = ván kết thúc từ 0h tới trước 5h sáng.
@@ -136,6 +138,7 @@ export class Top extends DurableObject {
       q('gold', '💰 Đại gia Đào Vàng', '$', 'MAX(p.score)', "p.game = 'dao-vang'"),
       q('tiles', '⚡ Thánh nối thú', 'điểm', 'MAX(p.score)', "p.game = 'pikachu'"),
       q('deep', '⛏️ Thợ mỏ lì đòn', 'màn', 'MAX(p.level)', "p.game = 'dao-vang'"),
+      q('mines', '💣 Thánh dò mìn', 'giây', 'MIN(p.score)', "p.game = 'do-min' AND p.won = 1", 'ASC'),
       q('team', '🤝 Đồng đội quốc dân', 'ván chung', 'COUNT(*)', "p.mode IN ('coop', 'team')"),
       q('night', '🌙 Cú đêm', 'ván lúc 0–5h', 'COUNT(*)', `${vnHour} < 5`),
     ];
@@ -143,7 +146,7 @@ export class Top extends DurableObject {
 
   stats(sub) {
     return this.ctx.storage.sql
-      .exec('SELECT game, COUNT(*) AS plays, SUM(won) AS wins, MAX(score) AS best, MAX(level) AS maxLevel FROM plays WHERE sub = ? GROUP BY game', sub)
+      .exec('SELECT game, COUNT(*) AS plays, SUM(won) AS wins, MAX(score) AS best, MIN(CASE WHEN won = 1 THEN score END) AS fastest, MAX(level) AS maxLevel FROM plays WHERE sub = ? GROUP BY game', sub)
       .toArray();
   }
 

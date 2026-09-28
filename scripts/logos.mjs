@@ -9,12 +9,14 @@ const sparkle = (x, y, s, fill = '#fff') =>
   `<path d="M${x} ${y - s}Q${x} ${y} ${x + s} ${y}Q${x} ${y} ${x} ${y + s}Q${x} ${y} ${x - s} ${y}Q${x} ${y} ${x} ${y - s}Z" fill="${fill}" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>`;
 
 // Mặt cười: mắt to có chấm sáng, má hồng, miệng "ω" hoặc cười mở.
-function face(cx, cy, k = 1, mouth = 'w') {
-  const e = (x) => `<ellipse cx="${x}" cy="${cy}" rx="${13 * k}" ry="${17 * k}" fill="${INK}"/><circle cx="${x - 4 * k}" cy="${cy - 6 * k}" r="${5 * k}" fill="#fff"/>`;
+// ink: màu mắt/miệng (mặt trên nền tối thì dùng trắng, chấm sáng chuyển sang màu mực).
+function face(cx, cy, k = 1, mouth = 'w', ink = INK) {
+  const hi = ink === INK ? '#fff' : INK;
+  const e = (x) => `<ellipse cx="${x}" cy="${cy}" rx="${13 * k}" ry="${17 * k}" fill="${ink}"/><circle cx="${x - 4 * k}" cy="${cy - 6 * k}" r="${5 * k}" fill="${hi}"/>`;
   const dx = 40 * k;
   const my = cy + 26 * k;
   const m = mouth === 'w'
-    ? `<path d="M${cx - 14 * k} ${my}q${7 * k} ${10 * k} ${14 * k} 0q${7 * k} ${10 * k} ${14 * k} 0" fill="none" stroke="${INK}" stroke-width="${6 * k}" stroke-linecap="round" stroke-linejoin="round"/>`
+    ? `<path d="M${cx - 14 * k} ${my}q${7 * k} ${10 * k} ${14 * k} 0q${7 * k} ${10 * k} ${14 * k} 0" fill="none" stroke="${ink}" stroke-width="${6 * k}" stroke-linecap="round" stroke-linejoin="round"/>`
     : `<path d="M${cx - 16 * k} ${my - 4 * k}Q${cx} ${my + 20 * k} ${cx + 16 * k} ${my - 4 * k}Z" fill="#e0564f" stroke="${INK}" stroke-width="${5 * k}" stroke-linejoin="round"/>`;
   return `${e(cx - dx)}${e(cx + dx)}
     <ellipse cx="${cx - dx - 22 * k}" cy="${cy + 24 * k}" rx="${18 * k}" ry="${10 * k}" fill="${BLUSH}" opacity=".75"/>
@@ -54,6 +56,17 @@ export const LOGOS = {
     <path d="M362 210l-26 48h22l-10 40 34-54h-22l12-34z" fill="#ffd84d" stroke="${INK}" stroke-width="7" stroke-linejoin="round"/>
     ${face(150, 372, 0.55)}${face(362, 312, 0.55)}
     ${sparkle(256, 70, 26)}${sparkle(440, 440, 24, '#ff9ec4')}${sparkle(70, 120, 20)}`),
+
+  // Dò mìn: quả bom tròn mặt cười, ngòi toé lửa, cắm cờ bên cạnh.
+  'do-min': frame('m', '#e6f0ff', '#9fb7e8', `
+    <path d="M300 150C312 118 336 102 360 96" fill="none" stroke="${INK}" stroke-width="12" stroke-linecap="round"/>
+    ${sparkle(372, 90, 30, '#ffd23f')}
+    ${sticker(`<circle cx="236" cy="296" r="136" fill="#3d4a66" stroke="${INK}" stroke-width="12"/>`)}
+    <rect x="262" y="140" width="56" height="40" rx="10" fill="#8a96b3" stroke="${INK}" stroke-width="10" transform="rotate(35 290 160)"/>
+    <ellipse cx="180" cy="232" rx="34" ry="20" fill="#fff" opacity=".35" transform="rotate(-30 180 232)"/>
+    ${face(236, 300, 0.9, 'w', '#fff')}
+    ${sticker(`<path d="M392 250V430" stroke="${INK}" stroke-width="12" stroke-linecap="round"/><path d="M398 256L470 282L398 312Z" fill="#ff5d5d" stroke="${INK}" stroke-width="10" stroke-linejoin="round"/>`)}
+    ${sparkle(90, 110, 26)}${sparkle(84, 420, 18, '#ffd23f')}${sparkle(456, 460, 16)}`),
 
   // Đào Vàng: cục vàng mặt cười bị móc câu gắp lên.
   'dao-vang': frame('d', '#fff1d6', '#f7b267', `

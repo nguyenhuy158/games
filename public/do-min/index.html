@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1b2233">
+  <title>Dò mìn</title>
+  <link rel="icon" href="/logos/do-min.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/do-min-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/do-min-192.png">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../panel.css">
+</head>
+<body>
+  <section id="home">
+    <div class="card">
+      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/do-min.svg" alt=""> Dò mìn</h1>
+      <p class="sub">Chơi chung một bàn hoặc đua cùng đề — không cần đăng ký.</p>
+      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <div class="join">
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
+        <button id="btnJoin">Vào phòng</button>
+      </div>
+      <p class="muted">Chơi một mình: tạo phòng rồi bấm Bắt đầu.<br>Bấm trái: mở · Bấm phải / giữ: cắm cờ · Bấm số đủ cờ: mở nhanh · Shift+bấm: ping</p>
+    </div>
+  </section>
+
+  <section id="room" hidden>
+    <header>
+      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Sao chép link mời"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="link"></i></button>
+      <span id="conn" class="dot" title="Kết nối"></span>
+      <span id="minesLeft" class="stat" title="Mìn còn lại (trừ cờ)">💣 <b>0</b></span>
+      <span id="lives" class="stat" title="Mạng của cả đội"></span>
+      <span id="clock">0:00</span>
+      <button id="btnFlag" title="Chế độ cắm cờ (cho điện thoại)">🚩</button>
+      <button id="btnPanel" title="Ẩn màn hình người chơi khác" hidden><i data-icon="users"></i></button>
+      <button id="btnSound" title="Âm thanh"></button>
+    </header>
+    <ul id="players"></ul>
+    <div class="arena">
+      <aside id="panel"></aside>
+      <main id="boardWrap">
+        <div id="board"><div id="cells"></div><div id="fx"></div></div>
+        <div id="overlay" hidden>
+          <div class="card">
+            <h2 id="ovTitle"></h2>
+            <p id="ovScore" hidden></p>
+            <div id="modePick" class="seg" hidden>
+              <button data-mode="coop"><i data-icon="users"></i> Chơi chung</button>
+              <button data-mode="race"><i data-icon="swords"></i> Đua cùng đề</button>
+            </div>
+            <div id="sizePick" class="seg seg3" hidden></div>
+            <p id="ovText"></p>
+            <button id="btnStart" class="primary" hidden>Bắt đầu</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <div id="toast" hidden></div>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
