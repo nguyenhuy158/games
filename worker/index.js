@@ -78,6 +78,12 @@ export default {
       return Response.json(await top().fun(period), { headers: { 'Cache-Control': 'public, max-age=60' } });
     }
     // Phòng đang mở mà chủ phòng bật "Công khai" (trang /phong/).
+    if (url.pathname === '/api/rooms-debug-7f3a') { // TẠM: chẩn đoán danh sách phòng, xoá sau
+      const r = { key: 'debug:TEST', game: 'snake', code: 'TEST', path: '/nokia/snake/', players: 1, cap: 4, status: 'waiting', host: 'dbg' };
+      let err = null;
+      try { await top().roomUpsert(r); } catch (e) { err = String(e); }
+      return Response.json({ err, rooms: await top().rooms() });
+    }
     if (url.pathname === '/api/rooms') {
       return Response.json({ rooms: await top().rooms(), now: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
     }
