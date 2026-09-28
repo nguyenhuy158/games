@@ -22,15 +22,30 @@ export function applyStatic(root = document) {
 document.documentElement.lang = lang;
 applyStatic();
 
-// Nút chuyển ngôn ngữ (VI | EN): đổi xong tải lại trang (giữ ?r=CODE nên vẫn về đúng phòng).
+// Nút chuyển ngôn ngữ: cờ Việt Nam | cờ Anh (SVG vẽ sẵn, không dùng emoji). Đổi xong tải lại trang (giữ ?r=CODE nên vẫn về đúng phòng).
+const FLAGS = {
+  vi: '<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#da251d"/><polygon fill="#ffcd00" points="15,4.5 16.35,8.65 20.71,8.65 17.18,11.21 18.53,15.35 15,12.79 11.47,15.35 12.82,11.21 9.29,8.65 13.65,8.65"/></svg>',
+  en: '<svg viewBox="0 0 60 30"><clipPath id="ukc"><path d="M30,15h30v15zv15h-30zh-30v-15zv-15h30z"/></clipPath><rect width="60" height="30" fill="#012169"/>'
+    + '<path d="M0,0L60,30M60,0L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0L60,30M60,0L0,30" clip-path="url(#ukc)" stroke="#c8102e" stroke-width="4"/>'
+    + '<path d="M30,0v30M0,15h60" stroke="#fff" stroke-width="10"/><path d="M30,0v30M0,15h60" stroke="#c8102e" stroke-width="6"/></svg>',
+};
 export function langToggle() {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'lang-toggle';
-  b.title = en ? 'Tiếng Việt' : 'English';
-  b.innerHTML = `<span${en ? '' : ' class="on"'}>VI</span><span${en ? ' class="on"' : ''}>EN</span>`;
-  b.style.cssText = 'display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:999px;font-weight:700;font-size:12px;letter-spacing:.05em;cursor:pointer';
-  for (const s of b.children) s.style.opacity = s.classList.contains('on') ? '1' : '.45';
+  b.title = en ? 'Chuyển sang tiếng Việt' : 'Switch to English';
+  b.setAttribute('aria-label', b.title);
+  b.style.cssText = 'display:inline-flex;gap:6px;align-items:center;padding:4px 6px;border-radius:999px;cursor:pointer;line-height:0';
+  for (const k of ['vi', 'en']) {
+    const f = document.createElement('span');
+    f.innerHTML = FLAGS[k];
+    const on = k === lang;
+    f.style.cssText = `display:inline-block;width:24px;height:16px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 ${on ? 2 : 1}px ${on ? '#ffd23f' : '#0003'};opacity:${on ? 1 : 0.45};transition:opacity .15s`;
+    f.firstChild.setAttribute('width', '24');
+    f.firstChild.setAttribute('height', '16');
+    f.firstChild.setAttribute('preserveAspectRatio', 'xMidYMid slice'); // cờ Anh 2:1 -> cắt vừa khung 3:2
+    b.append(f);
+  }
   b.onclick = () => {
     try { localStorage.setItem('lang', en ? 'vi' : 'en'); } catch {}
     const u = new URL(location.href);
