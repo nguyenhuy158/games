@@ -240,9 +240,12 @@ export function gameRoom(games) {
       const s = this.s;
       if (!s?.pub || !s.code || !this.mod.page) return;
       const host = s.players[this.hostId(except)]?.name ?? '';
+      const players = this.onlineIds(except).size, cap = this.mod.max;
+      // Game không có sảnh (Bầu cua): còn chỗ là người vào chơi được ngay -> "đang chờ", không phải "vào xem".
+      const playing = s.status === 'playing' && !(this.mod.autostart && players < cap);
       const row = {
-        key: `${s.game}:${s.code}`, game: this.slug, code: s.code, path: this.mod.page, players: this.onlineIds(except).size, cap: this.mod.max,
-        status: s.status === 'playing' ? 'playing' : 'waiting', host,
+        key: `${s.game}:${s.code}`, game: this.slug, code: s.code, path: this.mod.page, players, cap,
+        status: playing ? 'playing' : 'waiting', host,
       };
       const sig = JSON.stringify(row);
       if (!force && sig === this.listed) return;
