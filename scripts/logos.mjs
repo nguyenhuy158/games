@@ -80,6 +80,15 @@ export const LOGOS = {
     ${face(256, 256, 0.85)}
     ${sparkle(88, 440, 28, '#ffd23f')}${sparkle(256, 70, 22)}${sparkle(454, 250, 18, '#ffd23f')}`),
 
+  // Cờ caro: tờ giấy kẻ ô, quân X đỏ và quân O xanh mặt cười.
+  'co-caro': frame('c', '#fffaf0', '#ffd9a8', `
+    ${sticker(`<rect x="86" y="86" width="340" height="340" rx="34" fill="#fff" stroke="${INK}" stroke-width="12" transform="rotate(-6 256 256)"/>`)}
+    <g transform="rotate(-6 256 256)" stroke="#9fc0e8" stroke-width="6">${[154, 222, 290, 358].map((v) => `<line x1="${v}" y1="100" x2="${v}" y2="412"/><line x1="100" y1="${v}" x2="412" y2="${v}"/>`).join('')}</g>
+    <path d="M118 150L214 246M214 150L118 246" stroke="#e0312f" stroke-width="34" stroke-linecap="round"/>
+    ${sticker(`<circle cx="330" cy="318" r="80" fill="#8fc2ff" stroke="${INK}" stroke-width="12"/>`)}
+    ${face(330, 312, 0.62)}
+    ${sparkle(430, 100, 26, '#ffd23f')}${sparkle(90, 420, 22)}${sparkle(440, 440, 16, '#ff9ec4')}`),
+
   // Đào Vàng: cục vàng mặt cười bị móc câu gắp lên.
   'dao-vang': frame('d', '#fff1d6', '#f7b267', `
     <path d="M8 400C120 372 190 392 256 380S420 360 504 392V384 504H8Z" fill="#c98a55" opacity=".55"/>

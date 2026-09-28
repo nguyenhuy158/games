@@ -35,6 +35,10 @@ class_name = "MineRoom"
 name = "DICE"
 class_name = "DiceRoom"
 
+[[durable_objects.bindings]]
+name = "CARO"
+class_name = "CaroRoom"
+
 # SQLite-backed DO: dung duoc o goi free.
 [[migrations]]
 tag = "v1"
@@ -59,6 +63,11 @@ new_sqlite_classes = ["MineRoom"]
 [[migrations]]
 tag = "v5"
 new_sqlite_classes = ["DiceRoom"]
+
+# Phong Co caro.
+[[migrations]]
+tag = "v6"
+new_sqlite_classes = ["CaroRoom"]
 
 [observability]
 enabled = true

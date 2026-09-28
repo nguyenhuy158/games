@@ -6,12 +6,15 @@ hydrateIcons();
 const SSO = 'https://auth.huyab.click';
 const $ = (s) => document.querySelector(s);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua' };
-const MODES = { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình', rotate: 'Xoay cái', house: 'Máy làm cái' };
+const GAMES = { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro' };
+const MODES = { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình', rotate: 'Xoay cái', house: 'Máy làm cái', pvp: 'Đối kháng', bot: 'Với máy' };
 const back = () => encodeURIComponent(location.origin + '/');
 const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 // Điểm hiển thị theo game: Đào Vàng = tiền, Dò mìn = thời gian (giây), còn lại = điểm.
-const scoreText = (game, v) => (game === 'dao-vang' ? `$${v}` : game === 'do-min' ? mmss(v) : game === 'bau-cua' ? `${v > 0 ? '+' : ''}${v} xu` : v);
+const scoreText = (game, v) => (game === 'dao-vang' ? `$${v}` : game === 'do-min' ? mmss(v) : game === 'bau-cua' ? `${v > 0 ? '+' : ''}${v} xu` : game === 'co-caro' ? `${v} nước` : v);
+// "level" mỗi game mang nghĩa khác nhau.
+const LEVEL = { 'do-min': () => '', 'bau-cua': (l) => ` · ${l} ván`, 'co-caro': (l) => ` · bàn ${l}×${l}` };
+const levelText = (game, l) => (LEVEL[game] ?? ((x) => ` · màn ${x}`))(l);
 
 const ago = (t) => {
   const s = (Date.now() - t) / 1000;
@@ -42,8 +45,8 @@ async function load() {
   $('#stats').replaceChildren(...(stats.length ? stats.map((s) => el('div', { className: 'stat' },
     el('b', { textContent: GAMES[s.game] ?? s.game }),
     el('span', {}, 'Số ván: ', el('strong', { textContent: s.plays }), s.wins ? ` · thắng ${s.wins}` : ''),
-    s.game === 'do-min'
-      ? el('span', {}, 'Thắng nhanh nhất: ', el('strong', { textContent: s.fastest != null ? mmss(s.fastest) : '—' }))
+    s.game === 'do-min' || s.game === 'co-caro'
+      ? el('span', {}, 'Thắng nhanh nhất: ', el('strong', { textContent: s.fastest != null ? scoreText(s.game, s.fastest) : '—' }))
       : s.game === 'bau-cua'
       ? el('span', {}, 'Lãi đậm nhất: ', el('strong', { textContent: scoreText(s.game, s.best) }))
       : el('span', {}, 'Điểm cao nhất: ', el('strong', { textContent: scoreText(s.game, s.best) }), ` · màn xa nhất ${s.maxLevel}`),
@@ -51,10 +54,10 @@ async function load() {
   const hist = await (await fetch('/api/me/history')).json();
   $('#history').replaceChildren(...hist.map((h) => {
     const d = (() => { try { return JSON.parse(h.detail || '{}'); } catch { return {}; } })();
-    const extra = d.with?.length ? ` · cùng ${d.with.join(', ')}` : d.rank ? ` · hạng ${d.rank}/${d.of}` : d.size ? ` · ${d.size}, mở ${d.opened} ô, nổ ${d.booms}` : '';
+    const extra = d.vs ? ` · gặp ${d.vs}` : d.with?.length ? ` · cùng ${d.with.join(', ')}` : d.rank ? ` · hạng ${d.rank}/${d.of}` : d.size ? ` · ${d.size}, mở ${d.opened} ô, nổ ${d.booms}` : '';
     return el('li', {},
       el('b', { textContent: GAMES[h.game] ?? h.game }),
-      el('span', { textContent: `${MODES[h.mode] ?? h.mode}${h.game === 'do-min' ? '' : h.game === 'bau-cua' ? ` · ${h.level} ván` : ` · màn ${h.level}`}${extra}` }),
+      el('span', { textContent: `${MODES[h.mode] ?? h.mode}${levelText(h.game, h.level)}${extra}` }),
       el('span', { className: 'score', textContent: scoreText(h.game, h.score) }),
       h.won ? el('span', { className: 'won' }, iconEl('trophy'), ' thắng') : '',
       el('span', { className: 'when', textContent: ago(h.at) }),
@@ -72,7 +75,7 @@ const rank = (i) => {
   m.setAttribute('style', `color:${MEDALS[i]}`);
   return m;
 };
-const FUN_ICONS = { plays: 'gamepad-2', wins: 'crown', gold: 'coins', tiles: 'zap', deep: 'pickaxe', mines: 'bomb', baucua: 'dices', team: 'handshake', night: 'moon' };
+const FUN_ICONS = { plays: 'gamepad-2', wins: 'crown', gold: 'coins', tiles: 'zap', deep: 'pickaxe', mines: 'bomb', baucua: 'dices', caro: 'grid-3x3', team: 'handshake', night: 'moon' };
 let period = 'week';
 async function loadFun() {
   for (const b of document.querySelectorAll('#funPeriod button')) b.classList.toggle('on', b.dataset.period === period);

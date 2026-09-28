@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 export { MinerRoom } from './dao-vang.js';
 export { MineRoom } from './do-min.js';
 export { DiceRoom } from './bau-cua.js';
+export { CaroRoom } from './co-caro.js';
 import { userFrom } from './sso.js';
 import { SIZES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, reshuffle, countLeft } from '../public/pikachu/logic.js';
 
@@ -67,10 +68,10 @@ export default {
       const rows = await top().list(mode, size);
       return Response.json(rows, { headers: { 'Cache-Control': 'public, max-age=30' } });
     }
-    // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng, /api/ms/room/CODE = Dò mìn, /api/bc/room/CODE = Bầu cua.
-    const m = url.pathname.match(/^\/api\/(dv\/|ms\/|bc\/)?room\/([A-Z0-9]{4})$/);
+    // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng, /api/ms/room/CODE = Dò mìn, /api/bc/room/CODE = Bầu cua, /api/cc/room/CODE = Cờ caro.
+    const m = url.pathname.match(/^\/api\/(dv\/|ms\/|bc\/|cc\/)?room\/([A-Z0-9]{4})$/);
     if (!m || req.headers.get('Upgrade') !== 'websocket') return new Response('Not found', { status: 404 });
-    const ns = { 'dv/': env.MINER, 'ms/': env.MINES, 'bc/': env.DICE }[m[1]] ?? env.ROOM;
+    const ns = { 'dv/': env.MINER, 'ms/': env.MINES, 'bc/': env.DICE, 'cc/': env.CARO }[m[1]] ?? env.ROOM;
     // Phòng tin header X-User vì chỉ Worker gọi được DO; header client tự gửi luôn bị xoá trước.
     const headers = new Headers(req.headers);
     headers.delete('X-User');
@@ -141,6 +142,7 @@ export class Top extends DurableObject {
       q('deep', 'Thợ mỏ lì đòn', 'màn', 'MAX(p.level)', "p.game = 'dao-vang'"),
       q('mines', 'Thánh dò mìn', 'giây', 'MIN(p.score)', "p.game = 'do-min' AND p.won = 1", 'ASC'),
       q('baucua', 'Đại gia Bầu cua', 'xu lãi', 'SUM(p.score)', "p.game = 'bau-cua'"),
+    q('caro', 'Kỳ thủ caro', 'ván thắng', 'SUM(p.won)', "p.game = 'co-caro' AND p.mode = 'pvp'"),
     q('team', 'Đồng đội quốc dân', 'ván chung', 'COUNT(*)', "p.mode IN ('coop', 'team')"),
       q('night', 'Cú đêm', 'ván lúc 0–5h', 'COUNT(*)', `${vnHour} < 5`),
     ];
