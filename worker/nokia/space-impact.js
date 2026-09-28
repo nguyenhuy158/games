@@ -27,7 +27,7 @@ export default {
       const multi = w.ships.length > 1;
       ctx.end({
         mode: multi ? 'coop' : 'solo', level: w.level,
-        title: w.won ? `Phá đảo! ${w.score} điểm` : `Hết mạng ở màn ${w.level} — ${w.score} điểm`,
+        title: w.won ? [`Phá đảo! ${w.score} điểm`, `Cleared! ${w.score} points`] : [`Hết mạng ở màn ${w.level} — ${w.score} điểm`, `Out of lives on level ${w.level} — ${w.score} points`],
         ranks: [...w.ships].sort((a, b) => b.score - a.score).map((s) => ({ id: s.id, score: s.score, won: w.won })),
       });
     }

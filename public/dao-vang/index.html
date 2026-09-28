@@ -6,7 +6,7 @@
   <script src="/nozoom.js"></script>
   <script src="/bfcache.js"></script>
   <meta name="theme-color" content="#1a1008">
-  <title>Đào Vàng</title>
+  <title data-en="Gold Miner">Đào Vàng</title>
   <link rel="icon" href="/logos/dao-vang.svg" type="image/svg+xml">
   <link rel="icon" href="/logos/dao-vang-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/logos/dao-vang-192.png">
@@ -19,15 +19,15 @@
 </head>
 <body>
   <header id="hud" hidden>
-    <a href="/" class="btn" title="Các game khác"><i data-icon="arrow-left"></i></a>
-    <span class="stat"><small>Tiền</small> <b id="hMoney">$0</b></span>
-    <span class="stat" id="hTargetBox"><small>Mục tiêu</small><small class="short">/</small> <b id="hTarget">$650</b></span>
-    <span class="stat"><small>Màn</small><small class="short">M</small> <b id="hLevel">1</b></span>
-    <span class="stat"><small>Giờ</small><small class="short"><i data-icon="timer"></i></small> <b id="hTime">60</b></span>
-    <button id="btnDyn" title="Thuốc nổ (↑)"><i data-icon="bomb"></i> <span id="dynCount">0</span></button>
-    <button id="btnPanel" title="Ẩn màn hình người chơi khác" hidden><i data-icon="users"></i></button>
-    <button id="btnMenu" title="Tạm dừng"><i data-icon="pause"></i></button>
-    <button id="btnSound" title="Âm thanh"></button>
+    <a href="/" class="btn" title="Các game khác" data-en-title="Other games"><i data-icon="arrow-left"></i></a>
+    <span class="stat"><small data-en="Money">Tiền</small> <b id="hMoney">$0</b></span>
+    <span class="stat" id="hTargetBox"><small data-en="Target">Mục tiêu</small><small class="short">/</small> <b id="hTarget">$650</b></span>
+    <span class="stat"><small data-en="Level">Màn</small><small class="short" data-en="L">M</small> <b id="hLevel">1</b></span>
+    <span class="stat"><small data-en="Time">Giờ</small><small class="short"><i data-icon="timer"></i></small> <b id="hTime">60</b></span>
+    <button id="btnDyn" title="Thuốc nổ (↑)" data-en-title="Dynamite (↑)"><i data-icon="bomb"></i> <span id="dynCount">0</span></button>
+    <button id="btnPanel" title="Ẩn màn hình người chơi khác" data-en-title="Hide other players' screens" hidden><i data-icon="users"></i></button>
+    <button id="btnMenu" title="Tạm dừng" data-en-title="Pause"><i data-icon="pause"></i></button>
+    <button id="btnSound" title="Âm thanh" data-en-title="Sound"></button>
   </header>
   <ul id="scores" hidden></ul>
   <div class="arena">

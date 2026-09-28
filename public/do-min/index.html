@@ -6,7 +6,7 @@
   <script src="/nozoom.js"></script>
   <script src="/bfcache.js"></script>
   <meta name="theme-color" content="#1b2233">
-  <title>Dò mìn</title>
+  <title data-en="Minesweeper">Dò mìn</title>
   <link rel="icon" href="/logos/do-min.svg" type="image/svg+xml">
   <link rel="icon" href="/logos/do-min-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/logos/do-min-192.png">
@@ -19,34 +19,35 @@
 </head>
 <body>
   <section id="home">
-    <div class="card">
-      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/do-min.svg" alt=""> Dò mìn</h1>
-      <p class="sub">Chơi chung một bàn hoặc đua cùng đề — không cần đăng ký.</p>
-      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
-      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+    <div class="card" style="position:relative">
+      <div style="position:absolute;top:12px;right:12px"><span data-lang-toggle></span></div>
+      <h1><a href="/" class="back" title="Các game khác" data-en-title="Other games"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/do-min.svg" alt=""> <span data-en="Minesweeper">Dò mìn</span></h1>
+      <p class="sub" data-en="Play together on one board, or race the same layout — no signup needed.">Chơi chung một bàn hoặc đua cùng đề — không cần đăng ký.</p>
+      <label><span data-en="Your name">Tên của bạn</span> <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary" data-en="Create room">Tạo phòng mới</button>
       <div class="join">
-        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
-        <button id="btnJoin">Vào phòng</button>
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" data-en-placeholder="ROOM CODE" autocomplete="off">
+        <button id="btnJoin" data-en="Join room">Vào phòng</button>
       </div>
-      <p class="muted">Chơi một mình: tạo phòng rồi bấm Bắt đầu. Nút <b>⧉</b> trong phòng để đổi giao diện (Hiện đại / Windows XP / Socola).<br>Bấm trái: mở · Bấm phải / giữ: cắm cờ · Bấm số đủ cờ: mở nhanh · Shift+bấm: ping</p>
+      <p class="muted" data-en-html="Playing solo: create a room then press Start. The <b>⧉</b> button in the room switches theme (Modern / Windows XP / Chocolate).<br>Left click: open · Right click / hold: flag · Click a number with enough flags: quick-open · Shift+click: ping">Chơi một mình: tạo phòng rồi bấm Bắt đầu. Nút <b>⧉</b> trong phòng để đổi giao diện (Hiện đại / Windows XP / Socola).<br>Bấm trái: mở · Bấm phải / giữ: cắm cờ · Bấm số đủ cờ: mở nhanh · Shift+bấm: ping</p>
     </div>
   </section>
 
   <section id="room" hidden>
     <header>
-      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
-      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
-      <span id="conn" class="dot" title="Kết nối"></span>
-      <span id="ledMines" class="led" title="Mìn còn lại (trừ cờ)"></span>
-      <span id="minesLeft" class="stat" title="Mìn còn lại (trừ cờ)"><i data-icon="bomb"></i> <b>0</b></span>
-      <span id="lives" class="stat" title="Mạng của cả đội"></span>
-      <button id="face" title="Chủ phòng: bấm để chơi ván mới khi hết ván"><img alt=""></button>
-      <span id="ledTime" class="led" title="Thời gian (giây)"></span>
+      <button id="btnLeave" title="Rời phòng" data-en-title="Leave room"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Mời bạn: mã QR / link" data-en-title="Invite: QR code / link"><span class="lbl" data-en="Room ">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" title="Kết nối" data-en-title="Connection"></span>
+      <span id="ledMines" class="led" title="Mìn còn lại (trừ cờ)" data-en-title="Mines left (minus flags)"></span>
+      <span id="minesLeft" class="stat" title="Mìn còn lại (trừ cờ)" data-en-title="Mines left (minus flags)"><i data-icon="bomb"></i> <b>0</b></span>
+      <span id="lives" class="stat" title="Mạng của cả đội" data-en-title="Team lives"></span>
+      <button id="face" title="Chủ phòng: bấm để chơi ván mới khi hết ván" data-en-title="Host: press to start a new game when this one ends"><img alt=""></button>
+      <span id="ledTime" class="led" title="Thời gian (giây)" data-en-title="Time (seconds)"></span>
       <span id="clock">0:00</span>
-      <button id="btnSkin" title="Đổi giao diện (chỉ máy bạn)"><i data-icon="layers"></i></button>
-      <button id="btnFlag" title="Chế độ cắm cờ (cho điện thoại)"><i data-icon="flag"></i></button>
-      <button id="btnPanel" title="Ẩn màn hình người chơi khác" hidden><i data-icon="users"></i></button>
-      <button id="btnSound" title="Âm thanh"></button>
+      <button id="btnSkin" title="Đổi giao diện (chỉ máy bạn)" data-en-title="Change theme (this device only)"><i data-icon="layers"></i></button>
+      <button id="btnFlag" title="Chế độ cắm cờ (cho điện thoại)" data-en-title="Flag mode (for phones)"><i data-icon="flag"></i></button>
+      <button id="btnPanel" title="Ẩn màn hình người chơi khác" data-en-title="Hide other players' screens" hidden><i data-icon="users"></i></button>
+      <button id="btnSound" title="Âm thanh" data-en-title="Sound"></button>
     </header>
     <ul id="players"></ul>
     <div class="arena">
@@ -58,16 +59,16 @@
             <h2 id="ovTitle"></h2>
             <p id="ovScore" hidden></p>
             <div id="modePick" class="seg" hidden>
-              <button data-mode="coop"><i data-icon="users"></i> Chơi chung</button>
-              <button data-mode="race"><i data-icon="swords"></i> Đua cùng đề</button>
+              <button data-mode="coop"><i data-icon="users"></i> <span data-en="Play together">Chơi chung</span></button>
+              <button data-mode="race"><i data-icon="swords"></i> <span data-en="Race same layout">Đua cùng đề</span></button>
             </div>
             <div id="sizePick" class="seg seg3" hidden></div>
             <p id="ovText"></p>
-            <button id="btnStart" class="primary" hidden>Bắt đầu</button>
-            <button id="btnPeek" hidden><i data-icon="eye"></i> Xem bàn</button>
+            <button id="btnStart" class="primary" hidden data-en="Start">Bắt đầu</button>
+            <button id="btnPeek" hidden><i data-icon="eye"></i> <span data-en="View board">Xem bàn</span></button>
           </div>
         </div>
-        <button id="btnResult" hidden><i data-icon="trophy"></i> Kết quả</button>
+        <button id="btnResult" hidden><i data-icon="trophy"></i> <span data-en="Result">Kết quả</span></button>
       </main>
     </div>
   </section>

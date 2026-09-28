@@ -1,4 +1,5 @@
 import { nokiaApp } from '../room.js';
+import { t } from '../../i18n.js';
 import { createSim, step, score, scrollAt, TOP, PW, BALL } from './logic.js';
 
 // Máy mình tự chạy mô phỏng (cùng hạt giống với cả phòng), gửi vị trí 5 lần/giây; người khác hiện bóng mờ.
@@ -8,9 +9,10 @@ let sim = null, simSeed = null, keys = {}, lastT = 0, lastSent = 0, sentDone = f
 const app = nokiaApp({
   game: 'rapid-roll',
   title: 'Rapid Roll',
-  sub: 'Rapid Roll của Nokia 1110i — lăn bóng xuống giữa các thanh đang trôi lên, đua cùng đề với bạn bè.',
-  help: 'Giữ trái / phải (4 / 6 hoặc mũi tên) để lăn bóng. Đừng để bị đẩy lên chạm gai trên cùng, đừng rơi khỏi đáy và tránh thanh có gai. Tim: +1 mạng. Càng lâu càng nhanh; ai trụ xa nhất thắng.',
-  lobbyText: (r) => (r.players.length > 1 ? `${r.players.length} người đua cùng một đề.` : 'Một mình: trụ càng xa càng tốt.'),
+  sub: t('Rapid Roll của Nokia 1110i — lăn bóng xuống giữa các thanh đang trôi lên, đua cùng đề với bạn bè.', 'Rapid Roll from the Nokia 1110i — roll down between rising platforms, racing friends on the same course.'),
+  help: t('Giữ trái / phải (4 / 6 hoặc mũi tên) để lăn bóng. Đừng để bị đẩy lên chạm gai trên cùng, đừng rơi khỏi đáy và tránh thanh có gai. Tim: +1 mạng. Càng lâu càng nhanh; ai trụ xa nhất thắng.',
+    'Hold left / right (4 / 6 or arrows) to roll. Don\'t get pushed into the spikes on top, don\'t fall off the bottom, avoid spiked platforms. Heart: +1 life. It speeds up over time; whoever lasts longest wins.'),
+  lobbyText: (r) => (r.players.length > 1 ? t(`${r.players.length} người đua cùng một đề.`, `${r.players.length} players race the same course.`) : t('Một mình: trụ càng xa càng tốt.', 'Solo: go as far as you can.')),
   badge: (p, r) => r.view?.runners?.[p.id]?.score ?? '',
   scoreText: (v) => `${v} m`,
   onState(r) {
@@ -55,6 +57,6 @@ const app = nokiaApp({
     if (mine && !(sim.invul > 0 && Math.floor(now / 120) % 2)) lcd.sprite(sim.x, sim.y - s, BALL_ROWS);
     if (t <= 0) lcd.banner([String(Math.ceil((v.startAt - now) / 1000))]);
     else if (mine && sim.dead) lcd.banner(['GAME OVER', `${score(sim)} M`]);
-    else if (!mine) lcd.banner(['DANG XEM']);
+    else if (!mine) lcd.banner([t('DANG XEM', 'WATCHING')]);
   },
 });

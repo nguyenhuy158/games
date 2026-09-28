@@ -40,7 +40,7 @@ export default {
   view(ctx) {
     const g = ctx.g, s = g.s;
     return {
-      side: g.side, names: g.side.map((id) => (id === BOT ? 'Máy' : ctx.name(id))), b: s.b, big: s.big, cap: s.cap, debt: s.debt,
+      side: g.side, names: g.side.map((id) => (id === BOT ? ['Máy', 'Bot'] : ctx.name(id))), b: s.b, big: s.big, cap: s.cap, debt: s.debt,
       turn: s.turn, over: s.over, moves: s.moves, last: g.last, deadline: g.deadline, quanNon: s.quanNon,
     };
   },
@@ -66,10 +66,11 @@ function end(ctx, w, timeout) {
   g.deadline = 0;
   const pts = [0, score(g.s, 1), score(g.s, 2)];
   const humans = g.side.map((id, i) => ({ id, seat: i + 1 })).filter((x) => x.id !== BOT);
-  const wName = w ? (g.side[w - 1] === BOT ? 'Máy' : ctx.name(g.side[w - 1])) : null;
+  const bot = g.side[w - 1] === BOT, wName = w && ctx.name(g.side[w - 1]);
   ctx.end({
     mode: g.side.includes(BOT) ? 'bot' : 'pvp', level: ctx.cfg.level + 1,
-    title: w ? `${wName} thắng ${pts[w]}–${pts[3 - w]}${timeout ? ' (hết giờ)' : ''}` : `Hoà ${pts[1]}–${pts[2]}`,
+    title: w ? [`${bot ? 'Máy' : wName} thắng ${pts[w]}–${pts[3 - w]}${timeout ? ' (hết giờ)' : ''}`, `${bot ? 'Bot' : wName} wins ${pts[w]}–${pts[3 - w]}${timeout ? ' (time out)' : ''}`]
+      : [`Hoà ${pts[1]}–${pts[2]}`, `Draw ${pts[1]}–${pts[2]}`],
     ranks: humans.map(({ id, seat }) => ({ id, score: pts[seat], won: w === seat })).sort((a, b) => b.won - a.won || b.score - a.score),
   });
 }

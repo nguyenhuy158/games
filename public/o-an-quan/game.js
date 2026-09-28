@@ -1,12 +1,13 @@
 import { nokiaApp } from '../nokia/room.js';
 import { iconEl } from '../icons.js';
 import { QUAN } from './logic.js';
+import { t, tx } from '../i18n.js';
 
 // Bàn vẽ phấn trên sân gạch: 2 hàng × 5 ô dân, hai đầu là ô quan hình bán nguyệt.
 // Mình luôn ở hàng dưới (người 2 thấy bàn xoay 180°). Mỗi nước server gửi kèm các bước rải để diễn lại từng viên.
 const STEP_MS = 170;
 const PEBBLES = ['#d9d3c4', '#b8b0a0', '#8f8b83', '#ebe5d6', '#a8957c', '#75706a', '#c9b99c'];
-const LEVELS = ['Dễ', 'Vừa', 'Khó'];
+const LEVELS = [t('Dễ', 'Easy'), t('Vừa', 'Normal'), t('Khó', 'Hard')];
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 const pts = (c) => c.small + c.big * QUAN;
 const hash = (n) => { n = Math.imul(n ^ (n >>> 15), 0x2c1b3c6d); n = Math.imul(n ^ (n >>> 12), 0x297a2d39); return ((n ^ (n >>> 15)) >>> 0) / 2 ** 32; };
@@ -28,18 +29,19 @@ const pct = (v, total) => `${((8 + v * 100) / total) * 100}%`;
 const app = nokiaApp({
   game: 'o-an-quan',
   path: '/o-an-quan/',
-  title: 'Ô ăn quan',
-  sub: 'Trò chơi dân gian vẽ phấn trên sân gạch — rải sỏi, ăn dân, bắt quan. Đấu 1v1 hoặc với máy.',
-  help: 'Chạm một ô dân bên mình rồi chọn hướng rải. Rải hết mà ô kế có sỏi thì bốc rải tiếp; ô kế trống thì ăn ô sau nó (trống – có xen kẽ thì ăn dồn); gặp ô quan hoặc hai ô trống thì mất lượt. Quan = 10 dân. Hết dân bên mình thì lấy 5 dân đã ăn rải lại (thiếu thì vay). Hết hai quan là hết ván, dân còn lại về chủ hàng ô.',
-  lobbyText: (r) => (r.players.length > 1 ? `${r.players[0].name} đấu ${r.players[1].name}.` : 'Chỉ có mình bạn — sẽ đấu với máy.'),
+  title: t('Ô ăn quan', 'O An Quan'),
+  sub: t('Trò chơi dân gian vẽ phấn trên sân gạch — rải sỏi, ăn dân, bắt quan. Đấu 1v1 hoặc với máy.', 'The Vietnamese folk game chalked on a brick yard — sow pebbles, capture citizens, take the mandarins. 1v1 or vs the bot.'),
+  help: t('Chạm một ô dân bên mình rồi chọn hướng rải. Rải hết mà ô kế có sỏi thì bốc rải tiếp; ô kế trống thì ăn ô sau nó (trống – có xen kẽ thì ăn dồn); gặp ô quan hoặc hai ô trống thì mất lượt. Quan = 10 dân. Hết dân bên mình thì lấy 5 dân đã ăn rải lại (thiếu thì vay). Hết hai quan là hết ván, dân còn lại về chủ hàng ô.',
+    'Tap a citizen square on your side, then pick a direction to sow. If the next square has pebbles, pick them up and keep sowing; if it is empty, capture the square after it (alternating empty – full squares capture in a chain); hitting a mandarin square or two empty squares ends your turn. A mandarin = 10 citizens. With no citizens left on your side, re-seed 5 from your captures (borrow if short). The game ends when both mandarins are taken; remaining citizens go to their row owner.'),
+  lobbyText: (r) => (r.players.length > 1 ? t(`${r.players[0].name} đấu ${r.players[1].name}.`, `${r.players[0].name} vs ${r.players[1].name}.`) : t('Chỉ có mình bạn — sẽ đấu với máy.', 'Just you — you will play the bot.')),
   lobby(bx, r, isHost, setCfg) {
     const seg = (label, items, on, pick) => el('div', { className: 'seg' }, label, ...items.map((t, i) => el('button', {
       textContent: t, className: on === i ? 'on' : '', disabled: !isHost, onclick: () => pick(i),
     })));
-    bx.append(seg('Quan non ', ['Không ăn', 'Ăn được'], r.cfg.quanNon ? 0 : 1, (i) => setCfg({ quanNon: i === 0 })));
-    if (r.players.length < 2) bx.append(seg('Máy ', LEVELS, r.cfg.level, (i) => setCfg({ level: i })));
+    bx.append(seg(t('Quan non ', 'Young mandarin '), [t('Không ăn', 'Protected'), t('Ăn được', 'Capturable')], r.cfg.quanNon ? 0 : 1, (i) => setCfg({ quanNon: i === 0 })));
+    if (r.players.length < 2) bx.append(seg(t('Máy ', 'Bot '), LEVELS, r.cfg.level, (i) => setCfg({ level: i })));
   },
-  scoreText: (v) => `${v} điểm`,
+  scoreText: (v) => t(`${v} điểm`, `${v} pts`),
   mount(stage) {
     boardEl = el('div', { className: 'board' });
     boardEl.innerHTML = `<svg viewBox="-8 -8 716 216" aria-hidden="true"><g filter="url(#chalk)">
@@ -52,8 +54,8 @@ const app = nokiaApp({
     }
     handEl = el('div', { className: 'hand', hidden: true });
     dirsEl = el('div', { className: 'dirs', hidden: true },
-      el('button', { title: 'Rải sang trái', onclick: () => go(-1) }, iconEl('arrow-left')),
-      el('button', { title: 'Rải sang phải', onclick: () => go(1) }, iconEl('arrow-right')));
+      el('button', { title: t('Rải sang trái', 'Sow left'), onclick: () => go(-1) }, iconEl('arrow-left')),
+      el('button', { title: t('Rải sang phải', 'Sow right'), onclick: () => go(1) }, iconEl('arrow-right')));
     boardEl.append(handEl, dirsEl);
     bars = [el('div', { className: 'bar' }), el('div', { className: 'bar' })];
     hint = el('p', { className: 'hint' });
@@ -155,10 +157,10 @@ function paint() {
     const turn = r.status === 'playing' && v.turn === p;
     bars[i].className = `bar${turn ? ' turn' : ''}`;
     bars[i].replaceChildren(
-      el('span', { className: 'who' }, v.side[p - 1] === 'bot' ? iconEl('bot') : '', ` ${v.names[p - 1]}${v.side[p - 1] === app.id ? ' (bạn)' : ''}`),
+      el('span', { className: 'who' }, v.side[p - 1] === 'bot' ? iconEl('bot') : '', ` ${tx(v.names[p - 1])}${v.side[p - 1] === app.id ? t(' (bạn)', ' (you)') : ''}`),
       el('span', { className: 'got' },
-        ...Array.from({ length: c[p].big }, () => el('i', { className: 'q', title: 'Quan' })),
-        el('i', { className: 'd' }), ` ${c[p].small}`, v.debt[p] ? el('small', { textContent: ` nợ ${v.debt[p]}` }) : '',
+        ...Array.from({ length: c[p].big }, () => el('i', { className: 'q', title: t('Quan', 'Mandarin') })),
+        el('i', { className: 'd' }), ` ${c[p].small}`, v.debt[p] ? el('small', { textContent: t(` nợ ${v.debt[p]}`, ` owes ${v.debt[p]}`) }) : '',
         el('b', { textContent: pts(c[p]) })),
     );
   });
@@ -170,9 +172,9 @@ function drawHint(r) {
   if (!v || r.status !== 'playing') { hint.textContent = ''; return; }
   const left = Math.max(0, Math.ceil((v.deadline - app.now()) / 1000));
   const who = v.side[v.turn - 1];
-  hint.textContent = playing ? 'Đang rải…' : v.over ? 'Hết quan, tàn dân — thu quân!'
-    : who === app.id ? (sel == null ? `Lượt bạn — chạm một ô bên mình · ${left}s` : `Chọn hướng rải · ${left}s`)
-      : who === 'bot' ? 'Máy đang nghĩ…' : `Lượt ${v.names[v.turn - 1]} · ${left}s`;
+  hint.textContent = playing ? t('Đang rải…', 'Sowing…') : v.over ? t('Hết quan, tàn dân — thu quân!', 'Both mandarins gone — collect the rest!')
+    : who === app.id ? (sel == null ? t(`Lượt bạn — chạm một ô bên mình · ${left}s`, `Your turn — tap a square on your side · ${left}s`) : t(`Chọn hướng rải · ${left}s`, `Pick a direction · ${left}s`))
+      : who === 'bot' ? t('Máy đang nghĩ…', 'Bot is thinking…') : t(`Lượt ${tx(v.names[v.turn - 1])} · ${left}s`, `${tx(v.names[v.turn - 1])}'s turn · ${left}s`);
 }
 
 // Sỏi xếp xoắn ốc theo thứ tự (thêm viên không làm xê dịch viên cũ), màu/góc cố định theo ô + số thứ tự.

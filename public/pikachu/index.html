@@ -19,39 +19,40 @@
 </head>
 <body>
   <section id="home">
-    <div class="card">
-      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> Pikachu Online</h1>
-      <p class="sub">Nối thú cổ điển, chơi cùng bạn bè — không cần đăng ký.</p>
-      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
-      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+    <div class="card" style="position:relative">
+      <div style="position:absolute;top:12px;right:12px"><span data-lang-toggle></span></div>
+      <h1><a href="/" class="back" title="Các game khác" data-en-title="Other games"><i data-icon="arrow-left"></i></a> Pikachu Online</h1>
+      <p class="sub" data-en="Classic tile-matching, play with friends — no signup needed.">Nối thú cổ điển, chơi cùng bạn bè — không cần đăng ký.</p>
+      <label><span data-en="Your name">Tên của bạn</span> <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary" data-en="Create room">Tạo phòng mới</button>
       <div class="join">
-        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
-        <button id="btnJoin">Vào phòng</button>
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" data-en-placeholder="ROOM CODE" autocomplete="off">
+        <button id="btnJoin" data-en="Join">Vào phòng</button>
       </div>
-      <p class="muted">Chơi một mình: tạo phòng rồi bấm Bắt đầu.</p>
+      <p class="muted" data-en="Playing solo: create a room then press Start.">Chơi một mình: tạo phòng rồi bấm Bắt đầu.</p>
     </div>
 
     <div class="card" id="top">
-      <h2><i data-icon="trophy"></i> Bảng xếp hạng</h2>
+      <h2><i data-icon="trophy"></i> <span data-en="Leaderboard">Bảng xếp hạng</span></h2>
       <div id="topMode" class="seg seg3"></div>
       <div id="topSize" class="seg seg4"></div>
       <ol id="topList"></ol>
     </div>
-    <p class="credit">Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Icon: Lucide</p>
+    <p class="credit"><span data-en="Animal art:">Hình động vật:</span> <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Icon: Lucide</p>
   </section>
 
   <section id="room" hidden>
     <header>
-      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
-      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
-      <span id="conn" class="dot" title="Kết nối"></span>
+      <button id="btnLeave" title="Rời phòng" data-en-title="Leave room"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Mời bạn: mã QR / link" data-en-title="Invite: QR code / link"><span class="lbl" data-en="Room ">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" title="Kết nối" data-en-title="Connection"></span>
       <span id="modeTag" hidden></span>
       <span id="levelTag" hidden></span>
       <span id="clock">--:--</span>
-      <button id="btnHint" title="Gợi ý"><i data-icon="lightbulb"></i> <span id="hintLeft">3</span></button>
-      <button id="btnShuffle" title="Đổi vị trí"><i data-icon="shuffle"></i> <span id="shuffleLeft">5</span></button>
-      <button id="btnPanel" title="Ẩn màn hình người chơi khác" hidden><i data-icon="users"></i></button>
-      <button id="btnSound" title="Âm thanh"></button>
+      <button id="btnHint" title="Gợi ý" data-en-title="Hint"><i data-icon="lightbulb"></i> <span id="hintLeft">3</span></button>
+      <button id="btnShuffle" title="Đổi vị trí" data-en-title="Shuffle"><i data-icon="shuffle"></i> <span id="shuffleLeft">5</span></button>
+      <button id="btnPanel" title="Ẩn màn hình người chơi khác" data-en-title="Hide other players' screens" hidden><i data-icon="users"></i></button>
+      <button id="btnSound" title="Âm thanh" data-en-title="Sound"></button>
     </header>
     <div id="timeTrack"><div id="timebar"></div></div>
     <ul id="players"></ul>
@@ -65,18 +66,18 @@
           <h2 id="ovTitle"></h2>
           <p id="ovScore" hidden></p>
           <div id="modePick" class="seg seg3" hidden>
-            <button data-mode="coop"><i data-icon="users"></i> Chung</button>
-            <button data-mode="race"><i data-icon="swords"></i> Đua</button>
-            <button data-mode="team"><i data-icon="flag"></i> Đội 2v2</button>
+            <button data-mode="coop"><i data-icon="users"></i> <span data-en="Together">Chung</span></button>
+            <button data-mode="race"><i data-icon="swords"></i> <span data-en="Race">Đua</span></button>
+            <button data-mode="team"><i data-icon="flag"></i> <span data-en="Team 2v2">Đội 2v2</span></button>
           </div>
           <div id="sizePick" class="seg seg4" hidden></div>
           <div id="tilesPick" class="seg" hidden>
             <button data-tiles="poke"><i data-icon="zap"></i> Pokémon</button>
-            <button data-tiles="animal"><i data-icon="paw-print"></i> Động vật</button>
+            <button data-tiles="animal"><i data-icon="paw-print"></i> <span data-en="Animals">Động vật</span></button>
           </div>
           <div id="teamPick" class="teams" hidden></div>
           <p id="ovText"></p>
-          <button id="btnStart" class="primary" hidden>Bắt đầu</button>
+          <button id="btnStart" class="primary" hidden data-en="Start">Bắt đầu</button>
         </div>
       </div>
     </main>

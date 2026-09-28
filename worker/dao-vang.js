@@ -41,12 +41,12 @@ export class MinerRoom extends DurableObject {
       server.close(4001, 'rejected');
       return new Response(null, { status: 101, webSocket: client });
     };
-    if (!/^[\w-]{8,64}$/.test(id)) return reject('Thiết bị không hợp lệ');
+    if (!/^[\w-]{8,64}$/.test(id)) return reject(['Thiết bị không hợp lệ', 'Invalid device']);
 
     let p = s.players[id];
     if (!p) {
       const online = this.onlineIds();
-      if (online.size >= MAX_ONLINE) return reject('Phòng đông quá rồi');
+      if (online.size >= MAX_ONLINE) return reject(['Phòng đông quá rồi', 'Room is full']);
       const playing = [...online].filter((i) => s.players[i] && !s.players[i].spec).length;
       // Vào giữa ván (hoặc đủ người) thì xem, ván sau được chơi.
       p = s.players[id] = { id, name, money: 0, dynamite: 0, buffs: {}, spec: (s.status !== 'lobby' && s.status !== 'ended') || playing >= MAX_PLAYERS };

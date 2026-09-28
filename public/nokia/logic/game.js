@@ -1,4 +1,5 @@
 import { nokiaApp } from '../room.js';
+import { t } from '../../i18n.js';
 import { SHAPES, SLOTS, KINDS, MAX_GUESSES } from './logic.js';
 
 // Mỗi hàng 7px: 4 ô hình 5×5 (cách 7px) + phản hồi bên phải (chấm đặc = đúng chỗ, chấm rỗng = đúng hình sai chỗ).
@@ -9,11 +10,12 @@ let pick = [0, 0, 0, 0], slot = 0, sentAt = -1;
 nokiaApp({
   game: 'logic',
   title: 'Logic',
-  sub: 'Logic của Nokia 3210 (Mastermind) — đoán mã 4 hình, đua cùng một mã với bạn bè.',
-  help: 'Trái / phải chọn ô, lên / xuống đổi hình, OK (5) để đoán — hoặc chạm vào ô để đổi hình. Chấm đặc: đúng hình đúng chỗ; chấm rỗng: đúng hình nhưng sai chỗ. Tối đa 10 lượt, 5 phút.',
-  lobbyText: (r) => (r.players.length > 1 ? `${r.players.length} người đua giải cùng một mã.` : 'Một mình: giải mã trong ít lượt nhất.'),
-  badge: (p, r) => { const o = r.view?.others?.[p.id]; return o ? (o.solved ? `xong ${o.n}` : `${o.n}/10`) : ''; },
-  scoreText: (v, res) => (v ? `${v} lượt` : 'chưa giải'),
+  sub: t('Logic của Nokia 3210 (Mastermind) — đoán mã 4 hình, đua cùng một mã với bạn bè.', 'Logic from the Nokia 3210 (Mastermind) — crack a 4-shape code, racing friends on the same code.'),
+  help: t('Trái / phải chọn ô, lên / xuống đổi hình, OK (5) để đoán — hoặc chạm vào ô để đổi hình. Chấm đặc: đúng hình đúng chỗ; chấm rỗng: đúng hình nhưng sai chỗ. Tối đa 10 lượt, 5 phút.',
+    'Left / right to pick a slot, up / down to change shape, OK (5) to guess — or tap a slot. Filled dot: right shape, right place; hollow dot: right shape, wrong place. Up to 10 guesses, 5 minutes.'),
+  lobbyText: (r) => (r.players.length > 1 ? t(`${r.players.length} người đua giải cùng một mã.`, `${r.players.length} players race to crack the same code.`) : t('Một mình: giải mã trong ít lượt nhất.', 'Solo: crack it in as few guesses as possible.')),
+  badge: (p, r) => { const o = r.view?.others?.[p.id]; return o ? (o.solved ? t(`xong ${o.n}`, `done ${o.n}`) : `${o.n}/10`) : ''; },
+  scoreText: (v) => (v ? t(`${v} lượt`, `${v} guesses`) : t('chưa giải', 'unsolved')),
   onState(r, prev, app) {
     const n = r.view?.mine?.guesses.length ?? 0;
     if (r.status === 'playing' && prev?.status !== 'playing') { pick = [0, 0, 0, 0]; slot = 0; }
@@ -62,8 +64,8 @@ nokiaApp({
     lcd.text(44, 1, `${mine.guesses.length}/10`);
     const left = Math.max(0, Math.ceil((v.endsAt - now) / 1000));
     lcd.text(44, 8, `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`);
-    if (mine.solved) lcd.text(44, 16, 'DUNG!');
-    else if (v.secret) lcd.text(44, 16, 'MA LA');
+    if (mine.solved) lcd.text(44, 16, t('DUNG!', 'YES!'));
+    else if (v.secret) lcd.text(44, 16, t('MA LA', 'CODE'));
     // Tiến độ người khác: mỗi người 1 hàng "1st chữ cái + số lượt".
     Object.entries(v.others).filter(([id]) => id !== app.id).slice(0, 3).forEach(([id, o], k) => {
       const n = (r.players.find((p) => p.id === id)?.name ?? '?').slice(0, 3);

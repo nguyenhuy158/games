@@ -43,5 +43,5 @@ function finish(ctx) {
     .sort((a, b) => (b.solved - a.solved) || (a.n - b.n) || (a.time - b.time));
   ranks.forEach((r, i) => { r.won = r.solved && (ctx.seats.length === 1 || i === 0); });
   const solo = ctx.seats.length === 1;
-  ctx.end({ mode: solo ? 'solo' : 'multi', title: solo ? (ranks[0].solved ? `Giải được sau ${ranks[0].n} lượt` : 'Chưa giải được mã') : null, ranks });
+  ctx.end({ mode: solo ? 'solo' : 'multi', title: solo ? (ranks[0].solved ? [`Giải được sau ${ranks[0].n} lượt`, `Cracked in ${ranks[0].n} guesses`] : ['Chưa giải được mã', 'Code not cracked']) : null, ranks });
 }

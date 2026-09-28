@@ -1,4 +1,5 @@
 import { nokiaApp } from '../room.js';
+import { t } from '../../i18n.js';
 import { LEVELS, createSim, step, jump, timeScore, T, BALL } from './logic.js';
 
 // Mô phỏng chạy ở máy mình (cùng màn với cả phòng); camera cuộn ngang theo bóng; người khác hiện bóng mờ.
@@ -10,19 +11,20 @@ let sim = null, simKey = null, keys = {}, lastSent = 0, sentDone = false;
 const app = nokiaApp({
   game: 'bounce',
   title: 'Bounce',
-  sub: 'Bounce của Nokia 6600 — quả bóng nhảy qua các màn, chui qua hết vòng rồi về cửa đích. Đua cùng màn với bạn bè.',
-  help: 'Giữ trái / phải để lăn, lên (2) hoặc OK (5) để nhảy. Chui qua mọi vòng thì cửa đích mới mở. Tránh gai; mất mạng thì hồi sinh chỗ đứng gần nhất. Về đích nhanh nhất thắng.',
-  lobbyText: (r) => (r.players.length > 1 ? `${r.players.length} người đua cùng màn ${r.cfg.level + 1}.` : `Một mình: về đích màn ${r.cfg.level + 1} nhanh nhất có thể.`),
+  sub: t('Bounce của Nokia 6600 — quả bóng nhảy qua các màn, chui qua hết vòng rồi về cửa đích. Đua cùng màn với bạn bè.', 'Bounce from the Nokia 6600 — hop through every ring, then reach the exit. Race friends on the same level.'),
+  help: t('Giữ trái / phải để lăn, lên (2) hoặc OK (5) để nhảy. Chui qua mọi vòng thì cửa đích mới mở. Tránh gai; mất mạng thì hồi sinh chỗ đứng gần nhất. Về đích nhanh nhất thắng.',
+    'Hold left / right to roll, up (2) or OK (5) to jump. The exit opens after every ring. Avoid spikes; losing a life respawns you at the last safe spot. Fastest to the exit wins.'),
+  lobbyText: (r) => (r.players.length > 1 ? t(`${r.players.length} người đua cùng màn ${r.cfg.level + 1}.`, `${r.players.length} players race level ${r.cfg.level + 1}.`) : t(`Một mình: về đích màn ${r.cfg.level + 1} nhanh nhất có thể.`, `Solo: finish level ${r.cfg.level + 1} as fast as you can.`)),
   lobby(box, r, isHost, setCfg) {
     const seg = document.createElement('div');
     seg.className = 'seg';
-    seg.append('Màn ', ...LEVELS.map((_, i) => Object.assign(document.createElement('button'), {
+    seg.append(t('Màn ', 'Level '), ...LEVELS.map((_, i) => Object.assign(document.createElement('button'), {
       textContent: i + 1, className: r.cfg.level === i ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ level: i }),
     })));
     box.append(seg);
   },
-  badge: (p, r) => { const o = r.view?.runners?.[p.id]; return o ? (o.done ? (o.finished ? `${o.score}s` : 'thua') : '') : ''; },
-  scoreText: (v, res) => `${v} giây`,
+  badge: (p, r) => { const o = r.view?.runners?.[p.id]; return o ? (o.done ? (o.finished ? `${o.score}s` : t('thua', 'out')) : '') : ''; },
+  scoreText: (v) => t(`${v} giây`, `${v} s`),
   onState(r) {
     const v = r.view;
     const key = v && `${v.seed}:${v.level}`;
@@ -72,8 +74,8 @@ const app = nokiaApp({
     lcd.text(30, 0, `${Math.floor(sim.t)}S`);
     for (let k = 0; k < Math.min(5, sim.lives); k++) lcd.sprite(80 - k * 5, 1, ['#.#', '###', '.#.']);
     if (t <= 0) lcd.banner([String(Math.ceil((v.startAt - now) / 1000))]);
-    else if (sim.finished) lcd.banner(['VE DICH!', `${timeScore(sim)} GIAY`]);
+    else if (sim.finished) lcd.banner([t('VE DICH!', 'FINISH!'), t(`${timeScore(sim)} GIAY`, `${timeScore(sim)} SEC`)]);
     else if (sim.dead) lcd.banner(['GAME OVER']);
-    else if (!mine) lcd.banner(['DANG XEM']);
+    else if (!mine) lcd.banner([t('DANG XEM', 'WATCHING')]);
   },
 });

@@ -233,12 +233,12 @@ export class Room extends DurableObject {
       server.close(4001, 'rejected');
       return new Response(null, { status: 101, webSocket: client });
     };
-    if (!/^[\w-]{8,64}$/.test(id)) return reject('Thiết bị không hợp lệ');
+    if (!/^[\w-]{8,64}$/.test(id)) return reject(['Thiết bị không hợp lệ', 'Invalid device']);
 
     let p = s.players[id];
     if (!p) {
       const online = this.onlineIds();
-      if (online.size >= MAX_ONLINE) return reject('Phòng đông quá rồi');
+      if (online.size >= MAX_ONLINE) return reject(['Phòng đông quá rồi', 'This room is full']);
       const playing = [...online].filter((i) => s.players[i] && !s.players[i].spec).length;
       // Đang chơi hoặc đã đủ người -> vào xem, ván sau được chơi.
       const spec = s.status === 'playing' || playing >= MAX_PLAYERS;

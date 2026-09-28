@@ -2,6 +2,7 @@
 import qrcode from './vendor/qrcode.mjs';
 import { icon } from './icons.js';
 import { toast } from './toast.js';
+import { t } from './i18n.js';
 
 const CSS = `
 #invite { border: 0; padding: 0; background: none; color: #1b1b1b; max-width: calc(100vw - 32px); }
@@ -31,17 +32,17 @@ export function invite(link, code) {
   qr.make();
   const box = document.createElement('div');
   box.className = 'box';
-  box.innerHTML = `<h2>Quét để vào phòng</h2><div class="qr">${qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true })}</div>
+  box.innerHTML = `<h2>${t('Quét để vào phòng', 'Scan to join')}</h2><div class="qr">${qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true })}</div>
     <div class="code"></div><p class="link"></p><div class="row"></div>`;
   box.querySelector('.code').textContent = code;
   box.querySelector('.link').textContent = link;
   const btn = (html, cls, onclick) => Object.assign(document.createElement('button'), { innerHTML: html, className: cls, onclick });
   const row = box.querySelector('.row');
-  row.append(btn(`${icon('copy')} Sao chép link`, 'primary', async () => {
-    try { await navigator.clipboard.writeText(link); toast.success('Đã sao chép link mời'); } catch { toast(link); }
+  row.append(btn(`${icon('copy')} ${t('Sao chép link', 'Copy link')}`, 'primary', async () => {
+    try { await navigator.clipboard.writeText(link); toast.success(t('Đã sao chép link mời', 'Invite link copied')); } catch { toast(link); }
   }));
-  if (navigator.share) row.append(btn(`${icon('share-2')} Chia sẻ`, '', () => navigator.share({ title: `Vào phòng ${code}`, url: link }).catch(() => {})));
-  row.append(btn('Đóng', '', () => dlg.close()));
+  if (navigator.share) row.append(btn(`${icon('share-2')} ${t('Chia sẻ', 'Share')}`, '', () => navigator.share({ title: t(`Vào phòng ${code}`, `Join room ${code}`), url: link }).catch(() => {})));
+  row.append(btn(t('Đóng', 'Close'), '', () => dlg.close()));
   dlg.replaceChildren(box);
   dlg.showModal();
 }

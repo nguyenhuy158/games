@@ -3,6 +3,7 @@ import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
+import { t, tx } from '../i18n.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -17,7 +18,7 @@ let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
 $('#name').value = deviceName();
 addReroll($('#name'));
-const myName = () => $('#name').value.trim() || 'Người chơi';
+const myName = () => $('#name').value.trim() || t('Người chơi', 'Player');
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const SHIP_COLORS = ['#e8716f', '#7c83d6', '#4fb3ea', '#4aa89a', '#b06ad6'];
@@ -28,6 +29,8 @@ let ws, code = null, room = null, clockOffset = 0, peek = false, sel = -1;
 const mySeat = () => (room?.seats.indexOf(deviceId) ?? -1) + 1;
 const myTurn = () => room?.status === 'playing' && mySeat() === room.turn;
 const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
+// Tên máy do server gửi cố định 'Máy' (dùng chung với logic/test) — dịch lúc hiển thị.
+const showName = (n) => (n === 'Máy' ? t('Máy', 'Bot') : n);
 
 // ---------- âm thanh (dùng lại âm của Pikachu / Đào Vàng) ----------
 let soundOn = store.get('bt.sound') !== '0';
@@ -68,14 +71,14 @@ function connect() {
   sock.onclose = (e) => {
     if (ws !== sock) return;
     $('#conn').classList.remove('on');
-    if (e.code === 4000) return leave('Bạn đã mở phòng này ở tab/thiết bị khác');
+    if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You already opened this room on another tab/device'));
     if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
   };
 }
 const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
 
 function onMsg(m) {
-  if (m.t === 'error') return leave(m.msg);
+  if (m.t === 'error') return leave(tx(m.msg));
   if (m.t === 'emo') return emoFx(m.id, m.e);
   if (m.t !== 'state') return;
   const was = room;
@@ -88,15 +91,16 @@ function onMsg(m) {
     play(shot.hit ? 'hit' : 'miss');
     if (shot.sunk >= 0) {
       const mine = shot.by !== mySeat() && mySeat();
-      toast(mine ? `Tàu ${FLEET[shot.sunk]} ô của bạn bị đánh chìm!` : `Đánh chìm tàu ${FLEET[shot.sunk]} ô!`, { icon: 'flame' });
+      toast(mine ? t(`Tàu ${FLEET[shot.sunk]} ô của bạn bị đánh chìm!`, `Your ${FLEET[shot.sunk]}-cell ship was sunk!`)
+        : t(`Đánh chìm tàu ${FLEET[shot.sunk]} ô!`, `Sunk a ${FLEET[shot.sunk]}-cell ship!`), { icon: 'flame' });
     }
   }
   if (was?.status === 'playing' && m.status === 'ended') {
     const seat = mySeat();
-    const who = m.names[m.winner - 1];
-    if (seat === m.winner) { play('win'); toast.success(m.why === 'timeout' ? 'Đối thủ bỏ lượt quá lâu — bạn thắng!' : 'Bạn đánh chìm hết tàu — thắng rồi!', { icon: 'trophy' }); }
-    else if (seat) { play('lose'); toast.error(m.why === 'timeout' ? 'Bỏ lượt 3 lần — bạn thua' : `${who} thắng`); }
-    else { play('win'); toast(`${who} thắng`, { icon: 'trophy' }); }
+    const who = showName(m.names[m.winner - 1]);
+    if (seat === m.winner) { play('win'); toast.success(m.why === 'timeout' ? t('Đối thủ bỏ lượt quá lâu — bạn thắng!', 'Opponent took too long — you win!') : t('Bạn đánh chìm hết tàu — thắng rồi!', 'You sank the whole fleet — you win!'), { icon: 'trophy' }); }
+    else if (seat) { play('lose'); toast.error(m.why === 'timeout' ? t('Bỏ lượt 3 lần — bạn thua', 'Skipped 3 turns — you lose') : t(`${who} thắng`, `${who} wins`)); }
+    else { play('win'); toast(t(`${who} thắng`, `${who} wins`), { icon: 'trophy' }); }
   }
   render();
 }
@@ -105,7 +109,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning('Mã phòng gồm 4 ký tự');
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
 $('#code').onkeydown = (e) => e.key === 'Enter' && $('#btnJoin').click();
 $('#btnLeave').onclick = () => leave();
@@ -117,7 +121,7 @@ $('#btnReady').onclick = () => send({ t: 'ready' });
 $('#btnPeek').onclick = () => { peek = true; render(); };
 $('#btnResult').onclick = () => { peek = false; render(); };
 $('#emoBar').append(...EMOS.map(([name, color], i) => {
-  const b = el('button', { title: 'Gửi cảm xúc', onclick: () => send({ t: 'emo', e: i }) }, iconEl(name));
+  const b = el('button', { title: t('Gửi cảm xúc', 'Send reaction'), onclick: () => send({ t: 'emo', e: i }) }, iconEl(name));
   b.style.color = color;
   return b;
 }));
@@ -137,7 +141,7 @@ const isDown = (ship) => ship.length > 1 && ship[1] - ship[0] === N;
 function tryPlace(k, cells) {
   const ships = myFleet().map((s, j) => (j === k ? cells : s));
   if (cells && validFleet(ships)) return send({ t: 'place', ships });
-  toast.warning('Không đặt được — tàu phải nằm trong biển và không sát tàu khác');
+  toast.warning(t('Không đặt được — tàu phải nằm trong biển và không sát tàu khác', "Can't place there — ship must stay in the sea and not touch another ship"));
 }
 function rotate(k) {
   if (!canEdit() || k < 0) return;
@@ -214,7 +218,7 @@ function drawSea(root, seat) {
   // Hàng tàu: tàu nào đã chìm (ai cũng biết, không lộ vị trí).
   const sunk = r?.sunk?.[seat - 1] ?? [];
   $(`${root} .fleet`).replaceChildren(...(r && r.status !== 'lobby' ? FLEET.map((len, k) => {
-    const pip = el('span', { className: `pip${sunk[k] ? ' sunk' : ''}`, title: `Tàu ${len} ô${sunk[k] ? ' — đã chìm' : ''}` },
+    const pip = el('span', { className: `pip${sunk[k] ? ' sunk' : ''}`, title: t(`Tàu ${len} ô${sunk[k] ? ' — đã chìm' : ''}`, `${len}-cell ship${sunk[k] ? ' — sunk' : ''}`) },
       ...Array.from({ length: len }, () => el('i')));
     pip.style.setProperty('--ship', SHIP_COLORS[k]);
     return pip;
@@ -229,11 +233,11 @@ function render() {
   document.body.classList.toggle('placing', placing);
   drawSea('#seaA', a);
   drawSea('#seaB', b);
-  const nm = (k) => r?.names?.[k - 1] || '…';
-  $('#seaA figcaption').textContent = me ? 'Biển của bạn' : `Biển của ${nm(a)}`;
+  const nm = (k) => showName(r?.names?.[k - 1]) || '…';
+  $('#seaA figcaption').textContent = me ? t('Biển của bạn', 'Your sea') : t(`Biển của ${nm(a)}`, `${nm(a)}'s sea`);
   $('#seaB figcaption').replaceChildren(...(me
-    ? [iconEl('swords'), myTurn() ? 'Biển đối thủ — chạm để bắn' : `Biển của ${nm(b)}`]
-    : [`Biển của ${nm(b)}`]));
+    ? [iconEl('swords'), myTurn() ? t('Biển đối thủ — chạm để bắn', "Opponent's sea — tap to fire") : t(`Biển của ${nm(b)}`, `${nm(b)}'s sea`)]
+    : [t(`Biển của ${nm(b)}`, `${nm(b)}'s sea`)]));
   $('#seaB').hidden = placing;
   $('#seaB').classList.toggle('target', myTurn());
   $('#seaB').classList.toggle('aim', myTurn());
@@ -247,8 +251,8 @@ function render() {
     const ready = me && r.ready[me - 1];
     const other = r.ready[(me || 1) % 2];
     $('#btnReroll').hidden = $('#btnReady').hidden = $('#btnRotate').hidden = !me || ready;
-    $('#placeText').textContent = !me ? 'Hai bên đang xếp tàu…' : ready ? (other ? '' : `Chờ ${nm(3 - me)} xếp tàu…`)
-      : 'Chạm tàu để chọn · chạm ô trống để dời · chạm lại để xoay';
+    $('#placeText').textContent = !me ? t('Hai bên đang xếp tàu…', 'Both sides are placing ships…') : ready ? (other ? '' : t(`Chờ ${nm(3 - me)} xếp tàu…`, `Waiting for ${nm(3 - me)} to place ships…`))
+      : t('Chạm tàu để chọn · chạm ô trống để dời · chạm lại để xoay', 'Tap a ship to select · tap an empty cell to move it · tap again to rotate');
   }
 
   // Thanh đối đầu
@@ -256,7 +260,7 @@ function render() {
     const k = Number(side.dataset.seat);
     const lobby = r?.status === 'lobby';
     const id = lobby ? r.players[k - 1]?.id : r?.seats[k - 1];
-    side.querySelector('b').textContent = lobby ? r.players[k - 1]?.name ?? 'Máy' : r?.names?.[k - 1] ?? '';
+    side.querySelector('b').textContent = showName(lobby ? r.players[k - 1]?.name ?? 'Máy' : r?.names?.[k - 1] ?? '');
     side.querySelector('.sc').textContent = id ? r.score[id] ?? 0 : '';
     side.classList.toggle('turn', r?.status === 'playing' && r.turn === k);
     side.classList.toggle('me', !!id && id === deviceId);
@@ -267,7 +271,7 @@ function render() {
   const players = r?.players ?? [];
   if (!r) {
     ov.hidden = false;
-    $('#ovTitle').textContent = 'Đang kết nối…';
+    $('#ovTitle').textContent = t('Đang kết nối…', 'Connecting…');
     $('#ovText').textContent = '';
     $('#btnStart').hidden = true;
   } else if (r.status === 'playing' || placing) {
@@ -275,19 +279,19 @@ function render() {
   } else {
     ov.hidden = peek && r.status === 'ended';
     if (r.status === 'lobby') {
-      $('#ovTitle').textContent = `Phòng ${code}`;
+      $('#ovTitle').textContent = t(`Phòng ${code}`, `Room ${code}`);
       const two = players.slice(0, 2).map((p) => p.name);
-      $('#ovText').textContent = (two.length < 2 ? 'Chỉ có mình bạn — sẽ đấu với máy. Mời bạn bè bằng mã QR ở trên nhé.' : `${two[0]} đấu ${two[1]}.`)
-        + (players.length > 2 ? ` ${players.length - 2} người xem.` : '') + (isHost ? '' : ' Chờ chủ phòng bắt đầu.');
+      $('#ovText').textContent = (two.length < 2 ? t('Chỉ có mình bạn — sẽ đấu với máy. Mời bạn bè bằng mã QR ở trên nhé.', "It's just you — you'll play the bot. Invite friends with the QR code above.") : t(`${two[0]} đấu ${two[1]}.`, `${two[0]} vs ${two[1]}.`))
+        + (players.length > 2 ? t(` ${players.length - 2} người xem.`, ` ${players.length - 2} watching.`) : '') + (isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.'));
     } else {
-      const who = r.names[r.winner - 1];
-      $('#ovTitle').replaceChildren(iconEl('trophy'), r.seats[r.winner - 1] === deviceId ? 'Bạn thắng!' : `${who} thắng`);
+      const who = showName(r.names[r.winner - 1]);
+      $('#ovTitle').replaceChildren(iconEl('trophy'), r.seats[r.winner - 1] === deviceId ? t('Bạn thắng!', 'You win!') : t(`${who} thắng`, `${who} wins`));
       const shots = r.fired[r.winner - 1];
-      $('#ovText').textContent = `${r.why === 'timeout' ? 'Đối thủ bỏ lượt quá lâu. ' : `Đánh chìm hết tàu sau ${shots} phát. `}`
-        + (isHost ? 'Ván mới đổi người bắn trước.' : 'Chờ chủ phòng mở ván mới.');
+      $('#ovText').textContent = (r.why === 'timeout' ? t('Đối thủ bỏ lượt quá lâu. ', 'Opponent took too long. ') : t(`Đánh chìm hết tàu sau ${shots} phát. `, `Sank the whole fleet in ${shots} shots. `))
+        + (isHost ? t('Ván mới đổi người bắn trước.', 'New game — the first shot swaps sides.') : t('Chờ chủ phòng mở ván mới.', 'Waiting for the host to start a new game.'));
     }
     $('#btnStart').hidden = !isHost;
-    $('#btnStart').textContent = r.status === 'lobby' ? 'Bắt đầu' : 'Ván mới';
+    $('#btnStart').textContent = r.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Ván mới', 'New game');
   }
   $('#btnPeek').hidden = r?.status !== 'ended';
   $('#btnResult').hidden = !(r?.status === 'ended' && peek);

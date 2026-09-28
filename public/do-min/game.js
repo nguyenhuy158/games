@@ -4,6 +4,7 @@ import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
+import { t, tx } from '../i18n.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -18,13 +19,13 @@ let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
 $('#name').value = deviceName();
 addReroll($('#name'));
-const myName = () => $('#name').value.trim() || 'Người chơi';
+const myName = () => $('#name').value.trim() || t('Người chơi', 'Player');
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b', '#6bf0e0', '#ff9b9b'];
 const LONG_PRESS_MS = 400;
 // Giao diện là lựa chọn riêng từng máy (không đổi màn hình người khác).
-const SKINS = { modern: 'Hiện đại', xp: 'Windows XP', choco: 'Socola' };
+const SKINS = { modern: t('Hiện đại', 'Modern'), xp: 'Windows XP', choco: t('Socola', 'Chocolate') };
 let skin = SKINS[store.get('ms.skin')] ? store.get('ms.skin') : 'modern';
 const gap = () => (skin === 'modern' ? 2 : 0); // skin cổ điển: ô sát nhau như bản gốc
 function applySkin() {
@@ -72,7 +73,7 @@ function leave(msg) {
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
-  if (msg) toast(msg);
+  if (msg) toast(tx(msg));
 }
 function connect() {
   const q = new URLSearchParams({ id: deviceId, name: myName() });
@@ -82,7 +83,7 @@ function connect() {
   sock.onclose = (e) => {
     if (ws !== sock) return;
     $('#conn').classList.remove('on');
-    if (e.code === 4000) return leave('Bạn đã mở phòng này ở tab/thiết bị khác');
+    if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You opened this room in another tab/device'));
     if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
   };
 }
@@ -111,7 +112,7 @@ function onMsg(m) {
       if (!g) return;
       for (const [i, v] of m.cells) g[i] = v;
       if (m.unit === view()) {
-        if (m.boom) { play('boom'); shake(); if (m.by !== deviceId) toast.error(`${nameOf(m.by)} đạp mìn!`, { icon: 'bomb' }); }
+        if (m.boom) { play('boom'); shake(); if (m.by !== deviceId) toast.error(t(`${nameOf(m.by)} đạp mìn!`, `${nameOf(m.by)} hit a mine!`), { icon: 'bomb' }); }
         else if (m.by === deviceId && m.cells.some(([, v]) => v >= 0)) play('open');
       }
       break;
@@ -134,7 +135,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning('Mã phòng gồm 4 ký tự');
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
@@ -145,16 +146,18 @@ $('#btnSkin').onclick = () => {
   skin = keys[(keys.indexOf(skin) + 1) % keys.length];
   store.set('ms.skin', skin);
   applySkin();
-  toast(`Giao diện: ${SKINS[skin]}`);
+  toast(t(`Giao diện: ${SKINS[skin]}`, `Theme: ${SKINS[skin]}`));
   render();
 };
 $('#btnPeek').onclick = () => { peek = true; render(); };
 $('#btnResult').onclick = () => { peek = false; render(); };
 $('#face').onclick = () => { if (room?.status === 'ended' && room.host === deviceId) send({ t: 'start' }); };
-$('#btnFlag').onclick = () => { flagMode = !flagMode; $('#btnFlag').classList.toggle('on', flagMode); toast(flagMode ? 'Chạm để cắm cờ' : 'Chạm để mở ô', { icon: 'flag' }); };
+$('#btnFlag').onclick = () => { flagMode = !flagMode; $('#btnFlag').classList.toggle('on', flagMode); toast(flagMode ? t('Chạm để cắm cờ', 'Tap to flag') : t('Chạm để mở ô', 'Tap to open'), { icon: 'flag' }); };
 for (const b of document.querySelectorAll('#modePick button')) b.onclick = () => send({ t: 'config', mode: b.dataset.mode });
+const SIZE_NAMES = { 'Dễ': 'Easy', 'Vừa': 'Medium', 'Khó': 'Hard' };
 $('#sizePick').replaceChildren(...SIZES.map((z, i) => el('button', {
-  textContent: `${z.name} ${z.cols}×${z.rows}`, title: `${z.mines} mìn`, onclick: () => send({ t: 'config', size: i }),
+  textContent: t(`${z.name} ${z.cols}×${z.rows}`, `${SIZE_NAMES[z.name]} ${z.cols}×${z.rows}`),
+  title: t(`${z.mines} mìn`, `${z.mines} mines`), onclick: () => send({ t: 'config', size: i }),
 })));
 
 // ---------- bàn ----------
@@ -278,7 +281,7 @@ function act(i, flag) {
 function ping(i) {
   if (!shared() || !playing()) return;
   send({ t: 'ping', i });
-  pingFx(i, colorOf(deviceId), 'Bạn');
+  pingFx(i, colorOf(deviceId), t('Bạn', 'You'));
 }
 
 let press = null;
@@ -328,7 +331,7 @@ function renderPanel() {
       const pct = Math.floor((u.opened / u.total) * 100);
       tiles.push({
         key: p.id, name: p.name, color: colorOf(p.id), off: !p.online,
-        sub: `${pct}% · nổ ${u.booms}`, badge: u.done === 'clear' ? { icon: 'trophy' } : '',
+        sub: t(`${pct}% · nổ ${u.booms}`, `${pct}% · boom ${u.booms}`), badge: u.done === 'clear' ? { icon: 'trophy' } : '',
         version: `${pct}|${u.booms}`,
         draw: (ctx, w, h) => {
           ctx.clearRect(0, 0, w, h);
@@ -347,7 +350,7 @@ function renderPanel() {
         },
       });
     } else {
-      tiles.push({ key: p.id, name: p.name, color: colorOf(p.id), off: !p.online, sub: `mở ${p.opened} · nổ ${p.booms}` });
+      tiles.push({ key: p.id, name: p.name, color: colorOf(p.id), off: !p.online, sub: t(`mở ${p.opened} · nổ ${p.booms}`, `opened ${p.opened} · boom ${p.booms}`) });
     }
   }
   panel.update(tiles);
@@ -370,7 +373,7 @@ function render() {
     const li = el('li', { className: `${p.id === deviceId ? 'me' : ''} ${p.online ? '' : 'off'}` });
     li.style.setProperty('--c', colorOf(p.id));
     if (p.id === r.host) li.innerHTML = icon('crown');
-    li.append(`${p.name}${p.id === deviceId ? ' (bạn)' : ''} · `, el('b', { textContent: `mở ${p.opened}` }), p.booms ? ` · nổ ${p.booms}` : '');
+    li.append(`${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''} · `, el('b', { textContent: t(`mở ${p.opened}`, `opened ${p.opened}`) }), p.booms ? t(` · nổ ${p.booms}`, ` · boom ${p.booms}`) : '');
     return li;
   }));
 
@@ -383,14 +386,14 @@ function render() {
   $('#ovScore').hidden = true;
   if (!r) {
     ov.hidden = false;
-    $('#ovTitle').textContent = 'Đang kết nối…';
+    $('#ovTitle').textContent = t('Đang kết nối…', 'Connecting…');
     $('#ovText').textContent = '';
     $('#btnStart').hidden = true;
   } else if (r.status === 'playing') {
     ov.hidden = !me()?.spec && !u?.done;
     if (!ov.hidden) {
-      $('#ovTitle').textContent = me()?.spec ? 'Bạn đang xem' : 'Xong bàn!';
-      $('#ovText').textContent = me()?.spec ? 'Ván sau bạn sẽ được chơi.' : 'Chờ những người khác…';
+      $('#ovTitle').textContent = me()?.spec ? t('Bạn đang xem', 'You are watching') : t('Xong bàn!', 'Board done!');
+      $('#ovText').textContent = me()?.spec ? t('Ván sau bạn sẽ được chơi.', 'You will play next round.') : t('Chờ những người khác…', 'Waiting for others…');
       $('#btnStart').hidden = true;
       if (me()?.spec) ov.hidden = true;
     }
@@ -398,20 +401,23 @@ function render() {
     ov.hidden = false;
     const coop = r.mode === 'coop';
     if (r.status === 'lobby') {
-      $('#ovTitle').textContent = `Phòng ${code}`;
-      $('#ovText').textContent = `${players.length}/4 người. ` + (coop
-        ? `Cả phòng chung một bàn, chung ${LIVES} mạng — thấy chuột nhau, Shift+bấm để ping ô nghi có mìn.`
-        : 'Cùng một đề mìn, mỗi người một bàn. Đạp mìn +10 giây. Ai mở hết trước thắng.') + (isHost ? '' : ' Chờ chủ phòng bắt đầu.');
+      $('#ovTitle').textContent = t(`Phòng ${code}`, `Room ${code}`);
+      $('#ovText').textContent = t(`${players.length}/4 người. `, `${players.length}/4 players. `) + (coop
+        ? t(`Cả phòng chung một bàn, chung ${LIVES} mạng — thấy chuột nhau, Shift+bấm để ping ô nghi có mìn.`, `The whole room shares one board and ${LIVES} lives — see each other's cursors, Shift+click to ping a suspected mine.`)
+        : t('Cùng một đề mìn, mỗi người một bàn. Đạp mìn +10 giây. Ai mở hết trước thắng.', 'Same mine layout, one board each. Hitting a mine adds 10 seconds. First to clear it wins.')) + (isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.'));
     } else {
       const wu = r.units[r.winner];
-      const t = coop ? (r.winner ? 'Cả đội dò sạch mìn!' : 'Hết mạng rồi…') : r.winner === me()?.unit ? 'Bạn thắng!' : `${nameOf(r.winner)} thắng`;
-      $('#ovTitle').replaceChildren(iconEl(r.winner ? 'trophy' : 'bomb'), ' ', t);
+      const title = coop ? (r.winner ? t('Cả đội dò sạch mìn!', 'The team cleared the mines!') : t('Hết mạng rồi…', 'Out of lives…'))
+        : r.winner === me()?.unit ? t('Bạn thắng!', 'You win!') : t(`${nameOf(r.winner)} thắng`, `${nameOf(r.winner)} wins`);
+      $('#ovTitle').replaceChildren(iconEl(r.winner ? 'trophy' : 'bomb'), ' ', title);
       $('#ovScore').hidden = false;
-      $('#ovScore').textContent = wu ? `Thời gian ${fmt(wu.time)}${wu.penalty ? ` (gồm phạt ${wu.penalty / 1000}s)` : ''}` : `Đã mở ${u?.opened ?? 0}/${u?.total ?? 0} ô`;
-      $('#ovText').textContent = isHost ? 'Ván mới?' : 'Chờ chủ phòng mở ván mới.';
+      $('#ovScore').textContent = wu
+        ? t(`Thời gian ${fmt(wu.time)}${wu.penalty ? ` (gồm phạt ${wu.penalty / 1000}s)` : ''}`, `Time ${fmt(wu.time)}${wu.penalty ? ` (incl. ${wu.penalty / 1000}s penalty)` : ''}`)
+        : t(`Đã mở ${u?.opened ?? 0}/${u?.total ?? 0} ô`, `Opened ${u?.opened ?? 0}/${u?.total ?? 0} cells`);
+      $('#ovText').textContent = isHost ? t('Ván mới?', 'New round?') : t('Chờ chủ phòng mở ván mới.', 'Waiting for the host to start a new round.');
     }
     $('#btnStart').hidden = !isHost;
-    $('#btnStart').textContent = r.status === 'lobby' ? 'Bắt đầu' : 'Chơi ván mới';
+    $('#btnStart').textContent = r.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Chơi ván mới', 'New round');
     if (r.status === 'ended' && peek) ov.hidden = true;
   }
   $('#btnPeek').hidden = r?.status !== 'ended';

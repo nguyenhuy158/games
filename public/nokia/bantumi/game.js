@@ -1,4 +1,5 @@
 import { nokiaApp } from '../room.js';
+import { t, tx } from '../../i18n.js';
 import { pits, store } from './logic.js';
 
 // LCD: kho đối thủ bên trái, kho mình bên phải; hàng dưới là 6 hố của mình (trái -> phải theo chiều rải),
@@ -15,19 +16,20 @@ const layout = (r, id) => {
 nokiaApp({
   game: 'bantumi',
   title: 'Bantumi',
-  sub: 'Trò rải sỏi của Nokia 3310 (Kalah) — đấu 1v1 hoặc với máy.',
-  help: 'Trái / phải để chọn hố, OK (5) để rải — hoặc chạm thẳng vào hố. Hạt cuối vào kho mình: đi tiếp. Hạt cuối vào hố trống bên mình: ăn luôn sỏi hố đối diện. Hết sỏi một bên thì kho nhiều hơn thắng. Mỗi nước 30 giây.',
-  lobbyText: (r) => (r.players.length > 1 ? `${r.players[0].name} đấu ${r.players[1].name}.` : 'Chỉ có mình bạn — sẽ đấu với máy.'),
+  sub: t('Trò rải sỏi của Nokia 3310 (Kalah) — đấu 1v1 hoặc với máy.', 'The Nokia 3310 seed-sowing game (Kalah) — 1v1 or vs the bot.'),
+  help: t('Trái / phải để chọn hố, OK (5) để rải — hoặc chạm thẳng vào hố. Hạt cuối vào kho mình: đi tiếp. Hạt cuối vào hố trống bên mình: ăn luôn sỏi hố đối diện. Hết sỏi một bên thì kho nhiều hơn thắng. Mỗi nước 30 giây.',
+    'Left / right to pick a pit, OK (5) to sow — or tap a pit. Last seed in your store: go again. Last seed in an empty pit on your side: capture the opposite pit too. When one side runs out, the bigger store wins. 30 seconds per move.'),
+  lobbyText: (r) => (r.players.length > 1 ? t(`${r.players[0].name} đấu ${r.players[1].name}.`, `${r.players[0].name} vs ${r.players[1].name}.`) : t('Chỉ có mình bạn — sẽ đấu với máy.', 'Just you — you will play the bot.')),
   lobby(box, r, isHost, setCfg) {
     const seg = document.createElement('div');
     seg.className = 'seg';
-    seg.append('Sỏi mỗi hố ', ...[3, 4, 5, 6].map((n) => Object.assign(document.createElement('button'), {
+    seg.append(t('Sỏi mỗi hố ', 'Seeds per pit '), ...[3, 4, 5, 6].map((n) => Object.assign(document.createElement('button'), {
       textContent: n, className: r.cfg.seeds === n ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ seeds: n }),
     })));
     box.append(seg);
   },
   badge: (p, r) => { const k = seatOf(r, p.id); return k ? r.view.board[store(k)] : ''; },
-  scoreText: (v) => `${v} sỏi`,
+  scoreText: (v) => t(`${v} sỏi`, `${v} seeds`),
   onState(r, prev, app) {
     const v = r.view;
     if (!v || v.moves === lastMoves) return;
@@ -55,7 +57,7 @@ nokiaApp({
     const mine = seatOf(r, app.id) === v.turn;
     const left = Math.max(0, Math.ceil((v.deadline - now) / 1000));
     const bot = v.side[v.turn - 1] === 'bot';
-    lcd.text(1, 1, r.status !== 'playing' ? 'HET VAN' : mine ? `LUOT BAN ${left}` : bot ? 'MAY NGHI...' : `DOI ${left}`);
+    lcd.text(1, 1, r.status !== 'playing' ? t('HET VAN', 'GAME OVER') : mine ? t(`LUOT BAN ${left}`, `YOUR TURN ${left}`) : bot ? t('MAY NGHI...', 'BOT...') : t(`DOI ${left}`, `WAIT ${left}`));
     // Kho
     for (const [x, i] of [[0, L.left], [74, L.right]]) {
       lcd.frame(x, TOP, 10, BOT + PH - TOP);
@@ -75,7 +77,7 @@ nokiaApp({
     rowDraw(L.top, TOP, false);
     rowDraw(L.bottom, BOT, true);
     // Tên 2 bên (chữ nhỏ ở giữa)
-    const n = (s) => (s ?? '').split(' ')[0].slice(0, 5);
+    const n = (s) => (tx(s) ?? '').split(' ')[0].slice(0, 5);
     // Tên: đối thủ bên trái (cạnh kho của họ), mình bên phải.
     lcd.text(0, NAMES, n(v.names[2 - L.me]));
     const mn = n(v.names[L.me - 1]);

@@ -30,9 +30,9 @@ export class DiceRoom extends DurableObject {
     const name = (q.get('name') ?? '').trim().slice(0, 20) || 'Người chơi';
     const [client, server] = Object.values(new WebSocketPair());
     const s = this.s;
-    if (!/^[\w-]{8,64}$/.test(id)) return this.reject(server, client, 'Thiết bị không hợp lệ');
+    if (!/^[\w-]{8,64}$/.test(id)) return this.reject(server, client, ['Thiết bị không hợp lệ', 'Invalid device']);
     if (!s.players[id]) {
-      if (this.onlineIds().size >= MAX_ONLINE) return this.reject(server, client, 'Phòng đông quá rồi');
+      if (this.onlineIds().size >= MAX_ONLINE) return this.reject(server, client, ['Phòng đông quá rồi', 'This room is full']);
       s.players[id] = { id, name, coins: START_COINS, net: 0, rounds: 0, rescues: 0 };
       s.order.push(id);
     }

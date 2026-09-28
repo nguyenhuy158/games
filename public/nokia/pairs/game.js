@@ -1,4 +1,5 @@
 import { nokiaApp } from '../room.js';
+import { t } from '../../i18n.js';
 import { ICONS, COLS } from './logic.js';
 
 // Lưới 6×4 lá 12×10px bắt đầu (6, 7); hàng trên cùng ghi lượt / điểm.
@@ -7,12 +8,13 @@ let cursor = 0, lastSig = '';
 
 nokiaApp({
   game: 'pairs',
-  title: 'Lật hình',
-  sub: 'Pairs II của Nokia 3310 — lật 2 lá tìm cặp, chơi một mình hoặc cả nhóm.',
-  help: 'Mũi tên / 2-4-6-8 để chọn lá, OK (5) để lật — hoặc chạm thẳng vào lá. Trúng cặp được 1 điểm và lật tiếp; trượt thì 2 lá úp lại, tới lượt người sau. Mỗi lượt 20 giây.',
-  lobbyText: (r) => (r.players.length > 1 ? `${r.players.length} người thay phiên lật, ai nhiều cặp nhất thắng.` : 'Một mình: lật hết trong ít lượt nhất.'),
+  title: t('Lật hình', 'Pairs'),
+  sub: t('Pairs II của Nokia 3310 — lật 2 lá tìm cặp, chơi một mình hoặc cả nhóm.', 'Pairs II from the Nokia 3310 — flip 2 cards to find a match, solo or with a group.'),
+  help: t('Mũi tên / 2-4-6-8 để chọn lá, OK (5) để lật — hoặc chạm thẳng vào lá. Trúng cặp được 1 điểm và lật tiếp; trượt thì 2 lá úp lại, tới lượt người sau. Mỗi lượt 20 giây.',
+    'Arrows / 2-4-6-8 to pick a card, OK (5) to flip — or tap a card. A match scores 1 and you flip again; a miss turns both back and passes the turn. 20 seconds per turn.'),
+  lobbyText: (r) => (r.players.length > 1 ? t(`${r.players.length} người thay phiên lật, ai nhiều cặp nhất thắng.`, `${r.players.length} players take turns; most pairs wins.`) : t('Một mình: lật hết trong ít lượt nhất.', 'Solo: clear the board in as few turns as possible.')),
   badge: (p, r) => r.view?.score?.[p.id] ?? '',
-  scoreText: (v, res) => (res.mode === 'solo' ? `${v} lượt` : `${v} cặp`),
+  scoreText: (v, res) => (res.mode === 'solo' ? t(`${v} lượt`, `${v} turns`) : t(`${v} cặp`, `${v} pairs`)),
   onState(r, prev, app) {
     const v = r.view;
     if (!v) return;
@@ -43,7 +45,7 @@ nokiaApp({
     const mine = v.turn === app.id;
     const left = v.deadline ? Math.max(0, Math.ceil((v.deadline - now) / 1000)) : '';
     const solo = r.seats.length === 1;
-    lcd.text(1, 1, solo ? `LUOT ${v.moves}` : mine ? `LUOT BAN ${left}` : `${(r.players.find((p) => p.id === v.turn)?.name ?? '').split(' ')[0].slice(0, 8)} ${left}`);
+    lcd.text(1, 1, solo ? t(`LUOT ${v.moves}`, `TURN ${v.moves}`) : mine ? t(`LUOT BAN ${left}`, `YOUR TURN ${left}`) : `${(r.players.find((p) => p.id === v.turn)?.name ?? '').split(' ')[0].slice(0, 8)} ${left}`);
     if (!solo) lcd.text(84 - 4 * String(v.score[app.id] ?? 0).length, 1, String(v.score[app.id] ?? 0));
     v.cards.forEach((c, i) => {
       const x = CX + (i % COLS) * CW, y = CY + Math.floor(i / COLS) * CH;

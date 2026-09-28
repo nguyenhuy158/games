@@ -6,6 +6,7 @@
 //   draw(ctx, w, h): vẽ bàn thu nhỏ (chỉ gọi lại khi version / cỡ ô đổi); không có draw -> thẻ "avatar".
 
 import { icon } from './icons.js';
+import { t } from './i18n.js';
 
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 
@@ -17,7 +18,7 @@ export function createPanel({ root, toggle, storeKey }) {
   const apply = () => {
     document.body.classList.toggle('panel-off', hidden);
     toggle.classList.toggle('on', !hidden);
-    toggle.title = hidden ? 'Hiện màn hình người chơi khác' : 'Ẩn màn hình người chơi khác';
+    toggle.title = hidden ? t('Hiện màn hình người chơi khác', 'Show other players') : t('Ẩn màn hình người chơi khác', 'Hide other players');
   };
   toggle.onclick = () => {
     hidden = !hidden;

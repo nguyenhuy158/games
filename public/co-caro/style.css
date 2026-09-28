@@ -75,6 +75,7 @@ header .grow { flex: 1; }
 .side.turn { border-color: currentColor; background: #fff; }
 .side[data-seat="1"].turn { color: var(--x); } .side[data-seat="2"].turn { color: var(--o); }
 .side.me b::after { content: ' (bạn)'; font-weight: 400; color: var(--muted); }
+html[lang="en"] .side.me b::after { content: ' (you)'; }
 .pc { display: inline-grid; place-items: center; width: 24px; height: 24px; flex: none; }
 .pc.x { color: var(--x); } .pc.o { color: var(--o); }
 .pc .ic { width: 100%; height: 100%; stroke-width: 3; }

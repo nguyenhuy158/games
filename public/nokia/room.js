@@ -9,6 +9,7 @@ import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { createLCD, bindKeys } from './lcd.js';
+import { t, tx, langToggle } from '../i18n.js';
 
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 const store = {
@@ -25,31 +26,32 @@ export function nokiaApp(opt) {
 
   // ---------- DOM ----------
   const name = el('input', { maxLength: 20, autocomplete: 'off', value: deviceName() });
-  const codeIn = el('input', { maxLength: 4, placeholder: 'MÃ PHÒNG', autocomplete: 'off', className: 'code' });
+  const codeIn = el('input', { maxLength: 4, placeholder: t('MÃ PHÒNG', 'ROOM CODE'), autocomplete: 'off', className: 'code' });
   const home = el('section', { id: 'home' }, el('div', { className: 'card' },
-    el('h1', {}, el('a', { href: '/', className: 'back', title: 'Các game khác', innerHTML: icon('arrow-left') }),
+    el('h1', {}, el('a', { href: '/', className: 'back', title: t('Các game khác', 'More games'), innerHTML: icon('arrow-left') }),
       el('img', { className: 'logo', src: `/logos/${opt.game}.svg`, alt: '' }), opt.title),
     el('p', { className: 'sub', textContent: opt.sub }),
-    el('label', {}, 'Tên của bạn', name),
-    el('button', { className: 'primary', textContent: 'Tạo phòng mới', onclick: () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')) }),
-    el('div', { className: 'join' }, codeIn, el('button', { textContent: 'Vào phòng', onclick: joinCode })),
+    el('label', {}, t('Tên của bạn', 'Your name'), name),
+    el('button', { className: 'primary', textContent: t('Tạo phòng mới', 'Create room'), onclick: () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')) }),
+    el('div', { className: 'join' }, codeIn, el('button', { textContent: t('Vào phòng', 'Join'), onclick: joinCode })),
     el('p', { className: 'muted', textContent: opt.help }),
+    el('div', { className: 'lang' }, langToggle()),
   ));
   addReroll(name);
   codeIn.onkeydown = (e) => e.key === 'Enter' && joinCode();
 
   const roomCode = el('b');
-  const conn = el('span', { className: 'dot', title: 'Kết nối' });
-  const btnSound = el('button', { title: 'Âm thanh' });
+  const conn = el('span', { className: 'dot', title: t('Kết nối', 'Connection') });
+  const btnSound = el('button', { title: t('Âm thanh', 'Sound') });
   const players = el('ul', { id: 'players' });
   const canvas = el('canvas');
   const pad = el('div', { className: 'pad' });
   const ov = el('div', { id: 'overlay', hidden: true });
   const roomEl = el('section', { id: 'room', hidden: true },
     el('header', {},
-      el('button', { title: 'Rời phòng', innerHTML: icon('arrow-left'), onclick: () => leave() }),
-      el('button', { title: 'Mời bạn: mã QR / link', onclick: () => invite(`${location.origin}${opt.path ?? `/nokia/${opt.game}/`}?r=${code}`, code) },
-        el('span', { className: 'lbl', textContent: 'Phòng ' }), roomCode, iconEl('qr-code')),
+      el('button', { title: t('Rời phòng', 'Leave room'), innerHTML: icon('arrow-left'), onclick: () => leave() }),
+      el('button', { title: t('Mời bạn: mã QR / link', 'Invite: QR code / link'), onclick: () => invite(`${location.origin}${opt.path ?? `/nokia/${opt.game}/`}?r=${code}`, code) },
+        el('span', { className: 'lbl', textContent: t('Phòng ', 'Room ') }), roomCode, iconEl('qr-code')),
       conn, el('span', { className: 'grow' }), btnSound),
     players,
     el('main', { className: 'stage' },
@@ -81,7 +83,7 @@ export function nokiaApp(opt) {
   // ---------- vào / rời phòng ----------
   function joinCode() {
     const c = codeIn.value.trim().toUpperCase();
-    if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning('Mã phòng gồm 4 ký tự');
+    if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room codes have 4 characters'));
   }
   function enter(c) {
     code = c.toUpperCase();
@@ -100,7 +102,7 @@ export function nokiaApp(opt) {
     history.replaceState(null, '', location.pathname);
     roomEl.hidden = true;
     home.hidden = false;
-    if (msg) toast.error(msg);
+    if (msg) toast.error(tx(msg));
   }
   function connect() {
     const q = new URLSearchParams({ id: deviceId, name: name.value.trim() || deviceName() });
@@ -110,7 +112,7 @@ export function nokiaApp(opt) {
     sock.onclose = (e) => {
       if (ws !== sock) return;
       conn.classList.remove('on');
-      if (e.code === 4000) return leave('Bạn đã mở phòng này ở tab/thiết bị khác');
+      if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You opened this room in another tab/device'));
       if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
     };
   }
@@ -125,8 +127,8 @@ export function nokiaApp(opt) {
     if (m.status === 'playing' && prev?.status !== 'playing') beep(1320, 120);
     if (m.status === 'ended' && prev?.status === 'playing') {
       const me = m.result?.ranks?.find((r) => r.id === deviceId);
-      if (me?.won) { toast.success('Bạn thắng!', { icon: 'trophy' }); beep(1760, 250); }
-      else if (m.result?.ranks?.length > 1) toast(`${m.result.ranks[0].name} thắng`, { icon: 'trophy' });
+      if (me?.won) { toast.success(t('Bạn thắng!', 'You win!'), { icon: 'trophy' }); beep(1760, 250); }
+      else if (m.result?.ranks?.length > 1) toast(t(`${m.result.ranks[0].name} thắng`, `${m.result.ranks[0].name} wins`), { icon: 'trophy' });
     }
     opt.onState?.(m, prev, app);
     render();
@@ -143,24 +145,24 @@ export function nokiaApp(opt) {
     players.replaceChildren(...(r?.players ?? []).map((p) => {
       const li = el('li', { className: p.id === deviceId ? 'me' : '' });
       li.style.setProperty('--c', r.seats.includes(p.id) ? colorOf(p.id) : 'transparent');
-      li.append(p.id === r.host ? iconEl('crown') : '', ` ${p.name}${p.id === deviceId ? ' (bạn)' : ''}`);
+      li.append(p.id === r.host ? iconEl('crown') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`);
       const b = opt.badge?.(p, r);
       if (b != null && b !== '') li.append(' · ', el('b', { textContent: b }));
       if (r.status === 'playing' && !r.seats.includes(p.id)) li.append(' ', iconEl('eye'));
       return li;
     }));
     const isHost = r?.host === deviceId;
-    if (!r || r.status === 'playing') { ov.hidden = !!r; if (!r) ov.replaceChildren(el('div', { className: 'card' }, el('h2', { textContent: 'Đang kết nối…' }))); return; }
+    if (!r || r.status === 'playing') { ov.hidden = !!r; if (!r) ov.replaceChildren(el('div', { className: 'card' }, el('h2', { textContent: t('Đang kết nối…', 'Connecting…') }))); return; }
     ov.hidden = false;
     const box = el('div', { className: 'cfg' });
     opt.lobby?.(box, r, isHost, (cfg) => raw({ t: 'config', cfg }));
     const res = r.status === 'ended' && r.result;
     ov.replaceChildren(el('div', { className: 'card' },
-      el('h2', {}, ...(res ? [iconEl('trophy'), ` ${res.title ?? (res.ranks.length > 1 ? `${res.ranks[0].name} thắng` : 'Hết ván')}`] : [`Phòng ${code}`])),
+      el('h2', {}, ...(res ? [iconEl('trophy'), ` ${tx(res.title) ?? (res.ranks.length > 1 ? t(`${res.ranks[0].name} thắng`, `${res.ranks[0].name} wins`) : t('Hết ván', 'Game over'))}`] : [t(`Phòng ${code}`, `Room ${code}`)])),
       res ? el('ol', { className: 'ranks' }, ...res.ranks.map((x) => el('li', {}, el('span', { textContent: x.name }), el('b', { textContent: opt.scoreText?.(x.score, res) ?? x.score })))) : '',
       box,
-      el('p', { className: 'sub', textContent: `${r.players.length} người trong phòng. ${opt.lobbyText?.(r) ?? ''}${isHost ? '' : ' Chờ chủ phòng bắt đầu.'}` }),
-      isHost ? el('button', { className: 'primary', textContent: res ? 'Chơi lại' : 'Bắt đầu', onclick: () => raw({ t: 'start' }) }) : '',
+      el('p', { className: 'sub', textContent: `${t(`${r.players.length} người trong phòng.`, `${r.players.length} in the room.`)} ${opt.lobbyText?.(r) ?? ''}${isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.')}` }),
+      isHost ? el('button', { className: 'primary', textContent: res ? t('Chơi lại', 'Play again') : t('Bắt đầu', 'Start'), onclick: () => raw({ t: 'start' }) }) : '',
     ));
   }
 

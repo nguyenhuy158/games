@@ -6,7 +6,7 @@
   <script src="/nozoom.js"></script>
   <script src="/bfcache.js"></script>
   <meta name="theme-color" content="#f3e3c3">
-  <title>Cờ caro</title>
+  <title data-en="Gomoku">Cờ caro</title>
   <link rel="icon" href="/logos/co-caro.svg" type="image/svg+xml">
   <link rel="icon" href="/logos/co-caro-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/logos/co-caro-192.png">
@@ -19,26 +19,27 @@
 <body>
   <section id="home">
     <div class="card">
-      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/co-caro.svg" alt=""> Cờ caro</h1>
-      <p class="sub">Nối 5 quân là thắng — hoặc XO 3×3 nối 3. Đấu 1v1 với bạn hoặc với máy, không cần đăng ký.</p>
-      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
-      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <span data-lang-toggle style="justify-self: end;"></span>
+      <h1><a href="/" class="back" data-en-title="Other games" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/co-caro.svg" alt=""> <span data-en="Gomoku">Cờ caro</span></h1>
+      <p class="sub" data-en="Line up 5 in a row to win — or 3 in Tic-tac-toe 3×3. Play 1v1 with a friend or the bot, no sign-up needed.">Nối 5 quân là thắng — hoặc XO 3×3 nối 3. Đấu 1v1 với bạn hoặc với máy, không cần đăng ký.</p>
+      <label><span data-en="Your name">Tên của bạn</span> <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary" data-en="Create room">Tạo phòng mới</button>
       <div class="join">
-        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
-        <button id="btnJoin">Vào phòng</button>
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" data-en-placeholder="ROOM CODE" autocomplete="off">
+        <button id="btnJoin" data-en="Join room">Vào phòng</button>
       </div>
-      <p class="muted">Ở một mình: tạo phòng rồi bấm Bắt đầu để đánh với máy. 2 người đầu vào phòng cầm quân, người sau được xem.<br>Mỗi nước tối đa 30 giây. Ván sau đổi người đi trước.</p>
+      <p class="muted" data-en-html="Playing alone: create a room then press Start to play the bot. The first 2 people to join a room hold the pieces, the rest watch.<br>Each move has 30 seconds max. The starting player alternates each round.">Ở một mình: tạo phòng rồi bấm Bắt đầu để đánh với máy. 2 người đầu vào phòng cầm quân, người sau được xem.<br>Mỗi nước tối đa 30 giây. Ván sau đổi người đi trước.</p>
     </div>
   </section>
 
   <section id="room" hidden>
     <header>
-      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
-      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
-      <span id="conn" class="dot" title="Kết nối"></span>
+      <button id="btnLeave" data-en-title="Leave room" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" data-en-title="Invite: QR code / link" title="Mời bạn: mã QR / link"><span class="lbl" data-en="Room ">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" data-en-title="Connection" title="Kết nối"></span>
       <span class="grow"></span>
-      <button id="btnSkin" title="Đổi kiểu quân (chỉ máy bạn)"><i data-icon="layers"></i></button>
-      <button id="btnSound" title="Âm thanh"></button>
+      <button id="btnSkin" data-en-title="Change piece style (your device only)" title="Đổi kiểu quân (chỉ máy bạn)"><i data-icon="layers"></i></button>
+      <button id="btnSound" data-en-title="Sound" title="Âm thanh"></button>
     </header>
     <div id="vs">
       <div class="side" data-seat="1"><span class="pc x"></span><b></b><span class="sc"></span></div>
@@ -51,13 +52,13 @@
         <div class="card">
           <h2 id="ovTitle"></h2>
           <div id="sizePick" class="seg"></div>
-          <label id="blockPick" class="check"><input type="checkbox" role="switch" class="switch"> Luật chặn 2 đầu</label>
+          <label id="blockPick" class="check"><input type="checkbox" role="switch" class="switch"> <span data-en="Blocked-ends rule">Luật chặn 2 đầu</span></label>
           <p id="ovText" class="sub"></p>
-          <button id="btnStart" class="primary" hidden>Bắt đầu</button>
-          <button id="btnPeek" hidden><i data-icon="eye"></i> Xem bàn</button>
+          <button id="btnStart" class="primary" hidden data-en="Start">Bắt đầu</button>
+          <button id="btnPeek" hidden><i data-icon="eye"></i> <span data-en="View board">Xem bàn</span></button>
         </div>
       </div>
-      <button id="btnResult" hidden><i data-icon="trophy"></i> Kết quả</button>
+      <button id="btnResult" hidden><i data-icon="trophy"></i> <span data-en="Result">Kết quả</span></button>
     </main>
     <footer id="emoBar"></footer>
   </section>

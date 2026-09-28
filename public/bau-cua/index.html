@@ -6,7 +6,7 @@
   <script src="/nozoom.js"></script>
   <script src="/bfcache.js"></script>
   <meta name="theme-color" content="#5a0f12">
-  <title>Bầu cua</title>
+  <title data-en="Bau Cua">Bầu cua</title>
   <link rel="icon" href="/logos/bau-cua.svg" type="image/svg+xml">
   <link rel="icon" href="/logos/bau-cua-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/logos/bau-cua-192.png">
@@ -19,27 +19,28 @@
 <body>
   <section id="home">
     <div class="card">
-      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/bau-cua.svg" alt=""> Bầu cua</h1>
-      <p class="sub">Cả phòng đặt cược bằng xu ảo — máy làm cái hoặc xoay vòng. Không cần đăng ký.</p>
-      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
-      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <h1><a href="/" class="back" title="Các game khác" data-en-title="More games"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/bau-cua.svg" alt=""> <span data-en="Bau Cua">Bầu cua</span></h1>
+      <p class="sub" data-en="Everyone bets virtual coins — the bot deals or the dealer rotates. No sign-up needed.">Cả phòng đặt cược bằng xu ảo — máy làm cái hoặc xoay vòng. Không cần đăng ký.</p>
+      <label><span data-en="Your name">Tên của bạn</span> <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary" data-en="Create room">Tạo phòng mới</button>
       <div class="join">
-        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
-        <button id="btnJoin">Vào phòng</button>
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" data-en-placeholder="ROOM CODE" autocomplete="off">
+        <button id="btnJoin" data-en="Join">Vào phòng</button>
       </div>
-      <p class="muted">Mỗi người 1000 xu. Chọn phỉnh rồi bấm vào con vật để đặt. Ra 1 mặt ăn 1, 2 mặt ăn 2, 3 mặt ăn 3; không ra thì mất cược.<br>Mặc định máy làm cái để ai cũng được đặt; chủ phòng bấm nút máy/vương miện để đổi sang làm cái xoay vòng.<br>Hết xu được cứu trợ 500 xu. Xu chỉ để vui, không có giá trị thật.</p>
+      <p class="muted" data-en-html="Everyone starts with 1000 coins. Pick a chip, then tap an animal to bet. One match pays 1×, two pay 2×, three pay 3×; no match loses the bet.<br>By default the bot is the dealer so everyone can bet; the host taps the bot/crown button to switch to a rotating dealer.<br>Broke? You get a 500-coin bailout. Coins are just for fun and have no real value.">Mỗi người 1000 xu. Chọn phỉnh rồi bấm vào con vật để đặt. Ra 1 mặt ăn 1, 2 mặt ăn 2, 3 mặt ăn 3; không ra thì mất cược.<br>Mặc định máy làm cái để ai cũng được đặt; chủ phòng bấm nút máy/vương miện để đổi sang làm cái xoay vòng.<br>Hết xu được cứu trợ 500 xu. Xu chỉ để vui, không có giá trị thật.</p>
+      <span data-lang-toggle></span>
     </div>
   </section>
 
   <section id="room" hidden>
     <header>
-      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
-      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
-      <span id="conn" class="dot" title="Kết nối"></span>
-      <span id="myCoins" class="coins" title="Xu của bạn"></span>
+      <button id="btnLeave" title="Rời phòng" data-en-title="Leave room"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" title="Mời bạn: mã QR / link" data-en-title="Invite: QR code / link"><span class="lbl" data-en="Room ">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" title="Kết nối" data-en-title="Connection"></span>
+      <span id="myCoins" class="coins" title="Xu của bạn" data-en-title="Your coins"></span>
       <span class="grow"></span>
-      <button id="btnMode" title="Chủ phòng: đổi người làm cái"></button>
-      <button id="btnSound" title="Âm thanh"></button>
+      <button id="btnMode" title="Chủ phòng: đổi người làm cái" data-en-title="Host: change dealer"></button>
+      <button id="btnSound" title="Âm thanh" data-en-title="Sound"></button>
     </header>
     <ul id="players"></ul>
     <main>
@@ -51,8 +52,8 @@
       <div id="board"></div>
       <div id="bar">
         <div id="chips"></div>
-        <button id="btnClear" title="Bỏ hết cược của bạn"><i data-icon="rotate-ccw"></i><span class="lbl"> Bỏ cược</span></button>
-        <button id="btnRoll" class="primary">Mở bát</button>
+        <button id="btnClear" title="Bỏ hết cược của bạn" data-en-title="Remove all your bets"><i data-icon="rotate-ccw"></i><span class="lbl" data-en=" Clear bets"> Bỏ cược</span></button>
+        <button id="btnRoll" class="primary" data-en="Reveal">Mở bát</button>
       </div>
     </main>
   </section>

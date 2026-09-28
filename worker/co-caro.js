@@ -52,9 +52,9 @@ export class CaroRoom extends DurableObject {
     const [client, server] = Object.values(new WebSocketPair());
     const s = this.s;
     if (!s.game) s.game = req.headers.get('X-Game') === 'c4' ? 'c4' : 'caro';
-    if (!/^[\w-]{8,64}$/.test(id)) return this.reject(server, client, 'Thiết bị không hợp lệ');
+    if (!/^[\w-]{8,64}$/.test(id)) return this.reject(server, client, ['Thiết bị không hợp lệ', 'Invalid device']);
     if (!s.players[id]) {
-      if (this.onlineIds().size >= MAX_ONLINE) return this.reject(server, client, 'Phòng đông quá rồi');
+      if (this.onlineIds().size >= MAX_ONLINE) return this.reject(server, client, ['Phòng đông quá rồi', 'Room is full']);
       s.players[id] = { id, name };
       s.order.push(id);
     }

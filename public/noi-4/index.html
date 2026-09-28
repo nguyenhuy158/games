@@ -6,7 +6,7 @@
   <script src="/nozoom.js"></script>
   <script src="/bfcache.js"></script>
   <meta name="theme-color" content="#e6eefa">
-  <title>Nối 4</title>
+  <title data-en="Connect 4">Nối 4</title>
   <link rel="icon" href="/logos/noi-4.svg" type="image/svg+xml">
   <link rel="icon" href="/logos/noi-4-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/logos/noi-4-192.png">
@@ -19,25 +19,26 @@
 <body>
   <section id="home">
     <div class="card">
-      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/noi-4.svg" alt=""> Nối 4</h1>
-      <p class="sub">Thả quân vào cột, ai nối được 4 quân liền (ngang, dọc, chéo) trước là thắng. Đấu 1v1 với bạn hoặc với máy.</p>
-      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
-      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <span data-lang-toggle style="justify-self: end;"></span>
+      <h1><a href="/" class="back" data-en-title="Other games" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/noi-4.svg" alt=""> <span data-en="Connect 4">Nối 4</span></h1>
+      <p class="sub" data-en="Drop pieces into a column — first to connect 4 in a row (horizontal, vertical, diagonal) wins. Play 1v1 with a friend or the bot.">Thả quân vào cột, ai nối được 4 quân liền (ngang, dọc, chéo) trước là thắng. Đấu 1v1 với bạn hoặc với máy.</p>
+      <label><span data-en="Your name">Tên của bạn</span> <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary" data-en="Create room">Tạo phòng mới</button>
       <div class="join">
-        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
-        <button id="btnJoin">Vào phòng</button>
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" data-en-placeholder="ROOM CODE" autocomplete="off">
+        <button id="btnJoin" data-en="Join room">Vào phòng</button>
       </div>
-      <p class="muted">Ở một mình: tạo phòng rồi bấm Bắt đầu để đánh với máy. 2 người đầu vào phòng cầm quân, người sau được xem.<br>Mỗi nước tối đa 30 giây. Ván sau đổi người đi trước.</p>
+      <p class="muted" data-en-html="Playing alone: create a room then press Start to play the bot. The first 2 people to join a room hold the pieces, the rest watch.<br>Each move has 30 seconds max. The starting player alternates each round.">Ở một mình: tạo phòng rồi bấm Bắt đầu để đánh với máy. 2 người đầu vào phòng cầm quân, người sau được xem.<br>Mỗi nước tối đa 30 giây. Ván sau đổi người đi trước.</p>
     </div>
   </section>
 
   <section id="room" hidden>
     <header>
-      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
-      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
-      <span id="conn" class="dot" title="Kết nối"></span>
+      <button id="btnLeave" data-en-title="Leave room" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" data-en-title="Invite: QR code / link" title="Mời bạn: mã QR / link"><span class="lbl" data-en="Room ">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" data-en-title="Connection" title="Kết nối"></span>
       <span class="grow"></span>
-      <button id="btnSound" title="Âm thanh"></button>
+      <button id="btnSound" data-en-title="Sound" title="Âm thanh"></button>
     </header>
     <div id="vs">
       <div class="side" data-seat="1"><span class="pc p1"></span><b></b><span class="sc"></span></div>
@@ -49,13 +50,13 @@
       <div id="overlay" hidden>
         <div class="card">
           <h2 id="ovTitle"></h2>
-          <div id="levelPick" class="seg" title="Độ khó của máy"></div>
+          <div id="levelPick" class="seg" data-en-title="Bot difficulty" title="Độ khó của máy"></div>
           <p id="ovText" class="sub"></p>
-          <button id="btnStart" class="primary" hidden>Bắt đầu</button>
-          <button id="btnPeek" hidden><i data-icon="eye"></i> Xem bàn</button>
+          <button id="btnStart" class="primary" hidden data-en="Start">Bắt đầu</button>
+          <button id="btnPeek" hidden><i data-icon="eye"></i> <span data-en="View board">Xem bàn</span></button>
         </div>
       </div>
-      <button id="btnResult" hidden><i data-icon="trophy"></i> Kết quả</button>
+      <button id="btnResult" hidden><i data-icon="trophy"></i> <span data-en="Result">Kết quả</span></button>
     </main>
     <footer id="emoBar"></footer>
   </section>

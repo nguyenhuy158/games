@@ -57,6 +57,7 @@ header .grow { flex: 1; }
 .side .sc { font-weight: 800; font-variant-numeric: tabular-nums; }
 .side.turn { border-color: var(--accent); background: #fff; }
 .side.me b::after { content: ' (bạn)'; font-weight: 400; color: var(--muted); }
+html[lang="en"] .side.me b::after { content: ' (you)'; }
 #clock { font-weight: 800; font-variant-numeric: tabular-nums; min-width: 44px; text-align: center; }
 #clock.low { color: var(--hit); animation: blink .5s infinite alternate; }
 @keyframes blink { to { opacity: .4; } }

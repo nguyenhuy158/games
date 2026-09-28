@@ -13,6 +13,7 @@ import oAnQuan from './nokia/o-an-quan.js';
 // Phòng lo phần chung (người chơi, chủ phòng, sảnh chờ, gửi trạng thái, lưu lịch sử); mỗi game chỉ là một module:
 //   { name, max, cfg: {mặc định}, config(cfg, m) -> cfg mới | null, start(ctx), msg(ctx, p, m) -> true nếu đổi,
 //     tickMs? (số hoặc hàm của cfg), tick?(ctx) -> true nếu đổi, view(ctx, id) -> dữ liệu gửi người id, volatile? (không lưu g lúc chơi) }
+// Chữ gửi cho người chơi (lỗi, tiêu đề kết quả) là cặp ['vi', 'en'], client chọn bằng tx() (public/i18n.js).
 // ctx = { g (trạng thái game), cfg, seats (id người chơi), players, now(), rand(), end(result), send(id, msg) }
 // end({ ranks: [{ id, score, won }], level?, mode? }) -> kết thúc ván, lưu lịch sử người đã đăng nhập.
 export const GAMES = Object.fromEntries(Object.entries({ snake, bantumi, pairs, logic, 'rapid-roll': rapid, 'space-impact': space, bounce, 'o-an-quan': oAnQuan }).filter(([, m]) => m));
@@ -48,12 +49,12 @@ export class NokiaRoom extends DurableObject {
       server.close(4001, 'rejected');
       return new Response(null, { status: 101, webSocket: client });
     };
-    if (!GAMES[game]) return reject('Không có game này');
-    if (!/^[\w-]{8,64}$/.test(id)) return reject('Thiết bị không hợp lệ');
+    if (!GAMES[game]) return reject(['Không có game này', 'No such game']);
+    if (!/^[\w-]{8,64}$/.test(id)) return reject(['Thiết bị không hợp lệ', 'Invalid device']);
     if (!this.s || this.s.game !== game) this.s = this.fresh(game);
     const s = this.s;
     if (!s.players[id]) {
-      if (this.onlineIds().size >= MAX_ONLINE) return reject('Phòng đông quá rồi');
+      if (this.onlineIds().size >= MAX_ONLINE) return reject(['Phòng đông quá rồi', 'This room is full']);
       s.players[id] = { id, name };
       s.order.push(id);
     }

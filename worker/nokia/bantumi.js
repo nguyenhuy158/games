@@ -36,7 +36,7 @@ export default {
   },
   view(ctx) {
     const g = ctx.g;
-    return { side: g.side, names: g.side.map((id) => (id === BOT ? 'Máy' : ctx.name(id))), board: g.board, turn: g.turn, last: g.last, deadline: g.deadline, moves: g.moves };
+    return { side: g.side, names: g.side.map((id) => (id === BOT ? ['Máy', 'Bot'] : ctx.name(id))), board: g.board, turn: g.turn, last: g.last, deadline: g.deadline, moves: g.moves };
   },
 };
 
@@ -56,10 +56,12 @@ function end(ctx, w, why) {
   const humans = g.side.map((id, k) => ({ id, seat: k + 1 })).filter((x) => x.id !== BOT);
   const ranks = humans.map(({ id, seat }) => ({ id, score: g.board[store(seat)], won: w === seat }))
     .sort((a, b) => b.won - a.won || b.score - a.score);
-  const wName = w ? (g.side[w - 1] === BOT ? 'Máy' : ctx.name(g.side[w - 1])) : null;
+  const bot = g.side[w - 1] === BOT, wName = w && ctx.name(g.side[w - 1]);
+  const hi = Math.max(g.board[6], g.board[13]), lo = Math.min(g.board[6], g.board[13]), late = why === 'timeout';
   ctx.end({
     mode: g.side.includes(BOT) ? 'bot' : 'pvp', level: ctx.cfg.seeds,
-    title: w ? `${wName} thắng ${Math.max(g.board[6], g.board[13])}–${Math.min(g.board[6], g.board[13])}${why === 'timeout' ? ' (hết giờ)' : ''}` : `Hoà ${g.board[6]}–${g.board[13]}`,
+    title: w ? [`${bot ? 'Máy' : wName} thắng ${hi}–${lo}${late ? ' (hết giờ)' : ''}`, `${bot ? 'Bot' : wName} wins ${hi}–${lo}${late ? ' (time out)' : ''}`]
+      : [`Hoà ${g.board[6]}–${g.board[13]}`, `Draw ${g.board[6]}–${g.board[13]}`],
     ranks,
   });
 }

@@ -6,7 +6,7 @@
   <script src="/nozoom.js"></script>
   <script src="/bfcache.js"></script>
   <meta name="theme-color" content="#0b1b2b">
-  <title>Game Cổ Điển</title>
+  <title data-en="Classic Games">Game Cổ Điển</title>
   <link rel="icon" href="/logos/hub.svg" type="image/svg+xml">
   <link rel="icon" href="/logos/hub-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/logos/hub-192.png">
@@ -41,7 +41,7 @@
     .game:hover { transform: translateY(-3px); border-color: var(--accent); }
     .thumb { height: 120px; border-radius: 10px; background: #0a1724 center / contain no-repeat; }
     .game b { font-size: 18px; }
-    .game span { color: var(--muted); font-size: 13px; }
+    .game > span { color: var(--muted); font-size: 13px; }
     .tags { display: flex; gap: 6px; flex-wrap: wrap; }
     .tags i { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--accent); }
     footer { color: var(--muted); font-size: 11px; text-align: center; }
@@ -105,127 +105,130 @@
     .thumb.bt i { width: 18px; height: 18px; border-radius: 6px; }
     .thumb.bt i.s { background: #e8716f; } .thumb.bt i.t { background: #7c83d6; } .thumb.bt i.h { background: #5a6b78; box-shadow: inset 0 0 0 5px #5a6b78, inset 0 0 0 9px #e0312f; }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
-    @media (max-width: 640px) { #account { position: static; justify-self: end; margin-bottom: -8px; } }
+    #lang { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; }
+    .lang-toggle { background: var(--panel); border: 1px solid var(--line); color: var(--text); }
+    @media (max-width: 640px) { #account { position: static; justify-self: end; margin-bottom: -8px; } #lang { position: static; justify-self: start; margin-bottom: -8px; } }
   </style>
 </head>
 <body>
   <div id="account"></div>
-  <h1><img class="logo" src="/logos/hub.svg" alt=""> Game Cổ Điển</h1>
-  <p class="sub">Chơi ngay trên trình duyệt, không cần đăng ký. Đăng nhập để lưu lịch sử các lần chơi.</p>
+  <div id="lang"><span data-lang-toggle></span></div>
+  <h1><img class="logo" src="/logos/hub.svg" alt=""> <span data-en="Classic Games">Game Cổ Điển</span></h1>
+  <p class="sub"><span data-en="Play right in your browser, no sign-up needed. Sign in to keep your game history.">Chơi ngay trên trình duyệt, không cần đăng ký. Đăng nhập để lưu lịch sử các lần chơi.</span></p>
   <div class="games">
     <a class="game" href="/pikachu/">
       <div class="thumb" style="background-image:url(pikachu/images/pieces-sprite.png);background-size:auto 60%;background-repeat:repeat-x;background-position:left center"></div>
-      <b><img class="logo" src="/logos/pikachu.svg" alt=""> Pikachu nối thú</b>
-      <span>Nối 2 hình giống nhau, tối đa 3 đoạn thẳng. 5 màn có ô trượt.</span>
-      <div class="tags"><i>Nhiều người</i><i>Chơi chung</i><i>Đua</i><i>Đội 2v2</i></div>
+      <b><img class="logo" src="/logos/pikachu.svg" alt=""> <span data-en="Pikachu Onet">Pikachu nối thú</span></b>
+      <span><span data-en="Link 2 matching tiles with up to 3 straight lines. 5 levels with sliding tiles.">Nối 2 hình giống nhau, tối đa 3 đoạn thẳng. 5 màn có ô trượt.</span></span>
+      <div class="tags"><i><span data-en="Multiplayer">Nhiều người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i><span data-en="Race">Đua</span></i><i><span data-en="Team 2v2">Đội 2v2</span></i></div>
     </a>
     <a class="game" href="/do-min/">
       <div class="thumb" style="background:linear-gradient(135deg,#b9c8e6,#8fa3c7);display:flex;justify-content:center;align-items:center;gap:12px;font-size:48px"><span style="color:#1b2233"><i data-icon="bomb"></i></span><span style="color:#e0312f"><i data-icon="flag"></i></span></div>
-      <b><img class="logo" src="/logos/do-min.svg" alt=""> Dò mìn</b>
-      <span>Mở hết ô an toàn, tránh mìn. Thấy chuột nhau, ping ô nghi có mìn.</span>
-      <div class="tags"><i>Nhiều người</i><i>Chơi chung</i><i>Đua cùng đề</i></div>
+      <b><img class="logo" src="/logos/do-min.svg" alt=""> <span data-en="Minesweeper">Dò mìn</span></b>
+      <span><span data-en="Open every safe cell, avoid the mines. See each other&#x27;s cursors and ping suspicious cells.">Mở hết ô an toàn, tránh mìn. Thấy chuột nhau, ping ô nghi có mìn.</span></span>
+      <div class="tags"><i><span data-en="Multiplayer">Nhiều người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i></div>
     </a>
     <a class="game" href="/bau-cua/">
       <div class="thumb bc"><img src="bau-cua/assets/nai.webp" alt=""><img src="bau-cua/assets/bau.webp" alt=""><img src="bau-cua/assets/ga.webp" alt=""><img src="bau-cua/assets/ca.webp" alt=""><img src="bau-cua/assets/cua.webp" alt=""><img src="bau-cua/assets/tom.webp" alt=""></div>
-      <b><img class="logo" src="/logos/bau-cua.svg" alt=""> Bầu cua</b>
-      <span>Đặt xu ảo vào con vật, lắc bát 3 viên xúc xắc. Máy làm cái hoặc xoay vòng.</span>
-      <div class="tags"><i>2–10 người</i><i>Làm cái</i><i>Xu ảo</i></div>
+      <b><img class="logo" src="/logos/bau-cua.svg" alt=""> <span data-en="Bau Cua">Bầu cua</span></b>
+      <span><span data-en="Bet virtual coins on animals, shake 3 dice under the bowl. Bot dealer or rotating dealer.">Đặt xu ảo vào con vật, lắc bát 3 viên xúc xắc. Máy làm cái hoặc xoay vòng.</span></span>
+      <div class="tags"><i><span data-en="2–10 players">2–10 người</span></i><i><span data-en="Dealer">Làm cái</span></i><i><span data-en="Virtual coins">Xu ảo</span></i></div>
     </a>
     <a class="game" href="/o-an-quan/">
       <div class="thumb oq"><svg viewBox="-8 -8 716 216" aria-hidden="true"><path d="M100 0H600V200H100Z M100 100H600 M200 0V200 M300 0V200 M400 0V200 M500 0V200 M100 0A100 100 0 0 0 100 200 M600 0A100 100 0 0 1 600 200" fill="none" stroke="#f6f1e4" stroke-width="7" stroke-linecap="round"/><g stroke="#2a0d07" stroke-width="2"><circle cx="140" cy="40" r="15" fill="#d9d3c4"/><circle cx="155" cy="55" r="15" fill="#8f8b83"/><circle cx="245" cy="48" r="15" fill="#ebe5d6"/><circle cx="330" cy="145" r="15" fill="#a8957c"/><circle cx="345" cy="160" r="15" fill="#d9d3c4"/><circle cx="445" cy="150" r="15" fill="#b8b0a0"/><circle cx="150" cy="150" r="15" fill="#ebe5d6"/><circle cx="250" cy="140" r="15" fill="#75706a"/><circle cx="440" cy="45" r="15" fill="#c9b99c"/><circle cx="430" cy="60" r="15" fill="#d9d3c4"/></g><circle cx="60" cy="100" r="42" fill="#3d434c"/><circle cx="640" cy="100" r="42" fill="#3d434c"/></svg></div>
-      <b><img class="logo" src="/logos/o-an-quan.svg" alt=""> Ô ăn quan</b>
-      <span>Trò dân gian vẽ phấn trên sân gạch: rải sỏi, ăn dân, bắt quan. Hết quan tàn dân là hết ván.</span>
-      <div class="tags"><i>1v1</i><i>Đánh với máy</i><i>Dân gian</i></div>
+      <b><img class="logo" src="/logos/o-an-quan.svg" alt=""> <span data-en="O An Quan">Ô ăn quan</span></b>
+      <span><span data-en="Vietnamese folk game chalked on a brick yard: sow pebbles, capture citizens, take the mandarins.">Trò dân gian vẽ phấn trên sân gạch: rải sỏi, ăn dân, bắt quan. Hết quan tàn dân là hết ván.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
     </a>
     <a class="game" href="/co-caro/">
       <div class="thumb cc"><span class="x"><i data-icon="x"></i></span><span class="o"><i data-icon="circle"></i></span><span class="x"><i data-icon="x"></i></span></div>
-      <b><img class="logo" src="/logos/co-caro.svg" alt=""> Cờ caro</b>
-      <span>Nối 5 quân là thắng, hoặc XO 3×3 nối 3. Đấu 1v1 với bạn bè hoặc với máy.</span>
-      <div class="tags"><i>1v1</i><i>Đánh với máy</i><i>XO 3×3</i><i>Chặn 2 đầu</i></div>
+      <b><img class="logo" src="/logos/co-caro.svg" alt=""> <span data-en="Gomoku">Cờ caro</span></b>
+      <span><span data-en="Five in a row wins, or tic-tac-toe 3×3. Play 1v1 with friends or vs the bot.">Nối 5 quân là thắng, hoặc XO 3×3 nối 3. Đấu 1v1 với bạn bè hoặc với máy.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Tic-tac-toe">XO 3×3</span></i><i><span data-en="Blocked ends">Chặn 2 đầu</span></i></div>
     </a>
     <a class="game" href="/noi-4/">
       <div class="thumb c4"><div><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="r"></i><i></i><i></i><i></i><i></i><i></i><i class="y"></i><i class="r"></i><i class="y"></i><i></i><i></i></div></div>
-      <b><img class="logo" src="/logos/noi-4.svg" alt=""> Nối 4</b>
-      <span>Thả quân vào cột, nối 4 quân liền ngang, dọc hoặc chéo là thắng.</span>
-      <div class="tags"><i>1v1</i><i>Đánh với máy</i><i>Connect 4</i></div>
+      <b><img class="logo" src="/logos/noi-4.svg" alt=""> <span data-en="Connect 4">Nối 4</span></b>
+      <span><span data-en="Drop discs into columns; 4 in a row horizontally, vertically or diagonally wins.">Thả quân vào cột, nối 4 quân liền ngang, dọc hoặc chéo là thắng.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Connect 4</i></div>
     </a>
     <a class="game" href="/ban-tau/">
       <div class="thumb bt"><div><i class="s"></i><i class="s"></i><i class="h"></i><i class="s"></i><i></i><i class="t"></i><i></i><i></i><i></i><i></i><i></i><i class="t"></i></div></div>
-      <b><img class="logo" src="/logos/ban-tau.svg" alt=""> Bắn tàu</b>
-      <span>Giấu 5 chiếc tàu, thay phiên bắn vào biển đối thủ. Chìm hết tàu bên kia là thắng.</span>
-      <div class="tags"><i>1v1</i><i>Đánh với máy</i><i>Battleship</i></div>
+      <b><img class="logo" src="/logos/ban-tau.svg" alt=""> <span data-en="Battleship">Bắn tàu</span></b>
+      <span><span data-en="Hide 5 ships and take turns firing at the enemy sea. Sink their whole fleet to win.">Giấu 5 chiếc tàu, thay phiên bắn vào biển đối thủ. Chìm hết tàu bên kia là thắng.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Battleship</i></div>
     </a>
     <a class="game" href="/dao-vang/">
       <div class="thumb" style="background-image:url(dao-vang/assets/bg2.jpg);background-size:cover"></div>
-      <b><img class="logo" src="/logos/dao-vang.svg" alt=""> Đào Vàng</b>
-      <span>Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span>
-      <div class="tags"><i>1–4 người</i><i>Chung mỏ</i><i>Tranh vàng</i><i>Tiệm đồ</i></div>
+      <b><img class="logo" src="/logos/dao-vang.svg" alt=""> <span data-en="Gold Miner">Đào Vàng</span></b>
+      <span><span data-en="Swing the claw to grab gold and diamonds. Hit the target before time runs out.">Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span></span>
+      <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Shared mine">Chung mỏ</span></i><i><span data-en="Gold rush">Tranh vàng</span></i><i><span data-en="Shop">Tiệm đồ</span></i></div>
     </a>
   </div>
-  <h2 class="group"><i data-icon="smartphone"></i> Góc Nokia</h2>
-  <p class="sub group-sub">Game điện thoại Nokia ngày xưa, màn LCD xanh, bấm 2-4-6-8 — chơi nhiều người được.</p>
+  <h2 class="group"><i data-icon="smartphone"></i> <span data-en="Nokia corner">Góc Nokia</span></h2>
+  <p class="sub group-sub"><span data-en="Old-school Nokia phone games, green LCD, 2-4-6-8 keys — now multiplayer.">Game điện thoại Nokia ngày xưa, màn LCD xanh, bấm 2-4-6-8 — chơi nhiều người được.</span></p>
   <div class="games" id="nokia">
     <a class="game" href="/nokia/snake/">
       <div class="thumb nk"><img src="/logos/snake.svg" alt=""></div>
-      <b><img class="logo" src="/logos/snake.svg" alt=""> Rắn săn mồi</b>
-      <span>Snake huyền thoại: ăn mồi dài ra, có bọ thưởng. Một mình hoặc đấu trường 4 con rắn.</span>
-      <div class="tags"><i>1–4 người</i><i>Đấu trường</i><i>Nokia 3310</i></div>
+      <b><img class="logo" src="/logos/snake.svg" alt=""> <span data-en="Snake">Rắn săn mồi</span></b>
+      <span><span data-en="The legendary Snake: eat to grow, catch bonus bugs. Solo, score race or a 4-snake arena.">Snake huyền thoại: ăn mồi dài ra, có bọ thưởng. Một mình hoặc đấu trường 4 con rắn.</span></span>
+      <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Arena">Đấu trường</span></i><i>Nokia 3310</i></div>
     </a>
     <a class="game" href="/nokia/bantumi/">
       <div class="thumb nk"><img src="/logos/bantumi.svg" alt=""></div>
       <b><img class="logo" src="/logos/bantumi.svg" alt=""> Bantumi</b>
-      <span>Trò rải sỏi (Kalah) của Nokia 3310. Hạt cuối vào kho được đi tiếp.</span>
-      <div class="tags"><i>1v1</i><i>Đánh với máy</i><i>Nokia 3310</i></div>
+      <span><span data-en="The Nokia 3310 seed-sowing game (Kalah). Last seed in your store: go again.">Trò rải sỏi (Kalah) của Nokia 3310. Hạt cuối vào kho được đi tiếp.</span></span>
+      <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Nokia 3310</i></div>
     </a>
     <a class="game" href="/nokia/pairs/">
       <div class="thumb nk"><img src="/logos/pairs.svg" alt=""></div>
-      <b><img class="logo" src="/logos/pairs.svg" alt=""> Lật hình</b>
-      <span>Pairs II: lật 2 lá tìm cặp. Cả nhóm thay phiên, ai nhiều cặp nhất thắng.</span>
-      <div class="tags"><i>1–6 người</i><i>Trí nhớ</i><i>Nokia 3310</i></div>
+      <b><img class="logo" src="/logos/pairs.svg" alt=""> <span data-en="Pairs">Lật hình</span></b>
+      <span><span data-en="Pairs II: flip 2 cards to find a match. Take turns; most pairs wins.">Pairs II: lật 2 lá tìm cặp. Cả nhóm thay phiên, ai nhiều cặp nhất thắng.</span></span>
+      <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Memory">Trí nhớ</span></i><i>Nokia 3310</i></div>
     </a>
     <a class="game" href="/nokia/logic/">
       <div class="thumb nk"><img src="/logos/logic.svg" alt=""></div>
       <b><img class="logo" src="/logos/logic.svg" alt=""> Logic</b>
-      <span>Mastermind của Nokia 3210: đoán mã 4 hình, đua giải cùng một mã.</span>
-      <div class="tags"><i>1–6 người</i><i>Đua cùng đề</i><i>Nokia 3210</i></div>
+      <span><span data-en="Mastermind from the Nokia 3210: crack a 4-shape code, race on the same code.">Mastermind của Nokia 3210: đoán mã 4 hình, đua giải cùng một mã.</span></span>
+      <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i><i>Nokia 3210</i></div>
     </a>
     <a class="game" href="/nokia/rapid-roll/">
       <div class="thumb nk"><img src="/logos/rapid-roll.svg" alt=""></div>
       <b><img class="logo" src="/logos/rapid-roll.svg" alt=""> Rapid Roll</b>
-      <span>Lăn bóng xuống giữa các thanh đang trôi lên, tránh gai. Đua cùng đề, ai trụ xa nhất thắng.</span>
-      <div class="tags"><i>1–6 người</i><i>Đua cùng đề</i><i>Nokia 1110i</i></div>
+      <span><span data-en="Roll down between rising platforms, dodge spikes. Same course for all; last one standing wins.">Lăn bóng xuống giữa các thanh đang trôi lên, tránh gai. Đua cùng đề, ai trụ xa nhất thắng.</span></span>
+      <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i><i>Nokia 1110i</i></div>
     </a>
     <a class="game" href="/nokia/space-impact/">
       <div class="thumb nk"><img src="/logos/space-impact.svg" alt=""></div>
       <b><img class="logo" src="/logos/space-impact.svg" alt=""> Space Impact</b>
-      <span>Bắn quái vũ trụ, hạ trùm cuối màn. Tối đa 4 phi thuyền chơi chung.</span>
-      <div class="tags"><i>1–4 người</i><i>Chơi chung</i><i>Nokia 3310</i></div>
+      <span><span data-en="Blast space aliens and beat the boss. Up to 4 ships co-op.">Bắn quái vũ trụ, hạ trùm cuối màn. Tối đa 4 phi thuyền chơi chung.</span></span>
+      <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i>Nokia 3310</i></div>
     </a>
     <a class="game" href="/nokia/bounce/">
       <div class="thumb nk"><img src="/logos/bounce.svg" alt=""></div>
       <b><img class="logo" src="/logos/bounce.svg" alt=""> Bounce</b>
-      <span>Quả bóng đỏ nhảy qua 3 màn, chui qua hết vòng rồi về đích. Đua cùng màn.</span>
-      <div class="tags"><i>1–6 người</i><i>Đua cùng màn</i><i>Nokia 6600</i></div>
+      <span><span data-en="The red ball hops through 3 levels, every ring, then the exit. Race on the same level.">Quả bóng đỏ nhảy qua 3 màn, chui qua hết vòng rồi về đích. Đua cùng màn.</span></span>
+      <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-level race">Đua cùng màn</span></i><i>Nokia 6600</i></div>
     </a>
   </div>
   <section id="fun">
     <div class="fun-head">
-      <h2><i data-icon="medal"></i> Bảng xếp hạng vui</h2>
+      <h2><i data-icon="medal"></i> <span data-en="Fun leaderboards">Bảng xếp hạng vui</span></h2>
       <div class="seg" id="funPeriod">
-        <button data-period="week" class="on">Tuần này</button>
-        <button data-period="all">Mọi lúc</button>
+        <button data-period="week" class="on"><span data-en="This week">Tuần này</span></button>
+        <button data-period="all"><span data-en="All time">Mọi lúc</span></button>
       </div>
     </div>
     <div id="funList" class="fun-grid"></div>
-    <p class="sub hint" id="funHint">Đăng nhập Google để có tên trên bảng — khách vẫn chơi được, chỉ không được xếp hạng.</p>
+    <p class="sub hint" id="funHint"><span data-en="Sign in with Google to get on the boards — guests can still play, just not ranked.">Đăng nhập Google để có tên trên bảng — khách vẫn chơi được, chỉ không được xếp hạng.</span></p>
   </section>
   <section id="me" hidden>
-    <h2>Thành tích của bạn</h2>
+    <h2><span data-en="Your stats">Thành tích của bạn</span></h2>
     <div id="stats" class="stats"></div>
-    <h3>Các ván gần đây</h3>
+    <h3><span data-en="Recent games">Các ván gần đây</span></h3>
     <ol id="history"></ol>
   </section>
-  <footer>Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Skin dò mìn: <a href="https://github.com/Minesweeper-World/MS-Texture" target="_blank" rel="noopener">MS-Texture</a> (MIT) · Hình bầu cua: tờ in dân gian (ảnh Bách Hóa Xanh) · Icon: Lucide · Dự án học tập</footer>
+  <footer data-en-html="Animal art: &lt;a href=&quot;https://github.com/jdecked/twemoji&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Twemoji&lt;/a&gt; (CC-BY 4.0) · Minesweeper skin: &lt;a href=&quot;https://github.com/Minesweeper-World/MS-Texture&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;MS-Texture&lt;/a&gt; (MIT) · Bau Cua art: folk print (photo by Bách Hóa Xanh) · Icons: Lucide · A learning project">Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Skin dò mìn: <a href="https://github.com/Minesweeper-World/MS-Texture" target="_blank" rel="noopener">MS-Texture</a> (MIT) · Hình bầu cua: tờ in dân gian (ảnh Bách Hóa Xanh) · Icon: Lucide · Dự án học tập</footer>
   <script type="module" src="me.js"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
 </body>

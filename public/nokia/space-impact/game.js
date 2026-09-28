@@ -1,4 +1,5 @@
 import { nokiaApp } from '../room.js';
+import { t } from '../../i18n.js';
 import { SHIP, KINDS, BOSS, SHIP_SPEED, TOP, H, SHIP_H } from './logic.js';
 
 // Server là chuẩn; tàu của mình được "đoán trước" theo phím đang giữ từ lúc nhận trạng thái (bớt cảm giác trễ mạng).
@@ -8,11 +9,12 @@ let stateAt = 0, lastT = -1;
 const app = nokiaApp({
   game: 'space-impact',
   title: 'Space Impact',
-  sub: 'Space Impact của Nokia 3310 — bắn quái vũ trụ, hạ trùm cuối màn. Chơi chung tối đa 4 phi thuyền.',
-  help: 'Giữ mũi tên / 2-4-6-8 để bay, giữ OK (5) hoặc Space để bắn liên tục. 3 màn, cuối mỗi màn có trùm. Mỗi tàu 3 mạng, trúng đạn thì nhấp nháy 2 giây không chết. Tim rơi ra: +1 mạng.',
-  lobbyText: (r) => (r.players.length > 1 ? `${Math.min(4, r.players.length)} phi thuyền cùng chiến đấu.` : 'Một mình chiến đấu — mời bạn bè để chơi chung.'),
+  sub: t('Space Impact của Nokia 3310 — bắn quái vũ trụ, hạ trùm cuối màn. Chơi chung tối đa 4 phi thuyền.', 'Space Impact from the Nokia 3310 — blast aliens and beat each level\'s boss. Up to 4 ships co-op.'),
+  help: t('Giữ mũi tên / 2-4-6-8 để bay, giữ OK (5) hoặc Space để bắn liên tục. 3 màn, cuối mỗi màn có trùm. Mỗi tàu 3 mạng, trúng đạn thì nhấp nháy 2 giây không chết. Tim rơi ra: +1 mạng.',
+    'Hold arrows / 2-4-6-8 to fly, hold OK (5) or Space to keep firing. 3 levels, each ends with a boss. 3 lives per ship; after a hit you blink invulnerable for 2 seconds. Dropped heart: +1 life.'),
+  lobbyText: (r) => (r.players.length > 1 ? t(`${Math.min(4, r.players.length)} phi thuyền cùng chiến đấu.`, `${Math.min(4, r.players.length)} ships fighting together.`) : t('Một mình chiến đấu — mời bạn bè để chơi chung.', 'Flying solo — invite friends to play co-op.')),
   badge: (p, r) => r.view?.ships?.find((s) => s.id === p.id)?.score ?? '',
-  scoreText: (v) => `${v} điểm`,
+  scoreText: (v) => t(`${v} điểm`, `${v} pts`),
   onState(r) {
     const v = r.view;
     if (!v || v.t === lastT) return;
@@ -58,7 +60,7 @@ const app = nokiaApp({
       lcd.sprite(x, y, SHIP, s.id === app.id ? undefined : '#8fae8f');
     }
     if (v.phase === 'boss' && v.boss && v.boss.x > 70 && blink) lcd.center(24, 'BOSS!');
-    if (r.status === 'playing' && me && me.lives <= 0) lcd.banner(['HET MANG', 'DANG XEM']);
-    else if (r.status === 'playing' && !me) lcd.banner(['DANG XEM']);
+    if (r.status === 'playing' && me && me.lives <= 0) lcd.banner([t('HET MANG', 'NO LIVES'), t('DANG XEM', 'WATCHING')]);
+    else if (r.status === 'playing' && !me) lcd.banner([t('DANG XEM', 'WATCHING')]);
   },
 });

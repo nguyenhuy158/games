@@ -1,4 +1,5 @@
 import { nokiaApp } from '../room.js';
+import { t } from '../../i18n.js';
 import { COLS, ROWS } from './logic.js';
 
 // Ô 3px, sân bắt đầu từ y = 8 (hàng trên ghi điểm). Rắn của mình tô đặc, rắn người khác chỉ viền (LCD 2 màu).
@@ -8,29 +9,31 @@ let lastStep = -1;
 
 nokiaApp({
   game: 'snake',
-  title: 'Rắn săn mồi',
-  sub: 'Snake huyền thoại của Nokia — một mình, đua điểm mỗi người một sân, hoặc chung sân tranh mồi.',
-  help: 'Phím mũi tên / WASD / 2-4-6-8 hoặc bàn phím trên máy. Ăn mồi để dài ra, con bọ thưởng biến mất sau vài giây. Đâm tường (nếu bật) hoặc đâm thân rắn là thua. Chung sân: đâm vào rắn khác là chết, con sống sót cuối cùng thắng. Sân riêng: ai cũng chơi tới khi chết, điểm cao nhất thắng.',
-  lobbyText: (r) => (r.players.length < 2 ? 'Chơi một mình — mời bạn bè để đua điểm hoặc chung sân.'
-    : r.cfg.mode === 'solo' ? `${Math.min(4, r.players.length)} người, mỗi người một sân — so điểm.` : `${Math.min(4, r.players.length)} con rắn chung một sân — tranh mồi, đâm nhau là thua.`),
+  title: t('Rắn săn mồi', 'Snake'),
+  sub: t('Snake huyền thoại của Nokia — một mình, đua điểm mỗi người một sân, hoặc chung sân tranh mồi.', 'The legendary Nokia Snake — solo, a score race on separate fields, or one shared arena fighting for food.'),
+  help: t('Phím mũi tên / WASD / 2-4-6-8 hoặc bàn phím trên máy. Ăn mồi để dài ra, con bọ thưởng biến mất sau vài giây. Đâm tường (nếu bật) hoặc đâm thân rắn là thua. Chung sân: đâm vào rắn khác là chết, con sống sót cuối cùng thắng. Sân riêng: ai cũng chơi tới khi chết, điểm cao nhất thắng.',
+    'Arrow keys / WASD / 2-4-6-8 or the on-screen keypad. Eat food to grow; the bonus bug vanishes after a few seconds. Hitting a wall (if on) or a snake body loses. Shared arena: hit another snake and you die, last snake alive wins. Own field: everyone plays until they crash, highest score wins.'),
+  lobbyText: (r) => (r.players.length < 2 ? t('Chơi một mình — mời bạn bè để đua điểm hoặc chung sân.', 'Playing solo — invite friends for a score race or a shared arena.')
+    : r.cfg.mode === 'solo' ? t(`${Math.min(4, r.players.length)} người, mỗi người một sân — so điểm.`, `${Math.min(4, r.players.length)} players, one field each — highest score wins.`)
+      : t(`${Math.min(4, r.players.length)} con rắn chung một sân — tranh mồi, đâm nhau là thua.`, `${Math.min(4, r.players.length)} snakes in one arena — fight for food, crash and you lose.`)),
   lobby(box, r, isHost, setCfg) {
     const seg = document.createElement('div');
     seg.className = 'seg';
-    seg.append('Tốc độ ', ...SPEED_NAMES.map((n, i) => Object.assign(document.createElement('button'), {
+    seg.append(t('Tốc độ ', 'Speed '), ...SPEED_NAMES.map((n, i) => Object.assign(document.createElement('button'), {
       textContent: n, className: r.cfg.speed === i ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ speed: i }),
     })));
     const walls = Object.assign(document.createElement('button'), {
-      textContent: r.cfg.walls ? 'Có tường (đâm là chết)' : 'Không tường (đi xuyên)', disabled: !isHost, onclick: () => setCfg({ walls: !r.cfg.walls }),
+      textContent: r.cfg.walls ? t('Có tường (đâm là chết)', 'Walls (crash = die)') : t('Không tường (đi xuyên)', 'No walls (wrap around)'), disabled: !isHost, onclick: () => setCfg({ walls: !r.cfg.walls }),
     });
     const mode = document.createElement('div');
     mode.className = 'seg';
-    mode.append('Chế độ ', ...[['arena', 'Chung sân'], ['solo', 'Sân riêng']].map(([m, n]) => Object.assign(document.createElement('button'), {
+    mode.append(t('Chế độ ', 'Mode '), ...[['arena', t('Chung sân', 'Shared arena')], ['solo', t('Sân riêng', 'Own field')]].map(([m, n]) => Object.assign(document.createElement('button'), {
       textContent: n, className: (r.cfg.mode ?? 'arena') === m ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ mode: m }),
     })));
     box.append(mode, seg, walls);
   },
   badge: (p, r) => (r.view?.board ?? r.view?.snakes)?.find((s) => s.id === p.id)?.score ?? '',
-  scoreText: (v) => `${v} điểm`,
+  scoreText: (v) => t(`${v} điểm`, `${v} pts`),
   onKey(k, down, r, app) {
     if (down && k !== 'ok' && r?.status === 'playing') app.send({ d: k });
   },
@@ -75,8 +78,8 @@ nokiaApp({
       const eye = { up: [1, 0], down: [1, 2], left: [0, 1], right: [2, 1] }[s.dir];
       if (eye) lcd.px(hx + eye[0], hy + eye[1], '#c7f0d8');
     }
-    if (r.status === 'playing' && !me && r.seats.length) lcd.banner(['DANG XEM']);
-    else if (r.status === 'playing' && v.solo && me && !me.alive) lcd.banner(['HET VAN', 'CHO BAN BE']);
+    if (r.status === 'playing' && !me && r.seats.length) lcd.banner([t('DANG XEM', 'WATCHING')]);
+    else if (r.status === 'playing' && v.solo && me && !me.alive) lcd.banner([t('HET VAN', 'GAME OVER'), t('CHO BAN BE', 'WAIT FOR ALL')]);
   },
 });
 

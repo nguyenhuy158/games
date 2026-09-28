@@ -3,6 +3,7 @@ import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
+import { t, tx } from '../i18n.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -17,7 +18,8 @@ let deviceId = store.get('pk.id');
 if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
 $('#name').value = deviceName();
 addReroll($('#name'));
-const myName = () => $('#name').value.trim() || 'Người chơi';
+const myName = () => $('#name').value.trim() || t('Người chơi', 'Player');
+const botName = (n) => (n === 'Máy' ? t('Máy', 'Bot') : n);
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PIECE = ['', 'x', 'circle'];
@@ -45,7 +47,7 @@ $('#btnSkin').onclick = () => {
   const s = document.body.classList.contains('skin-stone') ? 'paper' : 'stone';
   store.set('cc.skin', s);
   applySkin(s);
-  toast(s === 'stone' ? 'Quân tròn' : 'Quân X / O trên giấy', { icon: 'layers' });
+  toast(s === 'stone' ? t('Quân tròn', 'Round pieces') : t('Quân X / O trên giấy', 'Paper X / O pieces'), { icon: 'layers' });
 };
 
 // ---------- vào / rời phòng ----------
@@ -66,7 +68,7 @@ function leave(msg) {
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
-  if (msg) toast.error(msg);
+  if (msg) toast.error(tx(msg));
 }
 function connect() {
   const q = new URLSearchParams({ id: deviceId, name: myName() });
@@ -76,7 +78,7 @@ function connect() {
   sock.onclose = (e) => {
     if (ws !== sock) return;
     $('#conn').classList.remove('on');
-    if (e.code === 4000) return leave('Bạn đã mở phòng này ở tab/thiết bị khác');
+    if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You opened this room on another tab/device'));
     if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
   };
 }
@@ -93,11 +95,11 @@ function onMsg(m) {
   else if (m.status === 'playing' && was && m.moves > was.moves) play('move');
   if (was?.status === 'playing' && m.status === 'ended') {
     const seat = mySeat();
-    const who = m.winner ? m.names[m.winner - 1] : '';
-    if (!m.winner) toast('Hoà — kín bàn rồi!');
-    else if (seat === m.winner) { play('win'); toast.success(m.why === 'timeout' ? 'Đối thủ hết giờ — bạn thắng!' : 'Bạn thắng!', { icon: 'trophy' }); }
-    else if (seat) { play('lose'); toast.error(m.why === 'timeout' ? 'Hết giờ — bạn thua' : `${who} thắng`); }
-    else { play('win'); toast(`${who} thắng`, { icon: 'trophy' }); }
+    const who = m.winner ? botName(m.names[m.winner - 1]) : '';
+    if (!m.winner) toast(t('Hoà — kín bàn rồi!', 'Draw — board is full!'));
+    else if (seat === m.winner) { play('win'); toast.success(m.why === 'timeout' ? t('Đối thủ hết giờ — bạn thắng!', "Opponent ran out of time — you win!") : t('Bạn thắng!', 'You win!'), { icon: 'trophy' }); }
+    else if (seat) { play('lose'); toast.error(m.why === 'timeout' ? t('Hết giờ — bạn thua', 'Out of time — you lose') : t(`${who} thắng`, `${who} wins`)); }
+    else { play('win'); toast(t(`${who} thắng`, `${who} wins`), { icon: 'trophy' }); }
   }
   render();
 }
@@ -106,7 +108,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning('Mã phòng gồm 4 ký tự');
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
 $('#code').onkeydown = (e) => e.key === 'Enter' && $('#btnJoin').click();
 $('#btnLeave').onclick = () => leave();
@@ -117,11 +119,11 @@ $('#btnResult').onclick = () => { peek = false; render(); };
 // Nút chọn bàn: XO 3×3 đứng đầu (chỉ số trong SIZES giữ nguyên để khớp server).
 const SIZE_ORDER = [2, 0, 1];
 $('#sizePick').append(...SIZE_ORDER.map((i) => el('button', {
-  textContent: SIZES[i] === 3 ? 'XO 3×3' : `${SIZES[i]}×${SIZES[i]}`, onclick: () => send({ t: 'config', size: i }),
+  textContent: SIZES[i] === 3 ? t('XO 3×3', 'Tic-tac-toe 3×3') : `${SIZES[i]}×${SIZES[i]}`, onclick: () => send({ t: 'config', size: i }),
 })));
 $('#blockPick input').onchange = (e) => send({ t: 'config', block: e.target.checked });
 $('#emoBar').append(...EMOS.map(([name, color], i) => {
-  const b = el('button', { title: 'Gửi cảm xúc', onclick: () => send({ t: 'emo', e: i }) }, iconEl(name));
+  const b = el('button', { title: t('Gửi cảm xúc', 'Send reaction'), onclick: () => send({ t: 'emo', e: i }) }, iconEl(name));
   b.style.color = color;
   return b;
 }));
@@ -197,7 +199,7 @@ function render() {
     const lobby = r?.status === 'lobby';
     const id = lobby ? r.players[k - 1]?.id : r?.seats[k - 1];
     if (!side.querySelector('.pc').firstChild) side.querySelector('.pc').append(iconEl(PIECE[k]));
-    side.querySelector('b').textContent = lobby ? r.players[k - 1]?.name ?? 'Máy' : r?.names?.[k - 1] ?? '';
+    side.querySelector('b').textContent = lobby ? r.players[k - 1]?.name ?? t('Máy', 'Bot') : botName(r?.names?.[k - 1]) ?? '';
     side.querySelector('.sc').textContent = id ? r.score[id] ?? 0 : '';
     side.classList.toggle('turn', r?.status === 'playing' && r.turn === k);
     side.classList.toggle('me', !!id && id === deviceId);
@@ -214,7 +216,7 @@ function render() {
   const players = r?.players ?? [];
   if (!r) {
     ov.hidden = false;
-    $('#ovTitle').textContent = 'Đang kết nối…';
+    $('#ovTitle').textContent = t('Đang kết nối…', 'Connecting…');
     $('#ovText').textContent = '';
     $('#btnStart').hidden = true;
   } else if (r.status === 'playing') {
@@ -222,17 +224,17 @@ function render() {
   } else {
     ov.hidden = peek && r.status === 'ended';
     if (r.status === 'lobby') {
-      $('#ovTitle').textContent = `Phòng ${code}`;
+      $('#ovTitle').textContent = t(`Phòng ${code}`, `Room ${code}`);
       const two = players.slice(0, 2).map((p) => p.name);
-      $('#ovText').textContent = (two.length < 2 ? 'Chỉ có mình bạn — sẽ đánh với máy. Mời bạn bè bằng mã QR ở trên nhé.' : `${two[0]} đấu ${two[1]}.`)
-        + (players.length > 2 ? ` ${players.length - 2} người xem.` : '') + (isHost ? '' : ' Chờ chủ phòng bắt đầu.');
+      $('#ovText').textContent = (two.length < 2 ? t('Chỉ có mình bạn — sẽ đánh với máy. Mời bạn bè bằng mã QR ở trên nhé.', "Just you here — you'll play the bot. Invite friends with the QR code above.") : t(`${two[0]} đấu ${two[1]}.`, `${two[0]} vs ${two[1]}.`))
+        + (players.length > 2 ? t(` ${players.length - 2} người xem.`, ` ${players.length - 2} watching.`) : '') + (isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.'));
     } else {
-      const who = r.names[r.winner - 1];
-      $('#ovTitle').replaceChildren(...(r.winner ? [iconEl('trophy'), r.seats[r.winner - 1] === deviceId ? 'Bạn thắng!' : `${who} thắng`] : ['Hoà!']));
-      $('#ovText').textContent = `${r.why === 'timeout' ? 'Đối thủ hết giờ. ' : ''}${r.moves} nước.` + (isHost ? ' Ván mới đổi người đi trước.' : ' Chờ chủ phòng mở ván mới.');
+      const who = botName(r.names[r.winner - 1]);
+      $('#ovTitle').replaceChildren(...(r.winner ? [iconEl('trophy'), r.seats[r.winner - 1] === deviceId ? t('Bạn thắng!', 'You win!') : t(`${who} thắng`, `${who} wins`)] : [t('Hoà!', 'Draw!')]));
+      $('#ovText').textContent = `${r.why === 'timeout' ? t('Đối thủ hết giờ. ', 'Opponent ran out of time. ') : ''}${t(`${r.moves} nước.`, `${r.moves} moves.`)}` + (isHost ? t(' Ván mới đổi người đi trước.', ' New round, starting player alternates.') : t(' Chờ chủ phòng mở ván mới.', ' Waiting for the host to start a new round.'));
     }
     $('#btnStart').hidden = !isHost;
-    $('#btnStart').textContent = r.status === 'lobby' ? 'Bắt đầu' : 'Ván mới';
+    $('#btnStart').textContent = r.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Ván mới', 'New round');
   }
   $('#btnPeek').hidden = r?.status !== 'ended';
   $('#btnResult').hidden = !(r?.status === 'ended' && peek);

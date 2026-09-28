@@ -6,7 +6,7 @@
   <script src="/nozoom.js"></script>
   <script src="/bfcache.js"></script>
   <meta name="theme-color" content="#e4f3f6">
-  <title>Bắn tàu</title>
+  <title data-en="Battleship">Bắn tàu</title>
   <link rel="icon" href="/logos/ban-tau.svg" type="image/svg+xml">
   <link rel="icon" href="/logos/ban-tau-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/logos/ban-tau-192.png">
@@ -19,25 +19,26 @@
 <body>
   <section id="home">
     <div class="card">
-      <h1><a href="/" class="back" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/ban-tau.svg" alt=""> Bắn tàu</h1>
-      <p class="sub">Mỗi bên giấu 5 chiếc tàu trên biển 10×10, thay phiên bắn vào biển đối thủ. Ai đánh chìm hết tàu bên kia trước là thắng.</p>
-      <label>Tên của bạn <input id="name" maxlength="20" autocomplete="off"></label>
-      <button id="btnCreate" class="primary">Tạo phòng mới</button>
+      <span data-lang-toggle style="justify-self: end;"></span>
+      <h1><a href="/" class="back" data-en-title="Other games" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/ban-tau.svg" alt=""> <span data-en="Battleship">Bắn tàu</span></h1>
+      <p class="sub" data-en="Each side hides 5 ships on a 10×10 sea, taking turns firing at the other's sea. Sink the other fleet first to win.">Mỗi bên giấu 5 chiếc tàu trên biển 10×10, thay phiên bắn vào biển đối thủ. Ai đánh chìm hết tàu bên kia trước là thắng.</p>
+      <label><span data-en="Your name">Tên của bạn</span> <input id="name" maxlength="20" autocomplete="off"></label>
+      <button id="btnCreate" class="primary" data-en="Create room">Tạo phòng mới</button>
       <div class="join">
-        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
-        <button id="btnJoin">Vào phòng</button>
+        <input id="code" maxlength="4" placeholder="MÃ PHÒNG" data-en-placeholder="ROOM CODE" autocomplete="off">
+        <button id="btnJoin" data-en="Join room">Vào phòng</button>
       </div>
-      <p class="muted">Ở một mình: tạo phòng rồi bấm Bắt đầu để đấu với máy. Tàu dài 5, 4, 3, 3, 2 ô, không nằm sát nhau — xếp ngẫu nhiên hoặc tự dời, xoay từng chiếc. Bắn trúng được bắn tiếp; mỗi lượt 30 giây.</p>
+      <p class="muted" data-en="Playing alone: create a room then press Start to play the bot. Ships are 5, 4, 3, 3, 2 cells long and can't touch — place them randomly or move and rotate each one yourself. A hit lets you fire again; each turn is 30 seconds.">Ở một mình: tạo phòng rồi bấm Bắt đầu để đấu với máy. Tàu dài 5, 4, 3, 3, 2 ô, không nằm sát nhau — xếp ngẫu nhiên hoặc tự dời, xoay từng chiếc. Bắn trúng được bắn tiếp; mỗi lượt 30 giây.</p>
     </div>
   </section>
 
   <section id="room" hidden>
     <header>
-      <button id="btnLeave" title="Rời phòng"><i data-icon="arrow-left"></i></button>
-      <button id="btnCopy" title="Mời bạn: mã QR / link"><span class="lbl">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
-      <span id="conn" class="dot" title="Kết nối"></span>
+      <button id="btnLeave" data-en-title="Leave room" title="Rời phòng"><i data-icon="arrow-left"></i></button>
+      <button id="btnCopy" data-en-title="Invite: QR code / link" title="Mời bạn: mã QR / link"><span class="lbl" data-en="Room ">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
+      <span id="conn" class="dot" data-en-title="Connection" title="Kết nối"></span>
       <span class="grow"></span>
-      <button id="btnSound" title="Âm thanh"></button>
+      <button id="btnSound" data-en-title="Sound" title="Âm thanh"></button>
     </header>
     <div id="vs">
       <div class="side" data-seat="1"><b></b><span class="sc"></span></div>
@@ -46,9 +47,9 @@
     </div>
     <div id="placeBar" hidden>
       <span id="placeText"></span>
-      <button id="btnRotate" disabled><i data-icon="rotate-ccw"></i> Xoay</button>
-      <button id="btnReroll"><i data-icon="shuffle"></i> Xếp lại</button>
-      <button id="btnReady" class="primary"><i data-icon="circle-check"></i> Sẵn sàng</button>
+      <button id="btnRotate" disabled><i data-icon="rotate-ccw"></i> <span data-en="Rotate">Xoay</span></button>
+      <button id="btnReroll"><i data-icon="shuffle"></i> <span data-en="Reshuffle">Xếp lại</span></button>
+      <button id="btnReady" class="primary"><i data-icon="circle-check"></i> <span data-en="Ready">Sẵn sàng</span></button>
     </div>
     <main id="wrap">
       <div id="seas">
@@ -60,10 +61,10 @@
           <h2 id="ovTitle"></h2>
           <p id="ovText" class="sub"></p>
           <button id="btnStart" class="primary" hidden>Bắt đầu</button>
-          <button id="btnPeek" hidden><i data-icon="eye"></i> Xem biển</button>
+          <button id="btnPeek" hidden><i data-icon="eye"></i> <span data-en="View sea">Xem biển</span></button>
         </div>
       </div>
-      <button id="btnResult" hidden><i data-icon="trophy"></i> Kết quả</button>
+      <button id="btnResult" hidden><i data-icon="trophy"></i> <span data-en="Result">Kết quả</span></button>
     </main>
     <footer id="emoBar"></footer>
   </section>

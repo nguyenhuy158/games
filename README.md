@@ -15,6 +15,8 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 
 Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.html`, thêm file vào `CORE` trong `public/sw.js` (và tăng `CACHE`), test vào `<ten-game>.test.mjs` rồi import ở cuối `logic.test.mjs`.
 
+Song ngữ vi / en (mặc định vi): `public/i18n.js`. JS viết cặp ngay tại chỗ `t('Tạo phòng', 'Create room')`; HTML tĩnh dùng `data-en` / `data-en-html` / `data-en-title` / `data-en-placeholder`; chữ server gửi cho người chơi (lỗi, tiêu đề kết quả) là cặp `['vi', 'en']`, client hiện bằng `tx()`. Chọn bằng nút VI | EN (`langToggle()` hoặc `<span data-lang-toggle>`) hoặc `?lang=en`, nhớ trong localStorage `lang` cho mọi game. Dữ liệu dùng chung server + test (tên con vật, cấp độ, đồ trong tiệm...) giữ tiếng Việt, dịch lúc hiện.
+
 Giao diện không dùng emoji: icon lấy từ lucide (`public/icons.js`, sinh bởi `scripts/icons.mjs`; `iconEl(tên)` cho DOM), toast dùng chung `public/toast.js` bắt chước sonner như chia-keo (`toast()`, `toast.success/.error/.warning`, `{ icon }`).
 
 Tên khách: lần đầu bốc ngẫu nhiên "con vật + tính cách" (`public/names.js`, vd "Mèo Lười", 900 kiểu), dùng chung mọi game. Server chống trùng trong phòng: tên đã có thì thêm số ("Mèo Lười 2", `worker/names.js`).

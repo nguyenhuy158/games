@@ -7,6 +7,7 @@ import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, randomName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
+import { t, tx, langToggle } from '../i18n.js';
 
 hydrateIcons();
 const $ = (s) => document.querySelector(s);
@@ -22,7 +23,14 @@ if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
 const myName = () => deviceName();
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const COLORS = ['#ffd23f', '#5cc8ff', '#ff7ab6', '#7dff9a'];
-const MODE_NAMES = { coop: 'Chung mỏ', versus: 'Tranh vàng' };
+const MODE_NAMES = { coop: t('Chung mỏ', 'Shared Mine'), versus: t('Tranh vàng', 'Gold Rush') };
+const SHOP_EN = {
+  dynamite: { name: 'Dynamite', desc: 'Press ↑ to blow up what you\'re pulling' },
+  strength: { name: 'Power potion', desc: 'Pull faster in later levels' },
+  clover: { name: 'Four-leaf clover', desc: 'Mystery bags give more money' },
+  rockBook: { name: 'Rock book', desc: 'Rocks worth 3x' },
+  polish: { name: 'Polish', desc: 'Diamonds worth x1.5' },
+};
 
 // ---------- tài nguyên ----------
 const atlasImg = new Image();
@@ -114,7 +122,7 @@ function onEvents(evs, minerById, mine) {
     if (e.k === 'boom') { fx.push({ kind: 'boom', x: e.x, y: e.y, t: 0 }); play('boom'); if (isMe) stop('up'); }
     if (e.k === 'tnt') { fx.push({ kind: 'boom', x: e.x, y: e.y, t: 0, scale: 5 }); play('boom'); }
     if (e.k === 'collect') {
-      const text = e.dynamite ? '+1 thuốc nổ' : e.strength ? 'Tăng lực!' : `+$${e.value}`;
+      const text = e.dynamite ? t('+1 thuốc nổ', '+1 dynamite') : e.strength ? t('Tăng lực!', 'Power up!') : `+$${e.value}`;
       fx.push({ kind: 'text', text, x: (m?.x ?? PIVOT[0]) + 30, y: PIVOT[1], t: 0, big: e.value >= 300, color: m?.color });
       if (isMe) {
         stop('up');
@@ -263,11 +271,11 @@ const solo = {
     if (isBest) store.set('dv.best', String(this.money));
     play(isBest ? 'win' : 'hvBad');
     showOverlay(el('div', { className: 'card' },
-      el('h2', { textContent: 'Hết giờ!' }),
-      el('p', { textContent: `Bạn kiếm được $${this.money} / cần $${target} ở màn ${this.level}.` }),
-      el('p', { className: 'muted' }, ...(isBest ? [iconEl('trophy'), ' Kỷ lục mới!'] : [`Kỷ lục: $${best()}`])),
-      el('button', { className: 'primary', textContent: 'Chơi lại', onclick: () => this.start() }),
-      el('button', { textContent: 'Về menu', onclick: menu }),
+      el('h2', { textContent: t('Hết giờ!', 'Time\'s up!') }),
+      el('p', { textContent: t(`Bạn kiếm được $${this.money} / cần $${target} ở màn ${this.level}.`, `You earned $${this.money} / needed $${target} at level ${this.level}.`) }),
+      el('p', { className: 'muted' }, ...(isBest ? [iconEl('trophy'), t(' Kỷ lục mới!', ' New record!')] : [t(`Kỷ lục: $${best()}`, `Best: $${best()}`)])),
+      el('button', { className: 'primary', textContent: t('Chơi lại', 'Play again'), onclick: () => this.start() }),
+      el('button', { textContent: t('Về menu', 'Back to menu'), onclick: menu }),
     ));
   },
   shop() {
@@ -286,11 +294,11 @@ const solo = {
     })));
     renderItems();
     showOverlay(el('div', { className: 'card shop' },
-      el('div', { className: 'shopkeeper' }, spriteEl('man0', 0.7), el('p', { textContent: `Qua màn ${this.level}! Mua gì cho màn ${next} không?` })),
+      el('div', { className: 'shopkeeper' }, spriteEl('man0', 0.7), el('p', { textContent: t(`Qua màn ${this.level}! Mua gì cho màn ${next} không?`, `Cleared level ${this.level}! Buy something for level ${next}?`) })),
       list,
-      el('p', {}, 'Tiền: ', moneyEl, ` · Mục tiêu màn ${next}: $${targetOf(next)}`),
+      el('p', {}, t('Tiền: ', 'Money: '), moneyEl, t(` · Mục tiêu màn ${next}: $${targetOf(next)}`, ` · Level ${next} target: $${targetOf(next)}`)),
       el('button', {
-        className: 'primary', textContent: `Vào màn ${next}`,
+        className: 'primary', textContent: t(`Vào màn ${next}`, `Enter level ${next}`),
         onclick: () => {
           this.buffs = { strength: !!bought.strength, clover: !!bought.clover, rockBook: !!bought.rockBook, polish: !!bought.polish };
           if (bought.dynamite) this.dynamite++;
@@ -305,10 +313,10 @@ const solo = {
     this.screen = 'pause';
     stop('up');
     showOverlay(el('div', { className: 'card' },
-      el('h2', { textContent: 'Tạm dừng' }),
-      el('button', { className: 'primary', textContent: 'Chơi tiếp', onclick: () => { this.screen = 'play'; showOverlay(null); } }),
-      el('button', { textContent: 'Chơi lại từ đầu', onclick: () => this.start() }),
-      el('button', { textContent: 'Về menu', onclick: menu }),
+      el('h2', { textContent: t('Tạm dừng', 'Paused') }),
+      el('button', { className: 'primary', textContent: t('Chơi tiếp', 'Resume'), onclick: () => { this.screen = 'play'; showOverlay(null); } }),
+      el('button', { textContent: t('Chơi lại từ đầu', 'Restart'), onclick: () => this.start() }),
+      el('button', { textContent: t('Về menu', 'Back to menu'), onclick: menu }),
     ));
   },
   view() {
@@ -324,10 +332,10 @@ const solo = {
 };
 
 function shopItem(o, owned, affordable, onBuy) {
-  const def = SHOP[o.key];
+  const def = SHOP[o.key], enDef = SHOP_EN[o.key];
   return el('button', { className: 'shop-item', disabled: owned || !affordable, onclick: onBuy },
-    spriteEl(def.frame), el('strong', { textContent: def.name }), el('small', { textContent: def.desc }),
-    el('em', { textContent: owned ? 'Đã mua' : `$${o.price}` }));
+    spriteEl(def.frame), el('strong', { textContent: t(def.name, enDef.name) }), el('small', { textContent: t(def.desc, enDef.desc) }),
+    el('em', { textContent: owned ? t('Đã mua', 'Bought') : `$${o.price}` }));
 }
 
 // ---------- driver: nhiều người (server chạy vật lý, mình vẽ theo snapshot) ----------
@@ -340,7 +348,7 @@ const net = {
     history.replaceState(null, '', `?r=${this.code}`);
     Object.assign(this, { room: null, world: null, snaps: [], money: null });
     fx = [];
-    showOverlay(el('div', { className: 'card' }, el('h2', { textContent: 'Đang kết nối…' })));
+    showOverlay(el('div', { className: 'card' }, el('h2', { textContent: t('Đang kết nối…', 'Connecting…') })));
     this.connect();
   },
   connect() {
@@ -349,7 +357,7 @@ const net = {
     sock.onmessage = (e) => this.onMsg(JSON.parse(e.data));
     sock.onclose = (e) => {
       if (this.ws !== sock) return;
-      if (e.code === 4000) return this.leave('Bạn đã mở phòng này ở tab khác');
+      if (e.code === 4000) return this.leave(t('Bạn đã mở phòng này ở tab khác', 'You already have this room open in another tab'));
       if (this.code && e.code !== 4001) setTimeout(() => this.ws === sock && this.code && this.connect(), 1000);
     };
   },
@@ -358,7 +366,7 @@ const net = {
     this.ws?.close();
     stop('up');
     history.replaceState(null, '', location.pathname);
-    if (msg) toast(msg);
+    if (msg) toast(tx(msg));
     menu();
   },
   send(m) { if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(m)); },
@@ -458,7 +466,7 @@ const net = {
       const m = live[p.id];
       return {
         key: p.id, name: p.name, color: this.color(p.id), off: !p.online,
-        sub: `$${this.money?.players?.[p.id] ?? p.money} · nổ ${m?.dynamite ?? p.dynamite}`,
+        sub: t(`$${this.money?.players?.[p.id] ?? p.money} · nổ ${m?.dynamite ?? p.dynamite}`, `$${this.money?.players?.[p.id] ?? p.money} · ${m?.dynamite ?? p.dynamite} dynamite`),
         badge: m?.mode === 'in' && m.held ? { icon: 'pickaxe' } : m?.mode === 'out' ? { icon: 'arrow-down' } : '',
       };
     }));
@@ -476,11 +484,11 @@ const net = {
     if (box.dataset.key === key) return; // khỏi dựng lại DOM mỗi khung hình
     box.dataset.key = key;
     box.replaceChildren(...ps.map((p) => {
-      const li = el('li', {}, el('i', { className: 'dot' }), `${p.name}${p.id === deviceId ? ' (bạn)' : ''} `, el('b', { textContent: `$${p.money}` }));
+      const li = el('li', {}, el('i', { className: 'dot' }), `${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''} `, el('b', { textContent: `$${p.money}` }));
       li.style.setProperty('--c', this.color(p.id));
       if (!p.online) li.classList.add('off');
       return li;
-    }), ...(this.me()?.spec ? [el('li', { className: 'spec' }, iconEl('eye'), ' Bạn đang xem')] : []));
+    }), ...(this.me()?.spec ? [el('li', { className: 'spec' }, iconEl('eye'), t(' Bạn đang xem', ' You are spectating'))] : []));
   },
 
   renderOverlay() {
@@ -489,11 +497,11 @@ const net = {
     const isHost = r.host === deviceId;
     const players = r.players.filter((p) => !p.spec);
     const playerList = el('ul', { className: 'plist' }, ...r.players.map((p) => el('li', { className: p.online ? '' : 'off' },
-      p.id === r.host ? iconEl('crown') : '', p.spec ? iconEl('eye') : '', ` ${p.name}${p.id === deviceId ? ' (bạn)' : ''}`)));
+      p.id === r.host ? iconEl('crown') : '', p.spec ? iconEl('eye') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`)));
     const copy = el('button', {
       onclick: () => invite(`${location.origin}/dao-vang/?r=${this.code}`, this.code),
-    }, iconEl('qr-code'), ` Mời: phòng ${this.code}`);
-    const leave = el('button', { textContent: 'Rời phòng', onclick: () => this.leave() });
+    }, iconEl('qr-code'), t(` Mời: phòng ${this.code}`, ` Invite: room ${this.code}`));
+    const leave = el('button', { textContent: t('Rời phòng', 'Leave room'), onclick: () => this.leave() });
 
     if (r.status === 'playing') return showOverlay(null);
     if (r.status === 'lobby' || r.status === 'ended') {
@@ -501,20 +509,20 @@ const net = {
         textContent: v, className: r.mode === k ? 'on' : '', disabled: !isHost, onclick: () => this.send({ t: 'config', mode: k }),
       })));
       const desc = r.mode === 'coop'
-        ? 'Cả phòng chung một mỏ, gom chung tiền. Mục tiêu tăng theo số người — không đủ là thua cả đội.'
-        : `Chung một mỏ, ví riêng. Tranh nhau vàng trong ${r.versusLevels} màn, ai nhiều tiền nhất thắng.`;
+        ? t('Cả phòng chung một mỏ, gom chung tiền. Mục tiêu tăng theo số người — không đủ là thua cả đội.', 'Everyone shares one mine and one purse. The target grows with more players — falling short loses for the whole team.')
+        : t(`Chung một mỏ, ví riêng. Tranh nhau vàng trong ${r.versusLevels} màn, ai nhiều tiền nhất thắng.`, `Shared mine, separate wallets. Race for gold over ${r.versusLevels} levels — whoever has the most money wins.`);
       const result = r.status === 'ended' && r.result ? el('div', { className: 'result' },
-        el('h2', {}, ...(r.result.winner ? [iconEl('trophy'), r.result.winner === deviceId ? ' Bạn thắng!' : ` ${this.name(r.result.winner)} thắng`] : [`Thua ở màn ${r.result.level}`])),
-        r.result.target ? el('p', { className: 'muted', textContent: `Quỹ chung $${r.result.team} / cần $${r.result.target}` }) : '',
+        el('h2', {}, ...(r.result.winner ? [iconEl('trophy'), r.result.winner === deviceId ? t(' Bạn thắng!', ' You win!') : t(` ${this.name(r.result.winner)} thắng`, ` ${this.name(r.result.winner)} wins`)] : [t(`Thua ở màn ${r.result.level}`, `Lost at level ${r.result.level}`)])),
+        r.result.target ? el('p', { className: 'muted', textContent: t(`Quỹ chung $${r.result.team} / cần $${r.result.target}`, `Team fund $${r.result.team} / needed $${r.result.target}`) }) : '',
         el('ol', {}, ...r.result.ranking.map((x) => el('li', { textContent: `${x.name}: $${x.money}` }))),
       ) : '';
       return showOverlay(el('div', { className: 'card' },
         result,
-        el('h2', { textContent: `Phòng ${this.code}` }),
+        el('h2', { textContent: t(`Phòng ${this.code}`, `Room ${this.code}`) }),
         modes, el('p', { className: 'muted', textContent: desc }),
         playerList,
-        el('p', { className: 'muted', textContent: `${players.length}/4 thợ mỏ.` + (isHost ? '' : ' Chờ chủ phòng bắt đầu.') }),
-        isHost ? el('button', { className: 'primary', textContent: r.status === 'ended' ? 'Chơi ván mới' : 'Bắt đầu', onclick: () => this.send({ t: 'start' }) }) : '',
+        el('p', { className: 'muted', textContent: t(`${players.length}/4 thợ mỏ.`, `${players.length}/4 miners.`) + (isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.')) }),
+        isHost ? el('button', { className: 'primary', textContent: r.status === 'ended' ? t('Chơi ván mới', 'Play again') : t('Bắt đầu', 'Start'), onclick: () => this.send({ t: 'start' }) }) : '',
         el('div', { className: 'row' }, copy, leave),
       ));
     }
@@ -527,14 +535,14 @@ const net = {
       tickLeft();
       clearInterval(this.shopTick);
       this.shopTick = setInterval(tickLeft, 500);
-      const readyList = el('p', { className: 'muted', textContent: `Sẵn sàng: ${players.filter((p) => p.ready).map((p) => p.name).join(', ') || '—'}` });
+      const readyList = el('p', { className: 'muted', textContent: t(`Sẵn sàng: ${players.filter((p) => p.ready).map((p) => p.name).join(', ') || '—'}`, `Ready: ${players.filter((p) => p.ready).map((p) => p.name).join(', ') || '—'}`) });
       return showOverlay(el('div', { className: 'card shop' },
-        el('div', { className: 'shopkeeper' }, spriteEl('man0', 0.7), el('p', { textContent: `Qua màn ${r.level}! ${coop ? 'Quỹ chung' : 'Ví của bạn'}: $${wallet}` })),
-        me?.spec ? el('p', { textContent: 'Bạn đang xem — ván sau được chơi.' }) : el('div', { className: 'shop-items' },
+        el('div', { className: 'shopkeeper' }, spriteEl('man0', 0.7), el('p', { textContent: t(`Qua màn ${r.level}! ${coop ? 'Quỹ chung' : 'Ví của bạn'}: $${wallet}`, `Cleared level ${r.level}! ${coop ? 'Team fund' : 'Your wallet'}: $${wallet}`) })),
+        me?.spec ? el('p', { textContent: t('Bạn đang xem — ván sau được chơi.', 'You are spectating — you\'ll play next round.') }) : el('div', { className: 'shop-items' },
           ...offer.map((o) => shopItem(o, me.bought?.[o.key], wallet >= o.price, () => { play('scoreAdd'); this.send({ t: 'buy', key: o.key }); }))),
-        el('p', {}, 'Màn tiếp theo bắt đầu sau ', left, ' giây'),
+        el('p', {}, t('Màn tiếp theo bắt đầu sau ', 'Next level starts in '), left, t(' giây', ' sec')),
         readyList,
-        me && !me.spec ? el('button', { className: 'primary', textContent: me.ready ? 'Đã sẵn sàng' : 'Sẵn sàng', disabled: me.ready, onclick: () => this.send({ t: 'ready' }) }) : '',
+        me && !me.spec ? el('button', { className: 'primary', textContent: me.ready ? t('Đã sẵn sàng', 'Ready') : t('Sẵn sàng', 'Ready up'), disabled: me.ready, onclick: () => this.send({ t: 'ready' }) }) : '',
       ));
     }
   },
@@ -548,26 +556,27 @@ function menu() {
   $('#scores').hidden = true;
   panel.update([]);
   stop('up');
-  const name = el('input', { value: myName(), maxLength: 20, placeholder: 'Tên của bạn' });
+  const name = el('input', { value: myName(), maxLength: 20, placeholder: t('Tên của bạn', 'Your name') });
   const saveName = () => store.set('pk.name', name.value.trim() || randomName());
-  const code = el('input', { maxLength: 4, placeholder: 'MÃ PHÒNG', className: 'code' });
+  const code = el('input', { maxLength: 4, placeholder: t('MÃ PHÒNG', 'ROOM CODE'), className: 'code' });
   const joinCode = () => {
     const c = code.value.trim().toUpperCase();
-    if (!/^[A-Z0-9]{4}$/.test(c)) return toast.warning('Mã phòng gồm 4 ký tự');
+    if (!/^[A-Z0-9]{4}$/.test(c)) return toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
     saveName();
     startNet(c);
   };
   code.onkeydown = (e) => { if (e.key === 'Enter') joinCode(); };
   showOverlay(el('div', { className: 'card menu' },
+    el('div', { className: 'row', style: 'justify-content:flex-end' }, langToggle()),
     spriteEl('goldMiner', 0.8),
     spriteEl('goldBig_0001', 0.5),
-    el('p', { className: 'muted', textContent: 'Bấm / chạm (hoặc ↓, Space) để thả móc. Có thuốc nổ thì bấm ↑ để phá vật đang kéo.' }),
-    el('button', { className: 'primary', textContent: 'Chơi một mình', onclick: () => { saveName(); driver = solo; solo.start(); } }),
-    el('label', { className: 'field' }, 'Tên của bạn', addReroll(name)),
-    el('button', { onclick: () => { saveName(); startNet(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')); } }, iconEl('users'), ' Tạo phòng chơi nhiều người'),
-    el('div', { className: 'row' }, code, el('button', { textContent: 'Vào phòng', onclick: joinCode })),
-    el('p', { className: 'muted', textContent: best() ? `Kỷ lục chơi một mình: $${best()}` : '' }),
-    el('a', { className: 'link', href: '/', textContent: '← Các game khác' }),
+    el('p', { className: 'muted', textContent: t('Bấm / chạm (hoặc ↓, Space) để thả móc. Có thuốc nổ thì bấm ↑ để phá vật đang kéo.', 'Click / tap (or ↓, Space) to drop the hook. With dynamite, press ↑ to blow up what you\'re pulling.') }),
+    el('button', { className: 'primary', textContent: t('Chơi một mình', 'Play solo'), onclick: () => { saveName(); driver = solo; solo.start(); } }),
+    el('label', { className: 'field' }, t('Tên của bạn', 'Your name'), addReroll(name)),
+    el('button', { onclick: () => { saveName(); startNet(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')); } }, iconEl('users'), t(' Tạo phòng chơi nhiều người', ' Create a multiplayer room')),
+    el('div', { className: 'row' }, code, el('button', { textContent: t('Vào phòng', 'Join room'), onclick: joinCode })),
+    el('p', { className: 'muted', textContent: best() ? t(`Kỷ lục chơi một mình: $${best()}`, `Solo best: $${best()}`) : '' }),
+    el('a', { className: 'link', href: '/', textContent: t('← Các game khác', '← Other games') }),
   ));
 }
 function startNet(c) {

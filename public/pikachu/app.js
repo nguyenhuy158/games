@@ -4,6 +4,7 @@ import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { createPanel, drawGrid } from '../panel.js';
+import { t, tx } from '../i18n.js';
 
 hydrateIcons();
 
@@ -25,7 +26,7 @@ const HINTS = 3;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 // Cảm xúc = icon lucide + màu; số lượng khớp EMOJI_COUNT ở worker (gửi theo chỉ số).
 const EMOJIS = [['thumbs-up', '#5cc8ff'], ['laugh', '#ffd23f'], ['frown', '#c49bff'], ['flame', '#ff7a3d'], ['heart', '#ff5d7a']];
-const MODE_NAMES = { coop: 'Chơi chung', race: 'Đua nhau', team: 'Đội 2v2' };
+const MODE_NAMES = { coop: t('Chơi chung', 'Together'), race: t('Đua nhau', 'Race'), team: t('Đội 2v2', 'Team 2v2') };
 const MODE_ICONS = { coop: 'users', race: 'swords', team: 'flag' };
 const TEAM_COLORS = { A: '#ff7a59', B: '#5cc8ff' };
 const PEER_COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b', '#6bf0e0', '#ff9b9b'];
@@ -56,7 +57,7 @@ const colorOf = (id) => {
   return PEER_COLORS[Math.max(0, room?.players.findIndex((x) => x.id === id) ?? 0) % PEER_COLORS.length];
 };
 const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '—';
-const unitName = (uid) => (uid === 'all' ? 'Cả phòng' : uid === 'A' || uid === 'B' ? `Đội ${uid}` : nameOf(uid));
+const unitName = (uid) => (uid === 'all' ? t('Cả phòng', 'Whole room') : uid === 'A' || uid === 'B' ? t(`Đội ${uid}`, `Team ${uid}`) : nameOf(uid));
 
 // ---------- âm thanh ----------
 let soundOn = store.get('pk.sound') !== '0';
@@ -106,17 +107,17 @@ function connect() {
   sock.onclose = (e) => {
     if (ws !== sock) return;
     $('#conn').classList.remove('on');
-    if (e.code === 4000) return leave('Bạn đã mở phòng này ở tab/thiết bị khác');
+    if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You opened this room in another tab/device'));
     if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), navigator.onLine ? 1000 : 3000);
   };
 }
 const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
-addEventListener('offline', () => toast.error('Mất mạng — sẽ tự kết nối lại'));
+addEventListener('offline', () => toast.error(t('Mất mạng — sẽ tự kết nối lại', 'Offline — will reconnect automatically')));
 
 function onMsg(m) {
   switch (m.t) {
     case 'error':
-      return leave(m.msg);
+      return leave(tx(m.msg));
     case 'state': {
       const was = room;
       room = m;
@@ -138,11 +139,11 @@ function onMsg(m) {
       if (m.why === 'start') { hints = HINTS; play('start'); }
       if (m.why === 'level') {
         const lv = (unit()?.level ?? 1) + 1; // state với màn mới tới ngay sau
-        banner(`Màn ${lv}/${LEVELS}`, SLIDE_ICON[SLIDES[lv - 1]] ? `Ô dồn ${SLIDE_ICON[SLIDES[lv - 1]]}` : '');
+        banner(t(`Màn ${lv}/${LEVELS}`, `Level ${lv}/${LEVELS}`), SLIDE_ICON[SLIDES[lv - 1]] ? t(`Ô dồn ${SLIDE_ICON[SLIDES[lv - 1]]}`, `Tiles shift ${SLIDE_ICON[SLIDES[lv - 1]]}`) : '');
         play('start');
       }
-      if (m.why === 'stuck') toast.warning('Hết nước — tự xáo lại, +10 giây', { icon: 'shuffle' });
-      if (m.why === 'shuffle' && m.by !== deviceId) toast(`${nameOf(m.by)} vừa đổi vị trí`, { icon: 'shuffle' });
+      if (m.why === 'stuck') toast.warning(t('Hết nước — tự xáo lại, +10 giây', 'No moves — auto-shuffled, +10 seconds'), { icon: 'shuffle' });
+      if (m.why === 'shuffle' && m.by !== deviceId) toast(t(`${nameOf(m.by)} vừa đổi vị trí`, `${nameOf(m.by)} just shuffled`), { icon: 'shuffle' });
       break;
     case 'match': {
       if (m.unit !== view()) return;
@@ -188,7 +189,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning('Mã phòng gồm 4 ký tự');
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
@@ -196,7 +197,7 @@ $('#btnStart').onclick = () => send({ t: 'start' });
 for (const b of document.querySelectorAll('#modePick button')) b.onclick = () => send({ t: 'config', mode: b.dataset.mode });
 for (const b of document.querySelectorAll('#tilesPick button')) b.onclick = () => send({ t: 'config', tiles: b.dataset.tiles });
 $('#sizePick').replaceChildren(...SIZES.map(([c, r], i) => el('button', {
-  textContent: `${c}×${r}`, title: `${(c * r) / 2} cặp`, onclick: () => send({ t: 'config', size: i }),
+  textContent: `${c}×${r}`, title: t(`${(c * r) / 2} cặp`, `${(c * r) / 2} pairs`), onclick: () => send({ t: 'config', size: i }),
 })));
 $('#btnCopy').onclick = () => invite(`${location.origin}/pikachu/?r=${code}`, code);
 $('#btnShuffle').onclick = () => send({ t: 'shuffle' });
@@ -209,7 +210,7 @@ $('#btnHint').onclick = () => {
   for (const [r, c] of p) cellEl(r, c)?.classList.add('hint');
 };
 $('#emoBar').replaceChildren(...EMOJIS.map(([name, color], i) => {
-  const b = el('button', { title: 'Gửi cảm xúc', onclick: () => { send({ t: 'emo', e: i }); emoFx(deviceId, i); } }, iconEl(name));
+  const b = el('button', { title: t('Gửi cảm xúc', 'Send reaction'), onclick: () => { send({ t: 'emo', e: i }); emoFx(deviceId, i); } }, iconEl(name));
   b.style.color = color;
   return b;
 }));
@@ -366,7 +367,7 @@ function setSel(v) {
 function ping(r, c) {
   if (!shared() || !playing()) return;
   send({ t: 'ping', a: [r, c] });
-  pingFx([r, c], colorOf(deviceId), 'Bạn');
+  pingFx([r, c], colorOf(deviceId), t('Bạn', 'You'));
 }
 
 function pick(r, c) {
@@ -428,7 +429,7 @@ function renderPanel() {
     const members = room.players.filter((p) => p.unit === uid);
     tiles.push({
       key: `u:${uid}`, name: unitName(uid), color: colorOf(members[0]?.id ?? uid),
-      sub: `${u.score}đ · M${u.level} · còn ${u.left}`,
+      sub: t(`${u.score}đ · M${u.level} · còn ${u.left}`, `${u.score}pt · L${u.level} · ${u.left} left`),
       badge: u.done === 'clear' ? { icon: 'trophy' } : u.done ? { icon: 'hourglass' } : u.combo > 1 ? `x${u.combo}` : '',
       off: members.length > 0 && members.every((p) => !p.online),
       version: `${miniVer[uid] ?? 0}|${room.tiles}|${spriteImg().complete}`, // sprite tải xong -> vẽ lại
@@ -440,7 +441,7 @@ function renderPanel() {
     if (p.spec || p.id === deviceId || p.unit !== mine) continue;
     tiles.push({
       key: `p:${p.id}`, name: p.name, color: colorOf(p.id), off: !p.online,
-      sub: `${p.score}đ${peers[p.id] ? ' · đang chọn' : ''}`,
+      sub: t(`${p.score}đ${peers[p.id] ? ' · đang chọn' : ''}`, `${p.score}pt${peers[p.id] ? ' · selecting' : ''}`),
     });
   }
   panel.update(tiles);
@@ -461,7 +462,7 @@ function render() {
   if (room) $('#modeTag').innerHTML = icon(MODE_ICONS[room.mode]) + `<span class="lbl">${MODE_NAMES[room.mode]}</span>`;
   $('#levelTag').hidden = !(room?.status === 'playing' && u);
   if (u) {
-    $('#levelTag').replaceChildren(el('span', { className: 'lbl', textContent: 'Màn ' }), `${u.level}/${LEVELS}${SLIDE_ICON[SLIDES[u.level - 1]] ? ' ' + SLIDE_ICON[SLIDES[u.level - 1]] : ''}`);
+    $('#levelTag').replaceChildren(el('span', { className: 'lbl', textContent: t('Màn ', 'Level ') }), `${u.level}/${LEVELS}${SLIDE_ICON[SLIDES[u.level - 1]] ? ' ' + SLIDE_ICON[SLIDES[u.level - 1]] : ''}`);
   }
 
   // Chip người chơi
@@ -476,10 +477,10 @@ function render() {
     if (p.spec) li.innerHTML = icon('eye');
     else if (p.id === room.host) li.innerHTML = icon('crown');
     if (room.mode === 'team' && !p.spec) li.append(el('i', { className: 'team', textContent: p.team }));
-    li.append(`${p.name}${p.id === deviceId ? ' (bạn)' : ''}`);
+    li.append(`${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`);
     if (!p.spec) li.append(' · ', el('b', { textContent: p.score }));
     const pu = room.units[p.unit];
-    if (room.mode === 'race' && pu && room.status !== 'lobby') li.append(` · M${pu.level} còn ${pu.left}`);
+    if (room.mode === 'race' && pu && room.status !== 'lobby') li.append(t(` · M${pu.level} còn ${pu.left}`, ` · L${pu.level}, ${pu.left} left`));
     return li;
   }));
 
@@ -487,8 +488,8 @@ function render() {
   const units = Object.keys(room?.units ?? {});
   $('#specBar').hidden = !(room?.status === 'playing' && mine?.spec);
   if (!$('#specBar').hidden) {
-    $('#specBar').replaceChildren(el('span', { innerHTML: icon('eye') + ' Đang xem' }), ...units.map((uid) => el('button', {
-      textContent: `${unitName(uid)} · M${room.units[uid].level}`,
+    $('#specBar').replaceChildren(el('span', { innerHTML: icon('eye') + t(' Đang xem', ' Watching') }), ...units.map((uid) => el('button', {
+      textContent: t(`${unitName(uid)} · M${room.units[uid].level}`, `${unitName(uid)} · L${room.units[uid].level}`),
       className: uid === view() ? 'on' : '',
       onclick: () => { watchUnit = uid; send({ t: 'watch', unit: uid }); render(); },
     })));
@@ -509,15 +510,15 @@ function render() {
 
   if (!room) {
     ov.hidden = false;
-    setTitle(null, 'Đang kết nối…');
+    setTitle(null, t('Đang kết nối…', 'Connecting…'));
     $('#ovText').textContent = '';
     $('#btnStart').hidden = true;
   } else if (room.status === 'playing') {
     ov.hidden = !!mine?.unit && !u?.done;
     if (!ov.hidden) {
       // Bàn mình đã xong (phá đảo / hết giờ) nhưng bàn khác còn chơi, hoặc là khán giả.
-      setTitle(u?.done === 'clear' ? 'trophy' : null, mine?.spec ? 'Bạn đang xem' : u?.done === 'clear' ? 'Phá đảo!' : 'Hết giờ rồi…');
-      $('#ovText').textContent = mine?.spec ? 'Ván sau bạn sẽ được chơi.' : 'Chờ các bàn khác chơi xong nhé.';
+      setTitle(u?.done === 'clear' ? 'trophy' : null, mine?.spec ? t('Bạn đang xem', 'You are watching') : u?.done === 'clear' ? t('Phá đảo!', 'Cleared!') : t('Hết giờ rồi…', 'Time is up…'));
+      $('#ovText').textContent = mine?.spec ? t('Ván sau bạn sẽ được chơi.', 'You will play next round.') : t('Chờ các bàn khác chơi xong nhé.', 'Wait for the other boards to finish.');
       $('#btnStart').hidden = true;
       if (mine?.spec) ov.hidden = true;
     }
@@ -525,24 +526,28 @@ function render() {
     ov.hidden = false;
     const n = room.players.filter((p) => !p.spec).length;
     if (room.status === 'lobby') {
-      setTitle(null, `Phòng ${code}`);
-      $('#ovText').textContent = `${n}/4 người. ` + {
+      setTitle(null, t(`Phòng ${code}`, `Room ${code}`));
+      $('#ovText').textContent = t(`${n}/4 người. `, `${n}/4 players. `) + t({
         coop: 'Cả phòng chung một bàn, cùng qua 5 màn.',
         race: 'Mỗi người một bàn cùng đề, ai qua 5 màn trước thắng.',
         team: 'Chia 2 đội, mỗi đội chung một bàn, đội nào qua 5 màn trước thắng.',
-      }[room.mode] + (isHost ? '' : ' Chờ chủ phòng bắt đầu.');
+      }[room.mode], {
+        coop: 'Whole room shares one board, clear 5 levels together.',
+        race: 'Everyone has their own board with the same layout, first to clear 5 levels wins.',
+        team: 'Split into 2 teams, each team shares one board, first team to clear 5 levels wins.',
+      }[room.mode]) + (isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for host to start.'));
     } else {
       const w = room.winner, wu = room.units[w];
-      if (room.mode === 'coop') setTitle(w ? 'trophy' : null, w ? `Cả đội phá đảo ${LEVELS} màn!` : `Hết giờ ở màn ${room.units.all?.level ?? 1}`);
-      else if (w === mine?.unit) setTitle('trophy', room.mode === 'team' ? `Đội ${w} (đội bạn) thắng!` : 'Bạn thắng!');
-      else setTitle('trophy', `${unitName(w)} thắng`);
-      const scores = Object.entries(room.units).map(([uid, x]) => `${unitName(uid)}: ${x.score} điểm, màn ${x.level}`);
+      if (room.mode === 'coop') setTitle(w ? 'trophy' : null, w ? t(`Cả đội phá đảo ${LEVELS} màn!`, `Team cleared all ${LEVELS} levels!`) : t(`Hết giờ ở màn ${room.units.all?.level ?? 1}`, `Time's up at level ${room.units.all?.level ?? 1}`));
+      else if (w === mine?.unit) setTitle('trophy', room.mode === 'team' ? t(`Đội ${w} (đội bạn) thắng!`, `Team ${w} (your team) wins!`) : t('Bạn thắng!', 'You win!'));
+      else setTitle('trophy', t(`${unitName(w)} thắng`, `${unitName(w)} wins`));
+      const scores = Object.entries(room.units).map(([uid, x]) => t(`${unitName(uid)}: ${x.score} điểm, màn ${x.level}`, `${unitName(uid)}: ${x.score} pts, level ${x.level}`));
       $('#ovScore').hidden = false;
       $('#ovScore').textContent = scores.join(' · ');
-      $('#ovText').textContent = (wu?.done === 'clear' || !w ? '' : 'Không ai phá đảo — xét màn rồi điểm. ') + (isHost ? 'Ván mới?' : 'Chờ chủ phòng mở ván mới.');
+      $('#ovText').textContent = (wu?.done === 'clear' || !w ? '' : t('Không ai phá đảo — xét màn rồi điểm. ', 'No one cleared it — ranked by level then score. ')) + (isHost ? t('Ván mới?', 'New round?') : t('Chờ chủ phòng mở ván mới.', 'Waiting for host to start a new round.'));
     }
     $('#btnStart').hidden = !isHost;
-    $('#btnStart').textContent = room.status === 'lobby' ? 'Bắt đầu' : 'Chơi ván mới';
+    $('#btnStart').textContent = room.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Chơi ván mới', 'New round');
   }
 }
 
@@ -550,12 +555,12 @@ function renderTeams(show) {
   const box = $('#teamPick');
   box.hidden = !show;
   if (!show) return;
-  box.replaceChildren(...['A', 'B'].map((t) => {
-    const members = room.players.filter((p) => !p.spec && p.team === t);
-    const col = el('div', { className: 'team-col' }, el('b', { textContent: `Đội ${t}` }));
-    col.style.setProperty('--c', TEAM_COLORS[t]);
-    for (const p of members) col.append(el('span', { textContent: p.name + (p.id === deviceId ? ' (bạn)' : '') }));
-    if (me()?.team !== t) col.append(el('button', { textContent: 'Vào đội này', onclick: () => send({ t: 'team', team: t }) }));
+  box.replaceChildren(...['A', 'B'].map((team) => {
+    const members = room.players.filter((p) => !p.spec && p.team === team);
+    const col = el('div', { className: 'team-col' }, el('b', { textContent: t(`Đội ${team}`, `Team ${team}`) }));
+    col.style.setProperty('--c', TEAM_COLORS[team]);
+    for (const p of members) col.append(el('span', { textContent: p.name + (p.id === deviceId ? t(' (bạn)', ' (you)') : '') }));
+    if (me()?.team !== team) col.append(el('button', { textContent: t('Vào đội này', 'Join this team'), onclick: () => send({ t: 'team', team }) }));
     return col;
   }));
 }
@@ -591,10 +596,10 @@ async function loadTop() {
     list.replaceChildren(...(rows.length ? rows.map((x) => el('li', {},
       el('span', { textContent: x.names }),
       el('b', { textContent: x.score }),
-      el('small', { textContent: x.cleared ? ` phá đảo` : ` màn ${x.level}` }),
-    )) : [el('p', { className: 'muted', textContent: 'Chưa có ai — chơi ván đầu đi!' })]));
+      el('small', { textContent: x.cleared ? t(` phá đảo`, ` cleared`) : t(` màn ${x.level}`, ` level ${x.level}`) }),
+    )) : [el('p', { className: 'muted', textContent: t('Chưa có ai — chơi ván đầu đi!', 'No one yet — play the first round!') })]));
   } catch {
-    list.replaceChildren(el('p', { className: 'muted', textContent: 'Không tải được (mất mạng?)' }));
+    list.replaceChildren(el('p', { className: 'muted', textContent: t('Không tải được (mất mạng?)', "Couldn't load (offline?)") }));
   }
 }
 

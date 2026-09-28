@@ -40,7 +40,7 @@ export default {
       const ranks = g.solo ? [...all].sort((a, b) => b.score - a.score) : ranking(g);
       ctx.end({
         mode: g.solo ? 'race' : multi ? 'multi' : 'solo', level: ctx.cfg.speed + 1,
-        title: multi ? null : `${all[0].score} điểm`,
+        title: multi ? null : [`${all[0].score} điểm`, `${all[0].score} points`],
         ranks: ranks.map((s, i) => ({ id: s.id, score: s.score, won: multi && i === 0 && (!g.solo || s.score > ranks[1].score) })),
       });
     }
