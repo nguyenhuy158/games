@@ -1,0 +1,52 @@
+/* Cờ gánh: chiếu cói, bàn gỗ kẻ mực, quân tròn kiểu cờ tướng (đỏ / đen). Ghi đè màu của nokia.css. */
+:root {
+  --bg: #3b2615; --panel: #fff6e6; --line: #e6cfa9; --text: #3b2416; --muted: #8a6a4e; --accent: #b23a26;
+  --good: #2e9e5b; --bad: #d9412b; --ink: #3a2412;
+}
+body {
+  background:
+    radial-gradient(ellipse at 50% 45%, #0000 40%, #1a0e0588 100%) fixed,
+    repeating-linear-gradient(90deg, #6b4a27 0 6px, #7a5630 6px 12px),
+    #6b4a27;
+  color: #fff6e6;
+}
+.card, #players li, .bar { color: var(--text); }
+input { background: #fff; color: var(--text); }
+button.primary { color: #fff; }
+#overlay { background: #1a0e0599; }
+header button { color: var(--text); }
+
+.board-stage { width: 100%; display: grid; place-items: center; }
+.cg { --w: min(94vw, 560px, calc(100dvh - 250px)); width: var(--w); display: grid; gap: 10px; }
+.board { position: relative; width: 100%; aspect-ratio: 1; }
+.board > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.board .wood { fill: #d9a766; stroke: #7a4b22; stroke-width: 8; }
+.board path { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.board svg { background: none; filter: drop-shadow(0 8px 18px #0008); }
+
+.pt, .pc { position: absolute; transform: translate(-50%, -50%); padding: 0; border: 0; border-radius: 50%; }
+.pt { width: 7%; aspect-ratio: 1; background: none; pointer-events: none; }
+.pt.to { pointer-events: auto; cursor: pointer; background: radial-gradient(circle, #2e9e5bcc 0 32%, #2e9e5b33 34% 60%, #0000 62%); animation: breathe 1.4s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .55; } }
+.pc { width: 13.5%; aspect-ratio: 1; z-index: 2; box-shadow: 0 3px 0 #0006, 0 5px 10px #0005; }
+.pc::before { content: ''; position: absolute; inset: 12%; border-radius: 50%; border: 2px solid #fff8; }
+.pc.p1 { background: radial-gradient(circle at 35% 30%, #ff8a6a, #c8321c 55%, #8a1d10); }
+.pc.p2 { background: radial-gradient(circle at 35% 30%, #6b7380, #2b3038 55%, #121418); }
+.pc:disabled, .pt:disabled { opacity: 1; cursor: default; } /* nokia.css làm mờ nút disabled */
+.pc.can { cursor: pointer; }
+.pc.can:hover { filter: brightness(1.12); }
+.pc.sel { box-shadow: 0 0 0 4px #ffe07a, 0 3px 0 #0006, 0 5px 10px #0005; }
+.pc.last::after { content: ''; position: absolute; inset: -9%; border-radius: 50%; border: 3px dashed #ffe07acc; }
+.pc.slide { animation: slide .28s ease-out; }
+@keyframes slide { from { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))); } }
+.pc.flip { animation: flip .55s ease-in-out .2s backwards; }
+@keyframes flip { 0% { transform: translate(-50%, -50%) rotateY(0); filter: hue-rotate(0); } 50% { transform: translate(-50%, -50%) rotateY(90deg) scale(1.15); } 100% { transform: translate(-50%, -50%) rotateY(0); } }
+
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px; border-radius: 12px; background: #fff6e6e8; box-shadow: 0 4px 12px #0004; font-size: 14px; }
+.bar.turn { box-shadow: 0 0 0 3px #ffe07a, 0 4px 12px #0004; }
+.bar .who { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar b { padding: 1px 8px; border-radius: 8px; background: var(--accent); color: #fff; white-space: nowrap; }
+.chip { display: inline-block; width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.chip.p1 { background: #c8321c; }
+.chip.p2 { background: #2b3038; }
+.hint { margin: 0; text-align: center; color: #fff6e6; font-weight: 600; text-shadow: 0 1px 3px #0008; min-height: 1.4em; }

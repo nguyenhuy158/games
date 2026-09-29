@@ -9,7 +9,7 @@ const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.crea
 // slug -> [tên vi, tên en, logo]. Nokia dùng logo theo tên game, Ô ăn quan theo slug.
 const GAMES = {
   pikachu: ['Pikachu nối thú', 'Pikachu Onet'], 'do-min': ['Dò mìn', 'Minesweeper'], 'bau-cua': ['Bầu cua', 'Bau Cua'],
-  'o-an-quan': ['Ô ăn quan', 'O An Quan'], 'co-caro': ['Cờ caro', 'Gomoku'], 'noi-4': ['Nối 4', 'Connect 4'], 'ban-tau': ['Bắn tàu', 'Battleship'],
+  'o-an-quan': ['Ô ăn quan', 'O An Quan'], 'co-ganh': ['Cờ gánh', 'Co Ganh'], 'co-caro': ['Cờ caro', 'Gomoku'], 'noi-4': ['Nối 4', 'Connect 4'], 'ban-tau': ['Bắn tàu', 'Battleship'],
   'dao-vang': ['Đào Vàng', 'Gold Miner'], snake: ['Rắn săn mồi', 'Snake'], bantumi: ['Bantumi', 'Bantumi'], pairs: ['Lật hình', 'Pairs'],
   logic: ['Logic', 'Logic'], 'rapid-roll': ['Rapid Roll', 'Rapid Roll'], 'space-impact': ['Space Impact', 'Space Impact'], bounce: ['Bounce', 'Bounce'],
 };

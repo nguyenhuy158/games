@@ -7,6 +7,7 @@ import { botMove as bantumiBot } from '../public/nokia/bantumi/logic.js';
 import { COLS } from '../public/noi-4/logic.js';
 import { N } from '../public/ban-tau/logic.js';
 import { findPair } from '../public/pikachu/logic.js';
+import { botMove as ganhBot } from '../public/co-ganh/logic.js';
 
 const base = (process.argv[2] ?? 'http://localhost:8789').replace(/^http/, 'ws');
 const only = process.argv.slice(3);
@@ -202,6 +203,18 @@ const GAMES = {
     const v = r.socks[0].last;
     if (v.result.ranks[0].detail.of !== 3) throw new Error('not a 3-player board');
     return JSON.stringify(v.result.title);
+  },
+  // Cờ gánh với máy: tới hết ván.
+  async 'co-ganh'() {
+    const r = await nokia('co-ganh', 1, (ws, m) => {
+      const v = m.view;
+      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
+      ws.moved = v.moves;
+      const [from, to] = ganhBot({ b: v.b, turn: v.turn, over: false, winner: 0, moves: v.moves }, 1);
+      r.send(ws, { t: 'g', from, to });
+    }, { level: 0 });
+    await until(() => r.socks[0].last.status === 'ended', 180000, 'co-ganh ends');
+    return JSON.stringify(r.socks[0].last.result.title);
   },
   // Bantumi với máy: tới hết ván.
   async bantumi() {

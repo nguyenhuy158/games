@@ -122,6 +122,7 @@ await import('./nokia-rapid-roll.test.mjs');
 await import('./nokia-bounce.test.mjs');
 await import('./nokia-space-impact.test.mjs');
 await import('./o-an-quan.test.mjs');
+await import('./co-ganh.test.mjs');
 await import('./scripts/check-deps.mjs');
 await import('./sso.test.mjs');
 await import('./top.test.mjs');
