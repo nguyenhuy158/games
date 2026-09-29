@@ -38,6 +38,8 @@ export class Top extends DurableObject {
       mode TEXT NOT NULL, size INTEGER NOT NULL, names TEXT NOT NULL,
       score INTEGER NOT NULL, level INTEGER NOT NULL, cleared INTEGER NOT NULL, at INTEGER NOT NULL)`);
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS scores_top ON scores (mode, size, score DESC)');
+    // Dọn một lần: dòng do bot test / smoke để lại trên bảng Pikachu 8x6 (bot giờ không ghi điểm nữa). Gỡ sau khi đã chạy trên web.
+    ctx.storage.sql.exec("DELETE FROM scores WHERE size = 3 AND names IN ('An, Binh', 'R1', 'Bot0', 'Bot1', 'A1, A2', 'B1, B2', 'alice')");
     // Lịch sử chơi của người đã đăng nhập (sub = id tài khoản SSO). Không lưu email.
     ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS plays (
       id INTEGER PRIMARY KEY AUTOINCREMENT, sub TEXT NOT NULL, game TEXT NOT NULL, mode TEXT NOT NULL,

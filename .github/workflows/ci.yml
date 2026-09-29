@@ -14,3 +14,27 @@ jobs:
         with:
           node-version: 22
       - run: node logic.test.mjs
+
+  # Sau khi Cloudflare deploy xong commit này (bản trên web mới hơn commit), chạy bot chơi thử mọi game vào web thật.
+  smoke-prod:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for the deploy of this commit
+        env:
+          COMMIT_AT: ${{ github.event.head_commit.timestamp }}
+        run: |
+          want=$(date -d "$COMMIT_AT" +%s)
+          for i in $(seq 1 90); do
+            at=$(curl -fsS https://games.huyab.click/api/version | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=JSON.parse(s).at;console.log(a?Math.floor(Date.parse(a)/1000):0)})" || echo 0)
+            if [ "$at" -ge "$want" ]; then echo "deployed at $at (commit $want)"; exit 0; fi
+            sleep 10
+          done
+          echo "deploy not seen after 15 min"; exit 1
+      - run: node scripts/smoke.mjs https://games.huyab.click

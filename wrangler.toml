@@ -15,6 +15,10 @@ directory = "./public"
 binding = "ASSETS"
 run_worker_first = true
 
+# Thông tin bản đang chạy (id, thời điểm tạo) cho /api/version — CI chờ bản mới rồi mới chạy smoke trên web thật.
+[version_metadata]
+binding = "CF_VERSION"
+
 [[durable_objects.bindings]]
 name = "ROOM"
 class_name = "Room"

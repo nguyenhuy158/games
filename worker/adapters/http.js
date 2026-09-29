@@ -82,6 +82,8 @@ export const http = {
       const before = Number(url.searchParams.get('before'));
       return Response.json(await top().history(user.sub, before > 0 ? before : undefined), { headers: { 'Cache-Control': 'no-store' } });
     }
+    // Bản đang chạy: CI (.github/workflows/ci.yml) chờ timestamp mới hơn commit rồi chạy scripts/smoke.mjs vào web thật.
+    if (url.pathname === '/api/version') return Response.json({ id: env.CF_VERSION?.id ?? null, at: env.CF_VERSION?.timestamp ?? null }, { headers: { 'Cache-Control': 'no-store' } });
     if (url.pathname === '/api/fun') {
       const period = url.searchParams.get('period') === 'week' ? 'week' : 'all';
       return Response.json(await top().fun(period), { headers: { 'Cache-Control': 'public, max-age=60' } });

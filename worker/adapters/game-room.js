@@ -191,7 +191,8 @@ export function gameRoom(games) {
         end: (result) => this.finish(result),
         // Game không bao giờ kết thúc (Bầu cua): cắt bản xem lại theo từng đợt; trả mã của đoạn đang ghi, lưu ở lần gửi trạng thái kế tiếp.
         clip: () => (this.clipRp ??= this.tape ? replayId() : undefined),
-        rank: (rows) => { if (rows.length && this.recorder()) this.io(this.recorder().add(rows)); },
+        // Bot kiểm thử (scripts/smoke.mjs, id thiết bị 'smoke-...') không lên bảng xếp hạng.
+        rank: (rows) => { if (rows.length && !s.seats.every((id) => id.startsWith('smoke-')) && this.recorder()) this.io(this.recorder().add(rows)); },
         record: (plays) => { if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays)); },
         send: (id, msg, o) => { if (id === s.seats[0] && o?.tape !== false) this.tape?.push(msg); for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) try { ws.send(JSON.stringify(msg)); } catch {} },
         sendAll: (msg, o) => { if (o?.tape !== false) this.tape?.push(msg); const d = JSON.stringify(msg); for (const ws of this.sockets()) try { ws.send(d); } catch {} },
