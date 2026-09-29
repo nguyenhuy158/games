@@ -35,7 +35,7 @@ export default {
     const g = ctx.g, s = g.s;
     return {
       side: g.side, names: g.side.map((id) => (id === BOT ? ['Máy', 'Bot'] : ctx.name(id))),
-      b: s.b, turn: s.turn, over: s.over, moves: s.moves, last: g.last, deadline: g.deadline,
+      b: s.b, turn: s.turn, open: s.open ?? -1, over: s.over, moves: s.moves, last: g.last, deadline: g.deadline,
     };
   },
 };

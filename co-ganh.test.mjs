@@ -66,4 +66,17 @@ const empty = () => ({ b: Array(N * N).fill(0), turn: 1, over: false, winner: 0,
   g.b[at(2, 1)] = 2; g.b[at(2, 3)] = 2; g.b[at(3, 2)] = 1; g.b[at(0, 0)] = 2; g.b[at(4, 4)] = 1;
   assert.deepEqual(botMove(g, 1), [at(3, 2), at(2, 2)]);
 }
+// Mở: đi quân bỏ trống điểm mà đối phương vào đó gánh được -> đối phương bắt buộc vào đó gánh
+{
+  const g = empty();
+  // Người 1 có (2,1) và (2,3); quân (2,2) của người 1 đi xuống (3,2) -> bỏ trống (2,2) giữa hai quân của mình.
+  g.b[at(2, 1)] = 1; g.b[at(2, 3)] = 1; g.b[at(2, 2)] = 1; g.b[at(1, 2)] = 2; g.b[at(0, 0)] = 2;
+  move(g, at(2, 2), at(3, 2));
+  assert.equal(g.open, at(2, 2), 'opened (2,2)');
+  assert.deepEqual(moves(g), [[at(1, 2), at(2, 2)]], 'only the forced carry');
+  assert.equal(legal(g, 2, at(0, 0), at(0, 1)), false, 'other moves are illegal');
+  const r = move(g, at(1, 2), at(2, 2));
+  assert.equal(r.ganh.length, 2);
+  assert.equal(g.open, -1);
+}
 console.log('co-ganh ok');

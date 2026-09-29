@@ -1,6 +1,6 @@
 import { nokiaApp } from '../nokia/room.js';
 import { iconEl } from '../icons.js';
-import { N, ADJ } from './logic.js';
+import { N, moves } from './logic.js';
 import { t, tx } from '../i18n.js';
 
 // Bàn gỗ kẻ mực 5×5 (đường chéo qua điểm chẵn), quân tròn kiểu cờ tướng: người 1 đỏ, người 2 đen.
@@ -26,8 +26,8 @@ const app = nokiaApp({
   path: '/co-ganh/',
   title: t('Cờ gánh', 'Co Ganh'),
   sub: t('Cờ dân gian Việt Nam trên bàn 5×5 — đi vào giữa hai quân địch là gánh cả hai, vây kín là bắt. 1v1 hoặc với máy.', 'A Vietnamese folk board game on a 5×5 grid — step between two enemy pieces to carry both, trap a group to take it. 1v1 or vs the bot.'),
-  help: t('Chạm một quân của mình rồi chạm điểm trống kề nó (theo đường kẻ; đường chéo chỉ có ở các điểm nối chéo). Gánh: quân vừa đi đứng giữa hai quân địch thẳng hàng thì cả hai đổi thành quân mình. Vây: nhóm quân địch không còn đường đi thì cả nhóm thành quân mình. Bắt hết quân đối thủ là thắng; mỗi nước có 30 giây.',
-    'Tap one of your pieces, then an empty point next to it (along a line; diagonals exist only at the points they pass through). Carry: when your piece lands between two enemy pieces in a line, both become yours. Trap: an enemy group with nowhere to move becomes yours. Take every enemy piece to win; 30 seconds per move.'),
+  help: t('Chạm một quân của mình rồi chạm điểm trống kề nó (theo đường kẻ; đường chéo chỉ có ở các điểm nối chéo). Gánh: quân vừa đi đứng giữa hai quân địch thẳng hàng thì cả hai đổi thành quân mình. Vây: nhóm quân địch không còn đường đi thì cả nhóm thành quân mình. Mở: đối phương vừa bỏ trống một điểm mà mình vào đó gánh được thì bắt buộc phải vào gánh. Bắt hết quân đối thủ là thắng; mỗi nước có 30 giây.',
+    'Tap one of your pieces, then an empty point next to it (along a line; diagonals exist only at the points they pass through). Carry: when your piece lands between two enemy pieces in a line, both become yours. Trap: an enemy group with nowhere to move becomes yours. Opened: if the opponent just vacated a point you could carry from, you must move there and carry. Take every enemy piece to win; 30 seconds per move.'),
   lobbyText: (r) => (r.players.length > 1 ? t(`${r.players[0].name} đấu ${r.players[1].name}.`, `${r.players[0].name} vs ${r.players[1].name}.`) : t('Chỉ có mình bạn — sẽ đấu với máy.', 'Just you — you will play the bot.')),
   lobby(bx, r, isHost, setCfg) {
     if (r.players.length > 1) return;
@@ -71,14 +71,17 @@ const app = nokiaApp({
   },
 });
 
+// Điểm quân ở `from` đi được (bị "mở" thì chỉ còn điểm mở).
+const targetsOf = (v, from) => new Set(moves({ b: v.b, turn: v.turn, open: v.open ?? -1 }).filter(([f]) => f === from).map(([, t]) => t));
+
 function myTurn(r = app.room) {
   return r?.status === 'playing' && r.view && !r.view.over && r.view.side[r.view.turn - 1] === app.id;
 }
 function tap(i) {
   const r = app.room, v = r?.view;
   if (!myTurn(r)) return;
-  if (v.b[i] === seat) { sel = sel === i ? null : i; return paint(r); }
-  if (sel != null && !v.b[i] && ADJ[sel].includes(i)) {
+  if (v.b[i] === seat && targetsOf(v, i).size) { sel = sel === i ? null : i; return paint(r); }
+  if (sel != null && targetsOf(v, sel).has(i)) {
     app.send({ from: sel, to: i });
     sel = null;
     paint(r);
@@ -93,7 +96,7 @@ function sound(last) {
 function paint(r) {
   const v = r.view;
   const mine = myTurn(r);
-  const targets = sel != null ? new Set(ADJ[sel].filter((j) => !v.b[j])) : new Set();
+  const targets = sel != null ? targetsOf(v, sel) : new Set();
   const flipped = new Set(animKey && v.last ? [...v.last.ganh, ...v.last.vay] : []);
   for (let i = 0; i < N * N; i++) {
     const [x, y] = pos(i);
@@ -104,8 +107,9 @@ function paint(r) {
     p.hidden = !who;
     if (!who) { p.className = 'pc'; continue; }
     Object.assign(p.style, { left: `${x}%`, top: `${y}%` });
-    p.className = `pc p${who}${sel === i ? ' sel' : ''}${mine && who === seat ? ' can' : ''}${v.last && v.last.to === i ? ' last' : ''}`;
-    p.disabled = !(mine && who === seat);
+    const can = mine && who === seat && targetsOf(v, i).size > 0;
+    p.className = `pc p${who}${sel === i ? ' sel' : ''}${can ? ' can' : ''}${v.last && v.last.to === i ? ' last' : ''}`;
+    p.disabled = !can;
     // Quân vừa đi trượt từ điểm cũ; quân bị gánh / vây lật (chỉ lần đầu vẽ nước đó).
     if (animKey && p.dataset.anim !== animKey) {
       p.dataset.anim = animKey;
@@ -135,7 +139,9 @@ function drawHint(r) {
   const left = Math.max(0, Math.ceil((v.deadline - app.now()) / 1000));
   const who = v.side[v.turn - 1];
   const got = v.last && v.last.ganh.length + v.last.vay.length ? (v.last.vay.length ? t(' — vây!', ' — trapped!') : t(' — gánh!', ' — carried!')) : '';
+  const forced = v.open >= 0 && who === app.id ? t(' — bị mở: bắt buộc gánh!', ' — opened: you must carry!') : '';
   hint.textContent = v.over ? t('Hết ván!', 'Game over!')
+    : forced && sel == null ? t(`Lượt bạn${forced} · ${left}s`, `Your turn${forced} · ${left}s`)
     : who === app.id ? (sel == null ? t(`Lượt bạn — chạm một quân của mình · ${left}s${got}`, `Your turn — tap one of your pieces · ${left}s${got}`) : t(`Chạm điểm muốn đi · ${left}s`, `Tap where to move · ${left}s`))
       : who === 'bot' ? t('Máy đang nghĩ…', 'Bot is thinking…') : t(`Lượt ${tx(v.names[v.turn - 1])} · ${left}s${got}`, `${tx(v.names[v.turn - 1])}'s turn · ${left}s${got}`);
 }

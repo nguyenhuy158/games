@@ -215,7 +215,7 @@ const GAMES = {
       const v = m.view;
       if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
       ws.moved = v.moves;
-      const [from, to] = ganhBot({ b: v.b, turn: v.turn, over: false, winner: 0, moves: v.moves }, 1);
+      const [from, to] = ganhBot({ b: v.b, turn: v.turn, open: v.open, over: false, winner: 0, moves: v.moves }, 1);
       r.send(ws, { t: 'g', from, to });
     }, { level: 0 });
     await until(() => r.socks[0].last.status === 'ended', 180000, 'co-ganh ends');

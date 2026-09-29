@@ -11,7 +11,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 | Ô ăn quan | `/o-an-quan/` | 2–5 người (3+ người: bàn đa giác, đi vòng), thiếu người thì máy (3 mức) vào chơi, người khác xem; quan non tuỳ chọn, vay dân khi hết quân |
 | Nối 4 | `/noi-4/` | Connect 4: 1v1 hoặc với máy, người khác xem |
 | Bắn tàu | `/ban-tau/` | Battleship: 1v1 hoặc với máy; tàu chỉ gửi cho chủ hạm đội |
-| Cờ gánh | `/co-ganh/` | Cờ dân gian 5×5: gánh (đi vào giữa 2 quân địch) và vây; 1v1 hoặc với máy (3 mức), người khác xem |
+| Cờ gánh | `/co-ganh/` | Cờ dân gian 5×5: gánh (đi vào giữa 2 quân địch), vây và mở (bắt buộc vào gánh); 1v1 hoặc với máy (3 mức), người khác xem |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |
 
 Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node scripts/smoke.mjs [url] [game ...]`, mặc định `http://localhost:8789` (`wrangler dev --port 8789`). Chạy trước / sau mỗi bước refactor (kế hoạch: `docs/hexagon-plan.md`). CI (`.github/workflows/ci.yml`, job `smoke-prod`) tự chạy vào web thật sau mỗi lần deploy (chờ `/api/version` mới hơn commit); bot smoke (id `smoke-...`) không lên bảng xếp hạng.
