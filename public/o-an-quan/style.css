@@ -17,8 +17,14 @@ button.primary { color: #fff; }
 header button { color: var(--text); }
 
 .board-stage { width: 100%; display: grid; place-items: center; }
-.oaq { --w: min(96vw, 920px, calc((100dvh - 250px) * 3.3)); width: var(--w); display: grid; gap: 10px; justify-items: stretch; }
+.oaq { --w: min(96vw, 920px, calc((100dvh - 250px) * var(--ar, 3.3))); width: var(--w); display: grid; gap: 10px; justify-items: stretch; }
 .board { position: relative; width: 100%; aspect-ratio: 716 / 216; margin-bottom: 44px; }
+.board.poly { width: min(100%, 640px); justify-self: center; }
+.oaq:has(.poly) { --w: min(96vw, 920px, calc((100dvh - 330px) * var(--ar))); }
+.oaq:has(.poly) .bars { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.oaq:has(.poly) .bar { padding: 4px 10px; font-size: 13px; gap: 4px; }
+.oaq:has(.poly) .bar .got { gap: 2px; }
+.oaq:has(.poly) .bar .got b { margin-left: 3px; padding: 1px 6px; }
 .board > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .board path { fill: #ffffff08; stroke: var(--chalk); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; opacity: .92; }
 
@@ -33,22 +39,19 @@ header button { color: var(--text); }
 /* Sỏi cuội: bóng loáng góc trên trái + bóng đổ; hơi méo cho giống đá thật. */
 .st, .qs { position: absolute; transform: translate(-50%, -50%) rotate(var(--r, 0deg)); pointer-events: none; }
 .st {
-  width: 17%; aspect-ratio: 1.15; border-radius: 48% 52% 45% 55% / 55% 45% 55% 45%;
+  width: var(--st, 17%); aspect-ratio: 1.15; border-radius: 48% 52% 45% 55% / 55% 45% 55% 45%;
   background: radial-gradient(circle at 32% 30%, #fffc, #fff0 42%), radial-gradient(circle at 60% 70%, #0003, #0000 60%), var(--c);
   box-shadow: 0 1.5px 1.5px #2a0d0799;
 }
-.quan .st { width: 34%; }
 .st.new { animation: drop .22s ease-out; }
 @keyframes drop { from { transform: translate(-50%, -110%) rotate(var(--r, 0deg)) scale(1.35); opacity: 0; } }
 .qs {
-  width: 64%; aspect-ratio: 1.1; border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
+  width: var(--qs, 64%); aspect-ratio: 1.1; border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
   background: radial-gradient(circle at 34% 28%, #fffb, #fff0 30%), radial-gradient(circle at 65% 72%, #000a, #0000 55%), linear-gradient(135deg, #5c6470, #2b3038);
   box-shadow: 0 3px 4px #2a0d07aa;
 }
-.n { position: absolute; right: 8%; bottom: 3%; font-weight: 800; font-size: calc(var(--w) * .026); color: var(--chalk); opacity: .85; text-shadow: 0 1px 2px #0008; pointer-events: none; }
-.quan .n { right: auto; left: 50%; transform: translateX(-50%); }
-.quan.left .n { left: 62%; }
-.quan:not(.left) .n { left: 38%; }
+.n { position: absolute; right: 8%; bottom: 3%; rotate: var(--rot, 0deg); font-weight: 800; font-size: calc(var(--w) * .026); color: var(--chalk); opacity: .85; text-shadow: 0 1px 2px #0008; pointer-events: none; }
+.quan .n { right: auto; left: var(--qx, 50%); transform: translateX(-50%); }
 
 .hand {
   position: absolute; transform: translate(-50%, -85%); z-index: 3; pointer-events: none; transition: left .12s, top .12s;
@@ -58,6 +61,7 @@ header button { color: var(--text); }
 .dirs button { width: 44px; height: 36px; padding: 0; border-radius: 12px; background: #ffe07a; color: #3b2416; border: 0; box-shadow: 0 3px 0 #a2791f; }
 .dirs button:active { transform: translateY(2px); box-shadow: 0 1px 0 #a2791f; }
 
+.bars { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px; border-radius: 12px; background: #fff6e6e8; box-shadow: 0 4px 12px #0004; font-size: 14px; }
 .bar.turn { box-shadow: 0 0 0 3px #ffe07a, 0 4px 12px #0004; }
 .bar .who { font-weight: 700; display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

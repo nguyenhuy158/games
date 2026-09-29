@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { newGame, move, legal, score, winner, botMove, moves, QUAN } from './public/o-an-quan/logic.js';
+import { newGame, move, legal, score, winner, botMove, moves, side, owner, players, QUAN } from './public/o-an-quan/logic.js';
 
 const total = (g) => g.b.reduce((a, x) => a + x, 0) + g.cap[1].small + g.cap[2].small + (g.big.reduce((a, x) => a + x, 0) + g.cap[1].big + g.cap[2].big) * 100;
 // Rải: bốc ô 1 (5 dân) sang phải -> 2..6; ô sau (7) có dân -> bốc rải tiếp
@@ -77,5 +77,43 @@ const total = (g) => g.b.reduce((a, x) => a + x, 0) + g.cap[1].small + g.cap[2].
   g.b = [4, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1];
   const m = botMove(g, 2);
   assert.deepEqual(m, [3, -1]);
+}
+// 3–5 người: vòng 6n ô, lượt đi vòng, máy tự đánh hết ván, sỏi bảo toàn
+for (const n of [3, 4, 5]) {
+  const all = (g) => g.b.reduce((a, x) => a + x, 0) + g.cap.slice(1).reduce((a, c) => a + c.small + (c.big * 100), 0) + g.big.reduce((a, x) => a + x, 0) * 100;
+  let g = newGame({ n });
+  assert.equal(players(g), n);
+  assert.equal(g.b.length, 6 * n);
+  assert.deepEqual(side(n), [6 * n - 5, 6 * n - 4, 6 * n - 3, 6 * n - 2, 6 * n - 1]);
+  assert.equal(owner(6 * n - 1), n);
+  assert.equal(moves(g).length, 10);
+  const first = all(g);
+  const turns = [];
+  let c = 0;
+  while (!g.over && c++ < 2000) {
+    turns.push(g.turn);
+    const m = botMove(g, 2);
+    assert.ok(legal(g, g.turn, ...m), 'bot move legal');
+    move(g, ...m);
+    assert.equal(all(g), first, 'stones conserved');
+  }
+  assert.equal(g.over, true, `${n} players: game ends`);
+  assert.deepEqual(turns.slice(0, n), Array.from({ length: n }, (_, i) => i + 1), 'turns go round');
+  const pts = Array.from({ length: n }, (_, i) => score(g, i + 1));
+  assert.equal(pts.reduce((a, x) => a + x, 0), 25 * n + n * QUAN);
+  const w = winner(g);
+  assert.ok(w === 0 || pts[w - 1] === Math.max(...pts));
+}
+// 3 người: hết dân thì vay người nhiều dân nhất, cuối ván trả
+{
+  const g = newGame({ n: 3 });
+  g.b = g.b.map(() => 0); g.big = g.big.map(() => 0);
+  g.b[1] = 1; g.big[6] = 1; g.big[12] = 1; g.b[13] = 1;
+  g.cap[2].small = 1; g.cap[3].small = 9; g.turn = 1;
+  move(g, 1, 1); // 1 -> 2; ô 3 trống, ô 4 trống -> hết lượt; tới người 2: hết dân, có 1 -> vay 4 của người 3
+  assert.equal(g.turn, 2);
+  assert.deepEqual(g.loans, [[2, 3, 4]]);
+  assert.equal(g.debt[2], 4);
+  assert.equal(side(2).reduce((a, k) => a + g.b[k], 0), 5);
 }
 console.log('o-an-quan ok');

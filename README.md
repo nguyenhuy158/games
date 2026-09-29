@@ -8,7 +8,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 | Đào Vàng | `/dao-vang/` | 1 người hoặc 2–4 người chung mỏ; luật thuần ở `public/dao-vang/logic.js` |
 | Bầu cua | `/bau-cua/` | 2–10 người đặt xu ảo, máy làm cái (mặc định) hoặc xoay vòng |
 | Cờ caro | `/co-caro/` | 1v1 hoặc với máy, người khác xem; XO 3×3; luật chặn 2 đầu tuỳ chọn |
-| Ô ăn quan | `/o-an-quan/` | 1v1 hoặc với máy (3 mức), người khác xem; quan non tuỳ chọn, vay dân khi hết quân |
+| Ô ăn quan | `/o-an-quan/` | 2–5 người (3+ người: bàn đa giác, đi vòng), thiếu người thì máy (3 mức) vào chơi, người khác xem; quan non tuỳ chọn, vay dân khi hết quân |
 | Nối 4 | `/noi-4/` | Connect 4: 1v1 hoặc với máy, người khác xem |
 | Bắn tàu | `/ban-tau/` | Battleship: 1v1 hoặc với máy; tàu chỉ gửi cho chủ hạm đội |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |

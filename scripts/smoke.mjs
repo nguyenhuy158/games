@@ -189,6 +189,20 @@ const GAMES = {
     await until(() => r.socks[0].last.status === 'ended', 300000, 'o-an-quan ends'); // ván dài: mỗi nước còn chờ client diễn lại
     return JSON.stringify(r.socks[0].last.result.title);
   },
+  // Ô ăn quan bàn 3 người: bot smoke + 2 máy của server, tới hết ván.
+  async 'o-an-quan-3'() {
+    const r = await nokia('o-an-quan', 1, (ws, m) => {
+      const v = m.view;
+      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
+      ws.moved = v.moves;
+      const [k, d] = oaqBot({ b: v.b, big: v.big, cap: v.cap, debt: v.debt, turn: v.turn, quanNon: v.quanNon, over: false, moves: v.moves }, 1);
+      r.send(ws, { t: 'g', k, d });
+    }, { level: 0, n: 3 });
+    await until(() => r.socks[0].last.status === 'ended', 400000, 'o-an-quan-3 ends');
+    const v = r.socks[0].last;
+    if (v.result.ranks[0].detail.of !== 3) throw new Error('not a 3-player board');
+    return JSON.stringify(v.result.title);
+  },
   // Bantumi với máy: tới hết ván.
   async bantumi() {
     const r = await nokia('bantumi', 1, (ws, m) => {
