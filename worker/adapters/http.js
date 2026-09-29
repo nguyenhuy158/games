@@ -7,7 +7,7 @@ import { MODES } from '../pikachu.js';
 const HOME = 'games.huyab.click';
 const OLD_HOSTS = ['pikachu.huyab.click'];
 // Phòng chạy trên adapter phòng chung: tiền tố URL -> key game (header X-Game). Nokia / Ô ăn quan lấy key từ URL.
-const ADAPTER_GAME = { 'cc/': 'caro', 'c4/': 'c4', 'bt/': 'ban-tau', 'bc/': 'bau-cua', 'ms/': 'do-min' };
+const ADAPTER_GAME = { 'cc/': 'caro', 'c4/': 'c4', 'bt/': 'ban-tau', 'bc/': 'bau-cua', 'ms/': 'do-min', 'dv/': 'dao-vang' };
 
 // Chuyển WebSocket vào DO. Phòng tin header X-User / X-Game / X-Room vì chỉ Worker gọi được DO; header client tự gửi luôn bị xoá trước.
 async function forward(req, ns, name, game, code) {

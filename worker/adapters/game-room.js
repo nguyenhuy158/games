@@ -16,6 +16,7 @@ import { replayId } from './top.js';
 // Chữ gửi cho người chơi (lỗi, tiêu đề kết quả) là cặp ['vi', 'en'], client chọn bằng tx() (public/i18n.js).
 const MAX_ONLINE = 12;
 const EMO_MS = 700; // chống spam emote
+const SAVE_MS = 2000; // game nhịp đều không volatile (Đào Vàng): lưu định kỳ dù không có gì gửi lại
 const BEAT_MS = 30_000; // phòng công khai: nhịp báo "còn sống" cho danh sách phòng (Top bỏ phòng im quá 90s)
 
 /** @param {Record<string, import('../ports.js').GameModule>} games */
@@ -149,7 +150,7 @@ export function gameRoom(games) {
       if (this.mod.tick(this.ctxFor())) {
         if (!this.mod.volatile) this.save();
         this.broadcast();
-      }
+      } else if (!this.mod.volatile && Date.now() - (this.savedAt ?? 0) > SAVE_MS) this.save(); // deploy giữa ván không mất tiến trình
       this.drain(); // kết quả ván ghi lúc đang chạy nhịp
     }
 
@@ -192,7 +193,7 @@ export function gameRoom(games) {
         clip: () => (this.clipRp ??= this.tape ? replayId() : undefined),
         record: (plays) => { if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays)); },
         send: (id, msg) => { if (id === s.seats[0]) this.tape?.push(msg); for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) try { ws.send(JSON.stringify(msg)); } catch {} },
-        sendAll: (msg) => { this.tape?.push(msg); const d = JSON.stringify(msg); for (const ws of this.sockets()) try { ws.send(d); } catch {} },
+        sendAll: (msg, o) => { if (o?.tape !== false) this.tape?.push(msg); const d = JSON.stringify(msg); for (const ws of this.sockets()) try { ws.send(d); } catch {} },
       };
     }
 
@@ -279,6 +280,7 @@ export function gameRoom(games) {
       const s = this.s;
       if (!s) return;
       // Game thời gian thực: không ghi g mỗi nhịp (chỉ sống trong bộ nhớ khi đang chơi).
+      this.savedAt = Date.now();
       return this.ctx.storage.put('s', this.mod.volatile && s.status === 'playing' ? { ...s, g: null, status: 'lobby' } : s);
     }
     sockets(except) { return this.ctx.getWebSockets().filter((ws) => ws !== except); }
@@ -313,7 +315,7 @@ export function gameRoom(games) {
           if (!this.tape) this.ctx.storage.delete('tape');
         }
         // Game theo lượt: giữ bản ghi qua lúc DO ngủ đông (game thời gian thực chạy nhịp nên không ngủ; khởi động lại thì về sảnh).
-        if (this.tape && !this.mod.volatile) this.ctx.storage.put('tape', { ...this.tape, clipRp: this.clipRp });
+        if (this.tape && !this.mod.volatile && !tickMsOf(this.mod, s.cfg)) this.ctx.storage.put('tape', { ...this.tape, clipRp: this.clipRp });
       }
       this.list(false, except);
     }

@@ -18,7 +18,7 @@
  * @property {(ctx: Ctx) => boolean} [tick]    gọi theo nhịp đều hoặc khi tới giờ đã hẹn bằng ctx.wakeAt -> true nếu đổi
  * @property {(ctx: Ctx, id: string) => object} view                trạng thái gửi riêng cho người id (giấu thông tin nếu cần)
  * @property {(ctx: Ctx, id: string) => void} [leave]               một người rời phòng giữa ván
- * @property {boolean} [volatile]              không lưu ctx.g mỗi nhịp (game thời gian thực; DO khởi động lại thì về sảnh)
+ * @property {boolean} [volatile]              không lưu ctx.g (game thời gian thực; DO khởi động lại thì về sảnh). Không volatile + tickMs: lưu mỗi 2 giây
  * @property {boolean} [flat]                  giao thức "phẳng": view() trả thẳng các trường của tin state (luôn gọi, kể cả lúc chưa có ván)
  * @property {string[]} [messages]             tin riêng của game ({ t: 'move' ... }) chuyển cho msg() ở mọi pha (module tự kiểm)
  * @property {number} [emotes]                 số emote; adapter xử lý { t: 'emo', e } (chống spam) và phát lại cho cả phòng
@@ -49,7 +49,7 @@
  * @property {(result: Result) => void} end    kết thúc ván; adapter ghi lịch sử người đã đăng nhập qua Recorder
  * @property {() => string | undefined} clip   game không kết thúc (Bầu cua): cắt bản xem lại tới lần gửi trạng thái kế tiếp, trả mã của đoạn đó
  * @property {(id: string, msg: object) => void} send
- * @property {(msg: object) => void} sendAll
+ * @property {(msg: object, o?: { tape?: boolean }) => void} sendAll   tape: false = không ghi vào bản xem lại (Đào Vàng bớt snap)
  */
 
 /** @typedef {{ id: string, name: string, user?: { sub: string, name: string } | null }} Player */

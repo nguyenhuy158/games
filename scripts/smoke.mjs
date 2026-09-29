@@ -97,7 +97,25 @@ const GAMES = {
   },
   // Pikachu / Đào Vàng / Dò mìn: vào phòng 2 người, bắt đầu, thấy ván chạy.
   async pikachu() { return startOnly((c) => `/api/room/${c}`); },
-  async 'dao-vang'() { return startOnly((c) => `/api/dv/room/${c}`); },
+  // Đào Vàng tranh vàng 2 người: thả móc liên tục hết màn 1 (60 giây) -> tiệm, mua được thì mua, cả hai sẵn sàng -> màn 2.
+  async 'dao-vang'() {
+    const r = await join((c) => `/api/dv/room/${c}`, 2);
+    r.send(r.host(), { t: 'config', mode: 'versus' });
+    await until(() => r.socks.every((s) => s.last.mode === 'versus'), 3000, 'versus mode');
+    r.send(r.host(), { t: 'start' });
+    await until(() => r.socks.every((s) => s.msgs.some((m) => m.t === 'world') && s.last.status === 'playing'), 5000, 'world received');
+    const pump = setInterval(() => r.socks.forEach((s) => r.send(s, { t: 'shoot' })), 500);
+    try { await until(() => r.socks.every((s) => s.last.status === 'shop'), 75000, 'level 1 -> shop'); } finally { clearInterval(pump); }
+    const snaps = r.socks[0].msgs.filter((m) => m.t === 'snap').length, grabs = r.socks[0].msgs.filter((m) => m.t === 'ev').length;
+    for (const s of r.socks) {
+      const me = s.last.players.find((p) => p.id === s.me);
+      const buy = me.offer.find((o) => o.price <= me.money);
+      if (buy) r.send(s, { t: 'buy', key: buy.key });
+      r.send(s, { t: 'ready' });
+    }
+    await until(() => r.socks.every((s) => s.last.status === 'playing' && s.last.level === 2), 5000, 'level 2');
+    return `snaps=${snaps} ev=${grabs} money=${r.socks[0].last.players.map((p) => p.money)}`;
+  },
   // Dò mìn đua 2 người: mỗi người mở ô ẩn ngẫu nhiên tới hết ván; không ai được nhận bàn của đối thủ trước khi hết ván.
   async 'do-min'() {
     const r = await join((c) => `/api/ms/room/${c}`, 2);
