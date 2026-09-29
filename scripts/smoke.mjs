@@ -165,10 +165,15 @@ const GAMES = {
     await until(() => r.socks.every((s) => s.last.mode === 'race'), 3000, 'race mode');
     r.send(r.host(), { t: 'start' });
     await until(() => r.socks.every((s) => grid[s.me]), 5000, 'grids received');
-    for (let n = 0; r.socks[0].last.status === 'playing' && n < 400; n++) {
+    // Mỗi bot mở ô ẩn chưa gửi (mạng chậm thì bàn về trễ: khỏi gửi lại ô đang chờ kết quả).
+    const sent = Object.fromEntries(r.socks.map((ws) => [ws.me, new Set()]));
+    for (const end = Date.now() + 45000; r.socks[0].last.status === 'playing' && Date.now() < end;) {
       for (const ws of r.socks) {
-        const hidden = grid[ws.me].flatMap((v, i) => (v === -1 ? [i] : []));
-        if (hidden.length) r.send(ws, { t: 'open', i: hidden[Math.floor(Math.random() * hidden.length)] });
+        const hidden = grid[ws.me].flatMap((v, i) => (v === -1 && !sent[ws.me].has(i) ? [i] : []));
+        if (!hidden.length) continue;
+        const i = hidden[Math.floor(Math.random() * hidden.length)];
+        sent[ws.me].add(i);
+        r.send(ws, { t: 'open', i });
       }
       await sleep(40);
     }
