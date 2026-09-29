@@ -11,6 +11,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 | Ô ăn quan | `/o-an-quan/` | 2–5 người (3+ người: bàn đa giác, đi vòng), thiếu người thì máy (3 mức) vào chơi, người khác xem; quan non tuỳ chọn, vay dân khi hết quân |
 | Nối 4 | `/noi-4/` | Connect 4: 1v1 hoặc với máy, người khác xem |
 | Bắn tàu | `/ban-tau/` | Battleship: 1v1 hoặc với máy; tàu chỉ gửi cho chủ hạm đội |
+| Cờ tướng | `/co-tuong/` | Đủ luật (cản mắt / cản chân, pháo cách ngòi, lộ mặt tướng, không tự chiếu); 1v1 hoặc với máy (alpha-beta + tìm yên, có hạn giờ), người khác xem |
 | Cờ gánh | `/co-ganh/` | Cờ dân gian 5×5: gánh (đi vào giữa 2 quân địch), vây và mở (bắt buộc vào gánh); 1v1 hoặc với máy (3 mức), người khác xem |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |
 

@@ -1,0 +1,56 @@
+/* Cờ tướng: bàn gỗ sáng kẻ mực, sông ở giữa, quân tròn ngà chữ Hán đỏ / đen. Ghi đè màu của nokia.css. */
+:root {
+  --bg: #3a1a10; --panel: #fff6e6; --line: #e6cfa9; --text: #3b2416; --muted: #8a6a4e; --accent: #b23a26;
+  --good: #2e9e5b; --bad: #d9412b; --ink: #4a2a14;
+}
+body {
+  background: radial-gradient(ellipse at 50% 40%, #6b2a1a 0%, #3a1a10 70%) fixed, #3a1a10;
+  color: #fff6e6;
+}
+.card, #players li, .bar { color: var(--text); }
+input { background: #fff; color: var(--text); }
+button.primary { color: #fff; }
+#overlay { background: #1a0a0599; }
+header button { color: var(--text); }
+
+.board-stage { width: 100%; display: grid; place-items: center; }
+.ct { --w: min(94vw, 560px, calc((100dvh - 250px) * 0.9)); width: var(--w); display: grid; gap: 8px; }
+.board { position: relative; width: 100%; aspect-ratio: 920 / 1020; container-type: inline-size; }
+.board > svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 8px 18px #0008); }
+.board .wood { fill: #e8c07d; stroke: #8a5a2a; stroke-width: 8; }
+.board .frame { fill: none; stroke: var(--ink); stroke-width: 7; }
+.board path { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: square; }
+.river { position: absolute; left: 6.5%; right: 6.5%; transform: translateY(-50%); display: flex; justify-content: space-around; pointer-events: none;
+  font-family: 'Be Vietnam Pro', serif; font-weight: 800; font-size: 5cqi; color: #4a2a14aa; letter-spacing: .12em; text-transform: uppercase; }
+
+.pt, .pc, .mark { position: absolute; transform: translate(-50%, -50%); padding: 0; border: 0; border-radius: 50%; }
+.mark { width: 10.5%; aspect-ratio: 1; box-shadow: 0 0 0 3px #2e9e5b99 inset; pointer-events: none; }
+.pt { width: 6%; aspect-ratio: 1; background: none; pointer-events: none; }
+.pt.to { pointer-events: auto; cursor: pointer; background: radial-gradient(circle, #2e9e5bdd 0 34%, #0000 38%); animation: breathe 1.4s ease-in-out infinite; }
+.pt.hit { background: none; }
+@keyframes breathe { 50% { opacity: .5; } }
+.pc {
+  width: 10%; aspect-ratio: 1; z-index: 2; font: 700 6cqi/1 'Noto Serif SC', 'Songti SC', 'SimSun', serif; display: grid; place-items: center;
+  background: radial-gradient(circle at 38% 32%, #fffaf0, #f2dfb8 60%, #d8b98a); box-shadow: 0 3px 0 #7a5530, 0 5px 10px #0005;
+}
+.pc::before { content: ''; position: absolute; inset: 8%; border-radius: 50%; border: 2px solid currentColor; opacity: .7; }
+.pc.s1 { color: #c0281a; }
+.pc.s2 { color: #1d1f24; }
+.pc:disabled { opacity: 1; cursor: default; } /* nokia.css làm mờ nút disabled */
+.pc.can, .pc.target { cursor: pointer; }
+.pc.can:hover { filter: brightness(1.06); }
+.pc.sel { box-shadow: 0 0 0 4px #ffe07a, 0 3px 0 #7a5530, 0 5px 10px #0005; }
+.pc.target { box-shadow: 0 0 0 4px #2e9e5bcc, 0 3px 0 #7a5530; }
+.pc.check { animation: check .8s ease-in-out infinite; }
+@keyframes check { 50% { box-shadow: 0 0 0 6px #d9412bcc, 0 3px 0 #7a5530; } }
+.pc.slide { animation: slide .28s ease-out; }
+@keyframes slide { from { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))); } }
+
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px; border-radius: 12px; background: #fff6e6e8; box-shadow: 0 4px 12px #0004; font-size: 14px; }
+.bar.turn { box-shadow: 0 0 0 3px #ffe07a, 0 4px 12px #0004; }
+.bar .who { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar b { padding: 1px 8px; border-radius: 8px; background: var(--accent); color: #fff; white-space: nowrap; }
+.chip { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font: 700 12px/1 serif; font-style: normal; background: #f2dfb8; flex: none; }
+.chip.s1 { color: #c0281a; box-shadow: 0 0 0 1.5px #c0281a inset; }
+.chip.s2 { color: #1d1f24; box-shadow: 0 0 0 1.5px #1d1f24 inset; }
+.hint { margin: 0; text-align: center; color: #fff6e6; font-weight: 600; text-shadow: 0 1px 3px #0008; min-height: 1.4em; }

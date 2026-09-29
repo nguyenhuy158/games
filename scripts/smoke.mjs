@@ -8,6 +8,7 @@ import { COLS } from '../public/noi-4/logic.js';
 import { N } from '../public/ban-tau/logic.js';
 import { findPair } from '../public/pikachu/logic.js';
 import { botMove as ganhBot } from '../public/co-ganh/logic.js';
+import { botMove as tuongBot } from '../public/co-tuong/logic.js';
 
 const base = (process.argv[2] ?? 'http://localhost:8789').replace(/^http/, 'ws');
 const only = process.argv.slice(3);
@@ -219,6 +220,18 @@ const GAMES = {
       r.send(ws, { t: 'g', from, to });
     }, { level: 0 });
     await until(() => r.socks[0].last.status === 'ended', 180000, 'co-ganh ends');
+    return JSON.stringify(r.socks[0].last.result.title);
+  },
+  // Cờ tướng với máy (máy dễ): bot smoke đi nước tốt nhất sâu 2, ván hết khi có người bị chiếu bí (hoặc 300 nước).
+  async 'co-tuong'() {
+    const r = await nokia('co-tuong', 1, (ws, m) => {
+      const v = m.view;
+      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
+      ws.moved = v.moves;
+      const [from, to] = tuongBot({ b: v.b, turn: v.turn, over: false, winner: 0, moves: v.moves }, 2, 60);
+      r.send(ws, { t: 'g', from, to });
+    }, { level: 0 });
+    await until(() => r.socks[0].last.status === 'ended', 240000, 'co-tuong ends');
     return JSON.stringify(r.socks[0].last.result.title);
   },
   // Bantumi với máy: tới hết ván.

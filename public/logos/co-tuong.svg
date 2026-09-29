@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="w" cx="35%" cy="25%" r="90%"><stop offset="0" stop-color="#ffb08a"/><stop offset="1" stop-color="#c0281a"/></radialGradient>
+    <radialGradient id="p" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f2dfb8"/><stop offset="1" stop-color="#d8b98a"/></radialGradient>
+  </defs>
+  <rect x="8" y="8" width="496" height="496" rx="120" fill="url(#w)"/>
+  <circle cx="256" cy="268" r="176" fill="#7a3a1a" opacity=".45"/>
+  <circle cx="256" cy="256" r="176" fill="url(#p)"/>
+  <circle cx="256" cy="256" r="146" fill="none" stroke="#c0281a" stroke-width="14"/>
+  <text x="256" y="322" text-anchor="middle" font-family="Songti SC, STSong, Noto Serif SC, SimSun, serif" font-weight="700" font-size="190" fill="#c0281a">帥</text>
+</svg>

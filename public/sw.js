@@ -1,6 +1,6 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v29';
+const CACHE = 'games-v30';
 const CORE = [
   '/', '/index.html', '/me.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/toast.js', '/nozoom.js', '/bfcache.js', '/public-switch.js', '/room-client.js', '/replay.js', '/tape.js', '/phong/', '/phong/index.html', '/phong/phong.js', '/i18n.js', '/names.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png',
   '/logos/hub.svg', '/logos/pikachu.svg', '/logos/dao-vang.svg', '/logos/do-min.svg', '/logos/bau-cua.svg', '/logos/co-caro.svg', '/logos/noi-4.svg', '/logos/ban-tau.svg',
@@ -12,6 +12,7 @@ const CORE = [
   '/nokia/bounce/index.html', '/nokia/bounce/logic.js', '/logos/bounce.svg',
   '/o-an-quan/', '/o-an-quan/index.html', '/o-an-quan/style.css', '/o-an-quan/game.js', '/o-an-quan/logic.js', '/logos/o-an-quan.svg',
   '/co-ganh/', '/co-ganh/index.html', '/co-ganh/style.css', '/co-ganh/game.js', '/co-ganh/logic.js', '/logos/co-ganh.svg',
+  '/co-tuong/', '/co-tuong/index.html', '/co-tuong/style.css', '/co-tuong/game.js', '/co-tuong/logic.js', '/logos/co-tuong.svg',
   '/co-caro/', '/co-caro/index.html', '/co-caro/style.css', '/co-caro/game.js', '/co-caro/logic.js',
   '/noi-4/', '/noi-4/index.html', '/noi-4/style.css', '/noi-4/game.js', '/noi-4/logic.js',
   '/ban-tau/', '/ban-tau/index.html', '/ban-tau/style.css', '/ban-tau/game.js', '/ban-tau/logic.js',
