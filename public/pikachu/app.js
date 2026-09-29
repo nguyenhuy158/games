@@ -191,6 +191,7 @@ function onMsg(m) {
     case 'ping':
       return pingFx(m.a, colorOf(m.id), nameOf(m.id));
     case 'emo':
+      if (m.id === deviceId) return; // mình đã tự hiện lúc bấm
       return EMOJIS[m.e] && emoFx(m.id, m.e);
     default:
       return;
@@ -564,7 +565,7 @@ function render() {
     $('#btnStart').hidden = !isHost;
     $('#btnStart').textContent = room.status === 'lobby' ? t('Bắt đầu', 'Start') : t('Chơi ván mới', 'New round');
   }
-  const rpNow = !replaying && room?.status === 'ended' ? room.rp ?? null : null;
+  const rpNow = !replaying && room?.status === 'ended' ? room.result?.rp ?? null : null;
   if (rpNow !== rpShown) { rpShown = rpNow; rpSlot.replaceChildren(replayLinks(rpNow)); }
 }
 

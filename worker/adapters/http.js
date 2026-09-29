@@ -1,13 +1,13 @@
 import { userFrom } from '../sso.js';
 import { REPLAY_ID, REPLAY_MAX, replayId } from './top.js';
 import { SIZES } from '../../public/pikachu/logic.js';
-import { MODES } from '../pikachu.js';
+import { MODES } from '../games/pikachu.js';
 
 // Adapter HTTP: domain cũ -> mới, file tĩnh, /api/* (tài khoản, lịch sử, bảng xếp hạng, phòng công khai) và nối WebSocket vào DO phòng.
 const HOME = 'games.huyab.click';
 const OLD_HOSTS = ['pikachu.huyab.click'];
 // Phòng chạy trên adapter phòng chung: tiền tố URL -> key game (header X-Game). Nokia / Ô ăn quan lấy key từ URL.
-const ADAPTER_GAME = { 'cc/': 'caro', 'c4/': 'c4', 'bt/': 'ban-tau', 'bc/': 'bau-cua', 'ms/': 'do-min', 'dv/': 'dao-vang' };
+const ADAPTER_GAME = { '': 'pikachu', 'cc/': 'caro', 'c4/': 'c4', 'bt/': 'ban-tau', 'bc/': 'bau-cua', 'ms/': 'do-min', 'dv/': 'dao-vang' };
 
 // Chuyển WebSocket vào DO. Phòng tin header X-User / X-Game / X-Room vì chỉ Worker gọi được DO; header client tự gửi luôn bị xoá trước.
 async function forward(req, ns, name, game, code) {
@@ -105,6 +105,6 @@ export const http = {
     const m = url.pathname.match(/^\/api\/(dv\/|ms\/|bc\/|cc\/|c4\/|bt\/)?room\/([A-Z0-9]{4})$/);
     if (!m || req.headers.get('Upgrade') !== 'websocket') return new Response('Not found', { status: 404 });
     const ns = { 'dv/': env.MINER, 'ms/': env.MINES, 'bc/': env.DICE, 'cc/': env.CARO, 'c4/': env.CARO, 'bt/': env.SHIPS }[m[1]] ?? env.ROOM;
-    return forward(req, ns, m[1] === 'c4/' ? `c4:${m[2]}` : m[2], ADAPTER_GAME[m[1]], m[2]);
+    return forward(req, ns, m[1] === 'c4/' ? `c4:${m[2]}` : m[2], ADAPTER_GAME[m[1] ?? ''], m[2]);
   },
 };

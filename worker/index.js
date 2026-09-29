@@ -14,18 +14,18 @@ import banTau from './games/ban-tau.js';
 import bauCua from './games/bau-cua.js';
 import doMin from './games/do-min.js';
 import daoVang from './games/dao-vang.js';
+import pikachu from './games/pikachu.js';
 
 export { http as default } from './adapters/http.js';
 export { Top } from './adapters/top.js';
-// Phòng chưa chuyển sang adapter (bước 4).
-export { Room } from './pikachu.js';
 
 // /api/nk/<game>/room/CODE -> DO "<game>:<CODE>".
 export const NOKIA_GAMES = { snake, bantumi, pairs, logic, 'rapid-roll': rapidRoll, 'space-impact': spaceImpact, bounce, 'o-an-quan': oAnQuan };
 export class NokiaRoom extends gameRoom(NOKIA_GAMES) {}
-// /api/cc|c4/room/CODE (Cờ caro / Nối 4 chung class), /api/bt/room/CODE, /api/bc/room/CODE, /api/ms/room/CODE, /api/dv/room/CODE.
+// /api/room/CODE (Pikachu), /api/cc|c4/room/CODE (Cờ caro / Nối 4 chung class), /api/bt/room/CODE, /api/bc/room/CODE, /api/ms/room/CODE, /api/dv/room/CODE.
 export class CaroRoom extends gameRoom({ caro, c4 }) {}
 export class ShipRoom extends gameRoom({ 'ban-tau': banTau }) {}
 export class DiceRoom extends gameRoom({ 'bau-cua': bauCua }) {}
 export class MineRoom extends gameRoom({ 'do-min': doMin }) {}
 export class MinerRoom extends gameRoom({ 'dao-vang': daoVang }) {}
+export class Room extends gameRoom({ pikachu }) {}

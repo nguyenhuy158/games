@@ -46,7 +46,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 ## Code
 
 - `public/pikachu/` — client tĩnh, không build. `public/pikachu/logic.js` là luật chơi (tìm đường, trượt ô) dùng chung client + server.
-- `worker/index.js` — chỉ nối dây: Worker = `worker/adapters/http.js` (router `/api/*`, nối WebSocket vào DO kèm header tin cậy); DO `Top` = `worker/adapters/top.js` (bảng xếp hạng, lịch sử, phòng công khai; SQLite trong DO vì gói free đã hết quota D1; hạng mục bảng vui là mảng `FUN`); mỗi class phòng = `gameRoom({...})`. Pikachu (`worker/pikachu.js`, DO `Room`), Đào Vàng, Dò mìn chưa chuyển sang adapter.
+- `worker/index.js` — chỉ nối dây: Worker = `worker/adapters/http.js` (router `/api/*`, nối WebSocket vào DO kèm header tin cậy); DO `Top` = `worker/adapters/top.js` (bảng xếp hạng, lịch sử, phòng công khai; SQLite trong DO vì gói free đã hết quota D1; hạng mục bảng vui là mảng `FUN`); mỗi class phòng = `gameRoom({...})`. Mọi phòng (kể cả Pikachu, Đào Vàng, Dò mìn) chạy trên adapter; luật mỗi game ở `worker/games/<game>.js`.
 - Mô hình "bàn chơi" (unit): coop = 1 unit, race = 1 unit/người, team = unit A/B. Màn, đồng hồ, combo, lượt xáo nằm trên unit nên mọi luật viết một lần cho cả 3 chế độ.
 - Icon: lucide, trích riêng icon cần dùng vào `public/icons.js` bằng `pnpm icons` (sửa danh sách trong `scripts/icons.mjs`).
 - Ảnh sinh bằng Chrome headless: `node scripts/render-assets.mjs` (sprite động vật + icon PWA), rồi commit PNG.
@@ -55,12 +55,12 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 
 - Canvas 640x480 logic, co giãn theo màn hình. Assets (atlas, nền, âm thanh) lấy từ daovangcodien.com cho mục đích học tập; bản gốc để tham khảo nằm ở `reference/dao-vang/` (không commit).
 - Móc lắc qua lại, bấm để thả; vật càng nặng kéo càng chậm. 60 giây/màn, đủ tiền mục tiêu (cộng dồn) mới qua màn, giữa các màn có tiệm (thuốc nổ, tăng lực, cỏ 4 lá, sách đá, nước đánh bóng).
-- **Nhiều người** (`worker/dao-vang.js`, DO `MinerRoom`, WebSocket `/api/dv/room/CODE`): 2–4 thợ mỏ đứng cạnh nhau, chung một mỏ, ai móc trúng trước được. **Chung mỏ** = quỹ chung, mục tiêu x(1 + 0.6·(n−1)), thua khi thiếu tiền; **Tranh vàng** = ví riêng, 5 màn, nhiều tiền nhất thắng. Tiệm giữa màn 20 giây hoặc khi mọi người sẵn sàng. Người vào giữa ván được xem.
+- **Nhiều người** (`worker/games/dao-vang.js`, DO `MinerRoom`, WebSocket `/api/dv/room/CODE`): 2–4 thợ mỏ đứng cạnh nhau, chung một mỏ, ai móc trúng trước được. **Chung mỏ** = quỹ chung, mục tiêu x(1 + 0.6·(n−1)), thua khi thiếu tiền; **Tranh vàng** = ví riêng, 5 màn, nhiều tiền nhất thắng. Tiệm giữa màn 20 giây hoặc khi mọi người sẵn sàng. Người vào giữa ván được xem.
 - Server chạy vật lý thật 20 lần/giây bằng **cùng hàm `step()`** với bản 1 người; client chỉ gửi `shoot`/`dyn` và vẽ theo snapshot (nội suy trễ 100 ms). Chuột chạy theo hàm của thời gian nên client tự tính vị trí, snapshot chỉ cần trạng thái móc.
 
 ## Dò mìn
 
-- `worker/do-min.js` (DO `MineRoom`, WebSocket `/api/ms/room/CODE`), luật ở `public/do-min/logic.js`.
+- `worker/games/do-min.js` (DO `MineRoom`, WebSocket `/api/ms/room/CODE`), luật ở `public/do-min/logic.js`.
 - Vị trí mìn **chỉ ở server**; client nhận ô đã mở. Đua cùng đề thì mỗi người chỉ nhận bàn của mình (thấy bàn đối thủ là chép được ô an toàn) — khung người chơi chỉ hiện % tiến độ. Hết ván mới lộ hết mìn.
 - Xuất phát: server chọn 1 ô, rải mìn chừa 3x3 quanh nó rồi mở sẵn cho mọi bàn (không ai đạp mìn nước đầu, đua công bằng).
 - 3 giao diện (riêng từng máy, lưu `ms.skin`): Hiện đại, **Windows XP**, **Socola** — ảnh từ [MS-Texture](https://github.com/Minesweeper-World/MS-Texture) (MIT, `public/do-min/skins/LICENSE`), có mặt cười + đồng hồ LED. Socola thu nhỏ còn 96px (`sips -Z 96`).

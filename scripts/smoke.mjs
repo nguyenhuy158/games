@@ -6,6 +6,7 @@ import { botMove as oaqBot } from '../public/o-an-quan/logic.js';
 import { botMove as bantumiBot } from '../public/nokia/bantumi/logic.js';
 import { COLS } from '../public/noi-4/logic.js';
 import { N } from '../public/ban-tau/logic.js';
+import { findPair } from '../public/pikachu/logic.js';
 
 const base = (process.argv[2] ?? 'http://localhost:8789').replace(/^http/, 'ws');
 const only = process.argv.slice(3);
@@ -30,7 +31,7 @@ async function join(path, n, onState = () => {}) {
   })));
   await until(() => socks.every((s) => s.last?.players?.length === n), 5000, 'all players see each other');
   const send = (ws, m) => ws.send(JSON.stringify(m));
-  return { socks, send, host: () => socks.find((s) => s.last.host === s.me), close: () => socks.forEach((s) => s.close()) };
+  return { socks, send, code: room, host: () => socks.find((s) => s.last.host === s.me), close: () => socks.forEach((s) => s.close()) };
 }
 async function untilAsync(fn, ms, what) {
   for (const end = Date.now() + ms; Date.now() < end; await sleep(200)) if (await fn()) return;
@@ -95,8 +96,36 @@ const GAMES = {
     await until(() => r.host().last.phase === 'show', 5000, 'bowl opened');
     return `dice=${r.host().last.dice} delta=${r.host().last.deltas?.[guest.me]}`;
   },
-  // Pikachu / Đào Vàng / Dò mìn: vào phòng 2 người, bắt đầu, thấy ván chạy.
-  async pikachu() { return startOnly((c) => `/api/room/${c}`); },
+  // Pikachu đua 2 người, bàn 8x6: mỗi bot nối cặp tìm được tới khi có người phá đảo 5 màn; giữa ván có người vào xem.
+  async pikachu() {
+    const r = await join((c) => `/api/room/${c}`, 2);
+    const boards = {};
+    for (const ws of r.socks) {
+      ws.addEventListener('message', (e) => {
+        const m = JSON.parse(e.data);
+        if ((m.t === 'board' || m.t === 'match') && m.unit === ws.me) {
+          boards[ws.me] = m.board;
+          const pair = findPair(m.board); // lúc bắt đầu board tới trước state
+          if (pair) setTimeout(() => r.send(ws, { t: 'pick', a: pair[0], b: pair[1] }), 5);
+        }
+      });
+    }
+    r.send(r.host(), { t: 'config', mode: 'race', size: 3 });
+    await until(() => r.socks.every((s) => s.last.mode === 'race' && s.last.size === 3), 3000, 'race 8x6');
+    r.send(r.host(), { t: 'start' });
+    await until(() => r.socks.every((s) => boards[s.me]), 5000, 'boards received');
+    const watcher = new WebSocket(`${base}/api/room/${r.code}?id=smoke-watch-${Date.now()}&name=Watch`);
+    watcher.msgs = [];
+    watcher.onmessage = (e) => watcher.msgs.push(JSON.parse(e.data));
+    await until(() => r.socks[0].last.status === 'ended', 60000, 'someone clears 5 levels');
+    const w = r.socks[0].last;
+    await sleep(300);
+    const seen = new Set(watcher.msgs.map((m) => m.t));
+    watcher.close();
+    if (!seen.has('board') || !seen.has('minis')) throw new Error(`watcher got ${[...seen]}`);
+    if (!w.result?.rp) throw new Error('no replay id');
+    return `winner=${w.winner === r.socks[0].me ? 'Bot0' : 'Bot1'} levels=${Object.values(w.units).map((u) => u.level)} watcher=${w.players.find((p) => p.name === 'Watch')?.spec ? 'spec' : '?'}`;
+  },
   // Đào Vàng tranh vàng 2 người: thả móc liên tục hết màn 1 (60 giây) -> tiệm, mua được thì mua, cả hai sẵn sàng -> màn 2.
   async 'dao-vang'() {
     const r = await join((c) => `/api/dv/room/${c}`, 2);
@@ -204,14 +233,6 @@ const GAMES = {
   async bounce() { return nokiaStart('bounce'); },
 };
 
-async function startOnly(path) {
-  const r = await join(path, 2);
-  const before = r.socks[0].last.status;
-  r.send(r.host(), { t: 'start' });
-  await until(() => r.socks.every((s) => s.last.status !== before), 5000, 'status changes after start');
-  r.close();
-  return `${before} -> ${r.socks[0].last.status}`;
-}
 async function nokia(game, n, onState, cfg) {
   const r = await join((c) => `/api/nk/${game}/room/${c}`, n, onState);
   if (cfg) { r.send(r.host(), { t: 'config', cfg }); await sleep(200); }

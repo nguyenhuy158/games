@@ -44,16 +44,17 @@
  * @property {() => string | null} host        chủ phòng hiện tại
  * @property {() => string[]} order            thứ tự vào phòng
  * @property {(key: string, ms: number) => boolean} allow            chống spam: false nếu `key` vừa dùng trong ms
+ * @property {(rows: object[]) => void} rank       ghi bảng xếp hạng /api/top (Pikachu: điểm mỗi bàn)
  * @property {(plays: object[]) => void} record                     ghi lịch sử tuỳ ý (Bầu cua ghi lúc rời phòng)
  * @property {(at: number) => void} wakeAt     hẹn gọi tick() lúc `at` (ms) — dùng alarm nên DO ngủ được, bị tắt vẫn dậy
  * @property {(result: Result) => void} end    kết thúc ván; adapter ghi lịch sử người đã đăng nhập qua Recorder
  * @property {() => string | undefined} clip   game không kết thúc (Bầu cua): cắt bản xem lại tới lần gửi trạng thái kế tiếp, trả mã của đoạn đó
- * @property {(id: string, msg: object) => void} send
+ * @property {(id: string, msg: object, o?: { tape?: boolean }) => void} send
  * @property {(msg: object, o?: { tape?: boolean }) => void} sendAll   tape: false = không ghi vào bản xem lại (Đào Vàng bớt snap)
  */
 
 /** @typedef {{ id: string, name: string, user?: { sub: string, name: string } | null }} Player */
-/** @typedef {{ ranks: { id: string, score: number, won: boolean, detail?: object }[], mode?: string, level?: number, title?: string | [string, string] }} Result */
+/** @typedef {{ ranks: { id: string, score: number, won: boolean, level?: number, detail?: object }[], mode?: string, level?: number, title?: string | [string, string] }} Result */
 
 /**
  * Nơi ghi kết quả + danh sách phòng công khai (adapters/top.js, DO SQLite "global").
@@ -61,6 +62,7 @@
  * @property {(plays: object[]) => Promise<void>} addPlays
  * @property {(row: RoomRow) => Promise<void>} roomUpsert
  * @property {(key: string) => Promise<void>} roomDrop
+ * @property {(rows: object[]) => Promise<void>} add           bảng xếp hạng Pikachu
  */
 
 /** @typedef {{ key: string, game: string, code: string, path: string, players: number, cap: number, status: 'waiting' | 'playing', host: string, mode?: string }} RoomRow */

@@ -191,8 +191,9 @@ export function gameRoom(games) {
         end: (result) => this.finish(result),
         // Game không bao giờ kết thúc (Bầu cua): cắt bản xem lại theo từng đợt; trả mã của đoạn đang ghi, lưu ở lần gửi trạng thái kế tiếp.
         clip: () => (this.clipRp ??= this.tape ? replayId() : undefined),
+        rank: (rows) => { if (rows.length && this.recorder()) this.io(this.recorder().add(rows)); },
         record: (plays) => { if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays)); },
-        send: (id, msg) => { if (id === s.seats[0]) this.tape?.push(msg); for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) try { ws.send(JSON.stringify(msg)); } catch {} },
+        send: (id, msg, o) => { if (id === s.seats[0] && o?.tape !== false) this.tape?.push(msg); for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) try { ws.send(JSON.stringify(msg)); } catch {} },
         sendAll: (msg, o) => { if (o?.tape !== false) this.tape?.push(msg); const d = JSON.stringify(msg); for (const ws of this.sockets()) try { ws.send(d); } catch {} },
       };
     }
@@ -206,7 +207,7 @@ export function gameRoom(games) {
       s.result = { ...result, rp, ranks: result.ranks.map((r) => ({ ...r, name: s.players[r.id]?.name ?? r.name ?? '' })) };
       const plays = result.ranks.filter((r) => s.players[r.id]?.user).map((r) => ({
         sub: s.players[r.id].user.sub, name: s.players[r.id].user.name, game: this.slug, mode: result.mode ?? (s.seats.length > 1 ? 'multi' : 'solo'),
-        score: r.score ?? 0, level: result.level ?? 1, won: !!r.won,
+        score: r.score ?? 0, level: r.level ?? result.level ?? 1, won: !!r.won,
         detail: JSON.stringify({ ...(r.detail ?? { rank: result.ranks.indexOf(r) + 1, of: result.ranks.length }), ...(rp ? { rp } : {}) }),
       }));
       if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays));
