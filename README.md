@@ -46,7 +46,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 ## Code
 
 - `public/pikachu/` — client tĩnh, không build. `public/pikachu/logic.js` là luật chơi (tìm đường, trượt ô) dùng chung client + server.
-- `worker/index.js` — chỉ nối dây: Worker = `worker/adapters/http.js` (router `/api/*`, nối WebSocket vào DO kèm header tin cậy); DO `Top` = `worker/adapters/top.js` (bảng xếp hạng, lịch sử, phòng công khai; SQLite trong DO vì gói free đã hết quota D1; hạng mục bảng vui là mảng `FUN`); mỗi class phòng = `gameRoom({...})`. Mọi phòng (kể cả Pikachu, Đào Vàng, Dò mìn) chạy trên adapter; luật mỗi game ở `worker/games/<game>.js`.
+- `worker/index.js` — chỉ nối dây: Worker = `worker/adapters/http.js` (router `/api/*`, nối WebSocket vào DO kèm header tin cậy); DO `Top` = `worker/adapters/top.js` (bảng xếp hạng, lịch sử, phòng công khai; SQLite trong DO vì gói free đã hết quota D1; hạng mục bảng vui là mảng `FUN`); mỗi class phòng = `gameRoom({...})`. Mọi phòng (kể cả Pikachu, Đào Vàng, Dò mìn) chạy trên adapter; luật mỗi game ở `worker/games/<game>.js`. Phía client mọi game nối phòng qua `public/room-client.js` (tự nối lại, mở ở tab khác thì tab cũ rời phòng).
 - Mô hình "bàn chơi" (unit): coop = 1 unit, race = 1 unit/người, team = unit A/B. Màn, đồng hồ, combo, lượt xáo nằm trên unit nên mọi luật viết một lần cho cả 3 chế độ.
 - Icon: lucide, trích riêng icon cần dùng vào `public/icons.js` bằng `pnpm icons` (sửa danh sách trong `scripts/icons.mjs`).
 - Ảnh sinh bằng Chrome headless: `node scripts/render-assets.mjs` (sprite động vật + icon PWA), rồi commit PNG.

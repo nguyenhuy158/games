@@ -3,7 +3,7 @@
 //   nokiaApp({ game, title, help, lobby?(box, room, isHost, setCfg), draw(lcd, room, now), onKey?(k, down, room),
 //              onState?(room, prev), onMsg?(m), badge?(player, room), onTap?(x, y, room, app) })
 // Game không dùng LCD (vd Ô ăn quan): truyền mount(stage, app) + render(room, app) thay cho draw, path = đường dẫn trang.
-// Server: /api/nk/<game>/room/CODE (worker/nokia.js). Tin game gửi qua app.send({...}) -> { t: 'g', ... }.
+// Server: /api/nk/<game>/room/CODE (worker/adapters/game-room.js; kết nối qua public/room-client.js). Tin game gửi qua app.send({...}) -> { t: 'g', ... }.
 // Xem lại (?replay=<id>): không vào phòng, nạp tin server đã ghi (view của ghế 1) qua cùng onMsg; mình là người xem
 // (app.id = 'replay', app.replay = true, app.pov = ghế 1), phím / chạm tắt; app.now() / now của draw theo giờ trong bản ghi.
 import { icon, iconEl, hydrateIcons } from '../icons.js';
@@ -12,6 +12,7 @@ import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { createLCD, bindKeys } from './lcd.js';
 import { t, tx, langToggle } from '../i18n.js';
+import { roomClient } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 
@@ -27,7 +28,7 @@ export function nokiaApp(opt) {
   const rp = replayParam();
   let deviceId = rp ? 'replay' : store.get('pk.id');
   if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
-  let ws, code = null, room = null, clockOffset = 0;
+  let code = null, room = null, clockOffset = 0;
   let quiet = false; // đang tua bản xem lại (nạp dồn dập): không kêu, không toast, vẽ một lần lúc xong
 
   // ---------- DOM ----------
@@ -102,29 +103,20 @@ export function nokiaApp(opt) {
     roomEl.hidden = false;
     room = null;
     render();
-    connect();
+    net.open();
   }
   function leave(msg) {
     code = null;
-    ws?.close();
+    net.close();
     history.replaceState(null, '', location.pathname);
     roomEl.hidden = true;
     home.hidden = false;
     if (msg) toast.error(tx(msg));
   }
-  function connect() {
-    const q = new URLSearchParams({ id: deviceId, name: name.value.trim() || deviceName() });
-    const sock = (ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/nk/${opt.game}/room/${code}?${q}`));
-    sock.onopen = () => conn.classList.add('on');
-    sock.onmessage = (e) => onMsg(JSON.parse(e.data));
-    sock.onclose = (e) => {
-      if (ws !== sock) return;
-      conn.classList.remove('on');
-      if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You opened this room in another tab/device'));
-      if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
-    };
-  }
-  const raw = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+  const net = roomClient({
+    path: () => `/api/nk/${opt.game}/room/${code}`, query: () => ({ id: deviceId, name: name.value.trim() || deviceName() }), onMsg, onLeave: leave, conn,
+  });
+  const raw = (m) => net.send(m);
   // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ.
   const pub = publicSwitch(raw);
 

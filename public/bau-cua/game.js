@@ -4,6 +4,7 @@ import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { t, tx, en } from '../i18n.js';
+import { roomClient } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 
@@ -30,7 +31,7 @@ const MODE_TEXT = { rotate: ['crown', t(' Xoay cái', ' Rotating dealer')], hous
 const NAME_EN = { nai: 'Deer', bau: 'Gourd', ga: 'Rooster', ca: 'Fish', cua: 'Crab', tom: 'Shrimp' };
 const nm = (s) => t(s.name, NAME_EN[s.key]);
 
-let ws, code = null, room = null, clockOffset = 0, shown = 0;
+let code = null, room = null, clockOffset = 0, shown = 0;
 // Xem lại (?replay=<id>): chỉ xem, không mở WebSocket; quiet = đang tua (feed dồn dập) thì tắt tiếng + toast.
 const rp = replayParam();
 let quiet = false;
@@ -70,29 +71,20 @@ function enter(c) {
   $('#room').hidden = false;
   room = null;
   render();
-  connect();
+  net.open();
 }
 function leave(msg) {
   code = null;
-  ws?.close();
+  net.close();
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
   if (msg) toast(tx(msg));
 }
-function connect() {
-  const q = new URLSearchParams({ id: deviceId, name: myName() });
-  const sock = (ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/bc/room/${code}?${q}`));
-  sock.onopen = () => $('#conn').classList.add('on');
-  sock.onmessage = (e) => onMsg(JSON.parse(e.data));
-  sock.onclose = (e) => {
-    if (ws !== sock) return;
-    $('#conn').classList.remove('on');
-    if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You opened this room in another tab/device'));
-    if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
-  };
-}
-const send = (m) => !rp && ws?.readyState === 1 && ws.send(JSON.stringify(m));
+const net = roomClient({
+  path: () => `/api/bc/room/${code}`, query: () => ({ id: deviceId, name: myName() }), onMsg, onLeave: leave, conn: $('#conn'),
+});
+const send = (m) => !rp && net.send(m);
 // Công tắc "Công khai" (hiện ở /phong/): Bầu cua không có sảnh chờ nên để trên thanh đầu, cạnh nút làm cái.
 const pub = publicSwitch(send);
 $('#btnMode').after(pub.el);

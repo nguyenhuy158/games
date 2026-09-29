@@ -8,6 +8,7 @@ import { toast } from '../toast.js';
 import { deviceName, randomName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx, langToggle } from '../i18n.js';
+import { roomClient } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { Tape } from '../tape.js';
 import { replayParam, playReplay, replayLinks, uploadReplay } from '../replay.js';
@@ -382,7 +383,7 @@ function shopItem(o, owned, affordable, onBuy) {
 // ---------- driver: nhiều người (server chạy vật lý, mình vẽ theo snapshot) ----------
 const INTERP = 0.1; // vẽ trễ 100 ms so với snapshot mới nhất để luôn có 2 mốc nội suy
 const net = {
-  ws: null, code: null, room: null, world: null, snaps: [], money: null, anims: {}, replay: false,
+  sock: null, code: null, room: null, world: null, snaps: [], money: null, anims: {}, replay: false,
 
   join(code) {
     this.code = code.toUpperCase();
@@ -390,27 +391,21 @@ const net = {
     Object.assign(this, { room: null, world: null, snaps: [], money: null });
     fx = [];
     showOverlay(el('div', { className: 'card' }, el('h2', { textContent: t('Đang kết nối…', 'Connecting…') })));
-    this.connect();
-  },
-  connect() {
-    const q = new URLSearchParams({ id: deviceId, name: myName() });
-    const sock = (this.ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/dv/room/${this.code}?${q}`));
-    sock.onmessage = (e) => this.onMsg(JSON.parse(e.data));
-    sock.onclose = (e) => {
-      if (this.ws !== sock) return;
-      if (e.code === 4000) return this.leave(t('Bạn đã mở phòng này ở tab khác', 'You already have this room open in another tab'));
-      if (this.code && e.code !== 4001) setTimeout(() => this.ws === sock && this.code && this.connect(), 1000);
-    };
+    this.sock ??= roomClient({
+      path: () => `/api/dv/room/${this.code}`, query: () => ({ id: deviceId, name: myName() }),
+      onMsg: (m) => this.onMsg(m), onLeave: (msg) => this.leave(msg),
+    });
+    this.sock.open();
   },
   leave(msg) {
     this.code = null;
-    this.ws?.close();
+    this.sock?.close();
     stop('up');
     history.replaceState(null, '', location.pathname);
     if (msg) toast(tx(msg));
     menu();
   },
-  send(m) { if (!this.replay && this.ws?.readyState === 1) this.ws.send(JSON.stringify(m)); },
+  send(m) { if (!this.replay) this.sock?.send(m); },
   shoot() { this.send({ t: 'shoot' }); },
   dyn() { this.send({ t: 'dyn' }); },
   pause() { /* nhiều người không tạm dừng được */ },

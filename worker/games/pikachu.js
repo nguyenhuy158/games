@@ -112,7 +112,7 @@ function pick(ctx, p, a, b) {
   if (Date.now() >= u.endAt) { settle(ctx); return true; } // hết giờ mà alarm chưa kịp chạy
   const path = findPath(u.board, a, b);
   // Client lệch (hoặc đồng đội vừa ăn mất ô đó) -> đồng bộ lại.
-  if (!path) { ctx.send(p.id, { t: 'board', unit: uid, board: u.board, why: 'sync' }); return false; }
+  if (!path) { ctx.send(p.id, { t: 'board', unit: uid, board: u.board, why: 'sync' }, { tape: false }); return false; }
 
   const now = Date.now();
   u.combo = now - u.lastAt <= COMBO_MS ? Math.min(MAX_COMBO, u.combo + 1) : 1;

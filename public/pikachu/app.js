@@ -5,6 +5,7 @@ import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { createPanel, drawGrid } from '../panel.js';
 import { t, tx } from '../i18n.js';
+import { roomClient } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 
@@ -38,7 +39,7 @@ const PEER_COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ff
 const SPRITES = { poke: 'images/pieces-sprite.png', animal: 'images/animals-sprite.png' };
 const LONG_PRESS_MS = 450;
 
-let ws, code = null, room = null, board = null, sel = null, hints = HINTS, clockOffset = 0, stateAt = 0;
+let code = null, room = null, board = null, sel = null, hints = HINTS, clockOffset = 0, stateAt = 0;
 let muted = false; // đang tua bản xem lại: bỏ âm thanh / hiệu ứng / toast, vẽ một lần lúc tua xong
 let watchUnit = null; // khán giả: bàn đang xem
 let peers = {}; // id đồng đội -> ô họ đang chọn
@@ -92,12 +93,12 @@ function enter(c) {
   minis = {};
   miniVer = {};
   render();
-  connect();
+  net.open();
 }
 
 function leave(msg) {
   code = null;
-  ws?.close();
+  net.close();
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
@@ -105,19 +106,10 @@ function leave(msg) {
   if (msg) toast(msg);
 }
 
-function connect() {
-  const q = new URLSearchParams({ id: deviceId, name: myName() });
-  const sock = (ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/room/${code}?${q}`));
-  sock.onopen = () => $('#conn').classList.add('on');
-  sock.onmessage = (e) => onMsg(JSON.parse(e.data));
-  sock.onclose = (e) => {
-    if (ws !== sock) return;
-    $('#conn').classList.remove('on');
-    if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You opened this room in another tab/device'));
-    if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), navigator.onLine ? 1000 : 3000);
-  };
-}
-const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+const net = roomClient({
+  path: () => `/api/room/${code}`, query: () => ({ id: deviceId, name: myName() }), onMsg, onLeave: leave, conn: $('#conn'),
+});
+const send = (m) => net.send(m);
 // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ, ngay trên nút Bắt đầu.
 const pub = publicSwitch(send);
 $('#btnStart').before(pub.el);

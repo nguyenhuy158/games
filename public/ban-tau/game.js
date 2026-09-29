@@ -4,6 +4,7 @@ import { invite } from '../invite.js';
 import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { t, tx } from '../i18n.js';
+import { roomClient } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 
@@ -27,7 +28,7 @@ const SHIP_COLORS = ['#e8716f', '#7c83d6', '#4fb3ea', '#4aa89a', '#b06ad6'];
 // Cảm xúc = icon lucide + màu; số lượng khớp EMO_COUNT ở worker (gửi theo chỉ số).
 const EMOS = [['thumbs-up', '#1f6fd6'], ['laugh', '#e0a100'], ['frown', '#8a5cd6'], ['flame', '#ff7a3d'], ['heart', '#e0312f']];
 
-let ws, code = null, room = null, clockOffset = 0, peek = false, sel = -1;
+let code = null, room = null, clockOffset = 0, peek = false, sel = -1;
 // Xem lại (?replay=<id>): chỉ xem (góc nhìn ghế 1), không mở WebSocket; quiet = đang tua thì tắt tiếng + toast.
 const rp = replayParam();
 let quiet = false;
@@ -58,29 +59,20 @@ function enter(c) {
   $('#room').hidden = false;
   room = null;
   render();
-  connect();
+  net.open();
 }
 function leave(msg) {
   code = null;
-  ws?.close();
+  net.close();
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
   if (msg) toast.error(msg);
 }
-function connect() {
-  const q = new URLSearchParams({ id: deviceId, name: myName() });
-  const sock = (ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/bt/room/${code}?${q}`));
-  sock.onopen = () => $('#conn').classList.add('on');
-  sock.onmessage = (e) => onMsg(JSON.parse(e.data));
-  sock.onclose = (e) => {
-    if (ws !== sock) return;
-    $('#conn').classList.remove('on');
-    if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You already opened this room on another tab/device'));
-    if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
-  };
-}
-const send = (m) => !rp && ws?.readyState === 1 && ws.send(JSON.stringify(m));
+const net = roomClient({
+  path: () => `/api/bt/room/${code}`, query: () => ({ id: deviceId, name: myName() }), onMsg, onLeave: leave, conn: $('#conn'),
+});
+const send = (m) => !rp && net.send(m);
 // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ, ngay trên nút Bắt đầu.
 const pub = publicSwitch(send);
 $('#btnStart').before(pub.el);

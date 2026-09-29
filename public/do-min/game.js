@@ -5,6 +5,7 @@ import { toast } from '../toast.js';
 import { deviceName, addReroll } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx } from '../i18n.js';
+import { roomClient } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 
@@ -39,7 +40,7 @@ function applySkin() {
   builtFor = '';
 }
 
-let ws, code = null, room = null, grids = {}, mines = null, clockOffset = 0, flagMode = false;
+let code = null, room = null, grids = {}, mines = null, clockOffset = 0, flagMode = false;
 let peek = false; // hết ván: ẩn bảng kết quả để xem mìn nằm đâu
 let quiet = false; // đang tua bản xem lại (phát nhanh cả loạt tin): tắt âm, rung, toast, hiệu ứng ping
 let cursors = {};
@@ -75,29 +76,20 @@ function enter(c) {
   room = mines = null;
   grids = {}; cursors = {};
   render();
-  connect();
+  net.open();
 }
 function leave(msg) {
   code = null;
-  ws?.close();
+  net.close();
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
   if (msg) toast(tx(msg));
 }
-function connect() {
-  const q = new URLSearchParams({ id: deviceId, name: myName() });
-  const sock = (ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/ms/room/${code}?${q}`));
-  sock.onopen = () => $('#conn').classList.add('on');
-  sock.onmessage = (e) => onMsg(JSON.parse(e.data));
-  sock.onclose = (e) => {
-    if (ws !== sock) return;
-    $('#conn').classList.remove('on');
-    if (e.code === 4000) return leave(t('Bạn đã mở phòng này ở tab/thiết bị khác', 'You opened this room in another tab/device'));
-    if (code && e.code !== 4001) setTimeout(() => ws === sock && code && connect(), 1000);
-  };
-}
-const send = (m) => ws?.readyState === 1 && ws.send(JSON.stringify(m));
+const net = roomClient({
+  path: () => `/api/ms/room/${code}`, query: () => ({ id: deviceId, name: myName() }), onMsg, onLeave: leave, conn: $('#conn'),
+});
+const send = (m) => net.send(m);
 // Công tắc "Công khai" (hiện ở /phong/) trong thẻ sảnh chờ, ngay trên nút Bắt đầu.
 const pub = publicSwitch(send);
 $('#btnStart').before(pub.el);
