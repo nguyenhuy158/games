@@ -1,4 +1,4 @@
-import { createGame, turn, step, over, ranking, SPEEDS, MAX } from '../../public/nokia/snake/logic.js';
+import { createGame, turn, step, over, ranking, SPEEDS, MAX, MAZES } from '../../public/nokia/snake/logic.js';
 
 // Snake: server chạy bước theo tốc độ đã chọn.
 // cfg.mode 'arena' = chung 1 sân, tranh mồi, đâm rắn khác là chết; 'solo' = mỗi người 1 sân riêng, hết mạng hết thì so điểm.
@@ -10,12 +10,13 @@ const pick = ({ id, body, alive, score, dir }) => ({ id, body, alive, score, dir
 export default {
   page: '/nokia/snake/',
   max: MAX,
-  cfg: { speed: 2, walls: false, mode: 'arena' },
+  cfg: { speed: 2, walls: false, mode: 'arena', maze: 0 },
   config(cfg, m) {
     const next = { ...cfg };
     if (Number.isInteger(m.speed) && SPEEDS[m.speed]) next.speed = m.speed;
     if (typeof m.walls === 'boolean') next.walls = m.walls;
     if (MODES.includes(m.mode)) next.mode = m.mode;
+    if (Number.isInteger(m.maze) && MAZES[m.maze]) next.maze = m.maze;
     return next;
   },
   volatile: true,
@@ -53,7 +54,7 @@ export default {
     const w = !g.solo ? g : g.worlds.find((x) => x.snakes[0].id === id)
       ?? [...g.worlds].sort((a, b) => (b.snakes[0].alive - a.snakes[0].alive) || (b.snakes[0].score - a.snakes[0].score))[0];
     return {
-      solo: !!g.solo, snakes: w.snakes.map(pick), food: w.food, bug: w.bug, walls: w.walls, events: w.events, step: w.step,
+      solo: !!g.solo, snakes: w.snakes.map(pick), food: w.food, bug: w.bug, walls: w.walls, maze: w.maze, events: w.events, step: w.step,
       board: snakesOf(g).map(({ id, score, alive }) => ({ id, score, alive })),
     };
   },

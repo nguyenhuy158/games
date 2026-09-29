@@ -33,7 +33,8 @@ jobs:
           want=$(date -d "$COMMIT_AT" +%s)
           for i in $(seq 1 90); do
             at=$(curl -fsS https://games.huyab.click/api/version | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=JSON.parse(s).at;console.log(a?Math.floor(Date.parse(a)/1000):0)})" || echo 0)
-            if [ "$at" -ge "$want" ]; then echo "deployed at $at (commit $want)"; exit 0; fi
+            # Chờ thêm 30s cho mọi Durable Object chuyển sang bản mới rồi mới chạy.
+            if [ "$at" -ge "$want" ]; then echo "deployed at $at (commit $want)"; sleep 30; exit 0; fi
             sleep 10
           done
           echo "deploy not seen after 15 min"; exit 1

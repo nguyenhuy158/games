@@ -31,9 +31,10 @@ play('b', 'Bình', 'pikachu', 'race', 450, 2, true, now - 30 * 24 * H); // cũ h
 play('a', 'An Mới', 'pikachu', 'team', 100, 1, false, vnMidnight + 12 * H); // đổi tên -> dùng tên mới
 
 const all = Object.fromEntries(top.fun('all').map((c) => [c.key, c.rows]));
-assert.deepEqual(all.plays, [{ name: 'An Mới', value: 3 }, { name: 'Bình', value: 2 }]);
+// Ván Đào Vàng 1 người do client tự báo: không vào bảng xếp hạng vui (chỉ lịch sử cá nhân).
+assert.deepEqual(all.plays, [{ name: 'Bình', value: 2 }, { name: 'An Mới', value: 2 }]);
 assert.deepEqual(all.wins.map((r) => r.value), [1, 1]);
-assert.deepEqual(all.gold, [{ name: 'Bình', value: 1500 }, { name: 'An Mới', value: 900 }]);
+assert.deepEqual(all.gold, [{ name: 'Bình', value: 1500 }], 'self-reported solo run (900) not ranked');
 assert.deepEqual(all.tiles[0], { name: 'Bình', value: 450 });
 assert.deepEqual(all.deep[0], { name: 'Bình', value: 4 });
 assert.deepEqual(all.team, [{ name: 'An Mới', value: 2 }, { name: 'Bình', value: 1 }]);

@@ -11,8 +11,8 @@ nokiaApp({
   game: 'snake',
   title: t('Rắn săn mồi', 'Snake'),
   sub: t('Snake huyền thoại của Nokia — một mình, đua điểm mỗi người một sân, hoặc chung sân tranh mồi.', 'The legendary Nokia Snake — solo, a score race on separate fields, or one shared arena fighting for food.'),
-  help: t('Phím mũi tên / WASD / 2-4-6-8 hoặc bàn phím trên máy. Ăn mồi để dài ra, con bọ thưởng biến mất sau vài giây. Đâm tường (nếu bật) hoặc đâm thân rắn là thua. Chung sân: đâm vào rắn khác là chết, con sống sót cuối cùng thắng. Sân riêng: ai cũng chơi tới khi chết, điểm cao nhất thắng.',
-    'Arrow keys / WASD / 2-4-6-8 or the on-screen keypad. Eat food to grow; the bonus bug vanishes after a few seconds. Hitting a wall (if on) or a snake body loses. Shared arena: hit another snake and you die, last snake alive wins. Own field: everyone plays until they crash, highest score wins.'),
+  help: t('Phím mũi tên / WASD / 2-4-6-8 hoặc bàn phím trên máy. Ăn mồi để dài ra, con bọ thưởng biến mất sau vài giây. Đâm tường (nếu bật), tường mê cung hoặc thân rắn là thua. Chung sân: đâm vào rắn khác là chết, con sống sót cuối cùng thắng. Sân riêng: ai cũng chơi tới khi chết, điểm cao nhất thắng.',
+    'Arrow keys / WASD / 2-4-6-8 or the on-screen keypad. Eat food to grow; the bonus bug vanishes after a few seconds. Hitting a wall (if on), a maze wall or a snake body loses. Shared arena: hit another snake and you die, last snake alive wins. Own field: everyone plays until they crash, highest score wins.'),
   lobbyText: (r) => (r.players.length < 2 ? t('Chơi một mình — mời bạn bè để đua điểm hoặc chung sân.', 'Playing solo — invite friends for a score race or a shared arena.')
     : r.cfg.mode === 'solo' ? t(`${Math.min(4, r.players.length)} người, mỗi người một sân — so điểm.`, `${Math.min(4, r.players.length)} players, one field each — highest score wins.`)
       : t(`${Math.min(4, r.players.length)} con rắn chung một sân — tranh mồi, đâm nhau là thua.`, `${Math.min(4, r.players.length)} snakes in one arena — fight for food, crash and you lose.`)),
@@ -30,7 +30,12 @@ nokiaApp({
     mode.append(t('Chế độ ', 'Mode '), ...[['arena', t('Chung sân', 'Shared arena')], ['solo', t('Sân riêng', 'Own field')]].map(([m, n]) => Object.assign(document.createElement('button'), {
       textContent: n, className: (r.cfg.mode ?? 'arena') === m ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ mode: m }),
     })));
-    box.append(mode, seg, walls);
+    const maze = document.createElement('div');
+    maze.className = 'seg';
+    maze.append(t('Mê cung ', 'Maze '), ...[t('Không', 'None'), t('Bốn góc', 'Corners'), t('Đường hầm', 'Tunnel'), t('Chữ thập', 'Cross')].map((n, i) => Object.assign(document.createElement('button'), {
+      textContent: n, className: (r.cfg.maze ?? 0) === i ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ maze: i }),
+    })));
+    box.append(mode, seg, maze, walls);
   },
   badge: (p, r) => (r.view?.board ?? r.view?.snakes)?.find((s) => s.id === p.id)?.score ?? '',
   scoreText: (v) => t(`${v} điểm`, `${v} pts`),
@@ -63,6 +68,7 @@ nokiaApp({
     lcd.frame(X0 - 1, Y0 - 1, COLS * CELL + 2, ROWS * CELL + 2);
     if (v.walls) lcd.frame(X0 - 1, Y0 - 2, COLS * CELL + 2, ROWS * CELL + 4);
     const at = ([x, y]) => [X0 + x * CELL, Y0 + y * CELL];
+    for (const k of v.maze ?? []) { const [x, y] = at([k % COLS, Math.floor(k / COLS)]); lcd.rect(x, y, CELL, CELL); lcd.px(x + 1, y + 1, '#c7f0d8'); } // tường mê cung: ô đặc, chấm sáng giữa cho khác thân rắn
     if (v.food) { const [x, y] = at(v.food); lcd.sprite(x, y, ['.#.', '#.#', '.#.']); }
     if (v.bug && Math.floor(now / 250) % 2) { const [x, y] = at(v.bug.at); lcd.sprite(x, y, ['#.#', '.#.', '#.#']); }
     for (const s of v.snakes) {

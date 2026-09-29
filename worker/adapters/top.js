@@ -14,6 +14,10 @@ export const replayId = () => Array.from(crypto.getRandomValues(new Uint8Array(1
 // [key, tên, đơn vị, giá trị gộp theo người, điều kiện, thứ tự]. order 'ASC' = càng nhỏ càng giỏi (thời gian dò mìn, số phát bắn).
 // Giờ Việt Nam = UTC+7; "cú đêm" = ván kết thúc từ 0h tới trước 5h sáng.
 const VN_HOUR = '((p.at / 3600000 + 7) % 24)';
+// Ván do client tự báo (Đào Vàng 1 người, POST /api/me/history): chỉ vào lịch sử cá nhân, không vào bảng xếp hạng vui.
+// ponytail: muốn tính cả loại này thì server phải chạy lại bản ghi (replay) để kiểm điểm.
+const SELF_REPORTED = "(p.game = 'dao-vang' AND p.mode = 'solo')";
+
 export const FUN = [
   ['plays', 'Chiến thần cày game', 'ván', 'COUNT(*)'],
   ['wins', 'Vua chiến thắng', 'lần thắng', 'SUM(p.won)'],
@@ -38,8 +42,6 @@ export class Top extends DurableObject {
       mode TEXT NOT NULL, size INTEGER NOT NULL, names TEXT NOT NULL,
       score INTEGER NOT NULL, level INTEGER NOT NULL, cleared INTEGER NOT NULL, at INTEGER NOT NULL)`);
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS scores_top ON scores (mode, size, score DESC)');
-    // Dọn một lần: dòng do bot test / smoke để lại trên bảng Pikachu 8x6 (bot giờ không ghi điểm nữa). Gỡ sau khi đã chạy trên web.
-    ctx.storage.sql.exec("DELETE FROM scores WHERE size = 3 AND names IN ('An, Binh', 'R1', 'Bot0', 'Bot1', 'A1, A2', 'B1, B2', 'alice')");
     // Lịch sử chơi của người đã đăng nhập (sub = id tài khoản SSO). Không lưu email.
     ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS plays (
       id INTEGER PRIMARY KEY AUTOINCREMENT, sub TEXT NOT NULL, game TEXT NOT NULL, mode TEXT NOT NULL,
@@ -125,7 +127,7 @@ export class Top extends DurableObject {
       key, title, unit,
       rows: this.ctx.storage.sql.exec(
         `SELECT COALESCE(u.name, 'Ẩn danh') AS name, ${agg} AS value FROM plays p LEFT JOIN users u ON u.sub = p.sub
-         WHERE p.at >= ? AND (${where}) GROUP BY p.sub HAVING value > 0 ORDER BY value ${order}, MIN(p.at) ASC LIMIT 5`, since,
+         WHERE p.at >= ? AND NOT ${SELF_REPORTED} AND (${where}) GROUP BY p.sub HAVING value > 0 ORDER BY value ${order}, MIN(p.at) ASC LIMIT 5`, since,
       ).toArray(),
     });
     return FUN.map((c) => q(...c));

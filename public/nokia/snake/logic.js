@@ -7,8 +7,18 @@ const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const OPP = { up: 'down', down: 'up', left: 'right', right: 'left' };
 export const BUG_EVERY = 5, BUG_LIFE = 24; // cứ 5 mồi ra 1 con bọ, sống 24 bước
 
+// Mê cung kiểu Snake II (đâm là chết): danh sách ô tường. Vẽ né các ô xuất phát của 1–4 con rắn (x 4..6 và 20..22).
+const hline = (y, x0, x1) => Array.from({ length: x1 - x0 + 1 }, (_, i) => y * COLS + x0 + i);
+const vline = (x, y0, y1) => Array.from({ length: y1 - y0 + 1 }, (_, i) => (y0 + i) * COLS + x);
+export const MAZES = [
+  [], // không mê cung
+  [...hline(1, 1, 6), ...vline(1, 2, 4), ...hline(1, 20, 25), ...vline(25, 2, 4), ...hline(11, 1, 6), ...vline(1, 8, 10), ...hline(11, 20, 25), ...vline(25, 8, 10)], // bốn góc
+  [...hline(1, 7, 19), ...hline(11, 7, 19), ...vline(13, 4, 8)], // đường hầm
+  [...vline(13, 1, 11), ...hline(6, 8, 18)], // chữ thập
+].map((m) => [...new Set(m)]);
+
 // Vị trí xuất phát: các con nằm ngang, cách đều theo chiều dọc, quay hai hướng xen kẽ.
-export function createGame(ids, { walls = false } = {}, rand = Math.random) {
+export function createGame(ids, { walls = false, maze = 0 } = {}, rand = Math.random) {
   const snakes = ids.map((id, k) => {
     const y = Math.round(((k + 1) * ROWS) / (ids.length + 1)) - (ids.length === 1 ? 0 : 0);
     const right = k % 2 === 0;
@@ -16,7 +26,7 @@ export function createGame(ids, { walls = false } = {}, rand = Math.random) {
     const body = [0, 1, 2].map((i) => [right ? x0 - i : x0 + i, Math.min(ROWS - 1, y)]);
     return { id, body, dir: right ? 'right' : 'left', queue: [], alive: true, grow: 0, score: 0, diedAt: 0 };
   });
-  const g = { snakes, walls, food: null, bug: null, eaten: 0, step: 0 };
+  const g = { snakes, walls, maze: MAZES[maze] ?? [], food: null, bug: null, eaten: 0, step: 0 };
   g.food = freeCell(g, rand);
   return g;
 }
@@ -27,6 +37,7 @@ export function freeCell(g, rand = Math.random) {
   const used = occupied(g);
   if (g.food) used.add(g.food[1] * COLS + g.food[0]);
   if (g.bug) used.add(g.bug.at[1] * COLS + g.bug.at[0]);
+  for (const k of g.maze ?? []) used.add(k);
   const free = [];
   for (let i = 0; i < COLS * ROWS; i++) if (!used.has(i)) free.push(i);
   if (!free.length) return null;
@@ -58,7 +69,7 @@ export function step(g, rand = Math.random) {
     heads.set(s, [x, y]);
   }
   // Thân sau bước này: đuôi rụt đi (trừ khi đang dài ra), nên đâm vào ô đuôi vừa rời là không sao.
-  const bodies = new Set();
+  const bodies = new Set(g.maze ?? []);
   for (const s of live) {
     const keep = s.grow > 0 ? s.body.length : s.body.length - 1;
     for (const [x, y] of s.body.slice(0, keep)) bodies.add(y * COLS + x);

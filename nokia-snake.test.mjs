@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createGame, turn, step, over, ranking, COLS, ROWS } from './public/nokia/snake/logic.js';
+import { createGame, turn, step, over, ranking, freeCell, COLS, ROWS, MAZES } from './public/nokia/snake/logic.js';
 
 const r0 = () => 0; // mồi luôn rơi vào ô trống đầu tiên -> dễ đoán
 // Đi thẳng, ăn mồi thì dài ra
@@ -99,5 +99,20 @@ const r0 = () => 0; // mồi luôn rơi vào ô trống đầu tiên -> dễ đo
   assert.equal(result.mode, 'race');
   assert.equal(result.ranks[0].id, 'b');
   assert.equal(result.ranks[0].won, true);
+}
+// Mê cung: không đè ô xuất phát (1–4 rắn), đâm tường mê cung là chết, mồi không bao giờ nằm trên tường
+for (let m = 1; m < MAZES.length; m++) {
+  for (let n = 1; n <= 4; n++) {
+    const g = createGame(Array.from({ length: n }, (_, i) => `p${i}`), { maze: m });
+    const wall = new Set(g.maze);
+    for (const sn of g.snakes) for (const [x, y] of sn.body) assert.ok(!wall.has(y * COLS + x), `maze ${m}, ${n} snakes: spawn clear`);
+    for (let i = 0; i < 50; i++) { const f = freeCell(g); assert.ok(!wall.has(f[1] * COLS + f[0]), 'food never on a wall'); }
+  }
+  const g = createGame(['a'], { maze: m });
+  g.food = null;
+  const [hx, hy] = g.snakes[0].body[0];
+  g.maze = [hy * COLS + hx + 1]; // tường ngay trước mặt
+  const ev = step(g);
+  assert.deepEqual(ev, [{ t: 'die', id: 'a' }], 'hitting a maze wall kills');
 }
 console.log('nokia-snake ok');

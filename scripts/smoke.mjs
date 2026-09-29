@@ -276,13 +276,17 @@ async function nokiaStart(game) {
 let fail = 0;
 for (const [name, run] of Object.entries(GAMES)) {
   if (only.length && !only.includes(name)) continue;
-  const t = Date.now();
-  try {
-    const info = await run();
-    console.log(`ok   ${name.padEnd(13)} ${((Date.now() - t) / 1000).toFixed(1)}s  ${info}`);
-  } catch (e) {
-    fail++;
-    console.log(`FAIL ${name.padEnd(13)} ${e.message}`);
+  // Mạng / lúc vừa deploy có thể chập chờn: game fail thì chạy lại 1 lần, ghi rõ để còn thấy.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const t = Date.now();
+    try {
+      const info = await run();
+      console.log(`ok   ${name.padEnd(13)} ${((Date.now() - t) / 1000).toFixed(1)}s  ${info}${attempt > 1 ? '  (lần 2)' : ''}`);
+      break;
+    } catch (e) {
+      console.log(`${attempt < 2 ? 'retry' : 'FAIL '} ${name.padEnd(13)} ${e.message}`);
+      if (attempt === 2) fail++;
+    }
   }
 }
 process.exit(fail ? 1 : 0);
