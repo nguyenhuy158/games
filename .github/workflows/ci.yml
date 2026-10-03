@@ -5,27 +5,47 @@ on:
     branches: [main]
   pull_request:
 
+# PR: bản mới huỷ bản cũ. main: không huỷ để smoke-prod của từng deploy chạy hết.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  test:
+  check:
+    name: Lint, test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - run: node logic.test.mjs
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Biome thêm sau khi đã có code: còn lỗi cũ chưa sửa nên chưa chặn merge.
+      - name: Lint (Biome)
+        run: pnpm check
+        continue-on-error: true
+
+      - name: Unit tests
+        run: pnpm test
 
   # Sau khi Cloudflare deploy xong commit này (bản trên web mới hơn commit), chạy bot chơi thử mọi game vào web thật.
   smoke-prod:
     if: github.event_name == 'push'
-    needs: test
+    needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
       - name: Wait for the deploy of this commit
         env:
           COMMIT_AT: ${{ github.event.head_commit.timestamp }}

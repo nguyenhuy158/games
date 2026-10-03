@@ -99,8 +99,9 @@ connection code.
 History uses Conventional Commits, sometimes with an emoji prefix, for example
 `feat(co-ganh): ...`, `fix(rooms): ...`, `refactor(step 4a): ...`. Pull
 requests should include a short summary, test results, and screenshots for
-visible UI changes. CI (`.github/workflows/ci.yml`) runs the tests on every
-push/PR and smoke-tests production after each deploy to `main`.
+visible UI changes. CI (`.github/workflows/ci.yml`) runs `pnpm check`
+(non-blocking until the existing Biome findings are fixed) and `pnpm test` on
+every push/PR, then smoke-tests production after each deploy to `main`.
 
 ## Agent-Specific Instructions
 
