@@ -3,7 +3,8 @@
 ## Project Structure & Module Organization
 
 Classic browser games (Pikachu, Đào Vàng, Bầu cua, Cờ caro, Nối 4, Ô ăn quan,
-Bắn tàu, Cờ tướng, Cờ gánh, Dò mìn, Nokia corner) served by one Cloudflare
+Bắn tàu, Cờ tướng, Cờ gánh, Dò mìn, Lô tô, Nokia corner, and the client-only
+solo games 2048, Xếp gạch, Sudoku) served by one Cloudflare
 Worker at https://games.huyab.click. The client is plain static HTML/CSS/ES
 modules in `public/` with no build step; the Worker in `worker/` routes
 `/api/*`, proxies WebSockets into Durable Objects and serves `public/` through
@@ -29,6 +30,7 @@ Folder structure:
 public/                        # Static client (served as-is, no build)
   <game>/                      #   index.html, game.js (UI), logic.js (rules), style.css
   nokia/<game>/                #   Nokia corner games + shared lcd.js, room.js, nokia.css
+  2048/ tetris/ sudoku/        #   Solo games, run fully in the browser (shared solo.css shell, swipe.js touch helper)
   room-client.js               #   Shared WebSocket room connection (auto-reconnect), newRoomCode()
   dom.js  names.js             #   Shared $/el/store helpers; player name + loadDeviceId() (pk.id)
   i18n.js  toast.js  icons.js  #   vi/en strings, sonner-like toasts, lucide icons (generated)

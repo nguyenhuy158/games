@@ -14,6 +14,10 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 | Cờ tướng | `/co-tuong/` | Đủ luật (cản mắt / cản chân, pháo cách ngòi, lộ mặt tướng, không tự chiếu); 1v1 hoặc với máy (alpha-beta + tìm yên, có hạn giờ), người khác xem |
 | Cờ gánh | `/co-ganh/` | Cờ dân gian 5×5: gánh (đi vào giữa 2 quân địch), vây và mở (bắt buộc vào gánh); 1v1 hoặc với máy (3 mức), người khác xem |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |
+| Lô tô | `/loto/` | 1–12 người, mỗi người một phiếu 3×9 (chỉ chủ phiếu thấy), chủ phòng gọi số 1–90, server kiểm số đã gọi; kín một hàng là KINH; vào giữa ván vẫn có phiếu |
+| 2048 | `/2048/` | 1 người, chạy hết ở client: phím mũi tên / vuốt / phím trên màn; bảng xếp hạng tên + điểm (top 10, `/api/board?game=2048`) |
+| Xếp gạch | `/tetris/` | 1 người, chạy hết ở client: phím / vuốt / chạm / 4 nút; tạm dừng (P); kỷ lục lưu trên máy |
+| Sudoku | `/sudoku/` | 1 người, chạy hết ở client: 3 mức, ghi chú bút chì (N), 3 gợi ý, đồng hồ + tạm dừng, kỷ lục thời gian theo mức lưu trên máy |
 
 Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node scripts/smoke.mjs [url] [game ...]`, mặc định `http://localhost:8789` (`wrangler dev --port 8789`). Chạy trước / sau mỗi bước refactor (kế hoạch: `docs/hexagon-plan.md`). CI (`.github/workflows/ci.yml`, job `smoke-prod`) tự chạy vào web thật sau mỗi lần deploy (chờ `/api/version` mới hơn commit); bot smoke (id `smoke-...`) không lên bảng xếp hạng.
 
@@ -33,6 +37,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 - Worker xác thực rồi gắn `X-User` khi chuyển WebSocket vào phòng; header client tự gửi luôn bị xoá trước.
 - Lịch sử lưu ở bảng `plays` trong DO `Top` (chỉ `sub` + tên, không lưu email). Ván nhiều người do server ghi; Đào Vàng 1 người do client gửi `POST /api/me/history` (tự báo nên chỉ là lịch sử cá nhân).
 - `GET /api/me` (user + thống kê), `GET /api/me/history` (30 ván gần nhất). Trang chủ hiển thị cả hai.
+- **Bảng điểm tự báo** `GET /api/board?game=2048` (top 10 tên + điểm), `POST` `{ name, score }` (JSON, không cần đăng nhập, như bản cũ ở mytools; điểm chặn trên bằng `MAX_SCORE` của game). Bảng `boards` trong DO `Top`, chỉ giữ 10 dòng mỗi game.
 - **Bảng xếp hạng vui** `GET /api/fun?period=week|all`: 10 hạng mục (cày nhiều, thắng nhiều, đại gia Đào Vàng, đại gia Bầu cua, kỳ thủ caro, thánh dò mìn, thánh nối thú, thợ mỏ lì đòn, đồng đội quốc dân, cú đêm 0–5h giờ VN), top 5 mỗi mục, chỉ người đã đăng nhập. Tên lấy từ bảng `users` (tên SSO mới nhất).
 
 ## Pikachu
@@ -67,6 +72,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 - Xuất phát: server chọn 1 ô, rải mìn chừa 3x3 quanh nó rồi mở sẵn cho mọi bàn (không ai đạp mìn nước đầu, đua công bằng).
 - 3 giao diện (riêng từng máy, lưu `ms.skin`): Hiện đại, **Windows XP**, **Socola** — ảnh từ [MS-Texture](https://github.com/Minesweeper-World/MS-Texture) (MIT, `public/do-min/skins/LICENSE`), có mặt cười + đồng hồ LED. Socola thu nhỏ còn 96px (`sips -Z 96`).
 - Chung: 3 mạng cả đội. Đua: đạp mìn +10 giây, ai mở hết trước thắng. Lịch sử lưu thời gian (giây); bảng vui có "💣 Thánh dò mìn" (thắng nhanh nhất).
+- Chơi một mình: bấm mặt cười lúc nào cũng làm lại ván mới (tin `{ t: 'restart' }`, server chỉ nhận khi phòng có đúng 1 người chơi).
 
 ## Bầu cua
 
@@ -102,9 +108,11 @@ Game điện thoại Nokia ngày xưa ở `/nokia/<game>/`: **Rắn săn mồi**
 - Phòng công khai: chủ phòng gửi `{ t: 'public', on }`, state có `pub`; phòng báo lên DO `Top` (`roomUpsert` / `roomDrop`, mỗi 30s bằng alarm), `GET /api/rooms` trả phòng còn sống trong 90s (trang `/phong/`).
 - Client chung `public/nokia/room.js` (trang vào phòng, mời QR, sảnh chờ, kết quả) + `public/nokia/lcd.js`: LCD 84×48 hai màu, font pixel 3×5 tự vẽ, bàn phím 2/4/5/6/8 (bàn phím thật, WASD, mũi tên, nút trên màn — giữ được), tiếng bíp WebAudio.
 - Snake: server bước theo tốc độ (5 cấp), có / không tường, 1–4 con; con sống cuối cùng thắng. Bantumi: luật Kalah, máy minimax alpha-beta. Lật hình: 6×4 lá, hình lá úp chỉ ở server. Logic: mọi người đoán cùng một mã (chỉ ở server), 10 lượt / 5 phút.
+- Snake: kỷ lục của máy (`localStorage` `nk.best.snake`) hiện mờ cạnh điểm trên LCD và ở sảnh chờ.
 - Rapid Roll + Bounce: "đua cùng đề" (`worker/games/race.js`) — server phát hạt giống / màn + giờ xuất phát, máy mỗi người tự chạy mô phỏng (`public/nokia/<game>/logic.js`), gửi vị trí 5 lần/giây để người khác thấy bóng mờ. Bounce có 3 màn dựng bằng hàm `build()`; sửa màn xong chạy `node scripts/bounce-solve.mjs` (beam search trên chính mô phỏng) để chắc còn qua được.
 - Space Impact: server chạy thế giới 20 lần/giây, client chỉ gửi phím đang giữ; tàu của mình được đoán trước theo phím cho đỡ trễ. 3 màn, mỗi màn một trùm.
 - Logo: `node scripts/nokia-logos.mjs`.
+- Lô tô (`/loto/`) dùng chung khung `public/nokia/room.js` (chế độ `mount` / `render`, không có LCD) và DO `NokiaRoom` (`/api/nk/loto/room/CODE`); module `worker/games/loto.js`, luật ở `public/loto/logic.js`.
 
 ## Ảnh chụp màn hình
 
