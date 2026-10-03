@@ -48,6 +48,17 @@ button.primary { background: var(--gold); color: #2b1600; border-color: var(--go
   .stat .short { display: inline; }
   .stat b { font-size: 14px; }
 }
+/* ≤ 440px: chừa chỗ cho nút Cách chơi (i) trên HUD. */
+@media (max-width: 440px) {
+  #hud { gap: 4px; padding-inline: 6px; }
+  #hud button { padding: 5px 5px; }
+  .stat b { font-size: 13px; }
+}
+/* ≤ 390px, chơi nhiều người có thêm nút ẩn/hiện người chơi khác: khít thêm. */
+@media (max-width: 390px) {
+  #hud { gap: 2px; }
+  #hud button { padding: 5px 4px; }
+}
 
 #stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; padding: 0 8px 8px; }
 #game { border-radius: 10px; box-shadow: 0 10px 40px #000a; touch-action: none; cursor: pointer; }

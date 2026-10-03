@@ -4,6 +4,7 @@
 //   button: element, mảng element hoặc selector (mọi nút khớp đều mở hộp); content[lang] = {
 //     goal: 'Mục tiêu', play: ['Cách chơi'...], keys: ['Bàn phím / chuột'...], touch: ['Cảm ứng'...], tips: ['Mẹo'...] }
 // Kiểu dáng tự chèn một lần (game không dùng chung file css nào), màu riêng không phụ thuộc theme từng game.
+// Thanh trên chật (nút nhỏ hơn 44px): thêm class 'compact' cho nút — giữ cỡ như các nút bên cạnh, vùng chạm vẫn 44×44.
 import { t, en } from './i18n.js';
 import { iconEl } from './icons.js';
 import { el, store } from './dom.js';
@@ -11,6 +12,8 @@ import { el, store } from './dom.js';
 const SEEN_KEY = 'help.seen.';
 const CSS = `
 .help-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.help-btn.compact{min-width:0;min-height:0;position:relative}
+.help-btn.compact::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%)}
 dialog.help-dlg{padding:0;border:0;background:transparent;color:#3b2f4a;width:min(420px,calc(100vw - 24px));max-width:none;
   max-height:calc(100dvh - 24px);overflow:visible;font:15px/1.45 "Be Vietnam Pro","Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;user-select:text}
 dialog.help-dlg::backdrop{background:#1d1530a8;backdrop-filter:blur(3px)}
@@ -21,7 +24,7 @@ dialog.help-dlg[open]{animation:help-pop .18s ease-out}
 .help-head{display:flex;align-items:center;gap:10px;padding:12px 10px 10px 16px;background:linear-gradient(#ffe3ef,#fff2f8);border-bottom:2px dashed #ffc4de}
 .help-head h2{flex:1;margin:0;font-size:19px;font-weight:800;color:#c2307a;display:flex;align-items:center;gap:8px}
 .help-head h2 .ic{width:28px;height:28px;padding:5px;border-radius:50%;background:#ff7ab6;color:#fff}
-.help-x{width:44px;height:44px;flex:none;border-radius:50%;border:2px solid #ffc4de;background:#fff;color:#c2307a;display:grid;place-items:center;cursor:pointer;padding:0}
+.help-x{width:44px;height:44px;min-width:0;min-height:0;flex:none;border-radius:50%;border:2px solid #ffc4de;background:#fff;color:#c2307a;display:grid;place-items:center;cursor:pointer;padding:0;margin:0;box-shadow:none}
 .help-body{overflow:auto;overscroll-behavior:contain;padding:12px 16px;display:grid;gap:12px}
 .help-sec h3{margin:0 0 6px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;color:#4a3a63}
 .help-sec h3 .ic{width:24px;height:24px;padding:4px;border-radius:9px;background:var(--hc);color:#fff}
@@ -30,14 +33,15 @@ dialog.help-dlg[open]{animation:help-pop .18s ease-out}
 .help-sec h4{margin:6px 0 3px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#9a7fb5}
 .help-sec h4:first-of-type{margin-top:0}
 .help-foot{padding:10px 16px 14px;display:flex;justify-content:center}
-.help-ok{min-height:44px;min-width:140px;border-radius:999px;border:0;background:#ff7ab6;color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #d9468f}
+.help-ok{display:inline-flex;align-items:center;justify-content:center;width:auto;min-height:44px;min-width:140px;margin:0;padding:0 28px;border-radius:999px;border:0;background:#ff7ab6;color:#fff;
+  font:inherit;font-weight:800;line-height:1.2;letter-spacing:normal;text-transform:none;text-align:center;cursor:pointer;box-shadow:0 4px 0 #d9468f}
 .help-ok:active{transform:translateY(2px);box-shadow:0 2px 0 #d9468f}
 .help-x:focus-visible,.help-ok:focus-visible{outline:3px solid #8b5cf6;outline-offset:2px}
 `;
 
 const list = (items) => el('ul', {}, ...items.map((s) => el('li', { textContent: s })));
 function section(icon, color, title, ...kids) {
-  const s = el('section', { className: 'help-sec' }, el('h3', {}, iconEl(icon), title), ...kids);
+  const s = el('div', { className: 'help-sec' }, el('h3', {}, iconEl(icon), title), ...kids);
   s.style.setProperty('--hc', color);
   return s;
 }
@@ -52,7 +56,7 @@ export function mountHelp({ game, button, content, auto = true, onOpen, onClose 
   const title = t('Cách chơi', 'How to play');
   const dlg = el('dialog', { className: 'help-dlg' },
     el('div', { className: 'help-card' },
-      el('header', { className: 'help-head' },
+      el('div', { className: 'help-head' },
         el('h2', { id: `help-title-${game}` }, iconEl('info'), title),
         el('button', { type: 'button', className: 'help-x', title: t('Đóng', 'Close'), ariaLabel: t('Đóng', 'Close'), onclick: () => dlg.close() }, iconEl('x'))),
       el('div', { className: 'help-body' },
@@ -60,7 +64,7 @@ export function mountHelp({ game, button, content, auto = true, onOpen, onClose 
         section('gamepad-2', '#8b5cf6', t('Cách chơi', 'How it works'), list(c.play)),
         controls.length ? section('hand', '#2fb8ac', t('Điều khiển', 'Controls'), ...controls) : '',
         c.tips?.length ? section('lightbulb', '#ff7ab6', t('Mẹo', 'Tips'), list(c.tips)) : ''),
-      el('footer', { className: 'help-foot' },
+      el('div', { className: 'help-foot' },
         el('button', { type: 'button', className: 'help-ok', textContent: t('Đã hiểu', 'Got it'), onclick: () => dlg.close() }))));
   dlg.setAttribute('aria-labelledby', `help-title-${game}`);
   // Chạm nền mờ (ngoài thẻ) thì đóng.

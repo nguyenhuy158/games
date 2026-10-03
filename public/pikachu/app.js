@@ -9,6 +9,7 @@ import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 hydrateIcons();
 
@@ -631,3 +632,61 @@ if (replaying) {
   });
 } else if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
 else loadTop();
+
+// ---------- cách chơi ----------
+// Số liệu khớp logic.js (cỡ bàn, 2,5 giây/ô, 5 màn) và worker/games/pikachu.js (điểm, combo, lượt xáo).
+mountHelp({
+  game: 'pikachu',
+  button: '#btnHelpHome, #btnHelp',
+  auto: !replaying,
+  content: {
+    vi: {
+      goal: 'Nối hết các cặp hình giống nhau, qua đủ 5 màn trước khi hết giờ.',
+      play: [
+        'Chọn 2 ô cùng hình: ăn được nếu nối bằng ≤ 3 đoạn thẳng (rẽ ≤ 2 lần) qua ô trống, được vòng ra ngoài mép.',
+        'Mỗi màn có đồng hồ riêng, 2,5 giây/ô (16×9 là 6 phút, 8×6 là 2 phút); qua màn thì đầy giờ lại.',
+        'Màn 1 đứng yên; màn 2–5 các ô dồn về một hướng (↓ ← ↑ →) sau mỗi lần ăn.',
+        'Mỗi cặp 10 điểm × combo: ăn cặp kế trong 3 giây thì combo tăng, tối đa x5.',
+        'Gợi ý: 3 lần mỗi ván. Đổi vị trí: 5 lần, qua màn +1. Hết nước đi thì bàn tự xáo và +10 giây.',
+        'Tối đa 4 người: Chung (cả phòng một bàn), Đua (mỗi người một bàn cùng đề), Đội 2v2 (mỗi đội một bàn).',
+        'Đua / Đội: ai qua 5 màn trước thắng; không ai phá đảo thì xét màn rồi điểm. Chung: phải phá đảo mới thắng.',
+      ],
+      keys: [
+        'Chuột trái: chọn ô; bấm lại ô đang chọn để bỏ chọn.',
+        'Chuột phải: đánh dấu một ô cho đồng đội cùng bàn thấy.',
+      ],
+      touch: [
+        'Chạm: chọn ô; chạm lại ô đang chọn để bỏ chọn.',
+        'Chạm giữ một ô: đánh dấu cho đồng đội cùng bàn thấy.',
+      ],
+      tips: [
+        'Chơi một mình: tạo phòng rồi bấm Bắt đầu. Chủ phòng chọn chế độ, cỡ bàn và bộ hình.',
+        'Ăn liền tay để giữ combo; ưu tiên ô sát mép và chỗ bị chặn để mở đường.',
+      ],
+    },
+    en: {
+      goal: 'Match every pair of identical tiles and clear all 5 levels before time runs out.',
+      play: [
+        'Pick 2 matching tiles: they clear if joined by ≤ 3 straight lines (≤ 2 turns) through empty cells or round the edge.',
+        'Each level has its own clock, 2.5 s per tile (16×9 is 6 min, 8×6 is 2 min); clearing a level refills it.',
+        'Level 1 stays still; in levels 2–5 tiles shift one way (↓ ← ↑ →) after every match.',
+        'Each pair is 10 pts × combo: match the next pair within 3 s to raise the combo, up to x5.',
+        'Hints: 3 per round. Shuffles: 5, +1 per new level. No moves left: the board auto-reshuffles and adds +10 s.',
+        'Up to 4 players: Together (one shared board), Race (own board, same layout), Team 2v2 (one board per team).',
+        'Race / Team: first to clear 5 levels wins, else level then score decides. Together: clear all 5 to win.',
+      ],
+      keys: [
+        'Left click: select a tile; click it again to deselect.',
+        'Right click: mark a tile for teammates on your board.',
+      ],
+      touch: [
+        'Tap: select a tile; tap it again to deselect.',
+        'Press and hold a tile: mark it for teammates on your board.',
+      ],
+      tips: [
+        'Playing solo: create a room, then press Start. The host picks mode, board size and tile set.',
+        'Keep matching quickly to hold the combo; clear edge tiles and blocked spots first to open paths.',
+      ],
+    },
+  },
+});

@@ -82,14 +82,18 @@ header {
 header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; min-width: 48px; text-align: right; }
 @media (max-width: 480px) {
   header { gap: 4px; padding-inline: 8px; }
-  header button { padding: 6px 8px; }
+  header button { padding: 6px 5px; }
   header .lbl { display: none; }
+  /* Chừa chỗ cho nút Cách chơi: đồng hồ bỏ bề rộng tối thiểu; khi có thêm nút ẩn/hiện người chơi khác
+     (panel.js bỏ class panel-empty) thì nút mời chỉ còn icon QR — mã phòng vẫn hiện trong hộp mời. */
+  body:not(.panel-empty) header #roomCode { display: none; }
+  header #clock { min-width: 0; flex: none; }
   header #modeTag { display: none; }
 }
 /* 360–380px (Galaxy S8/S9, iPhone SE zoom): thanh trên gọn thêm để nút âm thanh không bị đẩy khuất. */
 @media (max-width: 380px) {
   header { gap: 3px; padding-inline: 6px; }
-  header button { padding: 6px 6px; }
+  header button { padding: 6px 4px; }
 }
 #modeTag { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); flex: none; }

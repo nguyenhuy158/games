@@ -57,6 +57,11 @@ header .grow { flex: 1; }
   header button { padding: 6px 6px; }
   header label.pub-switch { font-size: 0; gap: 0; }
 }
+/* Thêm nút Cách chơi (i) trên thanh trên: ≤400px thu khoảng cách / đệm nút cho vẫn vừa 360px. */
+@media (max-width: 400px) {
+  header { gap: 2px; padding-inline: 4px; }
+  header button { padding: 6px 4px; }
+}
 #players { list-style: none; margin: 4px 12px 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
 #players li {
   display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;

@@ -8,6 +8,7 @@ import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 hydrateIcons();
 
@@ -222,6 +223,63 @@ const linksOf = (id) => {
 // Nhắc lại khi hết giờ lắc / quá hạn AFK (mở bát được) mà không có tin mới.
 setInterval(() => room && render(), 1000);
 window.bc = { get room() { return room; } }; // cho test tự động
+
+// Hộp "Cách chơi": số liệu theo logic.js (phỉnh, xu đầu, cứu trợ) và worker/games/bau-cua.js (lắc 2,5s, 7s, AFK 30s).
+mountHelp({
+  game: 'bau-cua',
+  button: '#btnHelpHome, #btnHelp',
+  auto: !rp,
+  content: {
+    vi: {
+      goal: 'Đoán con vật trên 3 viên xúc xắc để ăn thêm xu ảo (xu chỉ để vui, không có giá trị thật).',
+      play: [
+        'Mỗi người bắt đầu với 1000 xu, phòng tối đa 10 người. Bàn có 6 con: Nai, Bầu, Gà, Cá, Cua, Tôm.',
+        'Đặt x xu vào một con: ra k viên con đó (1–3) thì ăn x×k, không ra thì mất x. Được đặt nhiều con.',
+        'Mặc định máy làm cái, ai cũng được đặt; chủ phòng mở bát. Ở một mình thì luôn là máy làm cái.',
+        'Chủ phòng đổi sang "Xoay cái" lúc đang đặt cược: mỗi ván một người làm cái, không đặt, chung/ăn bằng xu mình.',
+        'Cái bấm "Mở bát" (cần có người đặt). Quá 30 giây chưa mở thì ai cũng mở được.',
+        'Bát lắc khoảng 2,5 giây rồi lật; 7 giây sau khi mở bát thì sang ván mới. Còn dưới 10 xu được cứu trợ 500 xu.',
+      ],
+      keys: [
+        'Bấm phỉnh 10 / 50 / 100 / 500 để chọn mức, bấm con vật để đặt thêm một phỉnh.',
+        'Chuột phải vào con vật: bỏ cược con đó. Nút "Bỏ cược": bỏ hết cược của bạn.',
+        'Nút máy / vương miện trên thanh trên (chủ phòng): đổi máy làm cái ⇄ xoay cái.',
+      ],
+      touch: [
+        'Chạm phỉnh để chọn mức, chạm con vật để đặt thêm một phỉnh.',
+        'Giữ lâu con vật để bỏ cược con đó, hoặc chạm "Bỏ cược" để bỏ hết.',
+      ],
+      tips: [
+        'Cược công khai: tên và số xu mọi người hiện ngay trên từng con.',
+        'Xúc xắc chỉ tung lúc mở bát (cược đã khoá) nên không ai biết trước kết quả.',
+      ],
+    },
+    en: {
+      goal: 'Guess which animals show on the 3 dice to win virtual coins (just for fun, no real value).',
+      play: [
+        'Everyone starts with 1000 coins, up to 10 players. 6 animals: Deer, Gourd, Rooster, Fish, Crab, Shrimp.',
+        'Bet x coins on an animal: if k dice show it (1–3) you win x×k; if none do, you lose x. You may bet on several.',
+        'By default the bot is the dealer and everyone bets; the host reveals. Playing alone, the bot always deals.',
+        'While betting, the host can switch to "Rotating dealer": each round one player deals, skips betting, pays/collects.',
+        'The dealer taps "Reveal" (needs at least one bet). If nobody reveals within 30 seconds, anyone can.',
+        'The bowl shakes ~2.5 s, then opens; a new round starts 7 s after the reveal. Under 10 coins? You get 500 free.',
+      ],
+      keys: [
+        'Click a 10 / 50 / 100 / 500 chip to pick the amount, click an animal to add one chip.',
+        'Right-click an animal: remove your bet on it. "Clear bets": remove all your bets.',
+        'Bot / crown button in the top bar (host): switch bot dealer ⇄ rotating dealer.',
+      ],
+      touch: [
+        'Tap a chip to pick the amount, tap an animal to add one chip.',
+        'Long-press an animal to remove your bet on it, or tap "Clear bets" to remove all.',
+      ],
+      tips: [
+        'Bets are public: every player\'s name and amount shows on each animal.',
+        'Dice are only rolled when the bowl is revealed (bets locked), so nobody knows the result in advance.',
+      ],
+    },
+  },
+});
 
 if (rp) {
   // Người xem: không phải ai trong ván (không hiện "bạn"), ẩn nút chơi / mời / đổi cái / đặt cược.

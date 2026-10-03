@@ -66,6 +66,11 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
   #btnCopy .ic { display: none; }
   header #clock { min-width: 0; }
 }
+/* Thêm nút Cách chơi (i) trên thanh trên: ≤400px thu khoảng cách / đệm nút cho vẫn vừa 360px. */
+@media (max-width: 400px) {
+  header { gap: 2px; padding-inline: 4px; }
+  header button { padding: 6px 4px; }
+}
 #players { list-style: none; margin: 4px 12px 0; padding: 0; display: flex; gap: 6px; overflow-x: auto; }
 #players li { display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px 10px; font-size: 13px; white-space: nowrap; box-shadow: inset 4px 0 var(--c, transparent); }
 #players li.me { border-color: var(--accent); }

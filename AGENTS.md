@@ -145,4 +145,6 @@ scrolling; use compact layouts, tabs, panes, or contained internal lists when
 content can overflow.
 Adding a game: create `public/<game>/`, add its card to `public/index.html`,
 add its files to `CORE` in `public/sw.js` (and bump `CACHE`), add
-`<game>.test.mjs` and import it from `logic.test.mjs`.
+`<game>.test.mjs` and import it from `logic.test.mjs`. Every game needs a "Cách chơi"
+dialog: `mountHelp()` from `public/help.js` (nokiaApp games pass `help: { vi, en }`);
+`pnpm e2e` fails if a game page has no help button / content.

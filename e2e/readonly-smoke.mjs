@@ -23,6 +23,8 @@ const BOARDS = {
   "/sudoku/": ["#grid > div", 81],
   "/loto/": ["#home button.primary", 1],
 };
+// Hướng dẫn (public/help.js): thân hộp phải có ít nhất chừng này ký tự.
+const MIN_HELP_CHARS = 100;
 
 let passed = 0;
 let failed = 0;
@@ -90,13 +92,30 @@ try {
   ok(`hub renders ${links.length} game cards`);
 
   // Mở từng trang game (không có ?r= nên không vào phòng, không mở WebSocket):
-  // trang phải tải được và chạy hết module mà không lỗi.
+  // trang phải tải được và chạy hết module mà không lỗi, và có hướng dẫn: lần đầu vào
+  // tự mở hộp "Cách chơi", Esc đóng được, nút (i) đang hiện mở lại được, nội dung không rỗng.
+  const help = page.locator("dialog.help-dlg");
   for (const link of links) {
     const response = await page.goto(BASE + link, { waitUntil: "load" });
     if (!response?.ok()) throw new Error(`${link}: HTTP ${response?.status()}`);
     if (!(await page.title())) throw new Error(`${link}: trang thiếu <title>`);
+    await help.waitFor(WAIT).catch(() => {
+      throw new Error(`${link}: hướng dẫn không tự mở lần đầu vào`);
+    });
+    await page.keyboard.press("Escape");
+    await help.waitFor({ state: "hidden", ...WAIT });
+    const button = page.locator("[data-help]:visible").first();
+    await button.click(WAIT).catch(() => {
+      throw new Error(`${link}: không có nút hướng dẫn (i) đang hiện`);
+    });
+    await help.waitFor(WAIT);
+    const text = (await help.locator(".help-body").innerText()).trim();
+    if (text.length < MIN_HELP_CHARS)
+      throw new Error(`${link}: hướng dẫn quá ngắn (${text.length} ký tự)`);
+    await page.keyboard.press("Escape");
+    await help.waitFor({ state: "hidden", ...WAIT });
   }
-  ok(`every game page loads in the browser (${links.length})`);
+  ok(`every game page loads and has a help dialog (${links.length})`);
 
   for (const [path, [selector, count]] of Object.entries(BOARDS)) {
     if (!links.includes(path)) throw new Error(`trang chủ thiếu thẻ ${path}`);

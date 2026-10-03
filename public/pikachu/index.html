@@ -20,7 +20,7 @@
 <body>
   <section id="home">
     <div class="card" style="position:relative">
-      <div style="position:absolute;top:12px;right:12px"><span data-lang-toggle></span></div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin:-10px -10px -6px 0"><button type="button" id="btnHelpHome" title="Cách chơi" data-en-title="How to play"><i data-icon="info"></i></button><span data-lang-toggle></span></div>
       <h1><a href="/" class="back" title="Các game khác" data-en-title="Other games"><i data-icon="arrow-left"></i></a> Pikachu Online</h1>
       <p class="sub" data-en="Classic tile-matching, play with friends — no signup needed.">Nối thú cổ điển, chơi cùng bạn bè — không cần đăng ký.</p>
       <label><span data-en="Your name">Tên của bạn</span> <input id="name" maxlength="20" autocomplete="off"></label>
@@ -52,6 +52,7 @@
       <button id="btnHint" title="Gợi ý" data-en-title="Hint"><i data-icon="lightbulb"></i> <span id="hintLeft">3</span></button>
       <button id="btnShuffle" title="Đổi vị trí" data-en-title="Shuffle"><i data-icon="shuffle"></i> <span id="shuffleLeft">5</span></button>
       <button id="btnPanel" title="Ẩn màn hình người chơi khác" data-en-title="Hide other players' screens" hidden><i data-icon="users"></i></button>
+      <button id="btnHelp" type="button" class="compact" title="Cách chơi" data-en-title="How to play"><i data-icon="info"></i></button>
       <button id="btnSound" title="Âm thanh" data-en-title="Sound"></button>
     </header>
     <div id="timeTrack"><div id="timebar"></div></div>

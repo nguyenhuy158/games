@@ -9,6 +9,7 @@ import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 hydrateIcons();
 
@@ -462,6 +463,63 @@ addEventListener('pointerdown', (e) => { if (e.target.closest?.('#cells')) { pre
 addEventListener('pointerup', () => { if (pressing) { pressing = false; setTimeout(renderFace, 60); } });
 applySkin();
 window.ms = { get room() { return room; }, get grids() { return grids; }, view }; // cho test tự động
+
+// Hộp "Cách chơi": số liệu theo logic.js (SIZES, LIVES, phạt 10s) và worker/games/do-min.js (4 ghế, luật thắng).
+mountHelp({
+  game: 'do-min',
+  button: '#btnHelpHome, #btnHelp',
+  auto: !rp,
+  content: {
+    vi: {
+      goal: 'Mở hết mọi ô không có mìn mà không đạp mìn.',
+      play: [
+        'Chủ phòng chọn chế độ và cỡ bàn rồi bấm Bắt đầu: Dễ 9×9 (10 mìn), Vừa 16×16 (40 mìn), Khó 30×16 (99 mìn).',
+        'Số trên ô = số mìn trong 8 ô xung quanh. Ván bắt đầu với một vùng trống mở sẵn, không có mìn.',
+        'Chơi chung: tối đa 4 người cùng một bàn, chung 3 mạng; đạp mìn mất 1 mạng, hết mạng là thua.',
+        'Đua cùng đề: mỗi người một bàn cùng vị trí mìn; đạp mìn +10 giây; ai mở hết trước thắng.',
+        'Ô mìn đã nổ coi như đã cắm cờ, chơi tiếp được. Số mìn trên thanh trên = tổng mìn trừ số cờ.',
+        'Người vào thứ 5 trở đi hoặc vào giữa ván thì xem, ván sau được chơi. Hết ván, chủ phòng bấm Chơi ván mới.',
+      ],
+      keys: [
+        'Bấm trái: mở ô. Bấm phải: cắm / gỡ cờ.',
+        'Bấm vào ô số đã đủ cờ xung quanh: mở nhanh mọi ô còn lại quanh nó.',
+        'Shift+bấm: ping một ô cho đồng đội thấy (chỉ khi Chơi chung).',
+      ],
+      touch: [
+        'Chạm: mở ô; chạm ô số đã đủ cờ: mở nhanh xung quanh.',
+        'Giữ khoảng 0,4 giây: cắm / gỡ cờ. Nút cờ trên thanh trên: bật chế độ chạm là cắm cờ.',
+      ],
+      tips: [
+        'Cắm cờ sai rồi mở nhanh là đạp mìn: chỉ mở nhanh khi chắc chắn các cờ đúng.',
+        'Nút lớp đổi giao diện Hiện đại / Windows XP / Socola. Chơi một mình: bấm mặt cười (XP, Socola) để làm lại.',
+      ],
+    },
+    en: {
+      goal: 'Open every cell without a mine, without stepping on one.',
+      play: [
+        'The host picks a mode and size, then taps Start: Easy 9×9 (10 mines), Medium 16×16 (40), Hard 30×16 (99).',
+        'A number shows how many mines are in the 8 cells around it. Each game starts with a mine-free area opened.',
+        'Play together: up to 4 players share one board and 3 lives; each mine costs a life, no lives left = loss.',
+        'Race same layout: everyone gets their own board with the same mines; a mine adds 10 s; first to clear wins.',
+        'An exploded mine counts as flagged, so play goes on. The mine counter = total mines minus flags.',
+        'Players past 4, or anyone joining mid-game, watch until the next round. After a game the host taps New round.',
+      ],
+      keys: [
+        'Left click: open a cell. Right click: place / remove a flag.',
+        'Click a number that already has enough flags around it: quick-open all its other neighbors.',
+        'Shift+click: ping a cell for teammates (Play together only).',
+      ],
+      touch: [
+        'Tap: open a cell; tap a number with enough flags: quick-open around it.',
+        'Hold about 0.4 s: place / remove a flag. Flag button in the top bar: taps place flags instead.',
+      ],
+      tips: [
+        'A wrong flag plus quick-open hits a mine: only quick-open when you are sure the flags are right.',
+        'The layers button switches Modern / Windows XP / Chocolate. Solo: tap the smiley (XP, Chocolate) to restart.',
+      ],
+    },
+  },
+});
 
 const initial = new URLSearchParams(location.search).get('r');
 if (rp) {

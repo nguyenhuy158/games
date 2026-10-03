@@ -13,6 +13,7 @@ import { publicSwitch } from '../public-switch.js';
 import { Tape } from '../tape.js';
 import { replayParam, playReplay, replayLinks, uploadReplay } from '../replay.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 hydrateIcons();
 
@@ -385,10 +386,15 @@ const solo = {
     stop('up');
     showOverlay(el('div', { className: 'card' },
       el('h2', { textContent: t('Tạm dừng', 'Paused') }),
-      el('button', { className: 'primary', textContent: t('Chơi tiếp', 'Resume'), onclick: () => { this.screen = 'play'; showOverlay(null); } }),
+      el('button', { className: 'primary', textContent: t('Chơi tiếp', 'Resume'), onclick: () => this.resume() }),
       el('button', { textContent: t('Chơi lại từ đầu', 'Restart'), onclick: () => this.start() }),
       el('button', { textContent: t('Về menu', 'Back to menu'), onclick: menu }),
     ));
+  },
+  resume() {
+    if (this.screen !== 'pause') return;
+    this.screen = 'play';
+    showOverlay(null);
   },
   view() {
     const m = this.me();
@@ -647,6 +653,8 @@ const net = {
 
 // ---------- menu ----------
 let driver = null;
+// Nút "Cách chơi" ở menu: tạo một lần, menu() dựng lại thẻ thì gắn lại đúng nút này (mountHelp đã gắn sự kiện).
+const helpHome = el('button', { type: 'button', id: 'btnHelpHome' }, iconEl('info'));
 function menu() {
   driver = null;
   $('#hud').hidden = true;
@@ -664,7 +672,7 @@ function menu() {
   };
   code.onkeydown = (e) => { if (e.key === 'Enter') joinCode(); };
   showOverlay(el('div', { className: 'card menu' },
-    el('div', { className: 'row', style: 'justify-content:flex-end' }, langToggle()),
+    el('div', { className: 'row', style: 'justify-content:flex-end' }, helpHome, langToggle()),
     spriteEl('goldMiner', 0.8),
     spriteEl('goldBig_0001', 0.5),
     el('p', { className: 'muted', textContent: t('Bấm / chạm (hoặc ↓, Space) để thả móc. Có thuốc nổ thì bấm ↑ để phá vật đang kéo.', 'Click / tap (or ↓, Space) to drop the hook. With dynamite, press ↑ to blow up what you\'re pulling.') }),
@@ -692,6 +700,76 @@ addEventListener('keydown', (e) => {
 $('#btnMenu').onclick = () => (driver === net ? net.leave() : driver?.pause());
 document.addEventListener('visibilitychange', () => { if (document.hidden && driver === solo) solo.pause(); });
 window.dv = { solo, net }; // cho test tự động / console
+
+// ---------- cách chơi ----------
+// Số liệu khớp logic.js (giá vật, 60 giây/màn, mục tiêu cộng dồn, tiệm) và worker/games/dao-vang.js (20 giây ở tiệm).
+// Chơi một mình: mở hộp thì tạm dừng, đóng hộp thì chơi tiếp (chỉ khi chính hộp này đã dừng ván).
+let helpPaused = false;
+mountHelp({
+  game: 'dao-vang',
+  button: [helpHome, $('#btnHelp')],
+  auto: !replayParam(),
+  onOpen: () => {
+    helpPaused = driver === solo && solo.screen === 'play';
+    if (helpPaused) solo.pause();
+  },
+  onClose: () => {
+    if (helpPaused) solo.resume();
+    helpPaused = false;
+  },
+  content: {
+    vi: {
+      goal: 'Mỗi màn 60 giây, gom đủ tiền mục tiêu (cộng dồn: $650, $1195, $2010…) để qua màn; thiếu là thua.',
+      play: [
+        'Móc tự lắc qua lại; thả móc để gắp vật đầu tiên chạm phải. Vật càng nặng kéo về càng chậm.',
+        'Vàng $50–500, kim cương $600 (từ màn 3); đá chỉ $11–20 mà rất nặng; chuột, xương, sọ $2–20.',
+        'Túi bí ẩn: tiền ngẫu nhiên, 1 thuốc nổ hoặc thuốc tăng lực. Móc trúng thùng TNT thì nổ sạch vật xung quanh.',
+        'Thuốc nổ phá vật đang kéo (mất vật đó), móc rỗng rút về nhanh.',
+        'Hết màn khi hết giờ hoặc mỏ trống; qua màn thì vào tiệm mua đồ cho màn sau.',
+        'Tiệm: thuốc nổ, tăng lực (kéo nhanh hơn), cỏ 4 lá (túi nhiều tiền), sách về đá (đá x3), đánh bóng (kim cương x1.5).',
+        'Chung mỏ (tối đa 4 người): gom quỹ chung, mục tiêu tăng theo số người, thiếu là thua cả đội.',
+        'Tranh vàng: chung mỏ nhưng ví riêng, không có mục tiêu, chơi 5 màn, ai nhiều tiền nhất thắng.',
+        'Tiệm khi chơi nhiều người mở 20 giây, hoặc tới khi mọi người bấm Sẵn sàng.',
+      ],
+      keys: [
+        'Bấm chuột vào mỏ, ↓ hoặc Space: thả móc.',
+        '↑ hoặc nút quả bom: dùng thuốc nổ.',
+        'Nút tạm dừng: dừng ván chơi một mình; khi chơi nhiều người nút này rời phòng.',
+      ],
+      touch: [
+        'Chạm vào mỏ: thả móc; chạm nút quả bom trên thanh trên: dùng thuốc nổ.',
+      ],
+      tips: [
+        'Mục tiêu tính trên tổng tiền, nên tiêu ở tiệm cũng làm màn sau khó hơn.',
+      ],
+    },
+    en: {
+      goal: 'Each level lasts 60 s: reach the money target (cumulative: $650, $1195, $2010…) to advance, or it is game over.',
+      play: [
+        'The hook swings by itself; drop it to grab the first thing it touches. Heavier items reel in slower.',
+        'Gold $50–500, diamonds $600 (from level 3); rocks only $11–20 and very heavy; mice, bones, skulls $2–20.',
+        'Mystery bag: random money, 1 dynamite or a power potion. Hooking a TNT barrel blows up everything around it.',
+        'Dynamite destroys the item being pulled (you lose it) and the empty hook reels back fast.',
+        'A level ends when time runs out or the mine is empty; pass it to visit the shop before the next one.',
+        'Shop: dynamite, power potion (faster pull), clover (richer bags), rock book (rocks x3), polish (diamonds x1.5).',
+        'Shared Mine (up to 4 players): one pooled purse, the target grows with players; falling short loses for all.',
+        'Gold Rush: same mine but own wallets, no target, 5 levels, the richest miner wins.',
+        'In multiplayer the shop stays open 20 s, or until everyone presses Ready.',
+      ],
+      keys: [
+        'Click the mine, ↓ or Space: drop the hook.',
+        '↑ or the bomb button: use dynamite.',
+        'Pause button: pauses a solo game; in multiplayer it leaves the room.',
+      ],
+      touch: [
+        'Tap the mine: drop the hook; tap the bomb button in the top bar: use dynamite.',
+      ],
+      tips: [
+        'The target counts your total money, so spending in the shop makes the next level harder.',
+      ],
+    },
+  },
+});
 
 // ---------- vòng lặp ----------
 let last = 0;
