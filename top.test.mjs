@@ -21,14 +21,16 @@ const top = new Top({ storage: { sql } }, {});
 
 const H = 3600_000, now = Date.now();
 const vnMidnight = Math.floor((now + 7 * H) / (24 * H)) * 24 * H - 7 * H; // 0h hôm nay giờ VN (UTC ms)
+// Ván thường neo vào 12h trưa VN (không theo giờ chạy test) để chạy lúc 0–5h sáng không lọt vào bảng "cú đêm".
+const noon = vnMidnight + 12 * H;
 const play = (sub, name, game, mode, score, level, won, at) => {
   top.addPlays([{ sub, name, game, mode, score, level, won }]);
   db.prepare('UPDATE plays SET at = ? WHERE id = (SELECT MAX(id) FROM plays)').run(at);
 };
-play('a', 'An', 'dao-vang', 'solo', 900, 3, false, now - 2 * H);
+play('a', 'An', 'dao-vang', 'solo', 900, 3, false, noon - 2 * H);
 play('a', 'An', 'pikachu', 'coop', 300, 5, true, vnMidnight + 2 * H); // 2h sáng VN -> cú đêm
-play('b', 'Bình', 'dao-vang', 'coop', 1500, 4, false, now - H);
-play('b', 'Bình', 'pikachu', 'race', 450, 2, true, now - 30 * 24 * H); // cũ hơn 1 tuần
+play('b', 'Bình', 'dao-vang', 'coop', 1500, 4, false, noon - H);
+play('b', 'Bình', 'pikachu', 'race', 450, 2, true, noon - 30 * 24 * H); // cũ hơn 1 tuần
 play('a', 'An Mới', 'pikachu', 'team', 100, 1, false, vnMidnight + 12 * H); // đổi tên -> dùng tên mới
 
 const all = Object.fromEntries(top.fun('all').map((c) => [c.key, c.rows]));
@@ -45,13 +47,13 @@ const week = Object.fromEntries(top.fun('week').map((c) => [c.key, c.rows]));
 assert.deepEqual(week.tiles, [{ name: 'An Mới', value: 300 }], 'old play excluded from this week');
 assert.equal(top.fun('all').length, 13);
 // Bầu cua: tổng lãi các buổi, buổi lỗ kéo tổng xuống, tổng âm thì không lên bảng.
-play('a', 'An Mới', 'bau-cua', 'rotate', 500, 6, true, now - H);
-play('a', 'An Mới', 'bau-cua', 'rotate', -200, 3, false, now - H);
-play('b', 'Bình', 'bau-cua', 'house', -50, 2, false, now - H);
+play('a', 'An Mới', 'bau-cua', 'rotate', 500, 6, true, noon - H);
+play('a', 'An Mới', 'bau-cua', 'rotate', -200, 3, false, noon - H);
+play('b', 'Bình', 'bau-cua', 'house', -50, 2, false, noon - H);
 assert.deepEqual(Object.fromEntries(top.fun('all').map((c) => [c.key, c.rows])).baucua, [{ name: 'An Mới', value: 300 }]);
-play('a', 'An Mới', 'do-min', 'coop', 95, 1, true, now - H);
-play('b', 'Bình', 'do-min', 'race', 60, 2, true, now - H);
-play('b', 'Bình', 'do-min', 'race', 30, 2, false, now - H); // thua: không tính
+play('a', 'An Mới', 'do-min', 'coop', 95, 1, true, noon - H);
+play('b', 'Bình', 'do-min', 'race', 60, 2, true, noon - H);
+play('b', 'Bình', 'do-min', 'race', 30, 2, false, noon - H); // thua: không tính
 assert.deepEqual(Object.fromEntries(top.fun('all').map((c) => [c.key, c.rows])).mines, [{ name: 'Bình', value: 60 }, { name: 'An Mới', value: 95 }], 'nhanh nhất lên đầu, chỉ ván thắng');
 assert.equal(Object.fromEntries(top.stats('b').map((s) => [s.game, s]))['do-min'].fastest, 60);
 
@@ -64,11 +66,11 @@ assert.equal(top.history('b').length, 5); // 2 ván cũ + 2 ván dò mìn + 1 bu
 assert.equal(top.history('nobody').length, 0);
 
 // Nối 4: chỉ ván thắng người thật. Bắn tàu: thắng bằng ít phát nhất lên đầu, ván thua không tính.
-play('a', 'An Mới', 'noi-4', 'pvp', 21, 0, true, now - H);
-play('b', 'Bình', 'noi-4', 'bot', 15, 0, true, now - H);
-play('a', 'An Mới', 'ban-tau', 'bot', 48, 0, true, now - H);
-play('b', 'Bình', 'ban-tau', 'pvp', 39, 0, true, now - H);
-play('b', 'Bình', 'ban-tau', 'pvp', 20, 0, false, now - H);
+play('a', 'An Mới', 'noi-4', 'pvp', 21, 0, true, noon - H);
+play('b', 'Bình', 'noi-4', 'bot', 15, 0, true, noon - H);
+play('a', 'An Mới', 'ban-tau', 'bot', 48, 0, true, noon - H);
+play('b', 'Bình', 'ban-tau', 'pvp', 39, 0, true, noon - H);
+play('b', 'Bình', 'ban-tau', 'pvp', 20, 0, false, noon - H);
 const fun2 = Object.fromEntries(top.fun('all').map((c) => [c.key, c.rows]));
 assert.deepEqual(fun2.c4, [{ name: 'An Mới', value: 1 }], 'vs-bot wins do not count');
 assert.deepEqual(fun2.ships, [{ name: 'Bình', value: 39 }, { name: 'An Mới', value: 48 }]);
