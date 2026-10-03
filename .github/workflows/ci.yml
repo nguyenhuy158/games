@@ -11,62 +11,13 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # pnpm check (biome lint) + pnpm test; E2E riêng: wrangler dev local, smoke chỉ đọc bằng
+  # Chromium rồi bot chơi thử mọi game (pnpm e2e).
   check:
-    name: Lint, test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      # Biome thêm sau khi đã có code: còn lỗi cũ chưa sửa nên chưa chặn merge.
-      - name: Lint (Biome)
-        run: pnpm check
-        continue-on-error: true
-
-      - name: Unit tests
-        run: pnpm test
-
-  # Bật wrangler dev local, smoke chỉ đọc bằng Chromium rồi bot chơi thử mọi game (pnpm e2e).
-  e2e:
-    name: E2E (local wrangler dev)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      # playwright-core không tự tải browser; cài Chromium đúng phiên bản (e2e/chromium.mjs tự tìm).
-      - name: Install Chromium
-        run: pnpm exec playwright-core install --with-deps chromium
-
-      - name: E2E
-        run: pnpm e2e
-
-      - name: Upload failure screenshot
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-failure
-          path: e2e-failure.png
-          if-no-files-found: ignore
+    uses: nguyenhuy158/kit/.github/workflows/check.yml@v0.1.0
+    with:
+      run-test: true
+      run-e2e: true
 
   # Sau khi Cloudflare deploy xong commit này (bản trên web mới hơn commit), chạy bot chơi thử mọi game vào web thật.
   smoke-prod:
