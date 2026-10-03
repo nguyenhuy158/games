@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "wrangler dev",
-    "check": "biome check .",
+    "check": "biome lint .",
     "lint": "biome check .",
     "format": "biome format --write .",
     "test": "node logic.test.mjs",
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
+    "@huyab/config": "github:nguyenhuy158/kit#v0.1.0&path:packages/config",
     "lucide": "0.468.0",
     "playwright-core": "^1.63.0",
     "wrangler": "^4.106.0"

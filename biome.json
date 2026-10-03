@@ -1,34 +1,26 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
+  "extends": ["@huyab/config/biome.json"],
   "files": {
-    "includes": [
-      "**",
-      "!**/dist",
-      "!**/.wrangler",
-      "!public/vendor",
-      "!public/icons.js",
-      "!screenshots"
-    ]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2
+    "includes": ["!public/vendor", "!public/icons.js", "!screenshots"]
   },
   "linter": {
-    "enabled": true,
     "rules": {
-      "preset": "recommended"
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "double"
+      "a11y": {
+        "noSvgWithoutTitle": "warn",
+        "useAnchorContent": "warn",
+        "useAriaPropsForRole": "warn",
+        "useButtonType": "warn",
+        "useHeadingContent": "warn"
+      },
+      "correctness": {
+        "noInvalidGridAreas": "warn"
+      },
+      "suspicious": {
+        "noAssignInExpressions": "warn",
+        "noShadowRestrictedNames": "warn",
+        "useIterableCallbackReturn": "warn"
+      }
     }
   }
 }
