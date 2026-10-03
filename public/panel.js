@@ -78,9 +78,9 @@ export function createPanel({ root, toggle, storeKey }) {
   };
 }
 
-// Vẽ bàn lưới thu nhỏ từ sprite ngang (mỗi loại 1 ô, tỉ lệ 4:5), giữ tỉ lệ, căn giữa.
-// board có viền 1 ô (giá trị 0) như logic.js của Pikachu.
-export function drawGrid(ctx, w, h, board, sprite, types = 36) {
+// Vẽ bàn lưới thu nhỏ từ atlas (mỗi loại 1 ô, tỉ lệ 4:5, xếp ngang), giữ tỉ lệ, căn giữa.
+// cell = { y, w, h }: khung ô số 1 trong atlas. board có viền 1 ô (giá trị 0) như logic.js của Pikachu.
+export function drawGrid(ctx, w, h, board, sprite, cell) {
   ctx.clearRect(0, 0, w, h);
   if (!board || !sprite?.complete) return;
   const R = board.length - 2, C = board[0].length - 2;
@@ -88,13 +88,13 @@ export function drawGrid(ctx, w, h, board, sprite, types = 36) {
   const rows = portrait ? C : R, cols = portrait ? R : C;
   const cw = Math.min(w / cols, h / rows / 1.25), ch = cw * 1.25;
   const ox = (w - cw * cols) / 2, oy = (h - ch * rows) / 2;
-  const sw = sprite.naturalWidth / types, sh = sprite.naturalHeight;
+  const { y: sy, w: sw, h: sh } = cell;
   for (let r = 1; r <= R; r++) {
     for (let c = 1; c <= C; c++) {
       const t = board[r][c];
       if (!t) continue;
       const [x, y] = portrait ? [r - 1, c - 1] : [c - 1, r - 1];
-      ctx.drawImage(sprite, (t - 1) * sw, 0, sw, sh, ox + x * cw, oy + y * ch, cw - 0.5, ch - 0.5);
+      ctx.drawImage(sprite, (t - 1) * sw, sy, sw, sh, ox + x * cw, oy + y * ch, cw - 0.5, ch - 0.5);
     }
   }
 }

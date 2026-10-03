@@ -29,7 +29,11 @@ const MODE_NAMES = { coop: t('Chơi chung', 'Together'), race: t('Đua nhau', 'R
 const MODE_ICONS = { coop: 'users', race: 'swords', team: 'flag' };
 const TEAM_COLORS = { A: '#ff7a59', B: '#5cc8ff' };
 const PEER_COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b', '#6bf0e0', '#ff9b9b'];
-const SPRITES = { poke: 'images/pieces-sprite.png', animal: 'images/animals-sprite.png' };
+// Một atlas WebP cho cả hai bộ ô (scripts/render-assets.mjs): hàng 0 = con vật 80x100,
+// hàng 100px = Pokémon 40x50; mỗi bộ 36 ô xếp ngang. {y, w, h} = khung ô số 1.
+const ATLAS = { src: 'images/tiles.webp', w: 2880, h: 150 };
+const SHEETS = { animal: { y: 0, w: 80, h: 100 }, poke: { y: 100, w: 40, h: 50 } };
+const sheet = () => SHEETS[room?.tiles] ?? SHEETS.poke;
 const LONG_PRESS_MS = 450;
 
 let code = null, room = null, board = null, sel = null, hints = HINTS, clockOffset = 0, stateAt = 0;
@@ -39,12 +43,7 @@ let peers = {}; // id đồng đội -> ô họ đang chọn
 let cursors = {}; // id đồng đội -> [r, c] chuột (đơn vị ô, số thực)
 let minis = {}, miniVer = {}; // bàn thu nhỏ của các đơn vị khác (khung kiểu Google Meet)
 const panel = createPanel({ root: $('#panel'), toggle: $('#btnPanel'), storeKey: 'pk.panel' });
-const spriteImgs = {};
-const spriteImg = () => {
-  const src = SPRITES[room?.tiles] ?? SPRITES.poke;
-  if (!spriteImgs[src]) { spriteImgs[src] = new Image(); spriteImgs[src].src = src; spriteImgs[src].onload = () => render(); }
-  return spriteImgs[src];
-};
+const atlasImg = Object.assign(new Image(), { src: ATLAS.src, onload: () => render() });
 
 const me = () => room?.players.find((p) => p.id === deviceId);
 const view = () => me()?.unit ?? (room?.units[watchUnit] ? watchUnit : Object.keys(room?.units ?? {})[0] ?? null);
@@ -228,7 +227,6 @@ function layout() {
   const b = $('#board');
   b.style.width = `${gw * geo.w}px`;
   b.style.height = `${gh * geo.h}px`;
-  b.style.setProperty('--sprite', `url("${SPRITES[room?.tiles] ?? SPRITES.poke}")`);
 }
 const xy = (r, c) => (geo.portrait ? [r, c] : [c, r]);
 const px = (r, c) => { const [x, y] = xy(r, c); return [x * geo.w, y * geo.h]; };
@@ -237,8 +235,9 @@ const cellEl = (r, c) => $(`#cells [data-k="${r}-${c}"]`);
 function tile(r, c, t) {
   const [x, y] = px(r, c);
   const d = el('div', { className: 'cell' });
+  const s = sheet(), kx = geo.w / s.w, ky = geo.h / s.h;
   d.style.cssText = `left:${x}px;top:${y}px;width:${geo.w - 1}px;height:${geo.h - 1}px;` +
-    `background-size:${36 * geo.w}px ${geo.h}px;background-position:${-(t - 1) * geo.w}px 0`;
+    `background-size:${ATLAS.w * kx}px ${ATLAS.h * ky}px;background-position:${-(t - 1) * geo.w}px ${-s.y * ky}px`;
   return d;
 }
 
@@ -432,8 +431,8 @@ function renderPanel() {
       sub: t(`${u.score}đ · M${u.level} · còn ${u.left}`, `${u.score}pt · L${u.level} · ${u.left} left`),
       badge: u.done === 'clear' ? { icon: 'trophy' } : u.done ? { icon: 'hourglass' } : u.combo > 1 ? `x${u.combo}` : '',
       off: members.length > 0 && members.every((p) => !p.online),
-      version: `${miniVer[uid] ?? 0}|${room.tiles}|${spriteImg().complete}`, // sprite tải xong -> vẽ lại
-      draw: (ctx, w, h) => drawGrid(ctx, w, h, minis[uid], spriteImg()),
+      version: `${miniVer[uid] ?? 0}|${room.tiles}|${atlasImg.complete}`, // atlas tải xong -> vẽ lại
+      draw: (ctx, w, h) => drawGrid(ctx, w, h, minis[uid], atlasImg, sheet()),
     });
   }
   // Đồng đội cùng bàn với mình (chơi chung / cùng đội): thẻ avatar.

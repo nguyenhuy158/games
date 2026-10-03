@@ -1,6 +1,6 @@
 // Luật chơi dùng chung cho browser (public/app.js) và Worker (worker/index.js).
 // Bàn là mảng (rows+2) x (cols+2): viền ngoài luôn = 0 để đường nối đi vòng ra ngoài.
-// 0 = ô trống, 1..TYPES = loại icon (thứ tự trong pieces-sprite.png).
+// 0 = ô trống, 1..TYPES = loại icon (thứ tự ô trong images/tiles.webp).
 
 export const TYPES = 36;
 

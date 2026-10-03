@@ -1,9 +1,10 @@
-// Sinh ảnh tĩnh bằng Chrome headless (chạy tay khi cần đổi, rồi commit PNG):
-//   - public/pikachu/images/animals-sprite.png: 36 con vật Twemoji (CC-BY 4.0), cùng bố cục
-//     với pieces-sprite.png (36 ô ngang, tỉ lệ 40x50) nên client chỉ cần đổi URL.
+// Sinh ảnh tĩnh bằng Chrome headless (chạy tay khi cần đổi, rồi commit ảnh):
+//   - public/pikachu/images/tiles.webp: atlas 2880x150 cho cả hai bộ ô (36 ô ngang mỗi bộ):
+//     hàng 0 = 36 con vật Twemoji (CC-BY 4.0) 80x100, hàng 100px = Pokémon 40x50 lấy từ
+//     scripts/assets/pieces-sprite.png. Khung từng bộ khai báo ở SHEETS trong pikachu/app.js.
 //   - public/logos/<game>.svg + -192/-512.png: logo kawaii từng game (scripts/logos.mjs);
 //     public/pwa-*.png lấy từ logo trang chủ.
-// Chạy: node scripts/render-assets.mjs   (cần Google Chrome; đổi CHROME nếu nằm chỗ khác)
+// Chạy: node scripts/render-assets.mjs   (cần Google Chrome + cwebp; đổi CHROME nếu nằm chỗ khác)
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -36,14 +37,20 @@ const svgs = await Promise.all(ANIMALS.map(async (cp) => {
   return r.text();
 }));
 
+const atlasPng = join(tmp, 'tiles.png');
 shot(`<!doctype html><style>
   html, body { margin: 0; background: transparent; }
-  body { display: flex; }
+  .row { display: flex; }
   .t { width: ${W}px; height: ${H}px; box-sizing: border-box; display: grid; place-items: center;
        background: linear-gradient(160deg, #fff6ea, #f3c9a4); border: 3px solid #e2a77c; border-radius: 10px; }
   .t svg { width: 60px; height: 60px; }
-</style><body>${svgs.map((s) => `<div class="t">${s}</div>`).join('')}</body>`,
-'public/pikachu/images/animals-sprite.png', W * ANIMALS.length, H);
+  img { display: block; }
+</style><body><div class="row">${svgs.map((s) => `<div class="t">${s}</div>`).join('')}</div>
+<img src="file://${resolve('scripts/assets/pieces-sprite.png')}" width="${(W / 2) * ANIMALS.length}" height="${H / 2}"></body>`,
+atlasPng, W * ANIMALS.length, H * 1.5);
+// q90: không phân biệt được bằng mắt với PNG, nhẹ ~3 lần.
+execFileSync('cwebp', ['-quiet', '-q', '90', '-alpha_q', '100', '-m', '6', atlasPng, '-o', 'public/pikachu/images/tiles.webp']);
+console.log('wrote public/pikachu/images/tiles.webp');
 
 // Logo kawaii từng game (scripts/logos.mjs): SVG làm favicon, PNG cho icon app / apple-touch.
 // Icon PWA của cả trang (public/pwa-*.png) dùng logo trang chủ.

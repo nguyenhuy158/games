@@ -113,7 +113,7 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 #board { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .cell {
   position: absolute;
-  background-image: var(--sprite, url("images/pieces-sprite.png"));
+  background-image: url("images/tiles.webp");
   background-repeat: no-repeat;
   border-radius: 4px;
   outline: 1px solid #0003;
