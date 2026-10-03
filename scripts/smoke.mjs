@@ -235,9 +235,16 @@ const GAMES = {
     await until(() => r.socks[0].last.status === 'ended', 240000, 'co-tuong ends');
     return JSON.stringify(r.socks[0].last.result.title);
   },
-  // Lô tô 2 người: bot 0 bật tự dò, bot 1 tự dò từng ô và kinh láo một lần; chủ phòng dò xong thì hô tiếp; ai có hàng đủ 5 số
+  // Lô tô: trước hết 1 bot, tự hô 3 giây: bấm hô số đầu rồi server phải tự hô thêm (alarm của phòng).
+  // Sau đó 2 người: bot 0 bật tự dò, bot 1 tự dò từng ô và kinh láo một lần; chủ phòng dò xong thì hô tiếp; ai có hàng đủ 5 số
   // đã hô thì KINH, server dò vé xong là hết ván.
   async loto() {
+    const a = await nokia('loto', 1, (ws, m) => {
+      if (m.status === 'playing' && m.view && !m.view.called.length && !ws.started) { ws.started = true; a.send(ws, { t: 'g', a: 'call' }); }
+    }, { pace: 3 });
+    await until(() => a.socks[0].last.view?.called.length >= 3, 15000, 'loto auto call');
+    const auto = a.socks[0].last.view.called.length;
+    a.close();
     const r = await nokia('loto', 2, (ws, m) => {
       const v = m.view;
       if (m.status !== 'playing' || !v?.cards) return;
@@ -257,7 +264,7 @@ const GAMES = {
     if (!res.ranks[0].won || res.ranks[0].score !== 5) throw new Error(JSON.stringify(res));
     if (!r.socks[0].msgs.some((m) => m.t === 'loto' && m.e === 'lao')) throw new Error('no kinh láo notice');
     r.close();
-    return `${JSON.stringify(res.title)} after ${r.socks[0].last.view.called.length} calls`;
+    return `auto-called ${auto}; ${JSON.stringify(res.title)} after ${r.socks[0].last.view.called.length} calls`;
   },
   // Bantumi với máy: tới hết ván.
   async bantumi() {

@@ -16,7 +16,7 @@ header button { color: var(--text); }
   width: min(100%, 560px); height: 100%; min-height: 0; display: grid; gap: 8px;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
-.now { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 14px; background: #fff7e8; color: var(--text); box-shadow: 0 6px 18px #0005; min-width: 0; }
+.now { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 14px; background: #fff7e8; color: var(--text); box-shadow: 0 6px 18px #0005; min-width: 0; }
 .ball {
   width: 50px; height: 50px; flex: none; display: grid; place-items: center; border-radius: 50%;
   font-size: 24px; font-weight: 800; color: #3a1a10; font-variant-numeric: tabular-nums;
@@ -29,6 +29,12 @@ header button { color: var(--text); }
 .now .count { font-variant-numeric: tabular-nums; }
 .now .call { padding: 9px 14px; font-size: 15px; }
 .now .wait { color: var(--muted); font-size: 13px; text-align: right; }
+.now .pace-note { color: #b3261e; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.now .pace { padding: 8px 10px; font-size: 14px; font-weight: 700; color: var(--text); }
+.now .pace.on { background: #ffd23f; border-color: #e0a100; }
+/* Vạch đếm ngược tới số tự hô kế tiếp, chạy dọc đáy thanh. */
+.now .timer { position: absolute; left: 14px; right: 14px; bottom: 2px; height: 3px; border-radius: 2px; background: #e0a100; transform-origin: left; transform: scaleX(0); }
+@keyframes countdown { from { transform: scaleX(var(--from, 0)); } to { transform: scaleX(1); } }
 
 /* Bảng 90 số: 9 hàng × 10, số đã hô sáng lên, số vừa hô vàng. */
 .board { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; padding: 5px; border-radius: 12px; background: #2a0607aa; }

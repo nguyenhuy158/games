@@ -13,6 +13,7 @@ export const MAX_NUMBER = 90;
 // Màu tờ (chỉ số vào bảng màu ở client): đỏ, xanh lá, xanh dương, vàng, tím, cam, hồng, xanh ngọc.
 export const COLOR_COUNT = 8;
 export const MAX_CARDS = 6;
+export const PACES = [0, 3, 5, 8]; // giây giữa hai lần tự hô; 0 = chủ phòng tự bấm
 
 export const colRange = (c) => [c === 0 ? 1 : c * 10, c === COLS - 1 ? MAX_NUMBER : c * 10 + 9];
 

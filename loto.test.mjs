@@ -48,12 +48,46 @@ assert.deepEqual(waitRows(cards, [1, 20, 40], [0, 2, 4]).filter((w) => w.r === 0
 const ctxOf = (seats, extra = {}) => {
   const out = { result: null, sent: [], wake: 0, t: 1000 };
   const ctx = {
-    g: {}, seats, keep: {}, rand: Math.random, host: () => seats[0], name: (id) => ({ a: 'An', b: 'Bình', c: 'Cường' }[id]),
+    g: {}, seats, keep: {}, cfg: { pace: 0 }, rand: Math.random, host: () => seats[0], name: (id) => ({ a: 'An', b: 'Bình', c: 'Cường' }[id]),
     now: () => out.t, allow: () => true, wakeAt: (at) => { out.wake = at; }, sendAll: (m) => out.sent.push(m),
     end: (r) => { out.result = r; }, ...extra,
   };
   return [ctx, out];
 };
+// Tự hô: mặc định 5 giây; chủ phòng bấm hô số đầu, server hẹn giờ hô tiếp; đổi tốc độ / tắt; KINH thì dừng hẹn.
+{
+  assert.deepEqual(mod.cfg, { pace: 5 });
+  assert.deepEqual(mod.config(mod.cfg, { pace: 3 }), { pace: 3 });
+  assert.equal(mod.config(mod.cfg, { pace: 4 }), null);
+  const [ctx, out] = ctxOf(['a', 'b'], { cfg: { pace: 5 } });
+  mod.start(ctx);
+  assert.equal(mod.tick(ctx), false, 'no auto call before the host starts calling');
+  mod.msg(ctx, { id: 'a' }, { a: 'call' });
+  assert.equal(out.wake, out.t + 5000);
+  out.t = out.wake - 1;
+  assert.equal(mod.tick(ctx), false, 'not early');
+  out.t += 1;
+  assert.equal(mod.tick(ctx), true);
+  assert.equal(ctx.g.called.length, 2, 'server calls by itself');
+  assert.equal(out.wake, out.t + 5000, 'and books the next call');
+  assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'pace', s: 3 }), false, 'only the host sets the pace');
+  assert.equal(mod.msg(ctx, { id: 'a' }, { a: 'pace', s: 4 }), false);
+  assert.equal(mod.msg(ctx, { id: 'a' }, { a: 'pace', s: 3 }), true);
+  assert.equal(out.wake, out.t + 3000);
+  assert.equal(mod.view(ctx, 'b').next, out.wake, 'everyone sees when the next number comes');
+  mod.msg(ctx, { id: 'a' }, { a: 'pace', s: 0 });
+  out.t = out.wake;
+  assert.equal(mod.tick(ctx), false, 'paused');
+  mod.msg(ctx, { id: 'a' }, { a: 'pace', s: 8 });
+  ctx.g.cards.b = [CARD];
+  ctx.g.called = [1, 20, 40, 60, 80];
+  mod.msg(ctx, { id: 'b' }, { a: 'kinh' });
+  assert.equal(ctx.g.next, 0, 'KINH stops auto calling');
+  out.t = out.wake;
+  assert.equal(mod.tick(ctx), true);
+  assert.equal(ctx.g.called.length, 5, 'no call during the check');
+  assert.ok(out.result.ranks[0].won);
+}
 {
   const [ctx, out] = ctxOf(['a', 'b']);
   mod.start(ctx);
