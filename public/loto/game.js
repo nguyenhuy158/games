@@ -1,6 +1,7 @@
 import { nokiaApp } from '../nokia/room.js';
 import { COLS, BLOCK, CELLS, PER_ROW, MAX_NUMBER, COLOR_COUNT, MAX_CARDS, PACES, PARTY, numberAt, rowsOf, waitRows, numberWords, numberWordsEn, callLine } from './logic.js';
 import { createVoice, VOICE_MODES } from './voice.js';
+import { createMusic, LEVELS } from './music.js';
 import { penaltyCard, penaltyLobby } from './penalty.js';
 import { t, en } from '../i18n.js';
 import { iconEl } from '../icons.js';
@@ -16,14 +17,18 @@ const NOT_CALLED_MS = 1500; // nhắc "số này chưa hô" thưa thôi
 const SWIPE_PX = 40; // vuốt ngang tối thiểu để sang tờ khác
 const VE_PACE = 5; // tự hô chậm từ chừng này giây (hoặc hô tay) thì đọc cả câu vè, nhanh hơn thì chỉ đọc số
 
-let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, veEl, pop, voiceBtn, board, shop, swatches, shopNote, sheet, tabs, ticket, strip, kinhBtn, autoBtn, status, penCard;
+let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, veEl, pop, voiceBtn, musicBtn, musicVol, board, shop, swatches, shopNote, sheet, tabs, ticket, strip, kinhBtn, autoBtn, status, penCard;
 let cells = [], nums = [], sel = 0, seen = -1, nagAt = 0, timerAt = 0, tickTimer = 0;
 
+const music = createMusic();
 const voice = createVoice({
   lang: en ? 'en' : 'vi',
   onMissing: (m) => app.toast.warning(m === 'vi' ? t('Máy không có giọng tiếng Việt — chỉ hiện số trên màn hình', 'No Vietnamese voice on this device — numbers are shown on screen only')
     : t('Máy không có giọng tiếng Anh — chỉ hiện số trên màn hình', 'No English voice on this device — numbers are shown on screen only'), { icon: 'megaphone-off', duration: 5000 }),
+  onSpeaking: (on) => music.duck(on),
 });
+// Trình duyệt chỉ cho phát âm thanh sau lần chạm đầu tiên (giống mở khoá giọng đọc): mở AudioContext rồi bật nhạc nếu đang ván.
+for (const type of ['touchend', 'click', 'keydown']) document.addEventListener(type, () => { music.unlock(); syncMusic(); }, { capture: true });
 
 const nameOf = (r, id) => r?.players.find((p) => p.id === id)?.name ?? '?';
 
@@ -61,9 +66,15 @@ const app = nokiaApp({
     veEl = el('p', { className: 've' });
     pop = el('div', { className: 'pop' }, el('b'), el('span'));
     voiceBtn = el('button', { className: 'voice', onclick: nextVoice });
+    musicBtn = el('button', { className: 'music', onclick: nextMusic });
+    musicVol = el('input', { type: 'range', className: 'music-vol', min: 1, max: LEVELS.length - 1, step: 1, title: t('Âm lượng nhạc', 'Music volume'),
+      oninput: () => { music.level = Number(musicVol.value); renderMusic(); } });
     const header = stage.closest('#room').querySelector('header');
     header.insertBefore(voiceBtn, header.lastElementChild);
+    header.insertBefore(musicBtn, header.lastElementChild);
+    header.insertBefore(musicVol, header.lastElementChild);
     renderVoice();
+    renderMusic();
     nums = Array.from({ length: MAX_NUMBER }, (_, k) => el('span', { textContent: k + 1 }));
     board = el('div', { className: 'board', title: t('Bảng số đã hô', 'Called numbers') }, ...nums);
     swatches = Array.from({ length: COLOR_COUNT }, (_, c) => el('button', { title: t(`Tờ ${PALETTE[c][1]}`, `${PALETTE[c][2]} card`), onclick: () => toggleColor(c) }));
@@ -95,12 +106,15 @@ const app = nokiaApp({
     if (seen >= 0 && v.called.length > seen && r.status === 'playing') announce(v);
     seen = v.called.length;
     paint(r);
+    syncMusic();
   },
   onState(m, prev) {
+    queueMicrotask(syncMusic);
     const wins = m.view?.kinh?.wins ?? [], before = prev?.view?.kinh?.wins.length ?? 0;
     if (m.status !== 'playing' || wins.length <= before) return;
     for (const w of wins.slice(before)) app.toast.success(t(`${nameOf(m, w.id)} KINH! Đang dò vé…`, `${nameOf(m, w.id)} shouts KINH! Checking…`), { icon: 'party-popper' });
     app.beep(1568, 220, 'triangle');
+    music.fanfare();
   },
   onMsg(m) {
     if (m.t === 'loto' && m.e === 'lao') penCard.show(m, nameOf(app.room, m.id), app.room?.cfg.party ?? PARTY);
@@ -129,6 +143,7 @@ function announce(v) {
   ball.getBoundingClientRect();
   ball.classList.add('pulse');
   app.beep(980, 90, 'sine');
+  music.drum();
   voice.speak({ vi: !v.pace || v.pace >= VE_PACE ? line.say : `Số ${numberWords(n)}!`, en: `Number ${numberWordsEn(n)}!` });
 }
 
@@ -146,6 +161,32 @@ function renderVoice() {
   voiceBtn.hidden = !voice.supported;
   voiceBtn.title = t('Giọng đọc số: Tiếng Việt / English / tắt', 'Number voice: Vietnamese / English / off');
   voiceBtn.replaceChildren(iconEl(m === 'off' ? 'megaphone-off' : 'megaphone'), m === 'off' ? '' : ` ${m.toUpperCase()}`);
+}
+
+// Nhạc nền: bật/tắt (nhớ mức cũ), thanh trượt 3 mức âm lượng; tách riêng với giọng đọc số.
+let lastLevel = music.level || 2;
+function nextMusic() {
+  music.level = music.level ? 0 : lastLevel;
+  renderMusic();
+  music.unlock();
+  syncMusic();
+  app.toast(music.level ? t('Bật nhạc nền', 'Music on') : t('Tắt nhạc nền', 'Music off'), { icon: music.level ? 'music' : 'volume-x' });
+}
+
+function renderMusic() {
+  if (music.level) lastLevel = music.level;
+  musicBtn.title = t('Nhạc nền: bật / tắt', 'Background music: on / off');
+  musicBtn.replaceChildren(iconEl(music.level ? 'music' : 'volume-x'));
+  musicBtn.classList.toggle('on', !!music.level);
+  musicVol.value = lastLevel;
+  musicVol.hidden = !music.level;
+}
+
+// Nhạc chỉ chạy khi ván đang hô số (chưa có ai KINH); về sảnh / hết ván / xem lại thì tắt.
+function syncMusic() {
+  const r = app.room, v = r?.view;
+  if (r?.status === 'playing' && !app.replay && v?.called.length && !v.kinh) music.start();
+  else music.stop();
 }
 
 function paceName(s) {
