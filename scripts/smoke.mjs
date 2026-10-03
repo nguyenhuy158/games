@@ -9,6 +9,7 @@ import { N } from '../public/ban-tau/logic.js';
 import { findPair } from '../public/pikachu/logic.js';
 import { botMove as ganhBot } from '../public/co-ganh/logic.js';
 import { botMove as tuongBot } from '../public/co-tuong/logic.js';
+import { kinhRows as lotoKinh } from '../public/loto/logic.js';
 
 const base = (process.argv[2] ?? 'http://localhost:8789').replace(/^http/, 'ws');
 const only = process.argv.slice(3);
@@ -234,22 +235,27 @@ const GAMES = {
     await until(() => r.socks[0].last.status === 'ended', 240000, 'co-tuong ends');
     return JSON.stringify(r.socks[0].last.result.title);
   },
-  // Lô tô 2 người: mỗi bot dò số đã gọi trên phiếu của mình, chủ phòng dò xong thì gọi số tiếp, tới khi có người kinh.
+  // Lô tô 2 người: bot 0 bật tự dò, bot 1 tự dò từng ô và kinh láo một lần; chủ phòng dò xong thì hô tiếp; ai có hàng đủ 5 số
+  // đã hô thì KINH, server dò vé xong là hết ván.
   async loto() {
     const r = await nokia('loto', 2, (ws, m) => {
       const v = m.view;
-      if (m.status !== 'playing' || !v?.card) return;
-      const i = v.card.flat().findIndex((n, k) => n != null && v.called.includes(n) && !v.marked.includes(k));
+      if (m.status !== 'playing' || !v?.cards) return;
+      if (ws === r.socks[0] && !v.auto && !ws.auto) { ws.auto = true; return r.send(ws, { t: 'g', a: 'auto', on: true }); }
+      if (ws === r.socks[1] && v.called.length === 1 && !ws.lao) { ws.lao = true; r.send(ws, { t: 'g', a: 'kinh' }); }
+      if (!ws.kinh && lotoKinh(v.cards, v.called).length) { ws.kinh = true; return r.send(ws, { t: 'g', a: 'kinh' }); }
+      const i = v.cards.flatMap((g) => g.flat()).findIndex((n, k) => n != null && v.called.includes(n) && !v.marked.includes(k));
       if (i >= 0) {
         if (ws.marking !== `${i}:${v.marked.length}`) { ws.marking = `${i}:${v.marked.length}`; r.send(ws, { t: 'g', a: 'mark', i }); }
-      } else if (m.host === ws.me && ws.called !== v.called.length) {
+      } else if (m.host === ws.me && !v.kinh && ws.called !== v.called.length) {
         ws.called = v.called.length;
         r.send(ws, { t: 'g', a: 'call' });
       }
     });
     await until(() => r.socks[0].last.status === 'ended', 60000, 'loto ends');
     const res = r.socks[0].last.result;
-    if (!res.ranks[0].won || res.ranks[0].score < 5) throw new Error(JSON.stringify(res));
+    if (!res.ranks[0].won || res.ranks[0].score !== 5) throw new Error(JSON.stringify(res));
+    if (!r.socks[0].msgs.some((m) => m.t === 'loto' && m.e === 'lao')) throw new Error('no kinh láo notice');
     r.close();
     return `${JSON.stringify(res.title)} after ${r.socks[0].last.view.called.length} calls`;
   },

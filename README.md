@@ -14,7 +14,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click —
 | Cờ tướng | `/co-tuong/` | Đủ luật (cản mắt / cản chân, pháo cách ngòi, lộ mặt tướng, không tự chiếu); 1v1 hoặc với máy (alpha-beta + tìm yên, có hạn giờ), người khác xem |
 | Cờ gánh | `/co-ganh/` | Cờ dân gian 5×5: gánh (đi vào giữa 2 quân địch), vây và mở (bắt buộc vào gánh); 1v1 hoặc với máy (3 mức), người khác xem |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |
-| Lô tô | `/loto/` | 1–12 người, mỗi người một phiếu 3×9 (chỉ chủ phiếu thấy), chủ phòng gọi số 1–90, server kiểm số đã gọi; kín một hàng là KINH; vào giữa ván vẫn có phiếu |
+| Lô tô | `/loto/` | 1–12 người, lô tô hội chợ: tờ dò 9×9 (3 khối, mỗi hàng 5 số, cột theo chục, có màu; chỉ chủ tờ thấy, không trùng tờ nào trong phòng), chủ phòng hô số 1–90, bảng 90 số đã hô; tự dò hoặc bật "Tự dò"; hàng thiếu 1 số hiện CHỜ; bấm KINH, server kiểm số đã hô (sai = "kinh láo"), kinh cùng lúc thì chia giải; vào giữa ván vẫn có tờ |
 | 2048 | `/2048/` | 1 người, chạy hết ở client: phím mũi tên / vuốt / phím trên màn; bảng xếp hạng tên + điểm (top 10, `/api/board?game=2048`) |
 | Xếp gạch | `/tetris/` | 1 người, chạy hết ở client: phím / vuốt / chạm / 4 nút; tạm dừng (P); kỷ lục lưu trên máy |
 | Sudoku | `/sudoku/` | 1 người, chạy hết ở client: 3 mức, ghi chú bút chì (N), 3 gợi ý, đồng hồ + tạm dừng, kỷ lục thời gian theo mức lưu trên máy |
