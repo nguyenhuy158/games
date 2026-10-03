@@ -8,6 +8,7 @@ import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 hydrateIcons();
 
@@ -265,3 +266,62 @@ if (replay) {
     reset: () => { quiet = true; setTimeout(() => { quiet = false; }); room = null; peek = false; render(); },
   }).then((rec) => { if (!rec?.frames?.length) $('#ovTitle').textContent = t('Không tìm thấy bản xem lại', 'Replay not found'); });
 } else if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+
+// Hộp "Cách chơi": nút ở trang chủ + trên thanh đầu phòng; lần đầu vào tự mở.
+mountHelp({
+  game: 'co-caro',
+  button: '#btnHelpHome, #btnHelp',
+  auto: !replay,
+  content: {
+    vi: {
+      goal: 'Xếp 5 quân của mình liền nhau theo hàng ngang, dọc hoặc chéo (XO 3×3: chỉ cần 3).',
+      play: [
+        'Tạo phòng rồi mời bạn bằng mã 4 ký tự / mã QR; ở một mình thì bấm Bắt đầu để đánh với máy.',
+        'Ở sảnh chờ chủ phòng chọn bàn: XO 3×3, 15×15 (mặc định) hoặc 19×19.',
+        'Luật chặn 2 đầu (tuỳ chọn, bàn 15×15 / 19×19): dãy bị quân đối thủ chặn cả 2 đầu không tính thắng.',
+        '2 người vào đầu cầm quân, người sau chỉ xem. X luôn đi trước; ván mới hai bên đổi quân.',
+        'Dãy từ 5 quân trở lên là thắng. Mỗi nước tối đa 30 giây — hết giờ là thua.',
+        'Kín bàn mà chưa ai thắng thì hoà.',
+      ],
+      keys: [
+        'Tới lượt: bấm ô trống để đặt quân (rê chuột thấy mờ quân của bạn).',
+        'Nút lớp trên thanh đầu: đổi kiểu quân X/O giấy hoặc quân tròn, chỉ trên máy bạn.',
+      ],
+      touch: [
+        'Chạm ô trống để đặt quân.',
+        'Bàn to hơn màn hình (như 19×19 trên điện thoại): vuốt để kéo bàn; nước mới tự cuộn tới.',
+      ],
+      tips: [
+        'Dãy 4 hở cả 2 đầu là thắng chắc: đối thủ chỉ chặn được một đầu.',
+        'Thấy đối thủ có dãy 3 hở 2 đầu thì chặn ngay.',
+        'Luật chặn 2 đầu: dãy cần ít nhất 1 đầu không bị quân đối thủ chặn (sát mép bàn vẫn tính).',
+        'XO 3×3: máy đánh không bao giờ thua, giỏi lắm là hoà.',
+      ],
+    },
+    en: {
+      goal: 'Line up 5 of your pieces in a row — horizontal, vertical or diagonal (Tic-tac-toe 3×3: just 3).',
+      play: [
+        'Create a room and invite a friend with the 4-character code / QR; alone, press Start to play the bot.',
+        'In the lobby the host picks the board: Tic-tac-toe 3×3, 15×15 (default) or 19×19.',
+        "Blocked-ends rule (optional, 15×15 / 19×19): a line capped by opponent pieces at both ends doesn't win.",
+        'The first 2 people in hold the pieces, the rest watch. X always moves first; pieces swap each round.',
+        'A line of 5 or more wins. Each move has 30 seconds max — run out of time and you lose.',
+        'If the board fills up with no winner, it is a draw.',
+      ],
+      keys: [
+        'On your turn, click an empty cell to place a piece (hovering previews your piece).',
+        'Layers button in the header: switch between paper X/O and round pieces, on your device only.',
+      ],
+      touch: [
+        'Tap an empty cell to place a piece.',
+        'Board bigger than the screen (e.g. 19×19 on a phone): swipe to pan; new moves scroll into view.',
+      ],
+      tips: [
+        'An open four (both ends empty) is a sure win: your opponent can block only one end.',
+        'Block any open three (both ends empty) from your opponent right away.',
+        'Blocked-ends rule: a line needs at least one end not capped by an opponent piece (a board edge is fine).',
+        'Tic-tac-toe 3×3: the bot never loses — a draw is the best you can get.',
+      ],
+    },
+  },
+});

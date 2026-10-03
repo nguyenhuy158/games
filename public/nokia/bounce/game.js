@@ -12,8 +12,52 @@ const app = nokiaApp({
   game: 'bounce',
   title: 'Bounce',
   sub: t('Bounce của Nokia 6600 — quả bóng nhảy qua các màn, chui qua hết vòng rồi về cửa đích. Đua cùng màn với bạn bè.', 'Bounce from the Nokia 6600 — hop through every ring, then reach the exit. Race friends on the same level.'),
-  help: t('Giữ trái / phải để lăn, lên (2) hoặc OK (5) để nhảy. Chui qua mọi vòng thì cửa đích mới mở. Tránh gai; mất mạng thì hồi sinh chỗ đứng gần nhất. Về đích nhanh nhất thắng.',
-    'Hold left / right to roll, up (2) or OK (5) to jump. The exit opens after every ring. Avoid spikes; losing a life respawns you at the last safe spot. Fastest to the exit wins.'),
+  help: {
+    vi: {
+      goal: 'Đưa quả bóng chui qua mọi vòng rồi về cửa đích nhanh nhất.',
+      play: [
+        'Có 3 màn, chủ phòng chọn; góc trên trái hiện số vòng đã chui / tổng số vòng.',
+        'Cửa đích ở cuối màn chỉ mở khi đã chui đủ mọi vòng.',
+        'Chạm gai mất 1 mạng, hồi sinh ở chỗ đứng an toàn gần nhất. 3 mạng; nhặt tim: +1 mạng.',
+        'Điểm là thời gian (giây), càng ít càng tốt. Cả phòng cùng một màn, bóng người khác hiện mờ.',
+        'Người về đích xếp trên người chưa về; đếm ngược 3 giây, mỗi ván tối đa 5 phút.',
+      ],
+      keys: [
+        'Giữ trái / phải (mũi tên, A / D hoặc 4 / 6) để lăn.',
+        'Lên (mũi tên, W hoặc 2) hoặc OK (Enter, Space hoặc 5) để nhảy.',
+      ],
+      touch: [
+        'Chạm vào màn hình LCD để nhảy.',
+        'Giữ 4 / 6 trên bàn phím ảo để lăn; bấm 2 hoặc 5 để nhảy.',
+      ],
+      tips: [
+        'Chỉ nhảy được khi bóng đang chạm đất; bấm lúc đang bay sẽ không có tác dụng.',
+        'Vừa giữ hướng vừa nhảy để bay xa qua hàng gai.',
+      ],
+    },
+    en: {
+      goal: 'Get the ball through every ring, then reach the exit as fast as you can.',
+      play: [
+        '3 levels, picked by the host; the top-left counter shows rings collected / total.',
+        'The exit at the end of the level opens only after every ring is collected.',
+        'Spikes cost 1 life and respawn you at the last safe spot. 3 lives; a heart gives +1 life.',
+        'Score is your time (seconds), lower is better. Everyone races the same level as faint ghost balls.',
+        'Finishers rank above non-finishers; 3-second countdown, each game lasts at most 5 minutes.',
+      ],
+      keys: [
+        'Hold left / right (arrows, A / D or 4 / 6) to roll.',
+        'Up (arrow, W or 2) or OK (Enter, Space or 5) to jump.',
+      ],
+      touch: [
+        'Tap the LCD screen to jump.',
+        'Hold 4 / 6 on the on-screen keypad to roll; press 2 or 5 to jump.',
+      ],
+      tips: [
+        'You can only jump while touching the ground; presses in mid-air do nothing.',
+        'Hold a direction while jumping to clear rows of spikes.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t(`${r.players.length} người đua cùng màn ${r.cfg.level + 1}.`, `${r.players.length} players race level ${r.cfg.level + 1}.`) : t(`Một mình: về đích màn ${r.cfg.level + 1} nhanh nhất có thể.`, `Solo: finish level ${r.cfg.level + 1} as fast as you can.`)),
   lobby(box, r, isHost, setCfg) {
     const seg = document.createElement('div');

@@ -11,8 +11,56 @@ nokiaApp({
   game: 'logic',
   title: 'Logic',
   sub: t('Logic của Nokia 3210 (Mastermind) — đoán mã 4 hình, đua cùng một mã với bạn bè.', 'Logic from the Nokia 3210 (Mastermind) — crack a 4-shape code, racing friends on the same code.'),
-  help: t('Trái / phải chọn ô, lên / xuống đổi hình, OK (5) để đoán — hoặc chạm vào ô để đổi hình. Chấm đặc: đúng hình đúng chỗ; chấm rỗng: đúng hình nhưng sai chỗ. Tối đa 10 lượt, 5 phút.',
-    'Left / right to pick a slot, up / down to change shape, OK (5) to guess — or tap a slot. Filled dot: right shape, right place; hollow dot: right shape, wrong place. Up to 10 guesses, 5 minutes.'),
+  help: {
+    vi: {
+      goal: 'Đoán đúng mã bí mật gồm 4 hình trong ít lượt nhất.',
+      play: [
+        'Mã có 4 ô, mỗi ô là 1 trong 6 hình (tròn, vuông, tam giác, X, kim cương, cộng); hình có thể trùng.',
+        'Sau mỗi lần đoán: chấm đặc = đúng hình đúng chỗ, chấm rỗng = đúng hình nhưng sai chỗ.',
+        'Tối đa 10 lượt và 5 phút; hết ván thì mã thật hiện ra.',
+        'Tối đa 6 người cùng giải một mã; chỉ thấy số lượt của nhau, không thấy nước đoán.',
+        'Xếp hạng: giải được trước, rồi ít lượt hơn, rồi nhanh hơn.',
+      ],
+      keys: [
+        'Trái / phải (mũi tên, A / D hoặc 4 / 6): chọn ô.',
+        'Lên / xuống (mũi tên, W / S hoặc 2 / 8): đổi hình trong ô.',
+        'OK (Enter, Space hoặc 5): gửi lượt đoán.',
+      ],
+      touch: [
+        'Chạm một ô ở hàng dưới cùng để đổi sang hình kế tiếp.',
+        'Chạm khoảng trống ngay bên phải hàng đó để gửi lượt đoán.',
+        'Hoặc dùng 2 / 4 / 6 / 8 và 5 trên bàn phím ảo; vuốt quanh màn hình như bấm mũi tên.',
+      ],
+      tips: [
+        'Mỗi hình trong mã chỉ được tính chấm một lần, kể cả khi bạn đoán trùng hình.',
+        'Màn hình chỉ hiện 5 lượt gần nhất, hãy ghi nhớ các lượt cũ.',
+      ],
+    },
+    en: {
+      goal: 'Crack the secret 4-shape code in as few guesses as possible.',
+      play: [
+        'The code has 4 slots, each one of 6 shapes (circle, square, triangle, X, diamond, plus); repeats allowed.',
+        'After each guess: filled dot = right shape, right place; hollow dot = right shape, wrong place.',
+        'Up to 10 guesses and 5 minutes; the real code is revealed when the game ends.',
+        'Up to 6 players crack the same code; you only see how many guesses others used.',
+        'Ranking: solved first, then fewer guesses, then faster time.',
+      ],
+      keys: [
+        'Left / right (arrows, A / D or 4 / 6): pick a slot.',
+        'Up / down (arrows, W / S or 2 / 8): change the shape.',
+        'OK (Enter, Space or 5): submit the guess.',
+      ],
+      touch: [
+        'Tap a slot in the bottom row to cycle to the next shape.',
+        'Tap the empty space just right of that row to submit the guess.',
+        'Or use 2 / 4 / 6 / 8 and 5 on the on-screen keypad; swipe around the screen like arrow keys.',
+      ],
+      tips: [
+        'Each shape in the code earns a dot only once, even if you guess it twice.',
+        'Only the last 5 guesses fit on screen, so keep older ones in mind.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t(`${r.players.length} người đua giải cùng một mã.`, `${r.players.length} players race to crack the same code.`) : t('Một mình: giải mã trong ít lượt nhất.', 'Solo: crack it in as few guesses as possible.')),
   badge: (p, r) => { const o = r.view?.others?.[p.id]; return o ? (o.solved ? t(`xong ${o.n}`, `done ${o.n}`) : `${o.n}/10`) : ''; },
   scoreText: (v) => (v ? t(`${v} lượt`, `${v} guesses`) : t('chưa giải', 'unsolved')),

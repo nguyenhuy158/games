@@ -10,8 +10,54 @@ const app = nokiaApp({
   game: 'space-impact',
   title: 'Space Impact',
   sub: t('Space Impact của Nokia 3310 — bắn quái vũ trụ, hạ trùm cuối màn. Chơi chung tối đa 4 phi thuyền.', 'Space Impact from the Nokia 3310 — blast aliens and beat each level\'s boss. Up to 4 ships co-op.'),
-  help: t('Giữ mũi tên / 2-4-6-8 để bay, giữ OK (5) hoặc Space để bắn liên tục. 3 màn, cuối mỗi màn có trùm. Mỗi tàu 3 mạng, trúng đạn thì nhấp nháy 2 giây không chết. Tim rơi ra: +1 mạng.',
-    'Hold arrows / 2-4-6-8 to fly, hold OK (5) or Space to keep firing. 3 levels, each ends with a boss. 3 lives per ship; after a hit you blink invulnerable for 2 seconds. Dropped heart: +1 life.'),
+  help: {
+    vi: {
+      goal: 'Bắn hạ quái vũ trụ và trùm cuối của cả 3 màn.',
+      play: [
+        'Tàu bay ở nửa trái màn hình và bắn sang phải; quái bay từ phải sang.',
+        'Hạ quái được 10 / 15 / 20 điểm; trùm cuối màn được 200 × số màn.',
+        'Mỗi màn: hết đợt quái thì trùm xuất hiện (thanh máu ở trên); hạ trùm màn 3 là phá đảo.',
+        'Trúng đạn hoặc đâm vào quái / trùm: mất 1 mạng, nhấp nháy bất tử 2 giây.',
+        'Mỗi tàu 3 mạng; quái bị hạ đôi khi rơi tim: +1 mạng (tối đa 5).',
+        'Chơi chung tối đa 4 tàu, điểm cộng chung; hết ván khi mọi tàu hết mạng.',
+      ],
+      keys: [
+        'Giữ mũi tên / WASD / 2-4-6-8 để bay 4 hướng.',
+        'Giữ OK (Space, Enter hoặc 5) để bắn liên tục.',
+      ],
+      touch: [
+        'Giữ 2 / 4 / 6 / 8 trên bàn phím ảo để bay, giữ 5 để bắn.',
+        'Dùng 2 ngón để vừa bay vừa bắn cùng lúc.',
+      ],
+      tips: [
+        'Từ màn 2, trùm bắn 3 tia toả ra; né theo chiều dọc.',
+        'Hết mạng thì bạn vẫn xem đồng đội chơi tiếp.',
+      ],
+    },
+    en: {
+      goal: 'Shoot down the aliens and the boss of all 3 levels.',
+      play: [
+        'Your ship flies in the left half of the screen and fires right; aliens come from the right.',
+        'Aliens are worth 10 / 15 / 20 points; a level boss gives 200 × the level number.',
+        'Each level: a wave of aliens, then the boss (health bar on top); beat the level-3 boss to win.',
+        'Getting shot or touching an alien / the boss costs 1 life, then you blink invulnerable for 2 seconds.',
+        'Each ship has 3 lives; downed aliens sometimes drop a heart: +1 life (max 5).',
+        'Up to 4 ships co-op with a shared score; the game ends when every ship is out of lives.',
+      ],
+      keys: [
+        'Hold arrows / WASD / 2-4-6-8 to fly in 4 directions.',
+        'Hold OK (Space, Enter or 5) to keep firing.',
+      ],
+      touch: [
+        'Hold 2 / 4 / 6 / 8 on the on-screen keypad to fly, hold 5 to fire.',
+        'Use two fingers to fly and fire at the same time.',
+      ],
+      tips: [
+        'From level 2 the boss fires a 3-way spread; dodge vertically.',
+        'Out of lives, you can keep watching your teammates.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t(`${Math.min(4, r.players.length)} phi thuyền cùng chiến đấu.`, `${Math.min(4, r.players.length)} ships fighting together.`) : t('Một mình chiến đấu — mời bạn bè để chơi chung.', 'Flying solo — invite friends to play co-op.')),
   badge: (p, r) => r.view?.ships?.find((s) => s.id === p.id)?.score ?? '',
   scoreText: (v) => t(`${v} điểm`, `${v} pts`),

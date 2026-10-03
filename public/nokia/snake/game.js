@@ -16,8 +16,52 @@ nokiaApp({
   game: 'snake',
   title: t('Rắn săn mồi', 'Snake'),
   sub: t('Snake huyền thoại của Nokia — một mình, đua điểm mỗi người một sân, hoặc chung sân tranh mồi.', 'The legendary Nokia Snake — solo, a score race on separate fields, or one shared arena fighting for food.'),
-  help: t('Phím mũi tên / WASD / 2-4-6-8 hoặc bàn phím trên máy. Ăn mồi để dài ra, con bọ thưởng biến mất sau vài giây. Đâm tường (nếu bật), tường mê cung hoặc thân rắn là thua. Chung sân: đâm vào rắn khác là chết, con sống sót cuối cùng thắng. Sân riêng: ai cũng chơi tới khi chết, điểm cao nhất thắng.',
-    'Arrow keys / WASD / 2-4-6-8 or the on-screen keypad. Eat food to grow; the bonus bug vanishes after a few seconds. Hitting a wall (if on), a maze wall or a snake body loses. Shared arena: hit another snake and you die, last snake alive wins. Own field: everyone plays until they crash, highest score wins.'),
+  help: {
+    vi: {
+      goal: 'Điều khiển rắn ăn mồi để dài ra và ghi điểm, đừng đâm vào tường hay thân rắn.',
+      play: [
+        'Mồi thường: +1 điểm, rắn dài thêm 1 ô.',
+        'Cứ 5 mồi có 1 con bọ thưởng: 5–20 điểm (ăn càng sớm càng nhiều), biến mất sau 24 bước.',
+        'Chết khi đâm thân rắn, tường mê cung, hoặc mép sân nếu bật Có tường (tắt thì đi xuyên mép).',
+        'Chung sân (2–4 rắn): đâm rắn khác hoặc đối đầu là chết; con sống sót cuối cùng thắng.',
+        'Sân riêng: mỗi người một sân, chơi tới khi chết; điểm cao nhất thắng.',
+        'Chủ phòng chọn chế độ, tốc độ 1–5, mê cung (Bốn góc / Đường hầm / Chữ thập) và tường.',
+      ],
+      keys: [
+        'Mũi tên / WASD / 2-4-6-8 để rẽ; không quay đầu 180° được.',
+        'Bấm nhanh 2 phím liên tiếp vẫn nhận cả hai (rẽ gấp chữ U).',
+      ],
+      touch: [
+        'Bấm 2 / 4 / 6 / 8 trên bàn phím ảo dưới màn hình.',
+        'Hoặc vuốt lên / xuống / trái / phải ngay trên màn hình.',
+      ],
+      tips: [
+        'Chơi một mình: tới khi chết thì hết ván; kỷ lục của máy này hiện cạnh điểm.',
+      ],
+    },
+    en: {
+      goal: 'Steer the snake to eat food, grow and score, without crashing into walls or snakes.',
+      play: [
+        'Food: +1 point and the snake grows by 1 cell.',
+        'Every 5 foods a bonus bug appears: 5–20 points (sooner = more), gone after 24 steps.',
+        'You die hitting a snake body, a maze wall, or the edge when Walls is on (off = wrap around).',
+        'Shared arena (2–4 snakes): hitting another snake or a head-on crash kills; last snake alive wins.',
+        'Own field: everyone gets a separate field and plays until they crash; highest score wins.',
+        'The host picks mode, speed 1–5, maze (Corners / Tunnel / Cross) and walls.',
+      ],
+      keys: [
+        'Arrow keys / WASD / 2-4-6-8 to turn; no 180° reversing.',
+        'Two quick presses in a row both count (tight U-turns).',
+      ],
+      touch: [
+        'Press 2 / 4 / 6 / 8 on the on-screen keypad.',
+        'Or swipe up / down / left / right on the screen.',
+      ],
+      tips: [
+        'Solo: the game ends when you crash; this device\'s best score shows next to yours.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length < 2 ? t('Chơi một mình — mời bạn bè để đua điểm hoặc chung sân.', 'Playing solo — invite friends for a score race or a shared arena.')
     : r.cfg.mode === 'solo' ? t(`${Math.min(4, r.players.length)} người, mỗi người một sân — so điểm.`, `${Math.min(4, r.players.length)} players, one field each — highest score wins.`)
       : t(`${Math.min(4, r.players.length)} con rắn chung một sân — tranh mồi, đâm nhau là thua.`, `${Math.min(4, r.players.length)} snakes in one arena — fight for food, crash and you lose.`)) + bestText(),

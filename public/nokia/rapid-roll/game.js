@@ -10,8 +10,50 @@ const app = nokiaApp({
   game: 'rapid-roll',
   title: 'Rapid Roll',
   sub: t('Rapid Roll của Nokia 1110i — lăn bóng xuống giữa các thanh đang trôi lên, đua cùng đề với bạn bè.', 'Rapid Roll from the Nokia 1110i — roll down between rising platforms, racing friends on the same course.'),
-  help: t('Giữ trái / phải (4 / 6 hoặc mũi tên) để lăn bóng. Đừng để bị đẩy lên chạm gai trên cùng, đừng rơi khỏi đáy và tránh thanh có gai. Tim: +1 mạng. Càng lâu càng nhanh; ai trụ xa nhất thắng.',
-    'Hold left / right (4 / 6 or arrows) to roll. Don\'t get pushed into the spikes on top, don\'t fall off the bottom, avoid spiked platforms. Heart: +1 life. It speeds up over time; whoever lasts longest wins.'),
+  help: {
+    vi: {
+      goal: 'Lăn bóng xuống giữa các thanh đang trôi lên và trụ được xa nhất.',
+      play: [
+        'Màn cuộn liên tục: đứng yên trên thanh thì bóng bị đẩy dần lên dãy gai trên cùng.',
+        'Mất mạng khi chạm gai trên cùng, rơi khỏi đáy màn hoặc đậu lên thanh có gai.',
+        '3 mạng (tối đa 5); tim trên thanh: +1 mạng. Hồi sinh xong được bất tử 1,5 giây.',
+        'Tốc độ tăng dần trong khoảng 44 giây đầu rồi giữ ở mức cao nhất.',
+        'Điểm = quãng đường (m). Cả phòng chơi cùng một đề, bóng người khác hiện mờ; xa nhất thắng.',
+        'Đếm ngược 3 giây trước khi chạy; mỗi ván tối đa 4 phút.',
+      ],
+      keys: [
+        'Giữ trái / phải (mũi tên, A / D hoặc 4 / 6) để lăn bóng.',
+      ],
+      touch: [
+        'Giữ phím 4 / 6 trên bàn phím ảo để lăn bóng.',
+      ],
+      tips: [
+        'Lăn khỏi mép thanh để rơi xuống thanh dưới, đừng đứng lâu trên một thanh.',
+        'Thanh có gai có hàng chấm phía trên; lăn né ngay lúc đang rơi.',
+      ],
+    },
+    en: {
+      goal: 'Roll down between rising platforms and survive as far as you can.',
+      play: [
+        'The screen keeps scrolling: stay on a platform and you get pushed up toward the top spikes.',
+        'You lose a life touching the top spikes, falling off the bottom or landing on a spiked platform.',
+        '3 lives (max 5); a heart on a platform gives +1 life. After respawning you are safe for 1.5 seconds.',
+        'Speed rises over roughly the first 44 seconds, then stays at its maximum.',
+        'Score = distance (m). Everyone plays the same course, others show as faint balls; farthest wins.',
+        '3-second countdown before the start; each game lasts at most 4 minutes.',
+      ],
+      keys: [
+        'Hold left / right (arrows, A / D or 4 / 6) to roll.',
+      ],
+      touch: [
+        'Hold 4 / 6 on the on-screen keypad to roll.',
+      ],
+      tips: [
+        'Roll off a platform edge to drop to the next one; don\'t linger on one platform.',
+        'Spiked platforms have a dotted row on top; steer away while you fall.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t(`${r.players.length} người đua cùng một đề.`, `${r.players.length} players race the same course.`) : t('Một mình: trụ càng xa càng tốt.', 'Solo: go as far as you can.')),
   badge: (p, r) => r.view?.runners?.[p.id]?.score ?? '',
   scoreText: (v) => `${v} m`,

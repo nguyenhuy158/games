@@ -10,8 +10,54 @@ nokiaApp({
   game: 'pairs',
   title: t('Lật hình', 'Pairs'),
   sub: t('Pairs II của Nokia 3310 — lật 2 lá tìm cặp, chơi một mình hoặc cả nhóm.', 'Pairs II from the Nokia 3310 — flip 2 cards to find a match, solo or with a group.'),
-  help: t('Mũi tên / 2-4-6-8 để chọn lá, OK (5) để lật — hoặc chạm thẳng vào lá. Trúng cặp được 1 điểm và lật tiếp; trượt thì 2 lá úp lại, tới lượt người sau. Mỗi lượt 20 giây.',
-    'Arrows / 2-4-6-8 to pick a card, OK (5) to flip — or tap a card. A match scores 1 and you flip again; a miss turns both back and passes the turn. 20 seconds per turn.'),
+  help: {
+    vi: {
+      goal: 'Lật tìm các cặp hình giống nhau; nhiều người thì ai ăn nhiều cặp nhất thắng.',
+      play: [
+        'Bàn 24 lá úp (6 × 4) gồm 12 cặp hình; mỗi lượt lật 2 lá.',
+        'Trúng cặp: +1 điểm, 2 lá ở lại ngửa và bạn lật tiếp.',
+        'Trượt: cả phòng xem 2 lá khoảng 1 giây rồi úp lại, tới lượt người sau.',
+        'Mỗi lượt 20 giây, hết giờ là mất lượt.',
+        'Tối đa 6 người thay phiên; bằng điểm ở vị trí cao nhất thì không ai thắng.',
+        'Một mình: lật hết bàn trong ít lượt nhất.',
+      ],
+      keys: [
+        'Mũi tên / WASD / 2-4-6-8: dời ô chọn (đi quá mép thì vòng lại).',
+        'OK (Enter, Space hoặc 5): lật lá đang chọn.',
+      ],
+      touch: [
+        'Chạm thẳng vào lá để lật.',
+        'Hoặc dùng 2 / 4 / 6 / 8 và 5 trên bàn phím ảo; vuốt quanh màn hình để dời ô chọn.',
+      ],
+      tips: [
+        'Nhớ cả những lá người khác vừa lật trượt.',
+        'Nhiều người: lá bạn đã ăn có một chấm nhỏ ở góc dưới bên phải.',
+      ],
+    },
+    en: {
+      goal: 'Flip cards to find matching pairs; with friends, whoever collects the most pairs wins.',
+      play: [
+        '24 face-down cards (6 × 4) hold 12 pairs; you flip 2 cards per turn.',
+        'Match: +1 point, both cards stay up and you flip again.',
+        'Miss: everyone sees both cards for about a second, then they flip back and the turn passes.',
+        '20 seconds per turn; run out of time and you lose the turn.',
+        'Up to 6 players take turns; a tie for first place means no winner.',
+        'Solo: clear the board in as few turns as possible.',
+      ],
+      keys: [
+        'Arrows / WASD / 2-4-6-8: move the cursor (it wraps around the edges).',
+        'OK (Enter, Space or 5): flip the selected card.',
+      ],
+      touch: [
+        'Tap a card to flip it.',
+        'Or use 2 / 4 / 6 / 8 and 5 on the on-screen keypad; swipe around the screen to move the cursor.',
+      ],
+      tips: [
+        'Remember the cards other players just missed.',
+        'With friends: cards you won have a small dot in the bottom-right corner.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t(`${r.players.length} người thay phiên lật, ai nhiều cặp nhất thắng.`, `${r.players.length} players take turns; most pairs wins.`) : t('Một mình: lật hết trong ít lượt nhất.', 'Solo: clear the board in as few turns as possible.')),
   badge: (p, r) => r.view?.score?.[p.id] ?? '',
   scoreText: (v, res) => (res.mode === 'solo' ? t(`${v} lượt`, `${v} turns`) : t(`${v} cặp`, `${v} pairs`)),

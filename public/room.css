@@ -1,5 +1,5 @@
 /* Khung chung của mọi game chạy trên nokiaApp (public/nokia/room.js): trang vào phòng, thanh trên, danh sách người,
-   sảnh chờ / kết quả, hộp luật chơi. Game bàn cờ (Cờ tướng, Cờ gánh, Ô ăn quan, Lô tô) chỉ cần file này + style.css riêng;
+   sảnh chờ / kết quả (hộp Cách chơi nằm ở public/help.js). Game bàn cờ (Cờ tướng, Cờ gánh, Ô ăn quan, Lô tô) chỉ cần file này + style.css riêng;
    game LCD Nokia thêm nokia/nokia.css (màn LCD + bàn phím). */
 :root {
   --bg: #16202c; --panel: #223041; --line: #34485e; --text: #e8f1fa; --muted: #93a8bd; --accent: #9be564; --good: #3ddc84; --bad: #ff5d5d;
@@ -62,9 +62,4 @@ header button { min-width: 44px; min-height: 44px; }
 /* Điện thoại xoay ngang: không đủ cao cho dòng gợi ý. */
 @media (orientation: landscape) and (max-height: 560px) and (pointer: coarse) { .hint { display: none; } }
 #overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #16202cb0; z-index: 5; }
-.lang { display: flex; justify-content: center; }
-/* Luật chơi: hộp nổi trên cả phòng, mở bằng nút (i) trên thanh trên; dài thì cuộn trong hộp. */
-#help { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px; background: #000a; }
-#help .card { max-height: calc(100dvh - 32px); overflow: auto; text-align: left; }
-#help h2 { justify-content: flex-start; }
-#help .rules { margin: 0; line-height: 1.5; }
+.lang { display: flex; justify-content: center; align-items: center; gap: 8px; }

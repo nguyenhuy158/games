@@ -19,7 +19,10 @@
 <body>
   <section id="home">
     <div class="card">
-      <span data-lang-toggle style="justify-self: end;"></span>
+      <div style="display: flex; gap: 8px; align-items: center; justify-self: end;">
+        <button type="button" id="btnHelpHome" title="Cách chơi" data-en-title="How to play"><i data-icon="info"></i></button>
+        <span data-lang-toggle></span>
+      </div>
       <h1><a href="/" class="back" data-en-title="Other games" title="Các game khác"><i data-icon="arrow-left"></i></a> <img class="logo" src="/logos/noi-4.svg" alt=""> <span data-en="Connect 4">Nối 4</span></h1>
       <p class="sub" data-en="Drop pieces into a column — first to connect 4 in a row (horizontal, vertical, diagonal) wins. Play 1v1 with a friend or the bot.">Thả quân vào cột, ai nối được 4 quân liền (ngang, dọc, chéo) trước là thắng. Đấu 1v1 với bạn hoặc với máy.</p>
       <label><span data-en="Your name">Tên của bạn</span> <input id="name" maxlength="20" autocomplete="off"></label>
@@ -38,6 +41,7 @@
       <button id="btnCopy" data-en-title="Invite: QR code / link" title="Mời bạn: mã QR / link"><span class="lbl" data-en="Room ">Phòng </span><b id="roomCode"></b> <i data-icon="qr-code"></i></button>
       <span id="conn" class="dot" data-en-title="Connection" title="Kết nối"></span>
       <span class="grow"></span>
+      <button type="button" id="btnHelp" title="Cách chơi" data-en-title="How to play"><i data-icon="info"></i></button>
       <button id="btnSound" data-en-title="Sound" title="Âm thanh"></button>
     </header>
     <div id="vs">

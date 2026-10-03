@@ -71,8 +71,48 @@ const app = nokiaApp({
   path: '/o-an-quan/',
   title: t('Ô ăn quan', 'O An Quan'),
   sub: t('Trò chơi dân gian vẽ phấn trên sân gạch — rải sỏi, ăn dân, bắt quan. 2–5 người, thiếu người thì máy vào chơi.', 'The Vietnamese folk game chalked on a brick yard — sow pebbles, capture citizens, take the mandarins. 2–5 players; bots fill empty seats.'),
-  help: t('Chạm một ô dân bên mình rồi chọn hướng rải. Rải hết mà ô kế có sỏi thì bốc rải tiếp; ô kế trống thì ăn ô sau nó (trống – có xen kẽ thì ăn dồn); gặp ô quan hoặc hai ô trống thì mất lượt. Quan = 10 dân. Hết dân bên mình thì lấy 5 dân đã ăn rải lại (thiếu thì vay người nhiều dân nhất). Hết mọi quan là hết ván, dân còn lại về chủ hàng ô. 3–5 người: bàn đa giác, đi lần lượt vòng quanh.',
-    'Tap a citizen square on your side, then pick a direction to sow. If the next square has pebbles, pick them up and keep sowing; if it is empty, capture the square after it (alternating empty – full squares capture in a chain); hitting a mandarin square or two empty squares ends your turn. A mandarin = 10 citizens. With no citizens left on your side, re-seed 5 from your captures (borrow from the richest player if short). The game ends when every mandarin is taken; remaining citizens go to their row owner. 3–5 players: a polygon board, turns go round.'),
+  help: {
+    vi: {
+      goal: 'Ăn được nhiều điểm nhất khi hết ván: mỗi dân 1 điểm, mỗi quan 10 điểm.',
+      play: [
+        'Mỗi người có 5 ô dân (mỗi ô 5 viên); giữa các hàng là ô quan có 1 quan. 2–5 người, ghế trống do máy chơi.',
+        'Tới lượt: bốc hết sỏi một ô dân bên mình, rải mỗi ô 1 viên theo hướng đã chọn.',
+        'Rải hết mà ô kế tiếp có sỏi thì bốc ô đó rải tiếp; ô kế tiếp là ô quan thì dừng, mất lượt.',
+        'Ô kế tiếp trống thì ăn hết ô ngay sau nó; cứ xen kẽ một ô trống – một ô có sỏi thì ăn tiếp (ăn dồn).',
+        'Gặp hai ô trống liền nhau thì dừng, không ăn được gì.',
+        'Quan non (khi chủ phòng chọn "Không ăn"): ô quan còn quan mà dưới 5 dân thì chưa ăn được.',
+        'Hết dân bên mình: lấy 5 dân đã ăn rải lại mỗi ô 1 viên; thiếu thì vay người nhiều dân nhất, cuối ván trả.',
+        'Hết ván khi mọi ô quan đều trống (hoặc không còn dân để rải lại); dân còn trên ô về chủ hàng đó.',
+        'Mỗi nước 30 giây. Hết giờ: 2 người thì thua ngay; 3–5 người thì máy đi hộ.',
+      ],
+      keys: [
+        'Bấm chuột vào một ô dân bên mình (hàng dưới cùng) để chọn, bấm lại để bỏ chọn.',
+        'Bấm mũi tên trái / phải hiện trên bàn để chọn hướng rải.',
+      ],
+      touch: ['Chạm một ô dân bên mình, rồi chạm mũi tên trái / phải để rải.'],
+      tips: ['Đấu một mình với máy: nút "Đi lại" quay về trước nước vừa đi (tối đa 10 nước).'],
+    },
+    en: {
+      goal: 'Have the most points when the game ends: each citizen is 1 point, each mandarin 10.',
+      play: [
+        'You own 5 citizen squares (5 pebbles each); a mandarin square sits between rows. 2–5 players, bots fill seats.',
+        'On your turn pick up all pebbles in one of your citizen squares and sow one per square in a direction.',
+        'Hand empty: if the next square has pebbles, pick them up and keep sowing; a mandarin square ends your turn.',
+        'If the next square is empty, capture the square after it; alternating empty – full squares keep capturing.',
+        'Two empty squares in a row: your turn ends with no capture.',
+        'Young mandarin (host setting "Protected"): a mandarin square with under 5 citizens cannot be captured yet.',
+        'No citizens on your side: re-seed 5 from your captures; if short, borrow from the richest player (repaid).',
+        'Game ends when every mandarin square is empty (or nobody can re-seed); citizens left go to their row owner.',
+        '30 seconds per move. Timeout: with 2 players you lose; with 3–5 a bot moves for you.',
+      ],
+      keys: [
+        'Click a citizen square on your side (bottom row) to select it; click again to deselect.',
+        'Click the left / right arrow on the board to choose the sowing direction.',
+      ],
+      touch: ['Tap a citizen square on your side, then tap the left / right arrow to sow.'],
+      tips: ['Solo vs bots: the "Undo" button takes back your last move (up to 10 moves).'],
+    },
+  },
   lobbyText: (r) => {
     const n = Math.max(r.cfg.n ?? 2, r.players.length), bots = n - r.players.length;
     if (r.players.length === 1 && n === 2) return t('Chỉ có mình bạn — sẽ đấu với máy.', 'Just you — you will play the bot.');

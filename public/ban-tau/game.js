@@ -8,6 +8,7 @@ import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 hydrateIcons();
 
@@ -330,3 +331,62 @@ if (rp) {
   const initial = new URLSearchParams(location.search).get('r');
   if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
 }
+
+// Hộp "Cách chơi": nút ở trang chủ + trên thanh đầu phòng; lần đầu vào tự mở.
+mountHelp({
+  game: 'ban-tau',
+  button: '#btnHelpHome, #btnHelp',
+  auto: !rp,
+  content: {
+    vi: {
+      goal: 'Đánh chìm cả 5 tàu của đối thủ trước khi họ đánh chìm hết tàu của bạn.',
+      play: [
+        'Tạo phòng rồi mời bạn bằng mã 4 ký tự / mã QR; ở một mình thì bấm Bắt đầu để đấu với máy.',
+        '2 người vào đầu cầm hạm đội, người sau chỉ xem. Chủ phòng bấm Bắt đầu.',
+        'Biển 10×10, 5 tàu dài 5, 4, 3, 3, 2 ô, nằm ngang hoặc dọc, không sát nhau (kể cả chéo).',
+        'Có 60 giây xếp tàu: tàu xếp sẵn ngẫu nhiên, đổi tuỳ ý rồi bấm Sẵn sàng; hết giờ thì vào trận luôn.',
+        'Thay phiên bắn vào biển đối thủ: trúng thì được bắn tiếp, trượt thì mất lượt.',
+        'Mỗi lượt 30 giây; hết giờ sẽ bị bắn giùm 1 phát ngẫu nhiên, 3 lần liền như vậy là thua.',
+        'Ván mới đổi người bắn trước; tỉ số tính theo cặp đấu.',
+      ],
+      keys: [
+        'Xếp tàu: bấm tàu để chọn, bấm lại (hoặc nút Xoay) để xoay, bấm ô trống để dời tàu tới đó.',
+        'Xếp lại = xếp ngẫu nhiên mới. Đánh: bấm ô chưa bắn trên biển đối thủ (có viền màu).',
+      ],
+      touch: [
+        'Như chuột: chạm tàu để chọn / xoay, chạm ô trống để dời, chạm biển đối thủ để bắn.',
+        'Thanh dưới cùng: chạm để gửi cảm xúc cho cả phòng.',
+      ],
+      tips: [
+        'Trúng rồi thì bắn 4 ô kề bên để lần ra hướng tàu, rồi bắn nối dài theo hướng đó.',
+        'Tàu chìm thì các ô quanh nó tự đánh dấu trượt, vì tàu không bao giờ sát nhau.',
+        'Tìm tàu: bắn cách ô kiểu bàn cờ, tàu ngắn nhất 2 ô không lọt được.',
+      ],
+    },
+    en: {
+      goal: "Sink all 5 of your opponent's ships before they sink all of yours.",
+      play: [
+        'Create a room and invite a friend with the 4-character code / QR; alone, press Start to play the bot.',
+        'The first 2 people in hold fleets, the rest watch. The host presses Start.',
+        '10×10 sea, 5 ships of 5, 4, 3, 3, 2 cells, horizontal or vertical, never touching (even diagonally).',
+        'You get 60 seconds to place: ships start shuffled, adjust them, then press Ready; at time-out play begins.',
+        "Take turns firing at the opponent's sea: a hit lets you fire again, a miss passes the turn.",
+        'Each turn is 30 seconds; time out and a random shot is fired for you — 3 in a row and you lose.',
+        'Each new game swaps who fires first; the score is kept per pair of players.',
+      ],
+      keys: [
+        'Placing: click a ship to select it, click it again (or Rotate) to rotate, click an empty cell to move it.',
+        "Reshuffle = new random layout. Battle: click an unfired cell on the opponent's (outlined) sea.",
+      ],
+      touch: [
+        "Same as mouse: tap a ship to select / rotate, tap an empty cell to move, tap the opponent's sea to fire.",
+        'Bottom bar: tap to send a reaction to the room.',
+      ],
+      tips: [
+        "After a hit, try the 4 neighbouring cells to find the ship's direction, then follow that line.",
+        'A sunk ship marks its surrounding cells as misses, since ships never touch.',
+        'Hunting: fire in a checkerboard pattern — the smallest ship (2 cells) cannot slip through.',
+      ],
+    },
+  },
+});

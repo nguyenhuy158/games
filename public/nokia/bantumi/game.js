@@ -17,8 +17,52 @@ nokiaApp({
   game: 'bantumi',
   title: 'Bantumi',
   sub: t('Trò rải sỏi của Nokia 3310 (Kalah) — đấu 1v1 hoặc với máy.', 'The Nokia 3310 seed-sowing game (Kalah) — 1v1 or vs the bot.'),
-  help: t('Trái / phải để chọn hố, OK (5) để rải — hoặc chạm thẳng vào hố. Hạt cuối vào kho mình: đi tiếp. Hạt cuối vào hố trống bên mình: ăn luôn sỏi hố đối diện. Hết sỏi một bên thì kho nhiều hơn thắng. Mỗi nước 30 giây.',
-    'Left / right to pick a pit, OK (5) to sow — or tap a pit. Last seed in your store: go again. Last seed in an empty pit on your side: capture the opposite pit too. When one side runs out, the bigger store wins. 30 seconds per move.'),
+  help: {
+    vi: {
+      goal: 'Gom được nhiều sỏi vào kho của mình hơn đối thủ.',
+      play: [
+        'Mỗi bên 6 hố và 1 kho: hàng dưới là hố của bạn, kho bạn ở bên phải; mỗi hố 3–6 sỏi tuỳ chủ phòng.',
+        'Chọn hố của mình còn sỏi: bốc hết, rải mỗi hố 1 viên ngược chiều kim đồng hồ, bỏ qua kho đối thủ.',
+        'Viên cuối rơi vào kho mình: được đi tiếp.',
+        'Viên cuối rơi vào hố trống bên mình, hố đối diện còn sỏi: ăn cả hai hố vào kho.',
+        'Một bên hết sỏi: mỗi bên dồn sỏi còn lại về kho mình, kho nhiều hơn thắng.',
+        'Mỗi nước 30 giây, hết giờ là thua. Chỉ một người thì đấu với máy; ván sau đổi người đi trước.',
+      ],
+      keys: [
+        'Trái / phải (mũi tên, A / D hoặc 4 / 6): chọn hố.',
+        'OK (Enter, Space hoặc 5): rải hố đang chọn.',
+      ],
+      touch: [
+        'Chạm thẳng vào một hố ở hàng dưới để rải ngay.',
+        'Hoặc bấm 4 / 6 rồi 5 trên bàn phím ảo; vuốt trái / phải quanh màn hình để dời hố.',
+      ],
+      tips: [
+        'Hố có số sỏi vừa đủ rơi đúng vào kho thì đi trước để được thêm lượt.',
+      ],
+    },
+    en: {
+      goal: 'Collect more seeds in your store than your opponent.',
+      play: [
+        'Each side has 6 pits and 1 store: the bottom row is yours, your store is on the right; 3–6 seeds per pit.',
+        'Pick one of your non-empty pits: take all seeds and sow one per pit counter-clockwise, skipping their store.',
+        'Last seed lands in your store: you go again.',
+        'Last seed lands in an empty pit on your side with seeds opposite: capture both into your store.',
+        'When one side runs out, each side moves its remaining seeds to its own store; bigger store wins.',
+        '30 seconds per move or you lose. Alone in the room you play the bot; the first mover swaps each game.',
+      ],
+      keys: [
+        'Left / right (arrows, A / D or 4 / 6): pick a pit.',
+        'OK (Enter, Space or 5): sow the selected pit.',
+      ],
+      touch: [
+        'Tap a pit in the bottom row to sow it right away.',
+        'Or press 4 / 6 then 5 on the on-screen keypad; swipe left / right around the screen to move.',
+      ],
+      tips: [
+        'Play first the pit whose seeds end exactly in your store to earn an extra turn.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t(`${r.players[0].name} đấu ${r.players[1].name}.`, `${r.players[0].name} vs ${r.players[1].name}.`) : t('Chỉ có mình bạn — sẽ đấu với máy.', 'Just you — you will play the bot.')),
   lobby(box, r, isHost, setCfg) {
     const seg = document.createElement('div');

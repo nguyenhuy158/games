@@ -30,8 +30,52 @@ const app = nokiaApp({
   path: '/co-tuong/',
   title: t('Cờ tướng', 'Xiangqi'),
   sub: t('Cờ tướng đủ luật — pháo cách ngòi, mã cản chân, tượng không qua sông, lộ mặt tướng. 1v1 hoặc với máy.', 'Full-rules Chinese chess — cannon screens, blocked horses, elephants stay home, flying general. 1v1 or vs the bot.'),
-  help: t('Chạm một quân của mình, các điểm đi được hiện chấm xanh, chạm điểm để đi. Xe đi thẳng; Pháo đi như xe, ăn phải nhảy qua đúng 1 quân; Mã đi chữ nhật, bị cản chân; Tượng đi chéo 2 ô, không qua sông; Sĩ và Tướng ở trong cửu cung; Tốt qua sông được đi ngang. Hai tướng không được đối mặt trên cùng cột trống, không được đi để tướng mình bị chiếu. Chiếu bí (đối phương hết nước) là thắng; mỗi nước có 60 giây.',
-    'Tap one of your pieces; green dots show where it can go, tap one to move. Chariot moves straight; Cannon moves like a chariot but captures by jumping exactly one piece; Horse moves in an L and can be blocked; Elephant moves 2 diagonally and cannot cross the river; Advisor and General stay in the palace; Soldiers move sideways after crossing the river. The two generals may not face each other on an open file, and you may not leave your general in check. Checkmate (no legal moves) wins; 60 seconds per move.'),
+  help: {
+    vi: {
+      goal: 'Chiếu bí tướng đối phương: tới lượt họ mà không còn nước đi hợp lệ nào là bạn thắng.',
+      play: [
+        'Bàn 9×10, Đỏ đi trước; mỗi ván hai bên đổi màu. Mỗi nước có 60 giây, hết giờ là thua.',
+        'Xe đi thẳng bao xa cũng được; Pháo đi như Xe, nhưng muốn ăn phải nhảy qua đúng 1 quân (ngòi).',
+        'Mã đi chữ nhật (1 thẳng + 1 chéo), bị cản chân nếu có quân sát cạnh theo hướng đi.',
+        'Tượng đi chéo 2 ô, bị cản nếu ô giữa có quân, không được qua sông.',
+        'Sĩ đi chéo 1 ô, Tướng đi thẳng 1 ô; cả hai chỉ ở trong cửu cung.',
+        'Tốt đi thẳng 1 ô, qua sông thì được đi ngang, không bao giờ lùi.',
+        'Hai tướng không được đối mặt trên cùng cột trống; không được đi nước để tướng mình bị chiếu.',
+        'Quá 300 nước mà chưa phân thắng thua thì hoà.',
+      ],
+      keys: [
+        'Bấm chuột vào quân của mình để chọn (bấm lại để bỏ), các điểm đi được hiện chấm xanh.',
+        'Bấm vào một chấm (kể cả chấm trên quân địch) để đi hoặc ăn quân.',
+      ],
+      touch: ['Chạm quân của mình, rồi chạm điểm có chấm xanh để đi.'],
+      tips: [
+        'Tướng nháy đỏ là đang bị chiếu — nước tiếp theo phải gỡ chiếu.',
+        'Phòng chỉ có mình bạn thì đấu với máy; chủ phòng chọn Dễ / Vừa / Khó ở sảnh chờ.',
+      ],
+    },
+    en: {
+      goal: 'Checkmate the enemy general: if they have no legal move on their turn, you win.',
+      play: [
+        '9×10 board, Red moves first; sides swap every game. 60 seconds per move — running out loses.',
+        'Chariot moves any distance straight; Cannon moves the same but captures by jumping exactly one piece.',
+        'Horse moves in an L (1 straight + 1 diagonal) and is blocked by a piece right next to it that way.',
+        'Elephant moves 2 diagonally, is blocked if the middle point is occupied, and cannot cross the river.',
+        'Advisor moves 1 diagonally, General 1 straight; both must stay inside the palace.',
+        'Soldier moves 1 forward, may also step sideways after crossing the river, never backwards.',
+        'The generals may not face each other on an open file, and you may not leave your general in check.',
+        'No result after 300 moves: the game is a draw.',
+      ],
+      keys: [
+        'Click one of your pieces to select it (click again to deselect); green dots show where it can go.',
+        'Click a dot (including one on an enemy piece) to move or capture.',
+      ],
+      touch: ['Tap one of your pieces, then tap a green dot to move.'],
+      tips: [
+        'A flashing red general is in check — your next move must get out of it.',
+        'Alone in the room you play the bot; the host picks Easy / Normal / Hard in the lobby.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t(`${r.players[0].name} đấu ${r.players[1].name} — mỗi ván đổi bên cầm Đỏ.`, `${r.players[0].name} vs ${r.players[1].name} — sides swap every game.`) : t('Chỉ có mình bạn — sẽ đấu với máy.', 'Just you — you will play the bot.')),
   lobby(bx, r, isHost, setCfg) {
     if (r.players.length > 1) return;

@@ -38,8 +38,46 @@ const app = nokiaApp({
   path: '/loto/',
   title: t('Lô tô', 'Lo To'),
   sub: t('Lô tô hội chợ chơi cùng bạn bè: mỗi người một tờ dò, chủ phòng hô số, hàng nào đủ 5 số thì hô KINH!', 'Vietnamese fair-style bingo with friends: everyone gets a card, the host calls numbers, fill a row of 5 and shout KINH!'),
-  help: t('Tờ dò có 9 hàng (3 khối), mỗi hàng 5 số; cột 1: 1–9, cột 2: 10–19, ..., cột 9: 80–90. Đầu ván chọn màu tờ (1–6 tờ, đổi tờ khác được). Chủ phòng bấm "Bắt đầu hô", sau đó số tự hô đều đặn (đổi tốc độ hoặc tắt để tự bấm "Hô số"). Số có trên tờ thì chạm để đặt hạt (hoặc bật "Tự dò"). Hàng còn thiếu 1 số là CHỜ. Hàng ngang đủ 5 số đã hô thì bấm KINH — kinh sai là "kinh láo"! Nhiều người kinh cùng lúc thì chia giải.',
-    'Each card has 9 rows (3 blocks) of 5 numbers; column 1: 1–9, column 2: 10–19, ..., column 9: 80–90. At the start pick card colours (1–6 cards, swap for another if you like). The host taps "Start calling", then numbers are called automatically (change the speed, or turn it off and tap "Call"). Tap a called number on your card to place a chip (or turn on "Auto mark"). A row missing one number is WAITING. When a row has all 5 numbers called, tap KINH — a false claim is announced to everyone! Simultaneous claims share the win.'),
+  help: {
+    vi: {
+      goal: 'Có một hàng ngang đủ 5 số đã hô và bấm KINH trước mọi người.',
+      play: [
+        'Tờ dò có 9 hàng (3 khối), mỗi hàng 5 số; cột 1: 1–9, cột 2: 10–19, ..., cột 9: 80–90.',
+        'Trước số đầu tiên: chạm màu để lấy thêm / trả bớt tờ (1–6 tờ), bấm "Đổi tờ này" để lấy tờ khác.',
+        'Chủ phòng bấm "Bắt đầu hô"; sau đó cứ 5 giây hô một số 1–90 (đổi 3 / 8 giây, hoặc tắt để tự bấm "Hô số").',
+        'Số đã hô có trên tờ thì chạm để đặt hạt, hoặc bật "Tự dò" để đặt hộ mỗi lần hô.',
+        'Hàng còn thiếu đúng 1 số là CHỜ. KINH được kiểm theo số đã hô, không cần đã đặt hạt.',
+        'Kinh đúng: dừng hô 4 giây, ai kinh kịp lúc đó thì chia giải. Hô hết 90 số mà chưa ai kinh: không ai thắng.',
+        'Kinh sai là "kinh láo": báo cả phòng, kèm phạt theo chủ phòng chọn (Tắt / Trong game / Phạt vui / Cả hai).',
+        'Phạt trong game (bốc 1): khoá KINH 30 giây, mất 1 hạt, đóng băng Tự dò 1 phút, nhãn "Kinh láo" hoặc chờ 3 số.',
+      ],
+      keys: [
+        'Bấm chuột vào ô số để đặt hạt; bấm các nút 1, 2, ... trên tờ để chuyển tờ.',
+        'Nút "Tự dò" và "KINH!" ở thanh dưới; chủ phòng có nút "Hô số" và nút đổi tốc độ hô.',
+      ],
+      touch: ['Chạm ô số để đặt hạt; vuốt ngang trên tờ để sang tờ bên cạnh.'],
+      tips: ['Nút loa đổi giọng đọc số Tiếng Việt / English / tắt; nút nhạc bật / tắt nhạc nền.'],
+    },
+    en: {
+      goal: 'Be first to have a row of 5 called numbers and tap KINH.',
+      play: [
+        'Each card has 9 rows (3 blocks) of 5 numbers; column 1: 1–9, column 2: 10–19, ..., column 9: 80–90.',
+        'Before the first number: tap a colour to add / return a card (1–6 cards); "Swap this card" deals another.',
+        'The host taps "Start calling"; a number 1–90 is then called every 5s (or 3s / 8s, or off: tap "Call").',
+        'Tap a called number on your card to place a chip, or turn on "Auto mark" to mark each call for you.',
+        'A row missing exactly one number is WAITING. KINH is checked against called numbers, chips not required.',
+        'Valid KINH: calling pauses 4s; anyone claiming in that window shares the win. 90 called, no KINH: no winner.',
+        'A wrong claim is a "false KINH": shown to all, penalised per the host setting (Off / In game / Party / Both).',
+        'In-game penalty, one of: KINH locked 30s, lose a chip, Auto mark frozen 1 min, "False KINH" tag, wait 3 calls.',
+      ],
+      keys: [
+        'Click a number cell to place a chip; click the 1, 2, ... tabs above the card to switch cards.',
+        '"Auto mark" and "KINH!" are in the bottom bar; the host also has "Call" and the call-speed button.',
+      ],
+      touch: ['Tap a number cell to place a chip; swipe sideways on the card to switch cards.'],
+      tips: ['Megaphone button: number voice Vietnamese / English / off; music button: background music on / off.'],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t('Đầu ván mỗi người chọn tờ (1–6 tờ, theo màu); chủ phòng bắt đầu hô.', 'At the start everyone picks cards (1–6, by colour); the host starts calling.')
     : t('Chơi một mình: chọn tờ, tự hô, tự dò.', 'Playing alone: pick cards, call and mark the numbers yourself.')),
   lobby(box, r, isHost, setCfg) {

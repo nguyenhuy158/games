@@ -8,6 +8,7 @@ import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 hydrateIcons();
 
@@ -251,3 +252,62 @@ if (replay) {
     reset: () => { quiet = true; setTimeout(() => { quiet = false; }); room = null; peek = false; render(); },
   }).then((rec) => { if (!rec?.frames?.length) $('#ovTitle').textContent = t('Không tìm thấy bản xem lại', 'Replay not found'); });
 } else if (initial && /^[A-Za-z0-9]{4}$/.test(initial)) enter(initial);
+
+// Hộp "Cách chơi": nút ở trang chủ + trên thanh đầu phòng; lần đầu vào tự mở.
+mountHelp({
+  game: 'noi-4',
+  button: '#btnHelpHome, #btnHelp',
+  auto: !replay,
+  content: {
+    vi: {
+      goal: 'Nối 4 quân cùng màu liền nhau theo hàng ngang, dọc hoặc chéo trước đối thủ.',
+      play: [
+        'Tạo phòng rồi mời bạn bằng mã 4 ký tự / mã QR; ở một mình thì bấm Bắt đầu để đánh với máy.',
+        'Đánh với máy: chủ phòng chọn Máy dễ / thường / khó ở sảnh chờ.',
+        '2 người vào đầu cầm quân, người sau chỉ xem. Đỏ luôn đi trước; ván mới hai bên đổi màu.',
+        'Bàn 7 cột × 6 hàng: thả quân vào một cột, quân rơi xuống ô trống thấp nhất; cột đầy thì không thả được.',
+        'Mỗi nước tối đa 30 giây — hết giờ là thua ván.',
+        'Kín bàn mà chưa ai nối được 4 thì hoà.',
+      ],
+      keys: [
+        'Tới lượt: bấm vào ô bất kỳ trong một cột để thả quân vào cột đó (rê chuột thì cả cột sáng lên).',
+        'Hết ván: Xem bàn để nhìn lại thế cờ, Kết quả để quay về bảng kết quả.',
+      ],
+      touch: [
+        'Chạm vào ô bất kỳ của một cột là thả quân luôn.',
+        'Thanh dưới cùng: chạm để gửi cảm xúc cho cả phòng.',
+      ],
+      tips: [
+        'Giành cột giữa: nhiều đường nối 4 đi qua nó nhất.',
+        'Trước mỗi nước, xem đối thủ có sắp nối 4 không để chặn.',
+        'Tạo 2 đường doạ thắng cùng lúc, đối thủ chỉ chặn được một.',
+        'Cẩn thận ô ngay phía trên nước bạn đi: có thể đang mở chỗ thắng cho đối thủ.',
+      ],
+    },
+    en: {
+      goal: 'Connect 4 of your pieces in a row — horizontal, vertical or diagonal — before your opponent.',
+      play: [
+        'Create a room and invite a friend with the 4-character code / QR; alone, press Start to play the bot.',
+        'Against the bot, the host picks Bot easy / normal / hard in the lobby.',
+        'The first 2 people in hold the pieces, the rest watch. Red always moves first; colours swap each round.',
+        '7 columns × 6 rows: drop a piece into a column and it falls to the lowest empty cell; full columns are blocked.',
+        'Each move has 30 seconds max — run out of time and you lose the round.',
+        'If the board fills up with no 4 in a row, it is a draw.',
+      ],
+      keys: [
+        'On your turn, click any cell in a column to drop into that column (hovering highlights the column).',
+        'After a round: View board to look at the final position, Result to return to the result card.',
+      ],
+      touch: [
+        'Tap any cell of a column to drop a piece there right away.',
+        'Bottom bar: tap to send a reaction to the room.',
+      ],
+      tips: [
+        'Take the centre column: the most lines of 4 pass through it.',
+        'Before every move, check whether your opponent is about to connect 4 and block it.',
+        'Set up 2 winning threats at once — your opponent can only block one.',
+        'Watch the cell right above your move: you may be opening a winning spot for your opponent.',
+      ],
+    },
+  },
+});

@@ -26,8 +26,48 @@ const app = nokiaApp({
   path: '/co-ganh/',
   title: t('Cờ gánh', 'Co Ganh'),
   sub: t('Cờ dân gian Việt Nam trên bàn 5×5 — đi vào giữa hai quân địch là gánh cả hai, vây kín là bắt. 1v1 hoặc với máy.', 'A Vietnamese folk board game on a 5×5 grid — step between two enemy pieces to carry both, trap a group to take it. 1v1 or vs the bot.'),
-  help: t('Chạm một quân của mình rồi chạm điểm trống kề nó (theo đường kẻ; đường chéo chỉ có ở các điểm nối chéo). Gánh: quân vừa đi đứng giữa hai quân địch thẳng hàng thì cả hai đổi thành quân mình. Vây: nhóm quân địch không còn đường đi thì cả nhóm thành quân mình. Mở: đối phương vừa bỏ trống một điểm mà mình vào đó gánh được thì bắt buộc phải vào gánh. Bắt hết quân đối thủ là thắng; mỗi nước có 30 giây.',
-    'Tap one of your pieces, then an empty point next to it (along a line; diagonals exist only at the points they pass through). Carry: when your piece lands between two enemy pieces in a line, both become yours. Trap: an enemy group with nowhere to move becomes yours. Opened: if the opponent just vacated a point you could carry from, you must move there and carry. Take every enemy piece to win; 30 seconds per move.'),
+  help: {
+    vi: {
+      goal: 'Biến hết quân đối phương thành quân mình (hoặc dồn họ hết nước đi) bằng cách gánh và vây.',
+      play: [
+        'Bàn 5×5 giao điểm, mỗi bên 8 quân quanh mép; mỗi ván đổi người đi trước. Mỗi nước 30 giây, hết giờ là thua.',
+        'Mỗi lượt đi 1 quân 1 bước theo đường kẻ tới điểm trống kề; đường chéo chỉ có ở điểm có nét chéo.',
+        'Gánh: quân vừa đi đứng giữa 2 quân địch thẳng hàng thì cả 2 quân đó đổi thành quân mình.',
+        'Vây: nhóm quân địch liền nhau không còn điểm trống kề thì cả nhóm thành quân mình.',
+        'Mở: đối phương vừa bỏ trống điểm mà bạn vào đó gánh được thì bạn bắt buộc phải vào gánh.',
+        'Hết quân hoặc hết nước đi là thua. Quá 150 nước: bên nhiều quân hơn thắng, bằng nhau thì hoà.',
+      ],
+      keys: [
+        'Bấm chuột vào quân của mình (chỉ quân còn nước đi mới chọn được), bấm lại để bỏ chọn.',
+        'Bấm điểm trống được đánh dấu để đi tới đó.',
+      ],
+      touch: ['Chạm quân của mình, rồi chạm điểm trống được đánh dấu.'],
+      tips: [
+        'Một nước có thể vừa gánh vừa vây, lật được nhiều quân cùng lúc.',
+        'Phòng chỉ có mình bạn thì đấu với máy; chủ phòng chọn độ khó ở sảnh chờ.',
+      ],
+    },
+    en: {
+      goal: 'Turn every enemy piece into yours (or leave them with no move) by carrying and trapping.',
+      play: [
+        '5×5 grid, 8 pieces each around the edge; first player alternates. 30 seconds per move — timeout loses.',
+        'Each turn move one piece one step along a line to an empty neighbour; diagonals exist only where drawn.',
+        'Carry: when your moved piece lands between two enemy pieces in a line, both become yours.',
+        'Trap: a connected enemy group with no empty neighbouring point becomes yours.',
+        'Opened: if the opponent just vacated a point you could carry from, you must move there and carry.',
+        'No pieces or no moves left loses. After 150 moves the side with more pieces wins; equal is a draw.',
+      ],
+      keys: [
+        'Click one of your pieces (only pieces that can move are selectable); click again to deselect.',
+        'Click a highlighted empty point to move there.',
+      ],
+      touch: ['Tap one of your pieces, then tap a highlighted empty point.'],
+      tips: [
+        'One move can both carry and trap, flipping several pieces at once.',
+        'Alone in the room you play the bot; the host picks the level in the lobby.',
+      ],
+    },
+  },
   lobbyText: (r) => (r.players.length > 1 ? t(`${r.players[0].name} đấu ${r.players[1].name}.`, `${r.players[0].name} vs ${r.players[1].name}.`) : t('Chỉ có mình bạn — sẽ đấu với máy.', 'Just you — you will play the bot.')),
   lobby(bx, r, isHost, setCfg) {
     if (r.players.length > 1) return;
