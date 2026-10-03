@@ -1,10 +1,10 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v43';
+const CACHE = 'games-v44';
 const CORE = [
   '/', '/index.html', '/me.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/toast.js', '/nozoom.js', '/bfcache.js', '/public-switch.js', '/room-client.js', '/replay.js', '/tape.js', '/phong/', '/phong/index.html', '/phong/phong.js', '/i18n.js', '/names.js', '/dom.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png',
   '/logos/hub.svg', '/logos/pikachu.svg', '/logos/dao-vang.svg', '/logos/do-min.svg', '/logos/bau-cua.svg', '/logos/co-caro.svg', '/logos/noi-4.svg', '/logos/ban-tau.svg',
-  '/nokia/nokia.css', '/nokia/room.js', '/nokia/lcd.js',
+  '/room.css', '/nokia/nokia.css', '/nokia/room.js', '/nokia/lcd.js',
   '/nokia/snake/', '/nokia/snake/game.js', '/nokia/snake/index.html', '/nokia/snake/logic.js', '/logos/snake.svg', '/nokia/bantumi/', '/nokia/bantumi/game.js', '/nokia/bantumi/index.html',
   '/nokia/bantumi/logic.js', '/logos/bantumi.svg', '/nokia/pairs/', '/nokia/pairs/game.js', '/nokia/pairs/index.html', '/nokia/pairs/logic.js', '/logos/pairs.svg', '/nokia/logic/',
   '/nokia/logic/game.js', '/nokia/logic/index.html', '/nokia/logic/logic.js', '/logos/logic.svg', '/nokia/rapid-roll/', '/nokia/rapid-roll/game.js', '/nokia/rapid-roll/index.html', '/nokia/rapid-roll/logic.js',

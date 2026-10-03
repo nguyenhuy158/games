@@ -1,4 +1,4 @@
-/* Ô ăn quan: sân gạch đỏ, bàn kẻ phấn trắng, sỏi cuội nhiều màu, quan là hòn đá to. Ghi đè màu của nokia.css. */
+/* Ô ăn quan: sân gạch đỏ, bàn kẻ phấn trắng, sỏi cuội nhiều màu, quan là hòn đá to. Ghi đè màu của /room.css. */
 :root {
   --bg: #7d3526; --panel: #fff6e6; --line: #e6cfa9; --text: #3b2416; --muted: #8a6a4e; --accent: #c8452c;
   --good: #2e9e5b; --bad: #d9412b; --chalk: #f6f1e4;

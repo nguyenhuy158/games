@@ -1,0 +1,70 @@
+/* Khung chung của mọi game chạy trên nokiaApp (public/nokia/room.js): trang vào phòng, thanh trên, danh sách người,
+   sảnh chờ / kết quả, hộp luật chơi. Game bàn cờ (Cờ tướng, Cờ gánh, Ô ăn quan, Lô tô) chỉ cần file này + style.css riêng;
+   game LCD Nokia thêm nokia/nokia.css (màn LCD + bàn phím). */
+:root {
+  --bg: #16202c; --panel: #223041; --line: #34485e; --text: #e8f1fa; --muted: #93a8bd; --accent: #9be564; --good: #3ddc84; --bad: #ff5d5d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: radial-gradient(circle at 50% 0%, #26384c, var(--bg) 70%) fixed; color: var(--text); overflow: hidden;
+  font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  user-select: none; -webkit-tap-highlight-color: transparent; touch-action: pan-x pan-y;
+}
+[hidden] { display: none !important; }
+.ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
+button, input, select { font: inherit; color: inherit; }
+button {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
+  cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; justify-content: center;
+}
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: var(--accent); color: #142208; border-color: var(--accent); font-weight: 700; }
+button.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+input { background: #0f1822; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+  width: min(380px, calc(100vw - 32px)); display: grid; gap: 12px; text-align: center; box-shadow: 0 12px 40px #0008;
+}
+.card h1, .card h2 { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.card h1 .logo { width: 40px; height: 40px; }
+.card h1 .back { color: var(--muted); display: inline-flex; }
+.card label { display: grid; gap: 4px; text-align: left; color: var(--muted); }
+.sub, .muted { margin: 0; color: var(--muted); }
+.muted { font-size: 12px; }
+.join { display: flex; gap: 8px; }
+input.code { text-transform: uppercase; letter-spacing: 3px; text-align: center; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.seg button { flex: 1; }
+.cfg { display: grid; gap: 8px; }
+.cfg:empty { display: none; }
+.ranks { margin: 0; padding: 0 0 0 1.4em; text-align: left; display: grid; gap: 2px; }
+.ranks li span { display: inline-block; min-width: 60%; }
+.ranks li b { color: var(--accent); }
+#home { height: 100%; display: grid; place-items: center; padding: 16px; }
+
+#room { height: 100%; display: flex; flex-direction: column; }
+header { display: flex; align-items: center; gap: 6px; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); }
+header .grow { flex: 1; }
+header button { min-width: 44px; min-height: 44px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); flex: none; }
+.dot.on { background: var(--good); }
+@media (max-width: 480px) { header .lbl { display: none; } }
+#players { list-style: none; margin: 0 12px; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+#players li { display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px 10px; font-size: 13px; white-space: nowrap; box-shadow: inset 4px 0 var(--c); }
+#players li.me { border-color: var(--accent); }
+#players b { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* Màn chơi: phần còn lại dưới thanh trên; game tính cỡ theo chỗ trống thật của .stage (container query). */
+.stage { position: relative; flex: 1; min-height: 0; display: grid; padding: 8px 12px max(10px, env(safe-area-inset-bottom)); container-type: size; }
+/* Dòng gợi ý dưới màn chơi (LCD: cách điều khiển; bàn cờ: tới lượt ai). */
+.hint { color: var(--muted); font-size: 12px; opacity: .7; text-align: center; }
+/* Điện thoại xoay ngang: không đủ cao cho dòng gợi ý. */
+@media (orientation: landscape) and (max-height: 560px) and (pointer: coarse) { .hint { display: none; } }
+#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #16202cb0; z-index: 5; }
+.lang { display: flex; justify-content: center; }
+/* Luật chơi: hộp nổi trên cả phòng, mở bằng nút (i) trên thanh trên; dài thì cuộn trong hộp. */
+#help { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px; background: #000a; }
+#help .card { max-height: calc(100dvh - 32px); overflow: auto; text-align: left; }
+#help h2 { justify-content: flex-start; }
+#help .rules { margin: 0; line-height: 1.5; }

@@ -1,5 +1,5 @@
 /* Lô tô: nền đỏ hội chợ; tờ dò 9×9 in màu (đỏ, xanh, vàng…) ô số trắng chữ đậm, hạt đỏ khi dò; số vừa hô là quả bóng vàng.
-   Ghi đè màu của nokia.css. Điện thoại: một cột (số vừa hô, bảng 90 số, tờ dò, thanh KINH); máy tính: bảng bên trái, tờ bên phải. */
+   Ghi đè màu của /room.css. Điện thoại: một cột (số vừa hô, bảng 90 số, tờ dò, thanh KINH); máy tính: bảng bên trái, tờ bên phải. */
 :root {
   --bg: #5a0f12; --panel: #fff7e8; --line: #e9cfa4; --text: #3a1a10; --muted: #8a5a3c; --accent: #d62828;
   --good: #2e9e5b; --bad: #d9412b;
@@ -103,7 +103,7 @@ header .music-vol { width: 56px; accent-color: #d99a00; }
   background: #fffdf5; color: #1d140f; font-size: 5.4cqw; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
 }
 .ticket .cell.bt { border-top: 3px solid color-mix(in srgb, var(--tc) 55%, #000); }
-.ticket .cell:disabled { opacity: 1; cursor: default; } /* nokia.css làm mờ nút disabled */
+.ticket .cell:disabled { opacity: 1; cursor: default; } /* room.css làm mờ nút disabled */
 .ticket .blank { background: color-mix(in srgb, var(--tc) 82%, #fff); }
 .ticket .hit { color: #fff; }
 .ticket .hit::before {

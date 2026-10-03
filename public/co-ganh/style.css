@@ -1,4 +1,4 @@
-/* Cờ gánh: chiếu cói, bàn gỗ kẻ mực, quân tròn kiểu cờ tướng (đỏ / đen). Ghi đè màu của nokia.css. */
+/* Cờ gánh: chiếu cói, bàn gỗ kẻ mực, quân tròn kiểu cờ tướng (đỏ / đen). Ghi đè màu của /room.css. */
 :root {
   --bg: #3b2615; --panel: #fff6e6; --line: #e6cfa9; --text: #3b2416; --muted: #8a6a4e; --accent: #b23a26;
   --good: #2e9e5b; --bad: #d9412b; --ink: #3a2412;
@@ -32,7 +32,7 @@ header button { color: var(--text); }
 .pc::before { content: ''; position: absolute; inset: 12%; border-radius: 50%; border: 2px solid #fff8; }
 .pc.p1 { background: radial-gradient(circle at 35% 30%, #ff8a6a, #c8321c 55%, #8a1d10); }
 .pc.p2 { background: radial-gradient(circle at 35% 30%, #6b7380, #2b3038 55%, #121418); }
-.pc:disabled, .pt:disabled { opacity: 1; cursor: default; } /* nokia.css làm mờ nút disabled */
+.pc:disabled, .pt:disabled { opacity: 1; cursor: default; } /* room.css làm mờ nút disabled */
 .pc.can { cursor: pointer; }
 .pc.can:hover { filter: brightness(1.12); }
 .pc.sel { box-shadow: 0 0 0 4px #ffe07a, 0 3px 0 #0006, 0 5px 10px #0005; }
