@@ -1,6 +1,6 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v42';
+const CACHE = 'games-v43';
 const CORE = [
   '/', '/index.html', '/me.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/toast.js', '/nozoom.js', '/bfcache.js', '/public-switch.js', '/room-client.js', '/replay.js', '/tape.js', '/phong/', '/phong/index.html', '/phong/phong.js', '/i18n.js', '/names.js', '/dom.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png',
   '/logos/hub.svg', '/logos/pikachu.svg', '/logos/dao-vang.svg', '/logos/do-min.svg', '/logos/bau-cua.svg', '/logos/co-caro.svg', '/logos/noi-4.svg', '/logos/ban-tau.svg',
@@ -22,6 +22,7 @@ const CORE = [
   '/noi-4/', '/noi-4/index.html', '/noi-4/style.css', '/noi-4/game.js', '/noi-4/logic.js',
   '/ban-tau/', '/ban-tau/index.html', '/ban-tau/style.css', '/ban-tau/game.js', '/ban-tau/logic.js',
   '/bau-cua/', '/bau-cua/index.html', '/bau-cua/style.css', '/bau-cua/game.js', '/bau-cua/logic.js',
+  '/bau-cua/assets/nai.webp', '/bau-cua/assets/bau.webp', '/bau-cua/assets/ga.webp', '/bau-cua/assets/ca.webp', '/bau-cua/assets/cua.webp', '/bau-cua/assets/tom.webp',
   '/do-min/', '/do-min/index.html', '/do-min/style.css', '/do-min/game.js', '/do-min/logic.js',
   '/do-min/skins/face/smileface.svg', '/do-min/skins/xp/cellup.svg', '/do-min/skins/xp/celldown.svg',
   '/pikachu/', '/pikachu/index.html', '/pikachu/style.css', '/pikachu/app.js', '/pikachu/logic.js',

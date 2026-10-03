@@ -32,7 +32,12 @@ let chip = Number(store.get('bc.chip')) || CHIPS[1];
 if (!CHIPS.includes(chip)) chip = CHIPS[1];
 
 // Hình cắt từ tờ bầu cua in dân gian (xem README).
-const pic = (s, cls) => el('img', { className: cls, src: `assets/${s.key}.webp`, alt: nm(s), draggable: false });
+const pic = (s, cls = '') => {
+  const img = el('img', { className: cls, src: `assets/${s.key}.webp`, alt: nm(s), draggable: false });
+  // Ảnh không tải được (mất mạng, chưa cache): thay bằng huy hiệu chữ cùng cỡ thay vì icon ảnh vỡ.
+  img.onerror = () => img.replaceWith(el('span', { className: `${cls} pic-fb`, textContent: nm(s) }));
+  return img;
+};
 const now = () => Date.now() + clockOffset;
 const me = () => room?.players.find((p) => p.id === deviceId);
 const colorOf = (id) => COLORS[Math.max(0, room?.players.findIndex((p) => p.id === id) ?? 0) % COLORS.length];
