@@ -129,6 +129,10 @@
     .thumb.k2 div { display: grid; grid-template-columns: repeat(4, 30px); grid-auto-rows: 30px; gap: 4px; padding: 5px; border-radius: 8px; background: #bbada0; }
     .thumb.k2 i { border-radius: 5px; background: #cdc1b4; display: grid; place-items: center; font: 800 12px/1 inherit; font-style: normal; color: #776e65; }
     .thumb.k2 .a { background: #eee4da; } .thumb.k2 .b { background: #ede0c8; } .thumb.k2 .c { background: #f2b179; color: #fff; } .thumb.k2 .d { background: #f65e3b; color: #fff; } .thumb.k2 .e { background: #edc22e; color: #fff; font-size: 9px; }
+    .thumb.tt { background: #070d14; display: grid; place-items: center; }
+    .thumb.tt div { display: grid; grid-template-columns: repeat(10, 11px); grid-auto-rows: 11px; gap: 1px; }
+    .thumb.tt i { border-radius: 2px; }
+    .thumb.tt .I { background: #22d3ee; } .thumb.tt .J { background: #3b82f6; } .thumb.tt .L { background: #f97316; } .thumb.tt .O { background: #facc15; } .thumb.tt .S { background: #22c55e; } .thumb.tt .T { background: #a855f7; } .thumb.tt .Z { background: #ef4444; }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
     #lang { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; }
     .lang-toggle { background: var(--panel); border: 1px solid var(--line); color: var(--text); }
@@ -226,6 +230,12 @@
       <b><img class="logo" src="/logos/2048.svg" alt=""> 2048</b>
       <span><span data-en="Slide the tiles and join equal numbers to reach 2048. Save your score to the leaderboard.">Trượt các ô, ghép số giống nhau để đạt 2048. Lưu điểm lên bảng xếp hạng.</span></span>
       <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="Leaderboard">Bảng xếp hạng</span></i><i><span data-en="Swipe">Vuốt</span></i></div>
+    </a>
+    <a class="game" href="/tetris/">
+      <div class="thumb tt"><div><i></i><i></i><i></i><i class="T"></i><i class="T"></i><i class="T"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="T"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="I"></i><i class="L"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="Z"></i><i class="Z"></i><i class="I"></i><i class="L"></i><i class="O"></i><i class="O"></i><i class="S"></i><i class="S"></i><i class="J"></i><i></i><i class="Z"></i><i class="Z"></i><i class="I"></i><i class="L"></i><i class="L"></i><i class="O"></i><i class="O"></i><i class="S"></i><i class="S"></i><i class="J"></i><i class="J"></i><i class="J"></i><i class="I"></i></div></div>
+      <b><img class="logo" src="/logos/tetris.svg" alt=""> <span data-en="Tetris">Xếp gạch</span></b>
+      <span><span data-en="Stack the falling blocks and clear full lines. Keep your best score.">Xếp các khối rơi, lấp kín hàng để xoá. Lưu kỷ lục trên máy.</span></span>
+      <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="Classic">Cổ điển</span></i><i><span data-en="Swipe">Vuốt</span></i></div>
     </a>
   </div>
   <h2 class="group"><i data-icon="smartphone"></i> <span data-en="Nokia corner">Góc Nokia</span></h2>

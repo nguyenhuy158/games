@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script src="/nozoom.js"></script>
+  <script src="/bfcache.js"></script>
+  <meta name="theme-color" content="#0b1b2b">
+  <title data-en="Tetris">Xếp gạch</title>
+  <meta name="description" content="Xếp gạch cổ điển: xếp các khối rơi, lấp đầy hàng để xoá.">
+  <link rel="icon" href="/logos/tetris.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/tetris-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/tetris-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/solo.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <a href="/" class="back" title="Các game khác" data-en-title="More games"><i data-icon="arrow-left"></i></a>
+    <img class="logo" src="/logos/tetris.svg" alt="">
+    <h1 data-en="Tetris">Xếp gạch</h1>
+    <span class="grow"></span>
+    <div class="stat"><small data-en="Score">Điểm</small><b id="score">0</b></div>
+    <div class="stat best"><small><i data-icon="trophy"></i> <span data-en="Best">Kỷ lục</span></small><b id="best">0</b></div>
+    <span data-lang-toggle></span>
+  </header>
+  <main class="play">
+    <div class="col">
+      <div id="board">
+        <div id="cells"></div>
+        <div id="ovStart" class="overlay">
+          <div class="card">
+            <h2 data-en="TETRIS">XẾP GẠCH</h2>
+            <p data-en="Ready to play?">Sẵn sàng chơi chưa?</p>
+            <button type="button" class="primary" data-act="start"><i data-icon="play"></i> <span data-en="Start game">Bắt đầu</span></button>
+          </div>
+        </div>
+        <div id="ovOver" class="overlay" hidden>
+          <div class="card">
+            <h2 class="bad" data-en="GAME OVER">HẾT VÁN</h2>
+            <p><span data-en="Score">Điểm</span>: <b id="final">0</b></p>
+            <button type="button" class="primary" data-act="start"><i data-icon="rotate-ccw"></i> <span data-en="Try again">Chơi lại</span></button>
+          </div>
+        </div>
+        <div id="ovPause" class="overlay" hidden>
+          <div class="card">
+            <h2 data-en="PAUSED">TẠM DỪNG</h2>
+            <button type="button" class="primary" data-act="pause"><i data-icon="play"></i> <span data-en="Resume">Chơi tiếp</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="row moves touch-only">
+        <button type="button" data-act="left" aria-label="Sang trái" data-en-aria-label="Move left"><i data-icon="arrow-left"></i></button>
+        <button type="button" data-act="rotate" class="rot" aria-label="Xoay" data-en-aria-label="Rotate"><i data-icon="rotate-cw"></i></button>
+        <button type="button" data-act="right" aria-label="Sang phải" data-en-aria-label="Move right"><i data-icon="arrow-right"></i></button>
+        <button type="button" data-act="drop" class="drop" aria-label="Thả nhanh" data-en-aria-label="Drop"><i data-icon="arrow-down"></i></button>
+      </div>
+      <div class="row">
+        <button type="button" id="btnPause" data-act="pause"><i data-icon="pause"></i> <span data-en="Pause">Tạm dừng</span></button>
+        <button type="button" data-act="start"><i data-icon="rotate-ccw"></i> <span data-en="Reset">Chơi lại</span></button>
+      </div>
+    </div>
+    <aside class="panel help mouse-only">
+      <h2 data-en="Controls">Điều khiển</h2>
+      <div class="kv"><span data-en="Move">Sang trái / phải</span><span><kbd>←</kbd> <kbd>→</kbd></span></div>
+      <div class="kv"><span data-en="Rotate">Xoay</span><kbd>↑</kbd></div>
+      <div class="kv"><span data-en="Soft drop">Rơi nhanh</span><kbd>↓</kbd></div>
+      <div class="kv"><span data-en="Hard drop">Thả xuống đáy</span><kbd data-en="Space">Cách</kbd></div>
+      <div class="kv"><span data-en="Pause">Tạm dừng</span><kbd>P</kbd></div>
+      <p class="note" data-en="Clear 1–4 lines at once: 40 / 100 / 300 / 1200 points.">Xoá 1–4 hàng cùng lúc: 40 / 100 / 300 / 1200 điểm.</p>
+    </aside>
+  </main>
+  <script type="module" src="game.js"></script>
+</body>
+</html>
