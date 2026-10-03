@@ -57,6 +57,8 @@ header .voice { color: var(--text); font-weight: 800; font-size: 13px; }
 header .music { color: var(--text); opacity: .55; }
 header .music.on { opacity: 1; }
 header .music-vol { width: 56px; accent-color: #d99a00; }
+/* Điện thoại hẹp: thanh trên có 8 nút, bỏ thanh trượt âm lượng (nút nhạc vẫn bật / tắt) cho vừa một hàng. */
+@media (max-width: 420px) { header { gap: 4px; } header .music-vol { display: none; } }
 
 /* Bảng 90 số: 9 hàng × 10, số đã hô sáng lên, số vừa hô vàng. */
 .board { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; padding: 5px; border-radius: 12px; background: #2a0607aa; }
