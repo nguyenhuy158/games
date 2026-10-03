@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { ROWS, COLS, BLOCK, PER_ROW, PER_CARD, CELLS, MAX_NUMBER, colRange, newCard, cardKey, nextNumber, canMark, kinhRows, waitRows } from './public/loto/logic.js';
+import { ROWS, COLS, BLOCK, PER_ROW, PER_CARD, CELLS, MAX_NUMBER, colRange, newCard, cardKey, nextNumber, canMark, cellsOf, kinhRows, waitRows } from './public/loto/logic.js';
 import mod from './worker/games/loto.js';
 
 // Tờ dò: 9 hàng × 9 cột, mỗi hàng đúng 5 số, số đúng khoảng của cột, tăng dần trong cột, không trùng; khối 3 hàng nào cũng đủ 9 cột.
@@ -150,6 +150,35 @@ const ctxOf = (seats, extra = {}) => {
   mod.tick(ctx);
   assert.deepEqual(out.result.title, ['An KINH! (1 · 20 · 40 · 60 · 80)', 'An wins — KINH! (1 · 20 · 40 · 60 · 80)']);
   assert.equal(mod.view(ctx, 'a').auto, true);
+}
+// Mua tờ trước số đầu tiên: mỗi màu một tờ (1–6, không trùng màu), màu giữ lại thì giữ tờ; đổi tờ khác; ván sau nhớ lựa chọn.
+{
+  const [ctx] = ctxOf(['a', 'b']);
+  mod.start(ctx);
+  const pick = (colors) => mod.msg(ctx, { id: 'a' }, { a: 'pick', colors });
+  for (const bad of [[], [0, 0], [0, 1, 2, 3, 4, 5, 6], [8], [1.5], 'x', null]) assert.equal(pick(bad), false, `reject ${JSON.stringify(bad)}`);
+  const [first] = ctx.g.colors.a, firstCard = ctx.g.cards.a[0];
+  const other = (first + 1) % 8;
+  assert.equal(pick([other, first, (first + 2) % 8]), true);
+  assert.equal(ctx.g.cards.a.length, 3);
+  assert.equal(ctx.g.cards.a[1], firstCard, 'kept colour keeps its card');
+  const keys = Object.values(ctx.g.cards).flat().map(cardKey);
+  assert.equal(new Set(keys).size, keys.length, 'no repeated card in the room');
+  assert.equal(mod.msg(ctx, { id: 'a' }, { a: 'swap', k: 1 }), true);
+  assert.notEqual(ctx.g.cards.a[1], firstCard, 'swap deals another card');
+  assert.equal(mod.msg(ctx, { id: 'a' }, { a: 'swap', k: 3 }), false);
+  mod.msg(ctx, { id: 'a' }, { a: 'call' });
+  assert.equal(pick([first]), false, 'no buying once calling started');
+  assert.equal(mod.msg(ctx, { id: 'a' }, { a: 'swap', k: 0 }), false);
+  // Ô của tờ thứ 3 (k = 2): i = 2 * 81 + c; đánh được khi số đã hô, ô cùng số ở tờ khác vẫn để trống.
+  const top = ctx.g.cards.a[2][0], c = top.findIndex((v) => v != null && !ctx.g.called.includes(v));
+  ctx.g.called.push(top[c]);
+  assert.equal(mod.msg(ctx, { id: 'a' }, { a: 'mark', i: 2 * CELLS + c }), true);
+  assert.deepEqual(ctx.g.marked.a, [2 * CELLS + c]);
+  assert.ok(cellsOf(ctx.g.cards.a, top[c]).includes(2 * CELLS + c));
+  mod.start(Object.assign(ctx, { g: {} }));
+  assert.deepEqual(ctx.g.colors.a, [other, first, (first + 2) % 8], 'next round remembers the pick');
+  assert.equal(ctx.g.cards.a.length, 3);
 }
 // Hô hết 90 số mà chưa ai kinh: hết ván không ai thắng.
 {

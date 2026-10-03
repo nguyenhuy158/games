@@ -248,6 +248,11 @@ const GAMES = {
     const r = await nokia('loto', 2, (ws, m) => {
       const v = m.view;
       if (m.status !== 'playing' || !v?.cards) return;
+      // Chủ phòng mua 3 tờ trước khi hô (giữ màu đang có, thêm 2 màu khác).
+      if (m.host === ws.me && !v.called.length && v.cards.length < 3) {
+        if (!ws.picked) { ws.picked = true; r.send(ws, { t: 'g', a: 'pick', colors: [v.colors[0], (v.colors[0] + 1) % 8, (v.colors[0] + 2) % 8] }); }
+        return;
+      }
       if (ws === r.socks[0] && !v.auto && !ws.auto) { ws.auto = true; return r.send(ws, { t: 'g', a: 'auto', on: true }); }
       if (ws === r.socks[1] && v.called.length === 1 && !ws.lao) { ws.lao = true; r.send(ws, { t: 'g', a: 'kinh' }); }
       if (!ws.kinh && lotoKinh(v.cards, v.called).length) { ws.kinh = true; return r.send(ws, { t: 'g', a: 'kinh' }); }
@@ -263,8 +268,10 @@ const GAMES = {
     const res = r.socks[0].last.result;
     if (!res.ranks[0].won || res.ranks[0].score !== 5) throw new Error(JSON.stringify(res));
     if (!r.socks[0].msgs.some((m) => m.t === 'loto' && m.e === 'lao')) throw new Error('no kinh láo notice');
+    const host = r.socks.find((s) => s.last.host === s.me) ?? r.socks[0];
+    if (host.last.view.cards.length !== 3) throw new Error(`host holds ${host.last.view.cards.length} cards`);
     r.close();
-    return `auto-called ${auto}; ${JSON.stringify(res.title)} after ${r.socks[0].last.view.called.length} calls`;
+    return `auto-called ${auto}; host 3 cards; ${JSON.stringify(res.title)} after ${r.socks[0].last.view.called.length} calls`;
   },
   // Bantumi với máy: tới hết ván.
   async bantumi() {

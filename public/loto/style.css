@@ -45,9 +45,31 @@ header button { color: var(--text); }
 .board span.on { background: #fff7e8; color: var(--text); }
 .board span.cur { background: #ffd23f; color: #3a1a10; box-shadow: 0 0 0 2px #fff; }
 
+/* Mua tờ (trước số đầu tiên, thay chỗ bảng số): 8 ô màu, ô đã chọn ghi số thứ tự tờ. */
+.shop { display: grid; gap: 8px; align-content: start; padding: 10px; border-radius: 12px; background: #fff7e8; color: var(--text); box-shadow: 0 6px 18px #0005; }
+.shop p { margin: 0; font-weight: 700; font-size: 14px; }
+.swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.swatches button {
+  aspect-ratio: 1; min-width: 0; padding: 0; border-radius: 10px; border: 3px solid #fff; background: var(--c);
+  color: #fff; font-size: 18px; font-weight: 900; text-shadow: 0 1px 2px #0008; box-shadow: 0 2px 6px #0004;
+}
+.swatches button.on { border-color: #3a1a10; box-shadow: 0 0 0 3px #ffd23f; }
+.shop .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.shop .swap { color: var(--text); }
+.shop .note { color: var(--muted); font-size: 13px; font-weight: 600; }
+
 /* Tờ dò: khung màu tờ, dải tên, lưới 9×9 (vạch dày giữa 3 khối). Cỡ theo chỗ trống (container query). */
-.sheet { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; }
-.wrap { grid-row: 2; min-height: 0; container-type: size; display: grid; place-items: center; }
+.sheet { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+/* Tab các tờ (từ 2 tờ): màu của tờ, dấu CHỜ, vàng khi có hàng kinh. */
+.tabs { display: flex; gap: 6px; justify-content: center; margin-bottom: 6px; }
+.tabs button {
+  min-width: 42px; padding: 3px 10px; border-radius: 10px; border: 2px solid #fff8; background: var(--c); color: #fff;
+  font-weight: 800; font-size: 15px; display: inline-flex; flex-direction: column; line-height: 1.1; opacity: .75;
+}
+.tabs button.on { opacity: 1; border-color: #ffd23f; box-shadow: 0 0 0 2px #ffd23f; }
+.tabs button small { font-size: 9px; font-weight: 900; color: #ffd23f; }
+.tabs button.win { background: #ffd23f; color: #5a0f12; }
+.wrap { grid-row: 2; min-height: 0; container-type: size; display: grid; place-items: start center; touch-action: none; }
 .ticket {
   --tc: #c62828; width: min(100cqw, calc((100cqh - 14px) / 1.07)); container-type: inline-size; padding: 4px; border-radius: 10px;
   background: var(--tc); box-shadow: 0 10px 24px #0007, inset 0 0 0 1px #fff3;
@@ -92,7 +114,7 @@ header button { color: var(--text); }
     width: 100%; max-width: 1180px; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr) auto; column-gap: 18px;
   }
-  .now, .board, .bar { grid-column: 1; }
+  .now, .board, .shop, .bar { grid-column: 1; }
   .bar { grid-row: 4; }
   .sheet { grid-column: 2; grid-row: 1 / -1; }
   .board span { height: clamp(22px, 4cqh, 34px); font-size: 14px; }

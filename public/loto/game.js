@@ -1,18 +1,19 @@
 import { nokiaApp } from '../nokia/room.js';
-import { COLS, BLOCK, CELLS, PER_ROW, MAX_NUMBER, PACES, numberAt, rowsOf, waitRows } from './logic.js';
+import { COLS, BLOCK, CELLS, PER_ROW, MAX_NUMBER, COLOR_COUNT, MAX_CARDS, PACES, numberAt, rowsOf, waitRows } from './logic.js';
 import { t } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { el } from '../dom.js';
 
 // Lô tô nhiều người (server: worker/games/loto.js, phòng /api/nk/loto/room/CODE). Màn chơi: số vừa hô + nút hô / tốc độ tự hô
-// của chủ phòng (vạch đếm ngược tới số kế tiếp), bảng 90 số đã hô, tờ dò 9×9 của mình (chạm số đã hô để đặt hạt), dòng CHỜ,
-// nút "Tự dò" và nút KINH.
+// của chủ phòng (vạch đếm ngược tới số kế tiếp), bảng 90 số đã hô (đầu ván là chỗ mua tờ: chọn màu, mỗi màu một tờ, đổi tờ
+// khác), các tờ dò 9×9 của mình (tab / vuốt ngang để đổi tờ; chạm số đã hô để đặt hạt), dòng CHỜ, nút "Tự dò" và nút KINH.
 // Bảng màu tờ theo COLOR_COUNT ở logic.js: [màu nền, tên vi, tên en].
 const PALETTE = [['#c62828', 'đỏ', 'red'], ['#1e8a4a', 'xanh lá', 'green'], ['#1f5fbf', 'xanh dương', 'blue'], ['#d99a00', 'vàng', 'yellow'],
   ['#7b3bb8', 'tím', 'purple'], ['#e0640f', 'cam', 'orange'], ['#d23f7c', 'hồng', 'pink'], ['#0b8a8a', 'xanh ngọc', 'teal']];
 const NOT_CALLED_MS = 1500; // nhắc "số này chưa hô" thưa thôi
+const SWIPE_PX = 40; // vuốt ngang tối thiểu để sang tờ khác
 
-let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, board, sheet, ticket, strip, kinhBtn, autoBtn, status;
+let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, board, shop, swatches, shopNote, sheet, tabs, ticket, strip, kinhBtn, autoBtn, status;
 let cells = [], nums = [], sel = 0, seen = 0, nagAt = 0, timerAt = 0;
 
 const nameOf = (r, id) => r?.players.find((p) => p.id === id)?.name ?? '?';
@@ -22,9 +23,10 @@ const app = nokiaApp({
   path: '/loto/',
   title: t('Lô tô', 'Lo To'),
   sub: t('Lô tô hội chợ chơi cùng bạn bè: mỗi người một tờ dò, chủ phòng hô số, hàng nào đủ 5 số thì hô KINH!', 'Vietnamese fair-style bingo with friends: everyone gets a card, the host calls numbers, fill a row of 5 and shout KINH!'),
-  help: t('Tờ dò có 9 hàng (3 khối), mỗi hàng 5 số; cột 1: 1–9, cột 2: 10–19, ..., cột 9: 80–90. Chủ phòng bấm "Bắt đầu hô", sau đó số tự hô đều đặn (đổi tốc độ hoặc tắt để tự bấm "Hô số"). Số có trên tờ thì chạm để đặt hạt (hoặc bật "Tự dò"). Hàng còn thiếu 1 số là CHỜ. Hàng ngang đủ 5 số đã hô thì bấm KINH — kinh sai là "kinh láo"! Nhiều người kinh cùng lúc thì chia giải.',
-    'Each card has 9 rows (3 blocks) of 5 numbers; column 1: 1–9, column 2: 10–19, ..., column 9: 80–90. The host taps "Start calling", then numbers are called automatically (change the speed, or turn it off and tap "Call"). Tap a called number on your card to place a chip (or turn on "Auto mark"). A row missing one number is WAITING. When a row has all 5 numbers called, tap KINH — a false claim is announced to everyone! Simultaneous claims share the win.'),
-  lobbyText: (r) => (r.players.length > 1 ? t('Mỗi người một tờ dò; chủ phòng bắt đầu hô.', 'One card each; the host starts calling.') : t('Chơi một mình: tự hô, tự dò.', 'Playing alone: call and mark the numbers yourself.')),
+  help: t('Tờ dò có 9 hàng (3 khối), mỗi hàng 5 số; cột 1: 1–9, cột 2: 10–19, ..., cột 9: 80–90. Đầu ván chọn màu tờ (1–6 tờ, đổi tờ khác được). Chủ phòng bấm "Bắt đầu hô", sau đó số tự hô đều đặn (đổi tốc độ hoặc tắt để tự bấm "Hô số"). Số có trên tờ thì chạm để đặt hạt (hoặc bật "Tự dò"). Hàng còn thiếu 1 số là CHỜ. Hàng ngang đủ 5 số đã hô thì bấm KINH — kinh sai là "kinh láo"! Nhiều người kinh cùng lúc thì chia giải.',
+    'Each card has 9 rows (3 blocks) of 5 numbers; column 1: 1–9, column 2: 10–19, ..., column 9: 80–90. At the start pick card colours (1–6 cards, swap for another if you like). The host taps "Start calling", then numbers are called automatically (change the speed, or turn it off and tap "Call"). Tap a called number on your card to place a chip (or turn on "Auto mark"). A row missing one number is WAITING. When a row has all 5 numbers called, tap KINH — a false claim is announced to everyone! Simultaneous claims share the win.'),
+  lobbyText: (r) => (r.players.length > 1 ? t('Đầu ván mỗi người chọn tờ (1–6 tờ, theo màu); chủ phòng bắt đầu hô.', 'At the start everyone picks cards (1–6, by colour); the host starts calling.')
+    : t('Chơi một mình: chọn tờ, tự hô, tự dò.', 'Playing alone: pick cards, call and mark the numbers yourself.')),
   lobby(box, r, isHost, setCfg) {
     box.append(el('div', { className: 'seg' }, t('Tự hô ', 'Auto call '), ...PACES.map((s) => el('button', {
       textContent: paceName(s), className: (r.cfg.pace ?? 0) === s ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ pace: s }),
@@ -47,16 +49,26 @@ const app = nokiaApp({
     timer = el('i', { className: 'timer', hidden: true });
     nums = Array.from({ length: MAX_NUMBER }, (_, k) => el('span', { textContent: k + 1 }));
     board = el('div', { className: 'board', title: t('Bảng số đã hô', 'Called numbers') }, ...nums);
+    swatches = Array.from({ length: COLOR_COUNT }, (_, c) => el('button', { title: t(`Tờ ${PALETTE[c][1]}`, `${PALETTE[c][2]} card`), onclick: () => toggleColor(c) }));
+    swatches.forEach((b, c) => { b.style.setProperty('--c', PALETTE[c][0]); });
+    shopNote = el('span', { className: 'note' });
+    shop = el('div', { className: 'shop' },
+      el('p', { textContent: t(`Mua tờ: chạm màu để lấy thêm / trả bớt (1–${MAX_CARDS} tờ)`, `Buy cards: tap a colour to add / return one (1–${MAX_CARDS})`) }),
+      el('div', { className: 'swatches' }, ...swatches),
+      el('div', { className: 'row' }, el('button', { className: 'swap', onclick: () => app.send({ a: 'swap', k: sel }) }, iconEl('shuffle'), t(' Đổi tờ này', ' Swap this card')), shopNote));
     cells = Array.from({ length: CELLS }, (_, j) => el('button', { className: 'cell', onclick: () => mark(j) }));
     strip = el('div', { className: 'strip' });
     ticket = el('div', { className: 'ticket' }, strip, el('div', { className: 'grid' }, ...cells));
-    sheet = el('div', { className: 'sheet' }, el('div', { className: 'wrap' }, ticket));
+    tabs = el('div', { className: 'tabs' });
+    const wrap = el('div', { className: 'wrap' }, ticket);
+    swipe(wrap);
+    sheet = el('div', { className: 'sheet' }, tabs, wrap);
     status = el('p', { className: 'status' });
     autoBtn = el('button', { className: 'auto', onclick: () => app.send({ a: 'auto', on: !app.room?.view?.auto }) }, iconEl('sparkles'), t(' Tự dò', ' Auto mark'));
     kinhBtn = el('button', { className: 'kinh', textContent: 'KINH!', onclick: () => app.send({ a: 'kinh' }) });
     stage.append(el('div', { className: 'lt' },
       el('div', { className: 'now' }, ball, el('div', { className: 'meta' }, el('small', { textContent: t('Số vừa hô', 'Just called') }), count, paceEl), paceBtn, callBtn, waitEl, timer),
-      board, sheet, el('div', { className: 'bar' }, status, autoBtn, kinhBtn)));
+      board, shop, sheet, el('div', { className: 'bar' }, status, autoBtn, kinhBtn)));
   },
   render(r) {
     const v = r.view;
@@ -98,6 +110,33 @@ function nextPace() {
   app.toast(s ? t(`Tự hô mỗi ${s} giây`, `Auto call every ${s}s`) : t('Tắt tự hô — bấm "Hô số" để hô', 'Auto call off — tap "Call"'), { icon: s ? 'timer' : 'pause' });
 }
 
+// Mua tờ: chạm màu chưa có thì thêm một tờ màu đó (nhảy tới tờ mới), màu đang có thì trả tờ đó; giữ ít nhất một tờ.
+function toggleColor(c) {
+  const v = app.room?.view;
+  if (!v?.cards || v.called.length) return;
+  const cs = v.colors, has = cs.includes(c);
+  if (has && cs.length === 1) return app.toast(t('Phải cầm ít nhất một tờ', 'Keep at least one card'), { icon: 'info' });
+  if (!has && cs.length >= MAX_CARDS) return app.toast(t(`Tối đa ${MAX_CARDS} tờ`, `At most ${MAX_CARDS} cards`), { icon: 'info' });
+  const next = has ? cs.filter((x) => x !== c) : [...cs, c];
+  sel = has ? Math.max(0, next.indexOf(cs[sel])) : next.length - 1;
+  app.send({ a: 'pick', colors: next });
+}
+
+// Vuốt ngang trên tờ để sang tờ bên cạnh.
+function swipe(area) {
+  let from = null;
+  area.addEventListener('pointerdown', (e) => { from = [e.clientX, e.clientY]; });
+  area.addEventListener('pointercancel', () => { from = null; });
+  area.addEventListener('pointerup', (e) => {
+    const n = app.room?.view?.cards?.length ?? 0;
+    if (!from || n < 2) return;
+    const dx = e.clientX - from[0], dy = e.clientY - from[1];
+    from = null;
+    if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    sel = (sel + (dx < 0 ? 1 : n - 1)) % n;
+    paint(app.room);
+  });
+}
 function paint(r) {
   const v = r.view, cur = v.called.at(-1);
   const playing = r.status === 'playing', live = playing && !app.replay;
@@ -113,6 +152,7 @@ function paint(r) {
   paceBtn.hidden = !host || !playing;
   paceBtn.replaceChildren(iconEl(pace ? 'timer' : 'pause'), ` ${paceName(pace)}`);
   paceBtn.classList.toggle('on', !!pace);
+  paceEl.hidden = host;
   paceEl.textContent = !playing ? '' : pace ? t(`Tự hô mỗi ${pace} giây`, `Auto call every ${pace}s`) : t('Chủ phòng bấm hô', 'Host calls by hand');
   waitEl.textContent = v.kinh ? t('Dừng hô, đang dò vé…', 'Paused — checking…') : !started ? t('Chờ chủ phòng bắt đầu hô…', 'Waiting for the host to start…')
     : pace ? '' : t('Chờ chủ phòng hô…', 'Waiting for the host…');
@@ -130,6 +170,9 @@ function paint(r) {
   timerAt = next;
   const called = new Set(v.called);
   nums.forEach((s, k) => { s.className = `${called.has(k + 1) ? 'on' : ''}${k + 1 === cur ? ' cur' : ''}`; });
+  const buying = live && !!v.cards && !v.called.length;
+  board.hidden = buying;
+  shop.hidden = !buying;
 
   sheet.hidden = !v.cards;
   autoBtn.hidden = kinhBtn.hidden = !v.cards || !live;
@@ -138,14 +181,27 @@ function paint(r) {
     return;
   }
   sel = Math.min(sel, v.cards.length - 1);
-  const grid = v.cards[sel], color = PALETTE[v.colors[sel] ?? 0];
+  const total = v.cards.length, grid = v.cards[sel], color = PALETTE[v.colors[sel] ?? 0];
   ticket.style.setProperty('--tc', color[0]);
-  strip.textContent = `LÔ TÔ · ${t(`Tờ ${color[1]}`, `${color[2]} card`)}`;
+  strip.textContent = `LÔ TÔ · ${total > 1 ? `${sel + 1}/${total} · ` : ''}${t(`Tờ ${color[1]}`, `${color[2]} card`)}`;
   const marked = new Set(v.marked), base = sel * CELLS;
   const waits = waitRows(v.cards, v.called, v.marked);
   const mine = v.kinh?.wins.find((w) => w.id === app.pov);
   const winRows = new Set((mine?.rows ?? []).filter((w) => w.k === sel).map((w) => w.r));
   const waitNums = new Set(waits.filter((w) => w.k === sel).map((w) => w.n));
+  tabs.hidden = total < 2;
+  tabs.replaceChildren(...v.cards.map((_, k) => {
+    const b = el('button', { className: `${k === sel ? 'on' : ''}${mine?.rows.some((w) => w.k === k) ? ' win' : ''}`, textContent: k + 1, onclick: () => { sel = k; paint(app.room); } });
+    b.style.setProperty('--c', PALETTE[v.colors[k] ?? 0][0]);
+    if (waits.some((w) => w.k === k)) b.append(el('small', { textContent: t('CHỜ', 'WAIT') }));
+    return b;
+  }));
+  swatches.forEach((b, c) => {
+    const at = v.colors.indexOf(c);
+    b.className = at >= 0 ? 'on' : '';
+    b.textContent = at >= 0 ? at + 1 : '';
+  });
+  shopNote.textContent = t(`Đang cầm ${total} tờ`, `Holding ${total} card${total > 1 ? 's' : ''}`);
   cells.forEach((c, j) => {
     const row = Math.floor(j / COLS), n = grid[row][j % COLS], hit = marked.has(base + j);
     c.textContent = n ?? '';
