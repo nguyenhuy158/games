@@ -16,7 +16,7 @@ header button { color: var(--text); }
   width: min(100%, 560px); height: 100%; min-height: 0; display: grid; gap: 8px;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
-.now { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 14px; background: #fff7e8; color: var(--text); box-shadow: 0 6px 18px #0005; min-width: 0; }
+.now { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 6px 10px 8px; border-radius: 14px; background: #fff7e8; color: var(--text); box-shadow: 0 6px 18px #0005; min-width: 0; }
 .ball {
   width: 50px; height: 50px; flex: none; display: grid; place-items: center; border-radius: 50%;
   font-size: 24px; font-weight: 800; color: #3a1a10; font-variant-numeric: tabular-nums;
@@ -35,6 +35,25 @@ header button { color: var(--text); }
 /* Vạch đếm ngược tới số tự hô kế tiếp, chạy dọc đáy thanh. */
 .now .timer { position: absolute; left: 14px; right: 14px; bottom: 2px; height: 3px; border-radius: 2px; background: #e0a100; transform-origin: left; transform: scaleX(0); }
 @keyframes countdown { from { transform: scaleX(var(--from, 0)); } to { transform: scaleX(1); } }
+/* Câu vè của số vừa hô: một dòng dưới bóng số. */
+.now .ve { flex: 1 0 100%; margin: 0; font-size: 13px; font-style: italic; font-weight: 600; color: #8a2a12; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Số mới: bóng số to giữa màn ~1,5 giây (không chặn chạm). */
+.pop { position: fixed; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 10px; pointer-events: none; opacity: 0; }
+.pop b {
+  width: min(46vmin, 260px); aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; font-size: min(24vmin, 136px); font-weight: 900;
+  color: #3a1a10; font-variant-numeric: tabular-nums; background: radial-gradient(circle at 35% 30%, #fff6b0, #ffd23f 55%, #d99a00);
+  box-shadow: 0 18px 50px #000a, inset 0 -10px 0 #0002, 0 0 0 8px #fff7e8;
+}
+.pop span { max-width: min(90vw, 520px); padding: 6px 14px; border-radius: 12px; background: #2a0607e6; color: #fff7e8; font-size: 17px; font-weight: 700; text-align: center; }
+.pop.show { animation: pop 1.5s ease-out forwards; }
+@keyframes pop {
+  0% { opacity: 0; transform: scale(.4); }
+  14% { opacity: 1; transform: scale(1.08); }
+  24% { transform: scale(1); }
+  78% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+header .voice { color: var(--text); font-weight: 800; font-size: 13px; }
 
 /* Bảng 90 số: 9 hàng × 10, số đã hô sáng lên, số vừa hô vàng. */
 .board { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; padding: 5px; border-radius: 12px; background: #2a0607aa; }

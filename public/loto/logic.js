@@ -112,3 +112,38 @@ export function bestMarked(cards, marked) {
   const hit = new Set(marked);
   return Math.max(0, ...rowsOf(cards).map((row) => row.cells.filter((i) => hit.has(i)).length));
 }
+
+// Đọc số kiểu miền Nam / hội chợ: 21 "hai mươi mốt", 15 "mười lăm", 24 "hai mươi tư", 90 "chín mươi".
+const DIGITS = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+export function numberWords(n) {
+  const tens = Math.floor(n / 10), u = n % 10;
+  if (!tens) return DIGITS[u];
+  const head = tens === 1 ? 'mười' : `${DIGITS[tens]} mươi`;
+  if (!u) return head;
+  const tail = u === 5 ? 'lăm' : u === 1 && tens > 1 ? 'mốt' : u === 4 && tens > 1 ? 'tư' : DIGITS[u];
+  return `${head} ${tail}`;
+}
+
+// Đọc số tiếng Anh cho giọng English: 23 "twenty-three".
+const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen',
+  'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+export function numberWordsEn(n) {
+  if (n < 20) return ONES[n];
+  const u = n % 10;
+  return `${TENS[Math.floor(n / 10)]}${u ? `-${ONES[u]}` : ''}`;
+}
+
+// Câu hô (tự viết, ngắn): câu mở đầu xoay vòng + câu gắn với vài số quen; cả phòng ra cùng một câu vì chọn theo (số, lượt hô).
+const OPENERS = [
+  'Lô tô hô tô, bà con dò kỹ', 'Cờ ra con mấy, con mấy gì ra', 'Tay bốc tay hô, ai chờ thì dò', 'Hội chợ vui ghê, số mới ra lò',
+  'Bà con chú ý, số tiếp theo đây', 'Ai đang chờ đó, coi chừng kinh nha', 'Lắc ống tre nghe, số này ra nè', 'Xuân về rộn rã, lô tô ra số',
+];
+const TAGS = {
+  1: 'Một mình một chợ', 2: 'Hai bên cùng vui', 3: 'Ba chân bốn cẳng', 4: 'Bốn mùa xuân sắc', 5: 'Năm châu bốn biển', 6: 'Sáu câu vọng cổ',
+  7: 'Bảy nổi ba chìm', 8: 'Tám chuyện cả ngày', 9: 'Chín bỏ làm mười', 10: 'Mười phân vẹn mười', 50: 'Năm mươi nửa đường', 90: 'Chín mươi là chót',
+};
+export function callLine(n, turn) {
+  const opener = OPENERS[(n * 7 + turn) % OPENERS.length];
+  return { text: `${opener}${TAGS[n] ? ` — ${TAGS[n]}` : ''}: số ${n}!`, say: `${opener}. ${TAGS[n] ? `${TAGS[n]}. ` : ''}Số ${numberWords(n)}!` };
+}

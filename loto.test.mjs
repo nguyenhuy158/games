@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { ROWS, COLS, BLOCK, PER_ROW, PER_CARD, CELLS, MAX_NUMBER, colRange, newCard, cardKey, nextNumber, canMark, cellsOf, kinhRows, waitRows } from './public/loto/logic.js';
+import { ROWS, COLS, BLOCK, PER_ROW, PER_CARD, CELLS, MAX_NUMBER, colRange, newCard, cardKey, nextNumber, canMark, cellsOf, kinhRows, waitRows, numberWords, callLine } from './public/loto/logic.js';
 import mod from './worker/games/loto.js';
 
 // Tờ dò: 9 hàng × 9 cột, mỗi hàng đúng 5 số, số đúng khoảng của cột, tăng dần trong cột, không trùng; khối 3 hàng nào cũng đủ 9 cột.
@@ -189,4 +189,9 @@ const ctxOf = (seats, extra = {}) => {
   assert.ok(out.result.ranks.every((r) => !r.won));
   assert.equal(out.result.level, MAX_NUMBER);
 }
+// Đọc số tiếng Việt cho người hô; câu hô kết bằng số (đọc chữ để giọng vi-VN đọc đúng), vài số có câu riêng.
+assert.deepEqual([1, 5, 10, 11, 15, 20, 21, 24, 25, 44, 55, 70, 81, 90].map(numberWords),
+  ['một', 'năm', 'mười', 'mười một', 'mười lăm', 'hai mươi', 'hai mươi mốt', 'hai mươi tư', 'hai mươi lăm', 'bốn mươi tư', 'năm mươi lăm', 'bảy mươi', 'tám mươi mốt', 'chín mươi']);
+assert.match(callLine(23, 4).say, /Số hai mươi ba!$/);
+assert.match(callLine(10, 0).text, /Mười phân vẹn mười: số 10!$/);
 console.log('loto ok');

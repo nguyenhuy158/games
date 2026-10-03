@@ -1,6 +1,7 @@
 import { nokiaApp } from '../nokia/room.js';
-import { COLS, BLOCK, CELLS, PER_ROW, MAX_NUMBER, COLOR_COUNT, MAX_CARDS, PACES, numberAt, rowsOf, waitRows } from './logic.js';
-import { t } from '../i18n.js';
+import { COLS, BLOCK, CELLS, PER_ROW, MAX_NUMBER, COLOR_COUNT, MAX_CARDS, PACES, numberAt, rowsOf, waitRows, numberWords, numberWordsEn, callLine } from './logic.js';
+import { createVoice, VOICE_MODES } from './voice.js';
+import { t, en } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { el } from '../dom.js';
 
@@ -12,9 +13,16 @@ const PALETTE = [['#c62828', 'đỏ', 'red'], ['#1e8a4a', 'xanh lá', 'green'], 
   ['#7b3bb8', 'tím', 'purple'], ['#e0640f', 'cam', 'orange'], ['#d23f7c', 'hồng', 'pink'], ['#0b8a8a', 'xanh ngọc', 'teal']];
 const NOT_CALLED_MS = 1500; // nhắc "số này chưa hô" thưa thôi
 const SWIPE_PX = 40; // vuốt ngang tối thiểu để sang tờ khác
+const VE_PACE = 5; // tự hô chậm từ chừng này giây (hoặc hô tay) thì đọc cả câu vè, nhanh hơn thì chỉ đọc số
 
-let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, board, shop, swatches, shopNote, sheet, tabs, ticket, strip, kinhBtn, autoBtn, status;
-let cells = [], nums = [], sel = 0, seen = 0, nagAt = 0, timerAt = 0;
+let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, veEl, pop, voiceBtn, board, shop, swatches, shopNote, sheet, tabs, ticket, strip, kinhBtn, autoBtn, status;
+let cells = [], nums = [], sel = 0, seen = -1, nagAt = 0, timerAt = 0;
+
+const voice = createVoice({
+  lang: en ? 'en' : 'vi',
+  onMissing: (m) => app.toast.warning(m === 'vi' ? t('Máy không có giọng tiếng Việt — chỉ hiện số trên màn hình', 'No Vietnamese voice on this device — numbers are shown on screen only')
+    : t('Máy không có giọng tiếng Anh — chỉ hiện số trên màn hình', 'No English voice on this device — numbers are shown on screen only'), { icon: 'megaphone-off', duration: 5000 }),
+});
 
 const nameOf = (r, id) => r?.players.find((p) => p.id === id)?.name ?? '?';
 
@@ -47,6 +55,12 @@ const app = nokiaApp({
     waitEl = el('span', { className: 'wait', hidden: true });
     paceEl = el('small', { className: 'pace-note' });
     timer = el('i', { className: 'timer', hidden: true });
+    veEl = el('p', { className: 've' });
+    pop = el('div', { className: 'pop' }, el('b'), el('span'));
+    voiceBtn = el('button', { className: 'voice', onclick: nextVoice });
+    const header = stage.closest('#room').querySelector('header');
+    header.insertBefore(voiceBtn, header.lastElementChild);
+    renderVoice();
     nums = Array.from({ length: MAX_NUMBER }, (_, k) => el('span', { textContent: k + 1 }));
     board = el('div', { className: 'board', title: t('Bảng số đã hô', 'Called numbers') }, ...nums);
     swatches = Array.from({ length: COLOR_COUNT }, (_, c) => el('button', { title: t(`Tờ ${PALETTE[c][1]}`, `${PALETTE[c][2]} card`), onclick: () => toggleColor(c) }));
@@ -67,13 +81,14 @@ const app = nokiaApp({
     autoBtn = el('button', { className: 'auto', onclick: () => app.send({ a: 'auto', on: !app.room?.view?.auto }) }, iconEl('sparkles'), t(' Tự dò', ' Auto mark'));
     kinhBtn = el('button', { className: 'kinh', textContent: 'KINH!', onclick: () => app.send({ a: 'kinh' }) });
     stage.append(el('div', { className: 'lt' },
-      el('div', { className: 'now' }, ball, el('div', { className: 'meta' }, el('small', { textContent: t('Số vừa hô', 'Just called') }), count, paceEl), paceBtn, callBtn, waitEl, timer),
-      board, shop, sheet, el('div', { className: 'bar' }, status, autoBtn, kinhBtn)));
+      el('div', { className: 'now' }, ball, el('div', { className: 'meta' }, el('small', { textContent: t('Số vừa hô', 'Just called') }), count, paceEl), paceBtn, callBtn, waitEl, veEl, timer),
+      board, shop, sheet, el('div', { className: 'bar' }, status, autoBtn, kinhBtn)), pop);
   },
   render(r) {
     const v = r.view;
     if (!v) return;
-    if (v.called.length > seen && seen) app.beep(980, 90, 'sine');
+    // Số mới (kể cả số đầu tiên của ván); lần đầu vào phòng / vào lại thì không đọc lại số cũ.
+    if (seen >= 0 && v.called.length > seen && r.status === 'playing') announce(v);
     seen = v.called.length;
     paint(r);
   },
@@ -95,6 +110,35 @@ function mark(j) {
   if (n == null || v.marked.includes(i)) return;
   if (v.called.includes(n)) return app.send({ a: 'mark', i });
   if (Date.now() - nagAt > NOT_CALLED_MS) { nagAt = Date.now(); app.toast(t(`Số ${n} chưa hô`, `${n} has not been called`), { icon: 'info' }); }
+}
+
+// Số mới: bóng số to giữa màn ~1,5 giây + câu vè, tiếng bíp, người hô đọc số (giọng đã chọn).
+function announce(v) {
+  const n = v.called.at(-1), line = callLine(n, v.called.length);
+  const [num, text] = pop.children;
+  num.textContent = n;
+  text.textContent = t(line.text, `Number ${n}!`);
+  pop.classList.remove('show');
+  pop.getBoundingClientRect();
+  pop.classList.add('show');
+  app.beep(980, 90, 'sine');
+  voice.speak({ vi: !v.pace || v.pace >= VE_PACE ? line.say : `Số ${numberWords(n)}!`, en: `Number ${numberWordsEn(n)}!` });
+}
+
+// Giọng người hô: Tiếng Việt -> English -> tắt. Đổi giọng thì đọc thử (cũng mở khoá đọc trên iOS vì đang trong lần chạm).
+function nextVoice() {
+  voice.mode = VOICE_MODES[(VOICE_MODES.indexOf(voice.mode) + 1) % VOICE_MODES.length];
+  renderVoice();
+  voice.speak({ vi: 'Lô tô xin chào bà con!', en: 'Lo to, hello everyone!' });
+  app.toast(voice.mode === 'off' ? t('Tắt giọng đọc số', 'Number voice off') : voice.mode === 'vi' ? t('Đọc số bằng tiếng Việt', 'Numbers read in Vietnamese') : t('Đọc số bằng tiếng Anh', 'Numbers read in English'),
+    { icon: voice.mode === 'off' ? 'megaphone-off' : 'megaphone' });
+}
+
+function renderVoice() {
+  const m = voice.mode;
+  voiceBtn.hidden = !voice.supported;
+  voiceBtn.title = t('Giọng đọc số: Tiếng Việt / English / tắt', 'Number voice: Vietnamese / English / off');
+  voiceBtn.replaceChildren(iconEl(m === 'off' ? 'megaphone-off' : 'megaphone'), m === 'off' ? '' : ` ${m.toUpperCase()}`);
 }
 
 function paceName(s) {
@@ -144,6 +188,8 @@ function paint(r) {
   ball.classList.remove('pulse');
   if (playing && cur != null) requestAnimationFrame(() => ball.classList.add('pulse'));
   count.textContent = `${v.called.length}/${MAX_NUMBER}`;
+  veEl.textContent = cur != null && playing ? t(callLine(cur, v.called.length).text, `Number ${cur}!`) : '';
+  veEl.hidden = !veEl.textContent;
   const host = r.host === app.id && !app.replay;
   const pace = v.pace ?? 0, started = v.called.length > 0;
   callBtn.replaceChildren(iconEl('dices'), started ? t(' Hô số', ' Call') : t(' Bắt đầu hô', ' Start calling'));
