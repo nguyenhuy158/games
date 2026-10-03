@@ -15,6 +15,25 @@ export const COLOR_COUNT = 8;
 export const MAX_CARDS = 6;
 export const PACES = [0, 3, 5, 8]; // giây giữa hai lần tự hô; 0 = chủ phòng tự bấm
 
+// Phạt "kinh láo" (bấm KINH khi chưa có hàng nào đủ 5 số đã hô). Chủ phòng chọn: tắt / phạt trong game / phạt vui ngoài đời / cả hai.
+// Phạt trong game (server bốc một): khoá nút KINH, mất một hạt, đóng băng Tự dò, gắn nhãn "Kinh láo" tới hết ván, chờ thêm vài số.
+export const PENALTY_MODES = ['off', 'game', 'party', 'both'];
+export const GAME_PENALTIES = ['lock', 'chip', 'freeze', 'liar', 'after'];
+export const LOCK_MS = 30_000;
+export const FREEZE_MS = 60_000;
+export const AFTER_CALLS = 3;
+// Phạt vui (cả phòng thấy, không ép): mặc định song ngữ; chủ phòng sửa được (mỗi dòng một câu, lưu trên máy chủ phòng).
+export const PARTY = [
+  ['Hát 1 câu', 'Sing one line of a song'], ['Kể 1 chuyện cười', 'Tell a joke'], ['Chống đẩy 5 cái', 'Do 5 push-ups'],
+  ['Khen người bên phải', 'Compliment the person on your right'], ['Đổi chỗ với người bên cạnh', 'Swap seats with your neighbour'],
+  ['Nhảy 10 giây', 'Dance for 10 seconds'], ['Nói giọng miền khác 1 phút', 'Talk in another regional accent for 1 minute'],
+  ['Uống 1 ngụm nước', 'Drink a sip of water'],
+];
+export const PARTY_MAX = 20;
+export const PARTY_LEN = 60;
+export const validParty = (list) => Array.isArray(list) && list.length >= 1 && list.length <= PARTY_MAX
+  && list.every((s) => typeof s === 'string' && s.trim() && s.trim().length <= PARTY_LEN);
+
 export const colRange = (c) => [c === 0 ? 1 : c * 10, c === COLS - 1 ? MAX_NUMBER : c * 10 + 9];
 
 function pickDistinct(pool, n, rand) {

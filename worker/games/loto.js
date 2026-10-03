@@ -1,13 +1,17 @@
-import { PER_ROW, COLOR_COUNT, MAX_CARDS, PACES, newCard, cardKey, nextNumber, canMark, cellsOf, kinhRows, bestRow, bestMarked } from '../../public/loto/logic.js';
+import {
+  PER_ROW, COLOR_COUNT, MAX_CARDS, PACES, PENALTY_MODES, GAME_PENALTIES, LOCK_MS, FREEZE_MS, AFTER_CALLS, PARTY, validParty,
+  newCard, cardKey, nextNumber, numberAt, canMark, cellsOf, kinhRows, bestRow, bestMarked,
+} from '../../public/loto/logic.js';
 
 // Lô tô nhiều người (dùng chung phòng NokiaRoom, giao diện riêng ở /loto/). Mỗi người cầm 1–6 tờ dò 9×9 riêng (chỉ gửi cho chủ tờ),
 // các tờ trong phòng không trùng nhau. Đầu ván là lúc mua tờ: trước số đầu tiên, mỗi người chọn màu (mỗi màu một tờ) và đổi tờ khác
 // được; lựa chọn giữ cho các ván sau (ctx.keep). Chủ phòng bấm "Bắt đầu hô": bốc một số 1–90 không lặp, cả phòng thấy cùng lúc;
 // sau đó server tự hô mỗi `pace` giây (hẹn giờ bằng alarm của phòng nên tab chủ phòng ẩn / rớt mạng vẫn hô tiếp), chủ phòng đổi
 // tốc độ hoặc tắt (0 = tự bấm) lúc nào cũng được. Người chơi tự dò (chạm ô để đặt hạt) hoặc bật "tự dò" (server đánh hộ mỗi lần
-// hô). Hàng ngang nào đủ 5 số đã hô thì bấm KINH: server kiểm theo số đã hô — sai là "kinh láo" (báo cả phòng, không mất gì),
-// đúng thì dừng hô, chờ KINH_MS cho ai cũng kinh lúc đó (cùng số thì chia giải) rồi hết ván. Hô hết 90 số mà chưa ai kinh thì hết
-// ván không ai thắng. Vào giữa ván vẫn được phát tờ (còn ghế); rớt mạng vào lại thì giữ tờ cũ.
+// hô). Hàng ngang nào đủ 5 số đã hô thì bấm KINH: server kiểm theo số đã hô — sai là "kinh láo": báo cả phòng kèm hình phạt theo
+// cấu hình chủ phòng (phạt trong game do server bốc và thi hành, phạt vui chỉ hiện cho cả phòng); đúng thì dừng hô, chờ KINH_MS
+// cho ai cũng kinh lúc đó (cùng số thì chia giải) rồi hết ván. Hô hết 90 số mà chưa ai kinh thì hết ván không ai thắng.
+// Vào giữa ván vẫn được phát tờ (còn ghế); rớt mạng vào lại thì giữ tờ cũ.
 const MAX = 12;
 const KINH_MS = 4000; // dừng hô để dò vé, ai cũng kinh trong lúc này thì chia giải
 const LAO_MS = 1500; // chống bấm "kinh láo" liên tục
@@ -16,12 +20,26 @@ export default {
   slug: 'loto',
   page: '/loto/',
   max: MAX,
-  cfg: { pace: 5 },
+  cfg: { pace: 5, penalty: 'both', party: null },
+  // Chủ phòng đổi một hay vài mục: tốc độ tự hô, kiểu phạt kinh láo, danh sách phạt vui (null = danh sách mặc định).
   config(cfg, m) {
-    return PACES.includes(m.pace) ? { ...cfg, pace: m.pace } : null;
+    const next = { ...cfg };
+    if (m.pace !== undefined) {
+      if (!PACES.includes(m.pace)) return null;
+      next.pace = m.pace;
+    }
+    if (m.penalty !== undefined) {
+      if (!PENALTY_MODES.includes(m.penalty)) return null;
+      next.penalty = m.penalty;
+    }
+    if (m.party !== undefined) {
+      if (m.party !== null && !validParty(m.party)) return null;
+      next.party = m.party?.map((s) => s.trim()) ?? null;
+    }
+    return next;
   },
   start(ctx) {
-    Object.assign(ctx.g, { called: [], cards: {}, colors: {}, marked: {}, kinh: null, pace: ctx.cfg.pace ?? 0, next: 0 });
+    Object.assign(ctx.g, { called: [], cards: {}, colors: {}, marked: {}, pen: {}, kinh: null, pace: ctx.cfg.pace ?? 0, next: 0 });
     for (const id of ctx.seats) deal(ctx, id);
   },
   join(ctx, p) {
@@ -54,7 +72,7 @@ export default {
       if (typeof m.on !== 'boolean') return false;
       ctx.keep.auto ??= {};
       ctx.keep.auto[id] = m.on;
-      if (m.on) autoMark(ctx, id, g.called);
+      if (m.on && !frozen(ctx, id)) autoMark(ctx, id, g.called);
       return true;
     }
     if (m.a === 'kinh') return kinh(ctx, id);
@@ -76,7 +94,8 @@ export default {
     return {
       called: g.called, cards: g.cards[id] ?? null, colors: g.colors[id] ?? [], marked: g.marked[id] ?? [], auto: !!ctx.keep.auto?.[id],
       best: Object.fromEntries(Object.keys(g.cards).map((k) => [k, bestMarked(g.cards[k], g.marked[k])])),
-      kinh: g.kinh, pace: g.pace, next: g.next,
+      kinh: g.kinh, pace: g.pace, next: g.next, pen: g.pen?.[id] ?? null,
+      liars: Object.keys(g.pen ?? {}).filter((k) => g.pen[k].liar),
     };
   },
 };
@@ -133,7 +152,7 @@ function call(ctx) {
   if (n == null) finish(ctx);
   else {
     g.called.push(n);
-    for (const id of Object.keys(g.cards)) if (ctx.keep.auto?.[id]) autoMark(ctx, id, [n]);
+    for (const id of Object.keys(g.cards)) if (ctx.keep.auto?.[id] && !frozen(ctx, id)) autoMark(ctx, id, [n]);
     schedule(ctx);
   }
   return true;
@@ -147,13 +166,16 @@ function schedule(ctx) {
 }
 
 // KINH: có hàng đủ 5 số đã hô thì ghi tên (và hàng) vào danh sách thắng, tiếng kinh đầu tiên dừng hô và hẹn giờ hết ván.
+// Đang bị phạt (khoá nút / chờ thêm số) thì không kinh được. Không có hàng nào đủ: kinh láo, báo cả phòng kèm hình phạt.
 function kinh(ctx, id) {
-  const g = ctx.g;
+  const g = ctx.g, pen = g.pen?.[id];
   if (g.kinh?.wins.some((w) => w.id === id)) return false;
+  if (pen && (ctx.now() < (pen.lock ?? 0) || g.called.length < (pen.after ?? 0))) return false;
   const rows = kinhRows(g.cards[id], g.called);
   if (!rows.length) {
-    if (ctx.allow(`${id}:kinh`, LAO_MS)) ctx.sendAll({ t: 'loto', e: 'lao', id });
-    return false;
+    if (!ctx.allow(`${id}:kinh`, LAO_MS)) return false;
+    ctx.sendAll({ t: 'loto', e: 'lao', id, ...penalize(ctx, id) });
+    return true;
   }
   if (!g.kinh) {
     g.kinh = { n: g.called.at(-1), until: ctx.now() + KINH_MS, wins: [] };
@@ -162,6 +184,32 @@ function kinh(ctx, id) {
   }
   g.kinh.wins.push({ id, rows: rows.map(({ k, r, nums }) => ({ k, r, nums })) });
   return true;
+}
+
+const frozen = (ctx, id) => ctx.now() < (ctx.g.pen?.[id]?.freeze ?? 0);
+
+// Bốc hình phạt kinh láo theo cấu hình: game = một phạt server thi hành (bỏ những phạt vô nghĩa lúc đó: không có hạt thì không
+// mất hạt, không bật Tự dò thì không đóng băng, đã mang nhãn thì không gắn lại); party = một câu trong danh sách phạt vui.
+function penalize(ctx, id) {
+  const g = ctx.g, mode = ctx.cfg.penalty ?? 'off', out = {};
+  if (mode === 'game' || mode === 'both') {
+    g.pen ??= {};
+    g.pen[id] ??= {};
+    const pen = g.pen[id];
+    const options = GAME_PENALTIES.filter((k) => (k !== 'chip' || g.marked[id].length) && (k !== 'freeze' || ctx.keep.auto?.[id]) && (k !== 'liar' || !pen.liar));
+    const k = options[Math.floor(ctx.rand() * options.length)];
+    out.game = k;
+    if (k === 'lock') pen.lock = ctx.now() + LOCK_MS;
+    if (k === 'freeze') pen.freeze = ctx.now() + FREEZE_MS;
+    if (k === 'after') pen.after = g.called.length + AFTER_CALLS;
+    if (k === 'liar') pen.liar = true;
+    if (k === 'chip') out.chip = numberAt(g.cards[id], g.marked[id].splice(Math.floor(ctx.rand() * g.marked[id].length), 1)[0]);
+  }
+  if (mode === 'party' || mode === 'both') {
+    const list = ctx.cfg.party ?? PARTY;
+    out.party = list[Math.floor(ctx.rand() * list.length)];
+  }
+  return out;
 }
 
 // Xếp hạng: người kinh trước, còn lại theo hàng gần kinh nhất (số đã hô trên hàng đó). level = số số đã hô.

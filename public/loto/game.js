@@ -1,6 +1,7 @@
 import { nokiaApp } from '../nokia/room.js';
-import { COLS, BLOCK, CELLS, PER_ROW, MAX_NUMBER, COLOR_COUNT, MAX_CARDS, PACES, numberAt, rowsOf, waitRows, numberWords, numberWordsEn, callLine } from './logic.js';
+import { COLS, BLOCK, CELLS, PER_ROW, MAX_NUMBER, COLOR_COUNT, MAX_CARDS, PACES, PARTY, numberAt, rowsOf, waitRows, numberWords, numberWordsEn, callLine } from './logic.js';
 import { createVoice, VOICE_MODES } from './voice.js';
+import { penaltyCard, penaltyLobby } from './penalty.js';
 import { t, en } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { el } from '../dom.js';
@@ -15,8 +16,8 @@ const NOT_CALLED_MS = 1500; // nhắc "số này chưa hô" thưa thôi
 const SWIPE_PX = 40; // vuốt ngang tối thiểu để sang tờ khác
 const VE_PACE = 5; // tự hô chậm từ chừng này giây (hoặc hô tay) thì đọc cả câu vè, nhanh hơn thì chỉ đọc số
 
-let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, veEl, pop, voiceBtn, board, shop, swatches, shopNote, sheet, tabs, ticket, strip, kinhBtn, autoBtn, status;
-let cells = [], nums = [], sel = 0, seen = -1, nagAt = 0, timerAt = 0;
+let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, veEl, pop, voiceBtn, board, shop, swatches, shopNote, sheet, tabs, ticket, strip, kinhBtn, autoBtn, status, penCard;
+let cells = [], nums = [], sel = 0, seen = -1, nagAt = 0, timerAt = 0, tickTimer = 0;
 
 const voice = createVoice({
   lang: en ? 'en' : 'vi',
@@ -39,11 +40,13 @@ const app = nokiaApp({
     box.append(el('div', { className: 'seg' }, t('Tự hô ', 'Auto call '), ...PACES.map((s) => el('button', {
       textContent: paceName(s), className: (r.cfg.pace ?? 0) === s ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ pace: s }),
     }))));
+    penaltyLobby(box, r, isHost, setCfg);
   },
   badge: (p, r) => {
     const v = r.view;
     if (r.status !== 'playing' || v?.best?.[p.id] == null) return '';
     if (v.kinh?.wins.some((w) => w.id === p.id)) return 'KINH';
+    if (v.liars?.includes(p.id)) return t('KINH LÁO', 'FALSE KINH');
     return v.best[p.id] === PER_ROW - 1 ? t('CHỜ', 'WAIT') : `${v.best[p.id]}/${PER_ROW}`;
   },
   scoreText: (v) => (v >= PER_ROW ? 'KINH' : v === PER_ROW - 1 ? t('chờ', 'one away') : `${v}/${PER_ROW}`),
@@ -83,6 +86,7 @@ const app = nokiaApp({
     stage.append(el('div', { className: 'lt' },
       el('div', { className: 'now' }, ball, el('div', { className: 'meta' }, el('small', { textContent: t('Số vừa hô', 'Just called') }), count, paceEl), paceBtn, callBtn, waitEl, veEl, timer),
       board, shop, sheet, el('div', { className: 'bar' }, status, autoBtn, kinhBtn)), pop);
+    penCard = penaltyCard(stage, (...a) => app.beep(...a));
   },
   render(r) {
     const v = r.view;
@@ -99,7 +103,7 @@ const app = nokiaApp({
     app.beep(1568, 220, 'triangle');
   },
   onMsg(m) {
-    if (m.t === 'loto' && m.e === 'lao') app.toast.warning(t(`${nameOf(app.room, m.id)} kinh láo! Phạt hát một bài.`, `${nameOf(app.room, m.id)} made a false KINH! Sing a song as a forfeit.`), { icon: 'triangle-alert' });
+    if (m.t === 'loto' && m.e === 'lao') penCard.show(m, nameOf(app.room, m.id), app.room?.cfg.party ?? PARTY);
   },
 });
 
@@ -121,6 +125,9 @@ function announce(v) {
   pop.classList.remove('show');
   pop.getBoundingClientRect();
   pop.classList.add('show');
+  ball.classList.remove('pulse');
+  ball.getBoundingClientRect();
+  ball.classList.add('pulse');
   app.beep(980, 90, 'sine');
   voice.speak({ vi: !v.pace || v.pace >= VE_PACE ? line.say : `Số ${numberWords(n)}!`, en: `Number ${numberWordsEn(n)}!` });
 }
@@ -185,8 +192,6 @@ function paint(r) {
   const v = r.view, cur = v.called.at(-1);
   const playing = r.status === 'playing', live = playing && !app.replay;
   ball.textContent = cur ?? '–';
-  ball.classList.remove('pulse');
-  if (playing && cur != null) requestAnimationFrame(() => ball.classList.add('pulse'));
   count.textContent = `${v.called.length}/${MAX_NUMBER}`;
   veEl.textContent = cur != null && playing ? t(callLine(cur, v.called.length).text, `Number ${cur}!`) : '';
   veEl.hidden = !veEl.textContent;
@@ -255,10 +260,19 @@ function paint(r) {
     c.className = `cell${n == null ? ' blank' : ''}${hit ? ' hit' : ''}${n != null && n === cur && !hit ? ' cur' : ''}${waitNums.has(n) ? ' wait' : ''}`
       + `${row % BLOCK === 0 && row ? ' bt' : ''}${winRows.has(row) ? ' win' : ''}`;
   });
-  autoBtn.classList.toggle('on', !!v.auto);
+  // Phạt kinh láo đang chạy: khoá nút KINH (đếm giây) / chờ thêm số / đóng băng Tự dò; còn đếm giây thì vẽ lại mỗi giây.
+  const pen = v.pen ?? {}, now = app.now();
+  const lockLeft = Math.ceil(((pen.lock ?? 0) - now) / 1000), afterLeft = (pen.after ?? 0) - v.called.length;
+  const frozenLeft = Math.ceil(((pen.freeze ?? 0) - now) / 1000);
+  autoBtn.classList.toggle('on', !!v.auto && frozenLeft <= 0);
+  autoBtn.classList.toggle('frozen', frozenLeft > 0);
+  autoBtn.replaceChildren(iconEl(frozenLeft > 0 ? 'pause' : 'sparkles'), frozenLeft > 0 ? ` ${frozenLeft}s` : t(' Tự dò', ' Auto mark'));
   const full = rowsOf(v.cards).some((row) => row.cells.every((i) => marked.has(i)));
-  kinhBtn.disabled = !!mine;
-  kinhBtn.classList.toggle('ready', full && !mine);
+  kinhBtn.disabled = !!mine || lockLeft > 0 || afterLeft > 0;
+  kinhBtn.textContent = lockLeft > 0 ? `KINH ${lockLeft}s` : afterLeft > 0 ? t(`KINH (còn ${afterLeft} số)`, `KINH (${afterLeft} more)`) : 'KINH!';
+  kinhBtn.classList.toggle('ready', full && !kinhBtn.disabled);
+  clearTimeout(tickTimer);
+  if (live && (lockLeft > 0 || frozenLeft > 0)) tickTimer = setTimeout(() => app.room?.view && paint(app.room), 1000);
   const waitList = [...new Set(waits.map((w) => w.n))];
   status.className = `status${waitList.length ? ' cho' : ''}`;
   const winners = v.kinh?.wins.map((w) => nameOf(r, w.id)).join(', ');

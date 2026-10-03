@@ -255,7 +255,7 @@ const GAMES = {
       }
       if (ws === r.socks[0] && !v.auto && !ws.auto) { ws.auto = true; return r.send(ws, { t: 'g', a: 'auto', on: true }); }
       if (ws === r.socks[1] && v.called.length === 1 && !ws.lao) { ws.lao = true; r.send(ws, { t: 'g', a: 'kinh' }); }
-      if (!ws.kinh && lotoKinh(v.cards, v.called).length) { ws.kinh = true; return r.send(ws, { t: 'g', a: 'kinh' }); }
+      if (ws.kinh !== v.called.length && !v.kinh?.wins.some((w) => w.id === ws.me) && lotoKinh(v.cards, v.called).length) { ws.kinh = v.called.length; return r.send(ws, { t: 'g', a: 'kinh' }); }
       const i = v.cards.flatMap((g) => g.flat()).findIndex((n, k) => n != null && v.called.includes(n) && !v.marked.includes(k));
       if (i >= 0) {
         if (ws.marking !== `${i}:${v.marked.length}`) { ws.marking = `${i}:${v.marked.length}`; r.send(ws, { t: 'g', a: 'mark', i }); }
@@ -267,11 +267,12 @@ const GAMES = {
     await until(() => r.socks[0].last.status === 'ended', 60000, 'loto ends');
     const res = r.socks[0].last.result;
     if (!res.ranks[0].won || res.ranks[0].score !== 5) throw new Error(JSON.stringify(res));
-    if (!r.socks[0].msgs.some((m) => m.t === 'loto' && m.e === 'lao')) throw new Error('no kinh láo notice');
+    const lao = r.socks[0].msgs.find((m) => m.t === 'loto' && m.e === 'lao');
+    if (!lao?.game || !lao.party) throw new Error(`kinh láo without penalties: ${JSON.stringify(lao)}`);
     const host = r.socks.find((s) => s.last.host === s.me) ?? r.socks[0];
     if (host.last.view.cards.length !== 3) throw new Error(`host holds ${host.last.view.cards.length} cards`);
     r.close();
-    return `auto-called ${auto}; host 3 cards; ${JSON.stringify(res.title)} after ${r.socks[0].last.view.called.length} calls`;
+    return `auto-called ${auto}; host 3 cards; kinh láo -> ${lao.game} + "${lao.party[0] ?? lao.party}"; ${JSON.stringify(res.title)} after ${r.socks[0].last.view.called.length} calls`;
   },
   // Bantumi với máy: tới hết ván.
   async bantumi() {

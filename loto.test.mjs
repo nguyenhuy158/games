@@ -56,8 +56,8 @@ const ctxOf = (seats, extra = {}) => {
 };
 // Tự hô: mặc định 5 giây; chủ phòng bấm hô số đầu, server hẹn giờ hô tiếp; đổi tốc độ / tắt; KINH thì dừng hẹn.
 {
-  assert.deepEqual(mod.cfg, { pace: 5 });
-  assert.deepEqual(mod.config(mod.cfg, { pace: 3 }), { pace: 3 });
+  assert.equal(mod.cfg.pace, 5);
+  assert.equal(mod.config(mod.cfg, { pace: 3 }).pace, 3);
   assert.equal(mod.config(mod.cfg, { pace: 4 }), null);
   const [ctx, out] = ctxOf(['a', 'b'], { cfg: { pace: 5 } });
   mod.start(ctx);
@@ -88,6 +88,60 @@ const ctxOf = (seats, extra = {}) => {
   assert.equal(ctx.g.called.length, 5, 'no call during the check');
   assert.ok(out.result.ranks[0].won);
 }
+// Kinh láo: phạt trong game do server bốc và thi hành, phạt vui bốc từ danh sách của chủ phòng; tắt thì chỉ báo.
+{
+  assert.equal(mod.config(mod.cfg, { penalty: 'game' }).penalty, 'game');
+  assert.equal(mod.config(mod.cfg, { penalty: 'x' }), null);
+  assert.deepEqual(mod.config(mod.cfg, { party: [' Hát ', 'Múa'] }).party, ['Hát', 'Múa']);
+  for (const bad of [[], [' '], ['x'.repeat(61)], Array(21).fill('a'), 'Hát', [1]]) assert.equal(mod.config(mod.cfg, { party: bad }), null, JSON.stringify(bad));
+  assert.equal(mod.config({ ...mod.cfg, party: ['Hát'] }, { party: null }).party, null, 'back to the default list');
+  // b có hạt ở 1, 20 (chưa đủ hàng); rand cố định để bốc đúng phạt: không bật Tự dò thì bốc trong lock, chip, liar, after.
+  const lao = (penalty, pick, setup) => {
+    const [ctx, out] = ctxOf(['a', 'b'], { cfg: { pace: 0, penalty, party: ['Hát', 'Múa'] } });
+    mod.start(ctx);
+    ctx.g.cards.b = [CARD];
+    ctx.g.called = [1, 20];
+    ctx.g.marked.b = [0, 2];
+    setup?.(ctx);
+    ctx.rand = () => pick;
+    assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'kinh' }), true);
+    return [ctx, out, out.sent.at(-1)];
+  };
+  let [ctx, out, sent] = lao('off', 0);
+  assert.deepEqual(sent, { t: 'loto', e: 'lao', id: 'b' });
+  [ctx, out, sent] = lao('both', 0);
+  assert.deepEqual(sent, { t: 'loto', e: 'lao', id: 'b', game: 'lock', party: 'Hát' });
+  ctx.g.called.push(40, 60, 80);
+  assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'kinh' }), false, 'KINH locked');
+  out.t += 30_000;
+  assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'kinh' }), true, 'unlocked after 30s');
+  [ctx, out, sent] = lao('game', 0.3);
+  assert.equal(sent.game, 'chip');
+  assert.ok([1, 20].includes(sent.chip) && ctx.g.marked.b.length === 1, 'one chip lost');
+  assert.equal(sent.party, undefined);
+  [ctx, out, sent] = lao('game', 0.6);
+  assert.equal(sent.game, 'liar');
+  assert.deepEqual(mod.view(ctx, 'a').liars, ['b'], 'everyone sees the label');
+  out.t += 2000;
+  mod.msg(ctx, { id: 'b' }, { a: 'kinh' });
+  assert.equal(out.sent.at(-1).game, 'chip', 'no second label: next pick moves on');
+  [ctx, out, sent] = lao('game', 0.9);
+  assert.equal(sent.game, 'after');
+  ctx.g.called.push(40, 60);
+  assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'kinh' }), false, 'must wait for 3 more numbers');
+  ctx.g.called.push(80);
+  assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'kinh' }), true);
+  [ctx, out, sent] = lao('game', 0.5, (c) => { c.keep.auto = { b: true }; });
+  assert.equal(sent.game, 'freeze');
+  ctx.g.called.push(40);
+  mod.msg(ctx, { id: 'b' }, { a: 'auto', on: true });
+  assert.deepEqual(ctx.g.marked.b, [0, 2], 'auto mark frozen');
+  out.t += 60_000;
+  mod.msg(ctx, { id: 'b' }, { a: 'auto', on: true });
+  assert.ok(ctx.g.marked.b.includes(4), 'auto mark back after a minute');
+  [ctx, out, sent] = lao('party', 0.9);
+  assert.deepEqual([sent.game, sent.party, mod.view(ctx, 'b').pen], [undefined, 'Múa', null]);
+}
 {
   const [ctx, out] = ctxOf(['a', 'b']);
   mod.start(ctx);
@@ -105,7 +159,7 @@ const ctxOf = (seats, extra = {}) => {
   assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'mark', i: 8 }), false, 'cannot mark an uncalled number');
   for (const i of ROW0.slice(0, 4)) assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'mark', i }), true);
   assert.equal(mod.view(ctx, 'a').best.b, 4, 'others see b waiting');
-  assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'kinh' }), false);
+  assert.equal(mod.msg(ctx, { id: 'b' }, { a: 'kinh' }), true, 'a false KINH is announced');
   assert.deepEqual(out.sent, [{ t: 'loto', e: 'lao', id: 'b' }]);
   assert.equal(ctx.g.kinh, null);
   // Vào giữa ván được phát tờ; vào lại giữ tờ cũ.
