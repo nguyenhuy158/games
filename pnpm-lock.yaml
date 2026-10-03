@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@huyab/sso':
+        specifier: github:nguyenhuy158/kit#v0.1.0&path:packages/sso
+        version: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/sso
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.15
@@ -292,6 +296,15 @@ packages:
   '@huyab/config@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/config':
     resolution: {gitHosted: true, path: packages/config, tarball: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51}
     version: 0.1.0
+
+  '@huyab/sso@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/sso':
+    resolution: {gitHosted: true, path: packages/sso, tarball: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51}
+    version: 0.1.0
+    peerDependencies:
+      hono: ^4
+    peerDependenciesMeta:
+      hono:
+        optional: true
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -736,6 +749,8 @@ snapshots:
     optional: true
 
   '@huyab/config@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/config': {}
+
+  '@huyab/sso@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/sso': {}
 
   '@img/colour@1.1.0': {}
 

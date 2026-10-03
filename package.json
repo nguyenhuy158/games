@@ -23,5 +23,8 @@
     "lucide": "0.468.0",
     "playwright-core": "^1.63.0",
     "wrangler": "^4.106.0"
+  },
+  "dependencies": {
+    "@huyab/sso": "github:nguyenhuy158/kit#v0.1.0&path:packages/sso"
   }
 }

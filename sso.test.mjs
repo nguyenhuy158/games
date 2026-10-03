@@ -1,5 +1,6 @@
 // Test xác thực JWT SSO (worker/sso.js) bằng khoá RSA tự tạo + JWKS giả.
 import assert from 'node:assert/strict';
+import './scripts/node-ts-hooks.mjs';
 
 const alg = { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' };
 const good = await crypto.subtle.generateKey(alg, true, ['sign', 'verify']);

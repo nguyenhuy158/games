@@ -1,6 +1,7 @@
 // Test SQL của DO Top (bảng xếp hạng, lịch sử, xếp hạng vui) bằng node:sqlite + stub 'cloudflare:workers'.
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
+import './scripts/node-ts-hooks.mjs';
 
 register('data:text/javascript,' + encodeURIComponent(`
   export async function resolve(spec, ctx, next) {
