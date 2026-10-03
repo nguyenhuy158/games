@@ -53,6 +53,13 @@ button.primary { background: var(--gold); color: #2b1600; border-color: var(--go
 #game { border-radius: 10px; box-shadow: 0 10px 40px #000a; touch-action: none; cursor: pointer; }
 
 #overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #1a1008c0; padding: 16px; overflow-y: auto; }
+#loading {
+  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px;
+  padding: 16px; text-align: center; color: var(--muted);
+}
+#loading p { margin: 0; }
+#loading .bar { width: min(240px, 70vw); height: 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); overflow: hidden; }
+#loading .bar i { display: block; width: 0; height: 100%; background: var(--gold); border-radius: inherit; transition: width .15s; }
 .card {
   background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px;
   width: min(420px, 100%); display: grid; gap: 10px; justify-items: center; text-align: center;
@@ -87,7 +94,7 @@ input.code { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 3
 body:not(.panel-off):not(.panel-empty) #scores { display: none; }
 .arena #stage { padding: 0 8px 8px; }
 #scores .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); font-style: normal; }
-.sprite { display: inline-block; background-image: url("assets/atlas.webp"); background-repeat: no-repeat; flex: none; }
+.sprite { display: inline-block; background-image: var(--atlas, url("assets/atlas.webp")); background-repeat: no-repeat; flex: none; }
 .menu .sprite:first-child { max-width: 100%; }
 
 .shopkeeper { display: flex; align-items: center; gap: 10px; text-align: left; }

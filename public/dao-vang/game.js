@@ -30,9 +30,36 @@ const SHOP_EN = {
 };
 
 // ---------- tài nguyên ----------
+// Atlas (~376KB) là phần nặng nhất: tải bằng fetch để chạy thanh tiến độ theo byte (index.html đã
+// preload cùng URL), rồi dùng blob URL cho cả canvas lẫn CSS (.sprite) -> không tải lại lần hai.
+// Nền mỗi màn chỉ tải khi cần (màn 1 trước, màn kế tiếp tải sẵn trong lúc chơi).
 const atlasImg = new Image();
-atlasImg.src = 'assets/atlas.webp';
-const bgs = [1, 2, 3, 4].map((i) => Object.assign(new Image(), { src: `assets/bg${i}.jpg` }));
+const bgs = [];
+const bgImg = (level) => {
+  const i = (level - 1) % 4;
+  return (bgs[i] ??= Object.assign(new Image(), { src: `assets/bg${i + 1}.jpg` }));
+};
+// onload thay vì decode(): Chrome hoãn decode() tới khi tab hiện -> mở ở tab nền là treo menu.
+const loaded = (img) => (img.complete && img.naturalWidth ? null : new Promise((ok, fail) => { img.onload = ok; img.onerror = fail; }));
+async function loadAtlas() {
+  const res = await fetch('assets/atlas.webp');
+  if (!res.ok || !res.body) throw new Error(`atlas ${res.status}`);
+  const total = Number(res.headers.get('content-length')) || 0;
+  const reader = res.body.getReader();
+  const chunks = [];
+  let got = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    got += value.length;
+    if (total) $('#loadBar').style.width = `${Math.min(100, (got / total) * 100)}%`;
+  }
+  const url = URL.createObjectURL(new Blob(chunks, { type: 'image/webp' }));
+  document.documentElement.style.setProperty('--atlas', `url("${url}")`);
+  atlasImg.src = url;
+  await loaded(atlasImg);
+}
 let FRAMES = {};
 const ready = Promise.all([
   fetch('assets/atlas.json').then((r) => r.json()).then((a) => {
@@ -40,14 +67,15 @@ const ready = Promise.all([
     const list = Array.isArray(a.frames) ? a.frames : Object.entries(a.frames).map(([filename, v]) => ({ filename, ...v }));
     FRAMES = Object.fromEntries(list.map((f) => [f.filename.replace('.png', ''), f.frame]));
   }),
-  // onload thay vì decode(): Chrome hoãn decode() tới khi tab hiện -> mở ở tab nền là treo menu.
-  ...[atlasImg, ...bgs].map((img) => (img.complete ? null : new Promise((ok, fail) => { img.onload = ok; img.onerror = fail; }))),
+  loadAtlas(),
+  loaded(bgImg(1)),
 ]);
 
 let soundOn = store.get('dv.sound') !== '0';
 let muted = false; // tua bản xem lại: nạp nhanh từ đầu thì im
+// preload none: ~100KB âm thanh không giành băng thông với atlas; nạp sau khi ảnh xong (await ready).
 const SND = Object.fromEntries(['boom', 'down', 'goal', 'hvBad', 'hvCool', 'hvGood', 'scoreAdd', 'up', 'upfinish', 'win']
-  .map((n) => [n, new Audio(`assets/audio/${n}.m4a`)]));
+  .map((n) => [n, Object.assign(new Audio(), { preload: 'none', src: `assets/audio/${n}.m4a` })]));
 SND.up.loop = true;
 function play(n) {
   if (!soundOn || muted) return;
@@ -145,11 +173,14 @@ function render(view) {
   sky.addColorStop(1, '#f0b95a');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, W, GROUND);
-  const bg = bgs[((view?.level ?? 1) - 1) % bgs.length];
-  ctx.drawImage(bg, 0, GROUND, W, H - GROUND);
+  const level = view?.level ?? 1;
+  const bg = bgImg(level);
   ctx.fillStyle = '#6b4a22';
+  if (bg.complete && bg.naturalWidth) ctx.drawImage(bg, 0, GROUND, W, H - GROUND);
+  else ctx.fillRect(0, GROUND, W, H - GROUND);
   ctx.fillRect(0, GROUND - 4, W, 4);
   if (!view) return;
+  bgImg(level + 1); // đang chơi: tải sẵn nền màn sau
 
   for (const o of view.items) {
     const def = ITEMS[o.type];
@@ -673,7 +704,18 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 
-await ready;
+try {
+  await ready;
+} catch (err) {
+  // Mất mạng giữa chừng: báo lỗi + nút tải lại thay vì treo ở thanh tiến độ.
+  $('#loading').replaceChildren(
+    el('p', { textContent: t('Không tải được hình ảnh trò chơi.', 'Could not load the game images.') }),
+    el('button', { className: 'primary', textContent: t('Thử lại', 'Retry'), onclick: () => location.reload() }),
+  );
+  throw err;
+}
+$('#loading').remove();
+for (const a of Object.values(SND)) { a.preload = 'auto'; a.load(); }
 fit();
 const initial = new URLSearchParams(location.search).get('r');
 const rp = replayParam();

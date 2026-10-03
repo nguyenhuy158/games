@@ -14,6 +14,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
   <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="preload" href="assets/atlas.webp" as="fetch" crossorigin>
+  <link rel="preload" href="assets/atlas.json" as="fetch" crossorigin>
+  <link rel="preload" href="assets/bg1.jpg" as="image">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="../panel.css">
 </head>
@@ -34,6 +37,10 @@
     <aside id="panel"></aside>
     <main id="stage">
       <canvas id="game"></canvas>
+      <div id="loading" role="status">
+        <p data-en="Loading the mine...">Đang tải mỏ vàng...</p>
+        <div class="bar"><i id="loadBar"></i></div>
+      </div>
       <div id="overlay" hidden></div>
     </main>
   </div>
