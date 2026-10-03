@@ -18,12 +18,16 @@ const MAX_ONLINE = 12;
 const EMO_MS = 700; // chống spam emote
 const SAVE_MS = 2000; // game nhịp đều không volatile (Đào Vàng): lưu định kỳ dù không có gì gửi lại
 const BEAT_MS = 30_000; // phòng công khai: nhịp báo "còn sống" cho danh sách phòng (Top bỏ phòng im quá 90s)
+const PING = 'ping'; // khớp PING / PONG ở public/room-client.js
+const PONG = 'pong';
 
 /** @param {Record<string, import('../ports.js').GameModule>} games */
 export function gameRoom(games) {
   return class GameRoom extends DurableObject {
     constructor(ctx, env) {
       super(ctx, env);
+      // Nhịp tim của public/room-client.js: 'ping' -> 'pong' do runtime tự trả, không đánh thức DO đang ngủ đông.
+      ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(PING, PONG));
       ctx.blockConcurrencyWhile(async () => {
         this.s = (await ctx.storage.get('s')) ?? null;
         // DO bị tạo lại giữa ván (bị dừng / deploy): trạng thái lạ thì bỏ; game nhịp đều thì bật lại nhịp.

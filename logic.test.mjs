@@ -128,6 +128,7 @@ await import('./2048.test.mjs');
 await import('./tetris.test.mjs');
 await import('./sudoku.test.mjs');
 await import('./loto.test.mjs');
+await import('./room-client.test.mjs');
 await import('./scripts/check-deps.mjs');
 await import('./sso.test.mjs');
 await import('./top.test.mjs');
