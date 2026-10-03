@@ -79,30 +79,40 @@ function act(ctx, p, kind, i) {
   return true;
 }
 
+function start(ctx) {
+  const size = SIZES[ctx.cfg.size];
+  // Ô xuất phát ngẫu nhiên, rải mìn chừa quanh nó rồi mở sẵn cho mọi bàn -> cùng vạch xuất phát.
+  const safe = Math.floor(ctx.rand() * size.rows * size.cols);
+  const g = Object.assign(ctx.g, { field: newField(size, safe), units: {}, stats: {}, startedAt: Date.now(), endedAt: 0, winner: null, over: false });
+  for (const id of ctx.seats) {
+    g.stats[id] = { opened: 0, booms: 0 };
+    const uid = unitOf(ctx, id);
+    if (g.units[uid]) continue;
+    const vis = newVis(size.rows, size.cols);
+    reveal(g.field, vis, safe, size.rows, size.cols);
+    g.units[uid] = { vis, lives: LIVES, booms: 0, penalty: 0, done: null, time: 0 };
+  }
+  sendAllGrids(ctx);
+}
+
+// Chơi một mình: bấm mặt cười lúc nào cũng được ván mới (như Minesweeper cổ điển); có người cùng chơi thì phải chờ hết ván.
+const soloRestart = (ctx, p) => ctx.seats.length === 1 && ctx.seats[0] === p.id && ctx.host() === p.id && !!ctx.g?.units && !ctx.g.over;
+
 export default {
   slug: 'do-min', page: '/do-min/', max: MAX_PLAYERS, maxOnline: 8, persist: true, flat: true,
-  messages: ['open', 'chord', 'flag', 'cur', 'ping'],
+  messages: ['open', 'chord', 'flag', 'cur', 'ping', 'restart'],
   cfg: { mode: 'coop', size: 0 },
   config: (cfg, m) => ({ ...cfg, ...(MODES.includes(m.mode) ? { mode: m.mode } : {}), ...(Number.isInteger(m.size) && SIZES[m.size] ? { size: m.size } : {}) }),
-  start(ctx) {
-    const size = SIZES[ctx.cfg.size];
-    // Ô xuất phát ngẫu nhiên, rải mìn chừa quanh nó rồi mở sẵn cho mọi bàn -> cùng vạch xuất phát.
-    const safe = Math.floor(ctx.rand() * size.rows * size.cols);
-    const g = Object.assign(ctx.g, { field: newField(size, safe), units: {}, stats: {}, startedAt: Date.now(), endedAt: 0, winner: null, over: false });
-    for (const id of ctx.seats) {
-      g.stats[id] = { opened: 0, booms: 0 };
-      const uid = unitOf(ctx, id);
-      if (g.units[uid]) continue;
-      const vis = newVis(size.rows, size.cols);
-      reveal(g.field, vis, safe, size.rows, size.cols);
-      g.units[uid] = { vis, lives: LIVES, booms: 0, penalty: 0, done: null, time: 0 };
-    }
-    sendAllGrids(ctx);
-  },
+  start,
   hello: sendGrids, // vào / vào lại phòng: gửi bàn đang chơi (hoặc đã xong)
   msg(ctx, p, m) {
     const g = ctx.g;
     if (m.t === 'open' || m.t === 'chord' || m.t === 'flag') return !!g?.units && act(ctx, p, m.t, m.i);
+    if (m.t === 'restart') {
+      if (!soloRestart(ctx, p)) return false;
+      start(ctx);
+      return true;
+    }
     // cur / ping: chỉ để đồng đội cùng bàn thấy, không lưu.
     const uid = unitOf(ctx, p.id), size = SIZES[ctx.cfg.size];
     if (!g?.units || g.over || !g.units[uid]) return false;

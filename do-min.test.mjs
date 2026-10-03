@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { SIZES, HIDDEN, FLAG, BOOM, neighbors, newField, newVis, reveal, chord, toggleFlag, openedCount, safeTotal, cleared } from './public/do-min/logic.js';
 import { seeded } from './public/dao-vang/logic.js';
+import mod from './worker/games/do-min.js';
 
 assert.deepEqual(neighbors(0, 3, 3).sort(), [1, 3, 4]);
 assert.equal(neighbors(4, 3, 3).length, 8);
@@ -65,6 +66,26 @@ assert.deepEqual(newField(SIZES[1], 40, seeded(9)), newField(SIZES[1], 40, seede
   toggleFlag(vis, 8);
   assert.equal(chord(f, vis, 4, R, C).boom, true);
   assert.equal(toggleFlag(vis, 4), null, 'không cắm cờ ô đã mở');
+}
+
+// Mặt cười làm lại giữa ván: chỉ khi chơi một mình (như Minesweeper cổ điển); có người cùng chơi thì không.
+{
+  const ctx = (seats) => ({
+    g: {}, cfg: { ...mod.cfg }, seats, rand: Math.random, host: () => seats[0], online: () => new Set(seats), order: () => seats,
+    send: () => {}, end: () => {}, allow: () => true, name: (id) => id,
+  });
+  const solo = ctx(['a']);
+  mod.start(solo);
+  const field = solo.g.field;
+  solo.g.units.all.booms = 1;
+  assert.equal(mod.msg(solo, { id: 'a' }, { t: 'restart' }), true);
+  assert.notEqual(solo.g.field, field, 'new board');
+  assert.equal(solo.g.units.all.booms, 0);
+  solo.g.over = true;
+  assert.equal(mod.msg(solo, { id: 'a' }, { t: 'restart' }), false, 'ended game uses the normal Start');
+  const duo = ctx(['a', 'b']);
+  mod.start(duo);
+  assert.equal(mod.msg(duo, { id: 'a' }, { t: 'restart' }), false, 'not with other players');
 }
 
 console.log('do-min ok');

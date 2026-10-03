@@ -91,10 +91,11 @@ function onMsg(m) {
   switch (m.t) {
     case 'error': return leave(m.msg);
     case 'state': {
-      const was = room?.status;
+      const was = room?.status, wasStart = room?.startedAt;
       room = m;
       clockOffset = m.now - Date.now();
-      if (m.status === 'playing' && was !== 'playing') { mines = null; peek = false; play('start'); }
+      // Ván mới (kể cả bấm mặt cười làm lại giữa ván khi chơi một mình).
+      if (m.status === 'playing' && (was !== 'playing' || wasStart !== m.startedAt)) { mines = null; peek = false; play('start'); }
       if (was === 'playing' && m.status === 'ended') {
         const won = m.mode === 'coop' ? !!m.winner : m.winner === me()?.unit;
         play(won ? 'win' : 'boom');
@@ -150,7 +151,11 @@ $('#btnSkin').onclick = () => {
 };
 $('#btnPeek').onclick = () => { peek = true; render(); };
 $('#btnResult').onclick = () => { peek = false; render(); };
-$('#face').onclick = () => { if (room?.status === 'ended' && room.host === deviceId) send({ t: 'start' }); };
+// Mặt cười: hết ván thì chủ phòng bấm chơi ván mới; chơi một mình thì bấm lúc nào cũng làm lại được.
+$('#face').onclick = () => {
+  if (room?.status === 'ended' && room.host === deviceId) send({ t: 'start' });
+  else if (room?.status === 'playing' && room.seats.length === 1 && room.seats[0] === deviceId) send({ t: 'restart' });
+};
 $('#btnFlag').onclick = () => { flagMode = !flagMode; $('#btnFlag').classList.toggle('on', flagMode); toast(flagMode ? t('Chạm để cắm cờ', 'Tap to flag') : t('Chạm để mở ô', 'Tap to open'), { icon: 'flag' }); };
 for (const b of document.querySelectorAll('#modePick button')) b.onclick = () => send({ t: 'config', mode: b.dataset.mode });
 const SIZE_NAMES = { 'Dễ': 'Easy', 'Vừa': 'Medium', 'Khó': 'Hard' };
