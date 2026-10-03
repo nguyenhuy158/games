@@ -1,5 +1,27 @@
-node_modules
-.wrangler
-.dev.vars
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+coverage/
+
+# Cloudflare local dev
+.wrangler/
+.dev.vars*
+
+# Environment files
+.env*
+
+# Logs
+*.log
+
+# OS files
 .DS_Store
+
+# Stray template dirs created by misconfigured tools
+{{pkgetc}}/
+{{HOMEBREW_PREFIX}}/
+
+# Original game assets kept locally for study (not committed)
 reference
