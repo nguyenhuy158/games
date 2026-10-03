@@ -12,12 +12,15 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "test": "node logic.test.mjs",
+    "e2e": "node e2e/run.mjs",
+    "e2e:prod": "E2E_BASE_URL=https://games.huyab.click node e2e/readonly-smoke.mjs",
     "deploy": "node logic.test.mjs && wrangler deploy",
     "icons": "node scripts/icons.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "lucide": "0.468.0",
+    "playwright-core": "^1.63.0",
     "wrangler": "^4.106.0"
   }
 }

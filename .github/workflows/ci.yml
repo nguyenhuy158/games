@@ -35,6 +35,39 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+  # Bật wrangler dev local, smoke chỉ đọc bằng Chromium rồi bot chơi thử mọi game (pnpm e2e).
+  e2e:
+    name: E2E (local wrangler dev)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # playwright-core không tự tải browser; cài Chromium đúng phiên bản (e2e/chromium.mjs tự tìm).
+      - name: Install Chromium
+        run: pnpm exec playwright-core install --with-deps chromium
+
+      - name: E2E
+        run: pnpm e2e
+
+      - name: Upload failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure
+          path: e2e-failure.png
+          if-no-files-found: ignore
+
   # Sau khi Cloudflare deploy xong commit này (bản trên web mới hơn commit), chạy bot chơi thử mọi game vào web thật.
   smoke-prod:
     if: github.event_name == 'push'
@@ -43,9 +76,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: pnpm
       - name: Wait for the deploy of this commit
         env:
           COMMIT_AT: ${{ github.event.head_commit.timestamp }}
@@ -59,3 +94,7 @@ jobs:
           done
           echo "deploy not seen after 15 min"; exit 1
       - run: node scripts/smoke.mjs https://games.huyab.click
+      # Smoke chỉ đọc bằng Chromium: trang chủ, mọi trang game, /phong/ render không lỗi JS.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright-core install --with-deps chromium
+      - run: pnpm e2e:prod

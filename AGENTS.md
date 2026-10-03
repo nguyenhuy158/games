@@ -29,7 +29,8 @@ Folder structure:
 public/                        # Static client (served as-is, no build)
   <game>/                      #   index.html, game.js (UI), logic.js (rules), style.css
   nokia/<game>/                #   Nokia corner games + shared lcd.js, room.js, nokia.css
-  room-client.js               #   Shared WebSocket room connection (auto-reconnect)
+  room-client.js               #   Shared WebSocket room connection (auto-reconnect), newRoomCode()
+  dom.js  names.js             #   Shared $/el/store helpers; player name + loadDeviceId() (pk.id)
   i18n.js  toast.js  icons.js  #   vi/en strings, sonner-like toasts, lucide icons (generated)
   invite.js  panel.js  ...     #   QR invite, player panels, replay, public-room switch
   sw.js  manifest.webmanifest  #   PWA (bump CACHE when adding files to CORE)
@@ -43,6 +44,7 @@ worker/
 scripts/                       # smoke.mjs (WebSocket bots), check-deps.mjs, asset generators
 docs/hexagon-plan.md           # Architecture plan and dependency rules
 screenshots/                   # Per-game, per-device screenshots (README generated)
+e2e/                           # run.mjs (dev e2e), readonly-smoke.mjs (dev + prod), chromium.mjs
 *.test.mjs                     # Tests at repo root, aggregated by logic.test.mjs
 reference/                     # Original game assets for study (gitignored)
 ```
@@ -59,6 +61,14 @@ reference/                     # Original game assets for study (gitignored)
 - `node scripts/smoke.mjs [url] [game ...]`: multiplayer smoke test with bots
   over real WebSockets (default `http://localhost:8789`, i.e.
   `wrangler dev --port 8789`).
+- `pnpm e2e`: start `wrangler dev` on port 8789, run the read-only browser
+  smoke (`e2e/readonly-smoke.mjs`) and then `scripts/smoke.mjs`, then stop the
+  server. Extra args filter games: `pnpm e2e caro c4`.
+- `pnpm e2e:prod`: run only the read-only smoke against
+  https://games.huyab.click (GET `/api/version`, `/api/rooms`, `/api/me`, the
+  hub, every game page without `?r=`, `/phong/`; no rooms, no WebSocket).
+  Needs Chromium: `pnpm exec playwright-core install chromium`, or set
+  `PLAYWRIGHT_CHROMIUM_PATH` (local Google Chrome is picked up on macOS).
 
 There is no build step. Deploy happens on push to `main`: Cloudflare Workers
 Builds runs `node logic.test.mjs` then `npx wrangler deploy`. `pnpm deploy`
@@ -91,8 +101,10 @@ Tests are plain Node scripts using `node:assert/strict`, one file per game at
 the repo root (`<game>.test.mjs`). When adding a game, create its test file and
 import it at the end of `logic.test.mjs` so `pnpm test` (and the Cloudflare
 deploy gate) runs it. Cover rules in `logic.js` and server modules in
-`worker/games/`. Run `scripts/smoke.mjs` before and after refactors of room or
-connection code.
+`worker/games/`. Run `pnpm e2e` (or `scripts/smoke.mjs`) before and after
+refactors of room or connection code. `scripts/smoke.mjs` creates rooms, so
+only CI's post-deploy job runs it against production; ad-hoc production checks
+use the read-only `pnpm e2e:prod`.
 
 ## Commit & Pull Request Guidelines
 
@@ -101,7 +113,8 @@ History uses Conventional Commits, sometimes with an emoji prefix, for example
 requests should include a short summary, test results, and screenshots for
 visible UI changes. CI (`.github/workflows/ci.yml`) runs `pnpm check`
 (non-blocking until the existing Biome findings are fixed) and `pnpm test` on
-every push/PR, then smoke-tests production after each deploy to `main`.
+every push/PR, runs `pnpm e2e` against a local `wrangler dev`, then
+smoke-tests production after each deploy to `main`.
 
 ## Agent-Specific Instructions
 
