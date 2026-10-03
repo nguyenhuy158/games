@@ -2,23 +2,17 @@ import { SIZES } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
-import { deviceName, addReroll } from '../names.js';
+import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { t, tx } from '../i18n.js';
-import { roomClient } from '../room-client.js';
+import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
+import { $, el, store } from '../dom.js';
 
 hydrateIcons();
-const $ = (s) => document.querySelector(s);
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-};
 
 // Cùng danh tính thiết bị với các game khác (pk.id / pk.name).
-let deviceId = store.get('pk.id');
-if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+let deviceId = loadDeviceId();
 // Xem lại (?replay=<id>): xem như người ngoài, không vào phòng, không gửi gì.
 const replay = replayParam();
 if (replay) deviceId = 'replay';
@@ -27,7 +21,6 @@ addReroll($('#name'));
 const myName = () => $('#name').value.trim() || t('Người chơi', 'Player');
 const botName = (n) => (n === 'Máy' ? t('Máy', 'Bot') : n);
 
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PIECE = ['', 'x', 'circle'];
 // Cảm xúc = icon lucide + màu; số lượng khớp EMO_COUNT ở worker (gửi theo chỉ số).
 const EMOS = [['thumbs-up', '#1f6fd6'], ['laugh', '#e0a100'], ['frown', '#8a5cd6'], ['flame', '#ff7a3d'], ['heart', '#e0312f']];
@@ -110,7 +103,7 @@ function onMsg(m) {
 }
 
 // ---------- nút ----------
-$('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
+$('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
   if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));

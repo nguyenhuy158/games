@@ -8,6 +8,7 @@
 // feed nhận từng tin theo đúng nhịp đã ghi; reset() dọn màn trước khi tua (tua = reset rồi feed lại nhanh tới mốc).
 // Khoảng lặng dài (chờ nước đi) rút còn tối đa GAP_MAX ms cho đỡ chán.
 import { t } from './i18n.js';
+import { el } from './dom.js';
 
 const GAP_MAX = 1500;
 const SPEEDS = [1, 2, 4, 0.5];
@@ -35,7 +36,6 @@ function style() {
     .rp-links a, .rp-links button { background: var(--panel, #0000000f); color: var(--text, inherit); border: 1px solid var(--line, #0002); }` }));
 }
 
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 const clock = (ms) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
 // Chia sẻ: menu share của máy (điện thoại) hoặc chép link. Trả về true nếu đã chép.

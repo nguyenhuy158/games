@@ -5,27 +5,20 @@ import {
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
-import { deviceName, randomName, addReroll } from '../names.js';
+import { deviceName, randomName, addReroll, loadDeviceId } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx, langToggle } from '../i18n.js';
-import { roomClient } from '../room-client.js';
+import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { Tape } from '../tape.js';
 import { replayParam, playReplay, replayLinks, uploadReplay } from '../replay.js';
+import { $, el, store } from '../dom.js';
 
 hydrateIcons();
-const $ = (s) => document.querySelector(s);
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-};
 
 // Cùng danh tính thiết bị với Pikachu (pk.id / pk.name).
-let deviceId = store.get('pk.id');
-if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+let deviceId = loadDeviceId();
 const myName = () => deviceName();
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const COLORS = ['#ffd23f', '#5cc8ff', '#ff7ab6', '#7dff9a'];
 const MODE_NAMES = { coop: t('Chung mỏ', 'Shared Mine'), versus: t('Tranh vàng', 'Gold Rush') };
 const SHOP_EN = {
@@ -641,7 +634,7 @@ function menu() {
     el('p', { className: 'muted', textContent: t('Bấm / chạm (hoặc ↓, Space) để thả móc. Có thuốc nổ thì bấm ↑ để phá vật đang kéo.', 'Click / tap (or ↓, Space) to drop the hook. With dynamite, press ↑ to blow up what you\'re pulling.') }),
     el('button', { className: 'primary', textContent: t('Chơi một mình', 'Play solo'), onclick: () => { saveName(); driver = solo; solo.start(); } }),
     el('label', { className: 'field' }, t('Tên của bạn', 'Your name'), addReroll(name)),
-    el('button', { onclick: () => { saveName(); startNet(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')); } }, iconEl('users'), t(' Tạo phòng chơi nhiều người', ' Create a multiplayer room')),
+    el('button', { onclick: () => { saveName(); startNet(newRoomCode()); } }, iconEl('users'), t(' Tạo phòng chơi nhiều người', ' Create a multiplayer room')),
     el('div', { className: 'row' }, code, el('button', { textContent: t('Vào phòng', 'Join room'), onclick: joinCode })),
     el('p', { className: 'muted', textContent: best() ? t(`Kỷ lục chơi một mình: $${best()}`, `Solo best: $${best()}`) : '' }),
     el('a', { className: 'link', href: '/', textContent: t('← Các game khác', '← Other games') }),

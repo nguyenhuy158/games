@@ -2,11 +2,11 @@ import { nokiaApp } from '../nokia/room.js';
 import { iconEl } from '../icons.js';
 import { N, moves } from './logic.js';
 import { t, tx } from '../i18n.js';
+import { el } from '../dom.js';
 
 // Bàn gỗ kẻ mực 5×5 (đường chéo qua điểm chẵn), quân tròn kiểu cờ tướng: người 1 đỏ, người 2 đen.
 // Mình luôn ở dưới (người 2 thấy bàn xoay 180°). Nước vừa đi: quân trượt từ điểm cũ, quân bị gánh / vây lật màu.
 const LEVELS = [t('Dễ', 'Easy'), t('Vừa', 'Normal'), t('Khó', 'Hard')];
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 
 let seat = 1, sel = null, lastMoves = -1, animKey = '';
 let boardEl, dots = [], pieces = [], bars, hint, timerId;

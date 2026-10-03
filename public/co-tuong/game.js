@@ -2,13 +2,13 @@ import { nokiaApp } from '../nokia/room.js';
 import { iconEl } from '../icons.js';
 import { COLS, ROWS, K, moves, sideOf } from './logic.js';
 import { t, tx } from '../i18n.js';
+import { el } from '../dom.js';
 
 // Bàn gỗ 9×10, sông "Sở hà – Hán giới", cửu cung kẻ chéo; quân tròn chữ Hán (Đỏ: 帥仕相傌俥炮兵, Đen: 將士象馬車砲卒).
 // Mình luôn ở dưới (cầm Đen thì bàn xoay 180°). Nước vừa đi: đánh dấu điểm đi + điểm đến, quân trượt tới; bị chiếu: tướng nháy đỏ.
 const LEVELS = [t('Dễ', 'Easy'), t('Vừa', 'Normal'), t('Khó', 'Hard')];
 const GLYPH = { 1: ['帥', '將'], 2: ['仕', '士'], 3: ['相', '象'], 4: ['傌', '馬'], 5: ['俥', '車'], 6: ['炮', '砲'], 7: ['兵', '卒'] };
 const NAMES = { 1: t('Tướng', 'General'), 2: t('Sĩ', 'Advisor'), 3: t('Tượng', 'Elephant'), 4: t('Mã', 'Horse'), 5: t('Xe', 'Chariot'), 6: t('Pháo', 'Cannon'), 7: t('Tốt', 'Soldier') };
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 
 let seat = 1, sel = null, lastMoves = -1, animKey = '';
 let boardEl, riverEl, dots = [], pieces = [], marks = [], bars, hint, timerId;

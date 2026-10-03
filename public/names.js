@@ -1,5 +1,6 @@
 import { icon } from './icons.js';
 import { en, t } from './i18n.js';
+import { store } from './dom.js';
 
 // Tên mặc định cho khách: con vật + tính cách ("Mèo Lười"), 30 × 30 = 900 kiểu nên hiếm khi trùng.
 // Server vẫn tự thêm số nếu trong phòng đã có người cùng tên (worker/names.js).
@@ -47,4 +48,11 @@ export function deviceName() {
   } catch {
     return randomName();
   }
+}
+
+// Danh tính thiết bị (khoá pk.id, dùng chung mọi game): UUID cố định, lần đầu thì tạo và nhớ lại.
+export function loadDeviceId() {
+  let id = store.get('pk.id');
+  if (!id) { id = crypto.randomUUID(); store.set('pk.id', id); }
+  return id;
 }

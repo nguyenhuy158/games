@@ -1,10 +1,9 @@
 // Danh sách phòng công khai của mọi game (GET /api/rooms, tự làm mới). Phòng tự báo lên khi chủ phòng bật "Công khai".
 import { hydrateIcons } from '../icons.js';
 import { t, en } from '../i18n.js';
+import { $, el } from '../dom.js';
 
 hydrateIcons();
-const $ = (s) => document.querySelector(s);
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 
 // slug -> [tên vi, tên en, logo]. Nokia dùng logo theo tên game, Ô ăn quan theo slug.
 const GAMES = {

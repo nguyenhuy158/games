@@ -2,28 +2,21 @@ import { SYMBOLS, CHIPS, betTotal } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
-import { deviceName, addReroll } from '../names.js';
+import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { t, tx, en } from '../i18n.js';
-import { roomClient } from '../room-client.js';
+import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
+import { $, el, store } from '../dom.js';
 
 hydrateIcons();
-const $ = (s) => document.querySelector(s);
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-};
 
 // Cùng danh tính thiết bị với các game khác (pk.id / pk.name).
-let deviceId = store.get('pk.id');
-if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+let deviceId = loadDeviceId();
 $('#name').value = deviceName();
 addReroll($('#name'));
 const myName = () => $('#name').value.trim() || t('Người chơi', 'Player');
 
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b', '#6bf0e0', '#ff9b9b', '#b8f07a', '#f0a6ff'];
 const CHIP_COLORS = { 10: '#2f7de1', 50: '#1d9a55', 100: '#d6452f', 500: '#1b1b1b' };
 const MODE_TEXT = { rotate: ['crown', t(' Xoay cái', ' Rotating dealer')], house: ['bot', t(' Máy làm cái', ' Bot dealer')] };
@@ -110,7 +103,7 @@ function onMsg(m) {
 }
 
 // ---------- nút ----------
-$('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
+$('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
   if (!/^[A-Z0-9]{4}$/.test(c)) return toast.warning(t('Mã phòng gồm 4 ký tự', 'Room codes have 4 characters'));

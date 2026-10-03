@@ -2,25 +2,19 @@ import { SIZES, LEVELS, SLIDES, SLIDE_ICON, slide, findPath, findPair } from './
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
-import { deviceName, addReroll } from '../names.js';
+import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { createPanel, drawGrid } from '../panel.js';
 import { t, tx } from '../i18n.js';
-import { roomClient } from '../room-client.js';
+import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
+import { $, el, store } from '../dom.js';
 
 hydrateIcons();
 
-const $ = (s) => document.querySelector(s);
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-};
 
 // Ẩn danh: mỗi thiết bị một UUID cố định, dùng để vào lại đúng chỗ của mình.
-let deviceId = store.get('pk.id');
-if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+let deviceId = loadDeviceId();
 // ?replay=<id>: xem lại ván đã ghi, như khán giả (không mở WebSocket, không là người chơi nào).
 const replaying = replayParam();
 if (replaying) deviceId = '';
@@ -29,7 +23,6 @@ addReroll($('#name'));
 const myName = () => $('#name').value.trim() || 'Pika';
 
 const HINTS = 3;
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 // Cảm xúc = icon lucide + màu; số lượng khớp EMOJI_COUNT ở worker (gửi theo chỉ số).
 const EMOJIS = [['thumbs-up', '#5cc8ff'], ['laugh', '#ffd23f'], ['frown', '#c49bff'], ['flame', '#ff7a3d'], ['heart', '#ff5d7a']];
 const MODE_NAMES = { coop: t('Chơi chung', 'Together'), race: t('Đua nhau', 'Race'), team: t('Đội 2v2', 'Team 2v2') };
@@ -192,7 +185,7 @@ function onMsg(m) {
 }
 
 // ---------- nút ----------
-$('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
+$('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
   if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));

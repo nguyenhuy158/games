@@ -2,6 +2,7 @@ import { nokiaApp } from '../nokia/room.js';
 import { iconEl } from '../icons.js';
 import { QUAN, MAX_PLAYERS, side, isQuan } from './logic.js';
 import { t, tx } from '../i18n.js';
+import { el } from '../dom.js';
 
 // Bàn vẽ phấn trên sân gạch. 2 người: 2 hàng × 5 ô dân, hai đầu là ô quan hình bán nguyệt.
 // 3–5 người: đa giác, mỗi cạnh 5 ô dân của một người, ô quan tròn ở mỗi đỉnh.
@@ -9,7 +10,6 @@ import { t, tx } from '../i18n.js';
 const STEP_MS = 170;
 const PEBBLES = ['#d9d3c4', '#b8b0a0', '#8f8b83', '#ebe5d6', '#a8957c', '#75706a', '#c9b99c'];
 const LEVELS = [t('Dễ', 'Easy'), t('Vừa', 'Normal'), t('Khó', 'Hard')];
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 const pts = (c) => c.small + c.big * QUAN;
 const hash = (n) => { n = Math.imul(n ^ (n >>> 15), 0x2c1b3c6d); n = Math.imul(n ^ (n >>> 12), 0x297a2d39); return ((n ^ (n >>> 15)) >>> 0) / 2 ** 32; };
 

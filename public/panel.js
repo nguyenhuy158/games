@@ -7,8 +7,8 @@
 
 import { icon } from './icons.js';
 import { t } from './i18n.js';
+import { el } from './dom.js';
 
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 
 export function createPanel({ root, toggle, storeKey }) {
   const cache = new Map(); // key -> { node, canvas, version, nameEl, subEl, badgeEl }

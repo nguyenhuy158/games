@@ -9,25 +9,19 @@
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
-import { deviceName, addReroll } from '../names.js';
+import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { createLCD, bindKeys } from './lcd.js';
 import { t, tx, langToggle } from '../i18n.js';
-import { roomClient } from '../room-client.js';
+import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
+import { el, store } from '../dom.js';
 
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-};
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b'];
 
 export function nokiaApp(opt) {
   const rp = replayParam();
-  let deviceId = rp ? 'replay' : store.get('pk.id');
-  if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+  let deviceId = rp ? 'replay' : loadDeviceId();
   let code = null, room = null, clockOffset = 0;
   let quiet = false; // đang tua bản xem lại (nạp dồn dập): không kêu, không toast, vẽ một lần lúc xong
 
@@ -39,7 +33,7 @@ export function nokiaApp(opt) {
       el('img', { className: 'logo', src: `/logos/${opt.game}.svg`, alt: '' }), opt.title),
     el('p', { className: 'sub', textContent: opt.sub }),
     el('label', {}, t('Tên của bạn', 'Your name'), name),
-    el('button', { className: 'primary', textContent: t('Tạo phòng mới', 'Create room'), onclick: () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')) }),
+    el('button', { className: 'primary', textContent: t('Tạo phòng mới', 'Create room'), onclick: () => enter(newRoomCode()) }),
     el('div', { className: 'join' }, codeIn, el('button', { textContent: t('Vào phòng', 'Join'), onclick: joinCode })),
     el('p', { className: 'muted', textContent: opt.help }),
     el('div', { className: 'lang' }, langToggle()),

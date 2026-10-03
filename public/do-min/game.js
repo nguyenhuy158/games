@@ -2,24 +2,18 @@ import { SIZES, HIDDEN, FLAG, BOOM, LIVES } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
 import { toast } from '../toast.js';
-import { deviceName, addReroll } from '../names.js';
+import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx } from '../i18n.js';
-import { roomClient } from '../room-client.js';
+import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
+import { $, el, store } from '../dom.js';
 
 hydrateIcons();
-const $ = (s) => document.querySelector(s);
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-};
 
 // Cùng danh tính thiết bị với các game khác (pk.id / pk.name).
-let deviceId = store.get('pk.id');
-if (!deviceId) { deviceId = crypto.randomUUID(); store.set('pk.id', deviceId); }
+let deviceId = loadDeviceId();
 // Xem lại ván (?replay=<id>): không vào phòng, chỉ phát lại tin đã ghi (góc nhìn ghế 1). Người xem không phải người chơi
 // (deviceId rỗng) nên bàn hiện là bàn ghế 1 (view() lấy bàn đầu tiên), không bấm / gửi được gì.
 const rp = replayParam();
@@ -28,7 +22,6 @@ $('#name').value = deviceName();
 addReroll($('#name'));
 const myName = () => $('#name').value.trim() || t('Người chơi', 'Player');
 
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const COLORS = ['#5cc8ff', '#ff7ab6', '#7dff9a', '#ffb454', '#c49bff', '#ffe66b', '#6bf0e0', '#ff9b9b'];
 const LONG_PRESS_MS = 400;
 // Giao diện là lựa chọn riêng từng máy (không đổi màn hình người khác).
@@ -138,7 +131,7 @@ function onMsg(m) {
 }
 
 // ---------- nút ----------
-$('#btnCreate').onclick = () => enter(Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join(''));
+$('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
   if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));

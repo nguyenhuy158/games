@@ -25,3 +25,7 @@ export function roomClient({ path, query, onMsg, onLeave, conn }) {
     send(m) { if (ws?.readyState === 1) ws.send(JSON.stringify(m)); },
   };
 }
+
+// Mã phòng mới: 4 ký tự, bỏ chữ/số dễ nhầm (I, O, 0, 1).
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export const newRoomCode = () => Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
