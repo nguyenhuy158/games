@@ -4,10 +4,14 @@ import { newGame, move, legal, score, winner, botMove, MAX_PLAYERS } from '../..
 // Chủ phòng chọn số người (cfg.n); ghế còn trống do máy chơi (phòng 1 người = đấu với máy). Vào đông hơn cfg.n thì bàn nới ra.
 // Hạn giờ mỗi nước tính thêm thời gian client diễn lại các bước rải (STEP_MS mỗi bước).
 // Hết giờ: 2 người thì thua; 3+ người thì máy đi hộ (một ghế bỏ đi không làm cả bàn dừng), 2 lần liền thì máy đi luôn cho nhanh.
+// Đi lại (chỉ ván 1 người + máy): server chụp bàn trước mỗi nước của người (tối đa UNDO_MAX), { undo: true } quay về
+// trước nước gần nhất của người đó (bỏ luôn các nước máy đi sau). Hết ván thì thôi.
 const TURN_MS = 30_000, BOT_MS = 900, STEP_MS = 170;
 const DEPTH = [1, 3, 6];
 const AFK = 2;
+const UNDO_MAX = 10;
 const isBot = (id) => id === 'bot' || id.startsWith('bot:'); // id thiết bị luôn dài >= 8 và không có ':' ('bot' = ván lưu từ bản cũ)
+const solo = (g) => g.side.filter((id) => !isBot(id)).length === 1;
 
 export default {
   max: MAX_PLAYERS,
@@ -26,14 +30,19 @@ export default {
     const all = [...ctx.seats, ...Array.from({ length: n - ctx.seats.length }, (_, i) => `bot:${i + 1}`)];
     // Mỗi ván người đi trước lùi một ghế.
     const rot = (ctx.keep.rot = ((ctx.keep.rot ?? -1) + 1) % n);
-    Object.assign(g, { side: [...all.slice(rot), ...all.slice(0, rot)], s: newGame({ quanNon: ctx.cfg.quanNon, n }), last: null, afk: Array(n).fill(0) });
+    Object.assign(g, { side: [...all.slice(rot), ...all.slice(0, rot)], s: newGame({ quanNon: ctx.cfg.quanNon, n }), last: null, afk: Array(n).fill(0), hist: [] });
     arm(ctx, 0);
   },
   msg(ctx, p, m) {
     const g = ctx.g;
+    if (m.undo) return undo(ctx, p);
     const who = g.side.indexOf(p.id) + 1;
     if (!legal(g.s, who, m.k, m.d)) return false;
     (g.afk ??= Array(g.side.length).fill(0))[who - 1] = 0;
+    if (solo(g)) {
+      (g.hist ??= []).push(structuredClone(g.s));
+      if (g.hist.length > UNDO_MAX) g.hist.shift();
+    }
     play(ctx, m.k, m.d);
     return true;
   },
@@ -54,9 +63,20 @@ export default {
       side: g.side, bot: g.side.map(isBot),
       names: g.side.map((id) => (isBot(id) ? (bots > 1 ? [`Máy ${id.slice(4)}`, `Bot ${id.slice(4)}`] : ['Máy', 'Bot']) : ctx.name(id))),
       b: s.b, big: s.big, cap: s.cap, debt: s.debt, turn: s.turn, over: s.over, moves: s.moves, last: g.last, deadline: g.deadline, quanNon: s.quanNon,
+      undo: !s.over && solo(g) ? g.hist?.length || 0 : 0,
     };
   },
 };
+
+// Quay về trước nước gần nhất của người chơi (chỉ ván 1 người + máy, chưa hết ván).
+function undo(ctx, p) {
+  const g = ctx.g;
+  if (g.s.over || !g.side.includes(p.id) || !solo(g) || !g.hist?.length) return false;
+  g.s = g.hist.pop();
+  g.last = null;
+  arm(ctx, 0);
+  return true;
+}
 
 // Hạn nước hiện tại; adapter gọi tick() đúng lúc đó bằng alarm.
 function arm(ctx, steps) {

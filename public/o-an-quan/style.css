@@ -72,3 +72,6 @@ header button { color: var(--text); }
 .bar i.q { width: 16px; height: 15px; background: radial-gradient(circle at 34% 28%, #fffb, #fff0 35%), linear-gradient(135deg, #5c6470, #2b3038); }
 .bar i.d { width: 11px; height: 10px; background: radial-gradient(circle at 32% 30%, #fffc, #fff0 45%), #b8b0a0; }
 .hint { margin: 0; text-align: center; color: var(--chalk); font-weight: 600; text-shadow: 0 1px 3px #0008; min-height: 1.4em; }
+.foot { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; }
+.undo { min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 12px; background: #fff6e6; color: var(--text); border: 0; font-weight: 700; box-shadow: 0 3px 0 #a2791f; }
+.undo:active { transform: translateY(2px); box-shadow: 0 1px 0 #a2791f; }

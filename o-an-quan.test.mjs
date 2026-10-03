@@ -116,4 +116,43 @@ for (const n of [3, 4, 5]) {
   assert.equal(g.debt[2], 4);
   assert.equal(side(2).reduce((a, k) => a + g.b[k], 0), 5);
 }
+// Server: đi lại chỉ cho ván 1 người + máy, quay về trước nước gần nhất của người (bỏ nước máy), tối đa 10 nước, hết ván thì thôi.
+{
+  const mod = (await import('./worker/games/o-an-quan.js')).default;
+  const room = (seats) => ({ g: {}, seats, cfg: { ...mod.cfg }, keep: {}, wakeAt() {}, end() {}, name: (id) => id });
+  const me = { id: 'human-01' }, other = { id: 'human-02' };
+  // Cho máy đi tới lượt mình (bỏ qua hạn giờ).
+  const botsUntilMe = (ctx) => { while (!ctx.g.s.over && ctx.g.side[ctx.g.s.turn - 1] !== me.id) { ctx.g.deadline = 0; mod.tick(ctx); } };
+  const ctx = room([me.id]);
+  mod.start(ctx);
+  botsUntilMe(ctx);
+  assert.equal(mod.msg(ctx, me, { undo: true }), false, 'nothing to undo yet');
+  const before = structuredClone(ctx.g.s);
+  assert.equal(mod.msg(ctx, me, { k: moves(ctx.g.s)[0][0], d: moves(ctx.g.s)[0][1] }), true);
+  assert.equal(mod.view(ctx).undo, 1);
+  botsUntilMe(ctx);
+  assert.ok(ctx.g.s.moves >= before.moves + 2, 'bot replied');
+  assert.equal(mod.msg(ctx, { id: 'watcher-1' }, { undo: true }), false, 'spectator cannot undo');
+  assert.equal(mod.msg(ctx, me, { undo: true }), true);
+  assert.deepEqual(ctx.g.s, before, 'back to before my move, bot moves dropped');
+  assert.equal(ctx.g.last, null);
+  assert.equal(mod.view(ctx).undo, 0);
+  for (let i = 0; i < 14 && !ctx.g.s.over; i++) {
+    const [k, d] = moves(ctx.g.s)[0];
+    mod.msg(ctx, me, { k, d });
+    botsUntilMe(ctx);
+  }
+  assert.ok(ctx.g.hist.length <= 10, 'history capped at 10');
+  while (!ctx.g.s.over) { const [k, d] = moves(ctx.g.s)[0]; mod.msg(ctx, me, { k, d }); botsUntilMe(ctx); }
+  assert.equal(mod.view(ctx).undo, 0);
+  assert.equal(mod.msg(ctx, me, { undo: true }), false, 'no undo after game over');
+  // 2 người thật: không có đi lại.
+  const pvp = room([me.id, other.id]);
+  mod.start(pvp);
+  const p = pvp.g.side[pvp.g.s.turn - 1] === me.id ? me : other;
+  const [k, d] = moves(pvp.g.s)[0];
+  assert.equal(mod.msg(pvp, p, { k, d }), true);
+  assert.equal(mod.view(pvp).undo, 0);
+  assert.equal(mod.msg(pvp, p, { undo: true }), false, 'no undo with two humans');
+}
 console.log('o-an-quan ok');

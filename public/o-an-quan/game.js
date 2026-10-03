@@ -15,7 +15,7 @@ const hash = (n) => { n = Math.imul(n ^ (n >>> 15), 0x2c1b3c6d); n = Math.imul(n
 
 let seat = 1, sel = null, playing = false, anim = 0, lastMoves = -1, shown = null, cap = null;
 let cells = [], painted = [], G = null;
-let boardEl, svgEl, handEl, dirsEl, barsTop, barMe, hint, timerId;
+let boardEl, svgEl, handEl, dirsEl, barsTop, barMe, hint, undoBtn, timerId;
 
 // Hình học bàn (đơn vị SVG, 1 ô = 100): mỗi ô k -> tâm, cỡ, góc xoay; quan: lệch cụm sỏi (qx %) cho ô bán nguyệt.
 function geometry(n, seat) {
@@ -102,7 +102,10 @@ const app = nokiaApp({
     barsTop = el('div', { className: 'bars' });
     barMe = el('div', { className: 'bar' });
     hint = el('p', { className: 'hint' });
-    stage.append(el('div', { className: 'oaq' }, barsTop, boardEl, barMe, hint));
+    // Đi lại: chỉ hiện ở ván 1 người + máy (server gửi view.undo = số nước còn đi lại được).
+    undoBtn = el('button', { className: 'undo', hidden: true, title: t('Đi lại nước vừa rồi', 'Undo your last move'), onclick: () => { sel = null; app.send({ undo: true }); } },
+      iconEl('undo-2'), el('span', { textContent: t('Đi lại', 'Undo') }));
+    stage.append(el('div', { className: 'oaq' }, barsTop, boardEl, barMe, el('div', { className: 'foot' }, hint, undoBtn)));
     timerId ??= setInterval(() => app.room && drawHint(app.room), 1000);
   },
   render(r) {
@@ -234,6 +237,7 @@ function paint() {
   const mine = myTurn(r), my = side(seat);
   for (let k = 0; k < cells.length; k++) paintCell(k, shown.b[k], shown.big[k], mine && my.includes(k) && shown.b[k] > 0);
   dirsEl.hidden = sel == null;
+  undoBtn.hidden = !(r.status === 'playing' && v.undo > 0 && v.side.includes(app.id));
   if (sel != null) dirsEl.style.left = at(sel)[0];
   // Trên: những người khác theo thứ tự lượt sau mình; dưới: mình (người xem: người 1 ở dưới).
   const c = cap ?? v.cap, n = v.side.length;
