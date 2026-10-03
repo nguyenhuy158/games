@@ -39,7 +39,15 @@
       color: inherit; text-decoration: none; transition: transform .12s, border-color .12s;
     }
     .game:hover { transform: translateY(-3px); border-color: var(--accent); }
-    .thumb { height: 120px; border-radius: 10px; background: #0a1724 center / contain no-repeat; }
+    .thumb { position: relative; height: 120px; border-radius: 10px; background: #0a1724 center / contain no-repeat; }
+    /* Nhãn "đang chơi" trên thẻ game: số phòng công khai / người trong đó (cập nhật từ /api/rooms). */
+    .live {
+      position: absolute; top: 6px; right: 6px; display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px;
+      background: #0b1b2bd9; color: var(--text); font-size: 11px; font-weight: 700; line-height: 1.5; white-space: nowrap; box-shadow: 0 2px 6px #0006;
+    }
+    .live::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #3ddc84; animation: live 1.6s ease-in-out infinite; }
+    @keyframes live { 50% { opacity: .35; } }
+    @media (prefers-reduced-motion: reduce) { .live::before { animation: none; } }
     .game b { font-size: 18px; }
     .game > span { color: var(--muted); font-size: 13px; }
     .tags { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -156,11 +164,30 @@
   <!-- Hiện khi server đã có /api/rooms (danh sách phòng công khai của mọi game). -->
   <a id="roomsLink" class="btn" href="/phong/" hidden><i data-icon="users"></i> <span data-en="Open rooms">Phòng đang mở</span> <b id="roomsCount"></b></a>
   <script type="module">
-    fetch('/api/rooms', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+    // Phòng công khai đang mở (/api/rooms): tổng trên nút "Phòng đang mở" + nhãn số phòng / người trên thẻ từng game.
+    // 10 giây làm mới một lần; tab ẩn thì dừng, mở lại tab thì tải ngay.
+    import { t } from '/i18n.js';
+    const link = document.getElementById('roomsLink'), count = document.getElementById('roomsCount');
+    async function load() {
+      let d = null;
+      try { const r = await fetch('/api/rooms', { cache: 'no-store' }); if (r.ok) d = await r.json(); } catch {}
       if (!d) return;
-      document.getElementById('roomsLink').hidden = false;
-      document.getElementById('roomsCount').textContent = d.rooms?.length ? `· ${d.rooms.length}` : '';
-    }).catch(() => {});
+      const rooms = d.rooms ?? [], by = new Map();
+      link.hidden = false;
+      count.textContent = rooms.length ? `· ${rooms.length}` : '';
+      for (const r of rooms) { const g = by.get(r.path) ?? { rooms: 0, players: 0 }; g.rooms++; g.players += r.players || 0; by.set(r.path, g); }
+      for (const a of document.querySelectorAll('a.game')) {
+        const g = by.get(a.getAttribute('href'));
+        let b = a.querySelector('.live');
+        if (!g) { b?.remove(); continue; }
+        if (!b) { b = Object.assign(document.createElement('span'), { className: 'live', title: t('Phòng công khai đang mở', 'Open public rooms') }); a.querySelector('.thumb').append(b); }
+        b.textContent = t(`${g.rooms} phòng · ${g.players} người`, `${g.rooms} room${g.rooms > 1 ? 's' : ''} · ${g.players} player${g.players === 1 ? '' : 's'}`);
+      }
+    }
+    let timer;
+    const tick = () => { clearTimeout(timer); if (document.hidden) return; load(); timer = setTimeout(tick, 10000); };
+    document.addEventListener('visibilitychange', tick);
+    tick();
   </script>
   <section id="recent" hidden>
     <h2 class="group"><i data-icon="hourglass"></i> <span data-en="Recently played">Chơi gần đây</span></h2>
