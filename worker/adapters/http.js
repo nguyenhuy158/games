@@ -1,5 +1,5 @@
 import { userFrom } from '../sso.js';
-import { REPLAY_ID, REPLAY_MAX, replayId } from './top.js';
+import { REPLAY_ID, REPLAY_MAX, replayId, BOARDS } from './top.js';
 import { SIZES } from '../../public/pikachu/logic.js';
 import { MODES } from '../games/pikachu.js';
 
@@ -87,6 +87,21 @@ export const http = {
     if (url.pathname === '/api/fun') {
       const period = url.searchParams.get('period') === 'week' ? 'week' : 'all';
       return Response.json(await top().fun(period), { headers: { 'Cache-Control': 'public, max-age=60' } });
+    }
+    // Bảng điểm tự báo của game chạy ở client (2048): GET top 10, POST { name, score } (không cần đăng nhập, như bản cũ ở mytools).
+    if (url.pathname === '/api/board') {
+      const game = url.searchParams.get('game');
+      if (!Object.hasOwn(BOARDS, game)) return new Response('Bad request', { status: 400 });
+      if (req.method === 'POST') {
+        if (!req.headers.get('Content-Type')?.startsWith('application/json')) return new Response('Unsupported', { status: 415 });
+        let b;
+        try { b = await req.json(); } catch { return new Response('Bad request', { status: 400 }); }
+        const name = typeof b?.name === 'string' ? b.name.trim().slice(0, 20) : '';
+        const score = Number(b?.score);
+        if (!name || !Number.isInteger(score) || score < 0 || score > BOARDS[game]) return new Response('Bad request', { status: 400 });
+        return Response.json(await top().boardAdd(game, name, score));
+      }
+      return Response.json(await top().board(game), { headers: { 'Cache-Control': 'no-store' } });
     }
     // Phòng đang mở mà chủ phòng bật "Công khai" (trang /phong/).
     if (url.pathname === '/api/rooms') {

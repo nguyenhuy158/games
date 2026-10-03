@@ -124,6 +124,7 @@ await import('./nokia-space-impact.test.mjs');
 await import('./o-an-quan.test.mjs');
 await import('./co-ganh.test.mjs');
 await import('./co-tuong.test.mjs');
+await import('./2048.test.mjs');
 await import('./scripts/check-deps.mjs');
 await import('./sso.test.mjs');
 await import('./top.test.mjs');

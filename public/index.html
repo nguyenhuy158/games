@@ -124,6 +124,11 @@
       .game .logo { width: 24px; height: 24px; }
     }
     .thumb.bt i.s { background: #e8716f; } .thumb.bt i.t { background: #7c83d6; } .thumb.bt i.h { background: #5a6b78; box-shadow: inset 0 0 0 5px #5a6b78, inset 0 0 0 9px #e0312f; }
+    /* Thumb game một người (2048, Xếp gạch, Sudoku) và Lô tô: vẽ bằng CSS. */
+    .thumb.k2 { background: #faf8ef; display: grid; place-items: center; }
+    .thumb.k2 div { display: grid; grid-template-columns: repeat(4, 30px); grid-auto-rows: 30px; gap: 4px; padding: 5px; border-radius: 8px; background: #bbada0; }
+    .thumb.k2 i { border-radius: 5px; background: #cdc1b4; display: grid; place-items: center; font: 800 12px/1 inherit; font-style: normal; color: #776e65; }
+    .thumb.k2 .a { background: #eee4da; } .thumb.k2 .b { background: #ede0c8; } .thumb.k2 .c { background: #f2b179; color: #fff; } .thumb.k2 .d { background: #f65e3b; color: #fff; } .thumb.k2 .e { background: #edc22e; color: #fff; font-size: 9px; }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
     #lang { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; }
     .lang-toggle { background: var(--panel); border: 1px solid var(--line); color: var(--text); }
@@ -212,6 +217,15 @@
       <b><img class="logo" src="/logos/dao-vang.svg" alt=""> <span data-en="Gold Miner">Đào Vàng</span></b>
       <span><span data-en="Swing the claw to grab gold and diamonds. Hit the target before time runs out.">Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span></span>
       <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Shared mine">Chung mỏ</span></i><i><span data-en="Gold rush">Tranh vàng</span></i><i><span data-en="Shop">Tiệm đồ</span></i></div>
+    </a>
+  </div>
+  <h2 class="group"><i data-icon="puzzle"></i> <span data-en="Puzzles &amp; solo">Giải đố &amp; một mình</span></h2>
+  <div class="games">
+    <a class="game" href="/2048/">
+      <div class="thumb k2"><div><i class="a">2</i><i></i><i class="b">4</i><i></i><i></i><i class="c">8</i><i></i><i class="a">2</i><i class="b">4</i><i></i><i class="d">64</i><i></i><i class="c">8</i><i class="d">64</i><i></i><i class="e">2048</i></div></div>
+      <b><img class="logo" src="/logos/2048.svg" alt=""> 2048</b>
+      <span><span data-en="Slide the tiles and join equal numbers to reach 2048. Save your score to the leaderboard.">Trượt các ô, ghép số giống nhau để đạt 2048. Lưu điểm lên bảng xếp hạng.</span></span>
+      <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="Leaderboard">Bảng xếp hạng</span></i><i><span data-en="Swipe">Vuốt</span></i></div>
     </a>
   </div>
   <h2 class="group"><i data-icon="smartphone"></i> <span data-en="Nokia corner">Góc Nokia</span></h2>

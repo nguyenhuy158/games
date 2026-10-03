@@ -72,5 +72,14 @@ play('b', 'Bình', 'ban-tau', 'pvp', 20, 0, false, now - H);
 const fun2 = Object.fromEntries(top.fun('all').map((c) => [c.key, c.rows]));
 assert.deepEqual(fun2.c4, [{ name: 'An Mới', value: 1 }], 'vs-bot wins do not count');
 assert.deepEqual(fun2.ships, [{ name: 'Bình', value: 39 }, { name: 'An Mới', value: 48 }]);
+
+// Bảng điểm tự báo 2048: chỉ giữ 10 điểm cao nhất mỗi game, bằng điểm thì ai ghi trước đứng trên.
+for (let k = 1; k <= 12; k++) top.boardAdd('2048', `P${k}`, k * 100);
+top.boardAdd('2048', 'Late', 1200);
+const b2048 = top.board('2048');
+assert.equal(b2048.length, 10);
+assert.deepEqual(b2048.slice(0, 3).map((r) => [r.name, r.score]), [['P12', 1200], ['Late', 1200], ['P11', 1100]]);
+assert.equal(b2048.at(-1).score, 400, 'lowest scores dropped');
+assert.deepEqual(top.board('other'), []);
 console.log('top ok');
 }

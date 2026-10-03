@@ -1,0 +1,70 @@
+/* Khung chung cho game một người chạy hết ở client (2048, Xếp gạch, Sudoku): thanh trên + màn chơi vừa một màn hình,
+   cùng bảng màu với trang chủ. Màu riêng từng game nằm trong <game>/style.css. */
+:root { --bg: #0b1b2b; --panel: #13283d; --line: #23405c; --text: #e8f1fa; --muted: #8aa4bd; --accent: #ffd23f; --good: #3ddc84; --bad: #ff5d5d; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+body {
+  display: flex; flex-direction: column; overflow: hidden; color: var(--text);
+  background: radial-gradient(circle at 50% 0%, #17385a, var(--bg) 70%) fixed;
+  font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
+button, input, select { font: inherit; color: inherit; }
+button {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer;
+  white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: var(--accent); color: #1b1300; border-color: var(--accent); font-weight: 700; }
+button.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+input, select { background: #0f1822; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+input { width: 100%; user-select: text; }
+
+header.bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); }
+header.bar h1 { margin: 0; font-size: 20px; white-space: nowrap; }
+header.bar .logo { width: 30px; height: 30px; }
+header.bar .back { color: var(--muted); display: inline-flex; padding: 4px; }
+header.bar .grow { flex: 1; }
+/* Điện thoại hẹp: bỏ chữ tên game (đã có logo + tiêu đề trang) cho thanh trên khỏi tràn. */
+@media (max-width: 420px) { header.bar h1 { display: none; } }
+.lang-toggle { background: var(--panel); border: 1px solid var(--line); }
+
+.stat small { display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.stat { min-width: 64px; padding: 3px 10px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); text-align: center; line-height: 1.15; }
+.stat b { font-size: 18px; font-variant-numeric: tabular-nums; }
+
+main.play { flex: 1; min-height: 0; display: flex; gap: 20px; justify-content: center; align-items: center; padding: 6px 12px max(12px, env(safe-area-inset-bottom)); }
+.col { display: flex; flex-direction: column; align-items: center; gap: 12px; min-height: 0; }
+.row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* Bảng phụ (bảng xếp hạng, hướng dẫn, kỷ lục): cạnh màn chơi trên máy tính. */
+.side { width: 260px; max-height: 100%; overflow: auto; display: grid; gap: 12px; align-content: start; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; }
+.panel h2 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+.panel ul, .panel ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.kv { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.kv b { color: var(--text); font-variant-numeric: tabular-nums; }
+kbd { padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); background: #0f1822; font: 12px/1.6 inherit; }
+
+/* Lớp phủ trên màn chơi: bắt đầu / tạm dừng / hết ván. */
+.overlay { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 12px; border-radius: inherit; background: #0b1b2bd0; backdrop-filter: blur(3px); }
+.card { width: min(320px, 100%); display: grid; gap: 10px; text-align: center; padding: 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 12px 40px #0008; }
+.card h2 { margin: 0; font-size: 24px; }
+.card p { margin: 0; color: var(--muted); }
+
+/* Phím mũi tên trên màn (chỉ máy cảm ứng). */
+.pad { display: grid; grid-template-columns: repeat(3, 56px); grid-auto-rows: 52px; gap: 8px; justify-content: center; touch-action: manipulation; }
+.pad button { padding: 0; font-size: 20px; }
+.pad .up { grid-column: 2; }
+.pad .left { grid-column: 1; }
+@media (hover: hover) and (pointer: fine) { .touch-only { display: none !important; } }
+@media not ((hover: hover) and (pointer: fine)) { .mouse-only { display: none !important; } }
+/* Màn hẹp: bảng phụ thành hộp nổi, mở bằng nút trên thanh trên. */
+@media (max-width: 760px) {
+  .side { position: fixed; inset: 56px 12px auto; width: auto; max-height: calc(100dvh - 80px); z-index: 20; padding: 0; box-shadow: 0 12px 40px #000a; border-radius: 14px; }
+  .side:not(.open) { display: none; }
+}
+@media (min-width: 761px) { .side-toggle { display: none !important; } }

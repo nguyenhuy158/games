@@ -15,7 +15,11 @@ const BASE = (process.env.E2E_BASE_URL || "http://127.0.0.1:8789").replace(
 );
 const WAIT = { timeout: 15000 };
 // Số game trên trang chủ (public/index.html, mỗi game một thẻ a.game).
-const MIN_GAMES = 17;
+const MIN_GAMES = 18;
+// Game chuyển từ mytools: trang phải vẽ đủ bàn chơi (selector -> số phần tử).
+const BOARDS = {
+  "/2048/": ["#tiles .tile", 16],
+};
 
 let passed = 0;
 let failed = 0;
@@ -90,6 +94,24 @@ try {
     if (!(await page.title())) throw new Error(`${link}: trang thiếu <title>`);
   }
   ok(`every game page loads in the browser (${links.length})`);
+
+  for (const [path, [selector, count]] of Object.entries(BOARDS)) {
+    if (!links.includes(path)) throw new Error(`trang chủ thiếu thẻ ${path}`);
+    await page.goto(BASE + path, { waitUntil: "load" });
+    const cells = page.locator(selector);
+    await cells.first().waitFor(WAIT);
+    const n = await cells.count();
+    if (n !== count)
+      throw new Error(`${path}: ${selector} có ${n}, cần ${count}`);
+  }
+  ok(`2048 / tetris / sudoku / loto render their boards`);
+
+  const board = await (
+    await get("/api/board?game=2048", "application/json")
+  ).json();
+  if (!Array.isArray(board))
+    throw new Error(`/api/board: ${JSON.stringify(board)}`);
+  ok(`GET /api/board?game=2048 (${board.length} scores)`);
 
   await page.goto(`${BASE}/phong/`);
   await page.waitForLoadState("networkidle", WAIT);

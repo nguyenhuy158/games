@@ -1,8 +1,12 @@
 import { DurableObject } from 'cloudflare:workers';
+import { MAX_SCORE as MAX_2048 } from '../../public/2048/logic.js';
 
 // Adapter lưu trữ (port Recorder trong worker/ports.js): một DO SQLite duy nhất "global" (gói free đã hết quota D1).
-// Bảng: scores (top Pikachu), plays (lịch sử người đã đăng nhập), users (tên hiển thị), rooms (phòng công khai).
+// Bảng: scores (top Pikachu), plays (lịch sử người đã đăng nhập), users (tên hiển thị), rooms (phòng công khai),
+// boards (bảng điểm tự báo của game chạy ở client, chỉ tên + điểm: 2048).
 const TOP_LIMIT = 10;
+// Game có bảng điểm tự báo (POST /api/board?game=...): điểm tối đa hợp lệ của từng game.
+export const BOARDS = { 2048: MAX_2048 };
 const ROOM_TTL = 90_000;
 const REPLAY_DAYS = 30;
 // Mã bản ghi: 12 ký tự ngẫu nhiên (khó đoán -> link share là quyền xem). Giới hạn cỡ để vừa 1 ô SQLite của DO (2MB).
@@ -58,6 +62,26 @@ export class Top extends DurableObject {
     ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS replays (
       id TEXT PRIMARY KEY, game TEXT NOT NULL, page TEXT NOT NULL, data TEXT NOT NULL, at INTEGER NOT NULL)`);
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS replays_at ON replays (at)');
+    // Bảng điểm tự báo (game chạy ở client, ai cũng ghi được tên + điểm như bản cũ ở mytools): chỉ giữ TOP_LIMIT dòng mỗi game.
+    ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS boards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, game TEXT NOT NULL, name TEXT NOT NULL, score INTEGER NOT NULL, at INTEGER NOT NULL)`);
+    ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS boards_top ON boards (game, score DESC)');
+  }
+
+  board(game) {
+    return this.ctx.storage.sql
+      .exec('SELECT name, score, at FROM boards WHERE game = ? ORDER BY score DESC, id ASC LIMIT ?', game, TOP_LIMIT)
+      .toArray();
+  }
+
+  // Ghi điểm rồi bỏ các dòng rớt khỏi top; trả bảng mới.
+  boardAdd(game, name, score) {
+    this.ctx.storage.sql.exec('INSERT INTO boards (game, name, score, at) VALUES (?, ?, ?, ?)', game, name, score, Date.now());
+    this.ctx.storage.sql.exec(
+      'DELETE FROM boards WHERE game = ? AND id NOT IN (SELECT id FROM boards WHERE game = ? ORDER BY score DESC, id ASC LIMIT ?)',
+      game, game, TOP_LIMIT,
+    );
+    return this.board(game);
   }
 
   roomUpsert(r) {

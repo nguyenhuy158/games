@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script src="/nozoom.js"></script>
+  <script src="/bfcache.js"></script>
+  <meta name="theme-color" content="#0b1b2b">
+  <title>2048</title>
+  <meta name="description" content="Trượt các ô, ghép số giống nhau để đạt 2048.">
+  <link rel="icon" href="/logos/2048.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/2048-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/2048-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/solo.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <a href="/" class="back" title="Các game khác" data-en-title="More games"><i data-icon="arrow-left"></i></a>
+    <img class="logo" src="/logos/2048.svg" alt="">
+    <h1>2048</h1>
+    <span class="grow"></span>
+    <div class="stat"><small data-en="Score">Điểm</small><b id="score">0</b></div>
+    <button type="button" id="btnBoard" class="side-toggle" title="Bảng xếp hạng" data-en-title="Leaderboard"><i data-icon="trophy"></i></button>
+    <span data-lang-toggle></span>
+  </header>
+  <main class="play">
+    <div class="col">
+      <p class="sub" data-en="Join the numbers to get 2048!">Ghép các số để đạt 2048!</p>
+      <div id="board">
+        <div id="tiles"></div>
+        <div id="over" class="overlay" hidden>
+          <form id="saveForm" class="card">
+            <h2 data-en="Game Over!">Kết thúc!</h2>
+            <p><span data-en="Final score">Điểm cuối cùng</span>: <b id="final">0</b></p>
+            <input id="name" maxlength="20" autocomplete="off" required placeholder="Nhập tên của bạn" data-en-placeholder="Enter your name">
+            <button id="btnSave" class="primary" type="submit"><i data-icon="save"></i> <span data-en="Save score">Lưu điểm</span></button>
+            <button id="btnRetry" type="button"><i data-icon="rotate-ccw"></i> <span data-en="Try again">Thử lại</span></button>
+          </form>
+        </div>
+      </div>
+      <div class="pad touch-only">
+        <button type="button" class="up" data-dir="up" aria-label="Lên" data-en-aria-label="Up"><i data-icon="arrow-up"></i></button>
+        <button type="button" class="left" data-dir="left" aria-label="Trái" data-en-aria-label="Left"><i data-icon="arrow-left"></i></button>
+        <button type="button" data-dir="down" aria-label="Xuống" data-en-aria-label="Down"><i data-icon="arrow-down"></i></button>
+        <button type="button" data-dir="right" aria-label="Phải" data-en-aria-label="Right"><i data-icon="arrow-right"></i></button>
+      </div>
+      <div class="row">
+        <button type="button" id="btnNew"><i data-icon="refresh-cw"></i> <span data-en="New game">Ván mới</span></button>
+        <span class="hint mouse-only" data-en="Arrow keys to slide">Phím mũi tên để trượt</span>
+      </div>
+    </div>
+    <aside id="side" class="side">
+      <div class="panel">
+        <h2><i data-icon="trophy"></i> <span data-en="Leaderboard">Bảng xếp hạng</span></h2>
+        <ol id="lb" class="lb"></ol>
+        <p id="lbEmpty" class="empty" data-en="No scores yet. Be the first!">Chưa có điểm nào. Hãy là người đầu tiên!</p>
+      </div>
+    </aside>
+  </main>
+  <script type="module" src="game.js"></script>
+</body>
+</html>

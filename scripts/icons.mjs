@@ -5,7 +5,8 @@ import { writeFileSync } from 'node:fs';
 const NAMES = ['arrow-left', 'link', 'lightbulb', 'shuffle', 'volume-2', 'volume-x', 'crown', 'trophy', 'users', 'swords', 'zap', 'play', 'rotate-ccw', 'mouse-pointer-2', 'grid-3x3', 'flag', 'paw-print', 'eye', 'layers', 'qr-code', 'share-2', 'copy',
   'crown', 'bot', 'party-popper', 'frown', 'coins', 'dices', 'bomb', 'timer', 'heart', 'heart-off', 'pickaxe',
   'arrow-down', 'gamepad-2', 'moon', 'handshake', 'medal', 'circle-check', 'circle-x', 'info', 'triangle-alert',
-  'thumbs-up', 'laugh', 'flame', 'sparkles', 'hourglass', 'smartphone', 'pause', 'x', 'circle', 'chevron-up', 'chevron-down', 'chevron-left', 'chevron-right', 'smartphone-nfc', 'gamepad', 'rotate-cw', 'hand', 'arrow-right'];
+  'thumbs-up', 'laugh', 'flame', 'sparkles', 'hourglass', 'smartphone', 'pause', 'x', 'circle', 'chevron-up', 'chevron-down', 'chevron-left', 'chevron-right', 'smartphone-nfc', 'gamepad', 'rotate-cw', 'hand', 'arrow-right',
+  'arrow-up', 'refresh-cw', 'pencil', 'eraser', 'save', 'puzzle'];
 
 const attrs = (o) => Object.entries(o).map(([k, v]) => `${k}="${v}"`).join(' ');
 const out = {};

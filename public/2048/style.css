@@ -1,0 +1,44 @@
+/* 2048: bàn vừa một màn hình (máy cảm ứng chừa chỗ cho phím trên màn), màu ô kiểu 2048 gốc. */
+.sub { margin: 0; color: var(--muted); }
+.hint { color: var(--muted); font-size: 13px; align-self: center; }
+#board {
+  --w: min(92vw, 460px, calc(100dvh - 290px)); --gap: calc(var(--w) * .03);
+  position: relative; width: var(--w); aspect-ratio: 1; padding: var(--gap); border-radius: 14px;
+  background: #bbada0; box-shadow: 0 10px 30px #0006; touch-action: none;
+}
+@media (hover: hover) and (pointer: fine) { #board { --w: min(92vw, 520px, calc(100dvh - 180px)); } }
+#tiles { height: 100%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: var(--gap); }
+.tile {
+  display: grid; place-items: center; border-radius: 8px; background: #cdc1b4; color: #776e65;
+  font-weight: 800; font-size: calc(var(--w) * .11); font-variant-numeric: tabular-nums; transition: background-color .12s;
+}
+.tile[data-len="3"] { font-size: calc(var(--w) * .09); }
+.tile[data-len="4"] { font-size: calc(var(--w) * .075); }
+.tile[data-len="5"], .tile[data-len="6"] { font-size: calc(var(--w) * .058); }
+.v2 { background: #eee4da; }
+.v4 { background: #ede0c8; }
+.v8 { background: #f2b179; color: #f9f6f2; }
+.v16 { background: #f59563; color: #f9f6f2; }
+.v32 { background: #f67c5f; color: #f9f6f2; }
+.v64 { background: #f65e3b; color: #f9f6f2; }
+.v128 { background: #edcf72; color: #f9f6f2; box-shadow: 0 0 12px #edcf7299; }
+.v256 { background: #edcc61; color: #f9f6f2; box-shadow: 0 0 14px #edcc61aa; }
+.v512 { background: #edc850; color: #f9f6f2; box-shadow: 0 0 16px #edc850bb; }
+.v1024 { background: #edc53f; color: #f9f6f2; box-shadow: 0 0 18px #edc53fcc; }
+.v2048 { background: #edc22e; color: #f9f6f2; box-shadow: 0 0 22px #edc22edd; }
+.vbig { background: #3c3a32; color: #f9f6f2; }
+.tile.new { animation: pop .18s ease-out; }
+@keyframes pop { from { transform: scale(.4); opacity: .4; } }
+#over .card { gap: 8px; }
+
+.lb { list-style: none; padding: 0 !important; }
+.lb li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; background: #0f1822; border: 1px solid var(--line); }
+.lb .rank { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 50%; font-size: 12px; font-weight: 700; background: #23405c; color: var(--text); }
+.lb .r1 .rank { background: #ffd23f; color: #1b1300; }
+.lb .r2 .rank { background: #cfd8e3; color: #1c2530; }
+.lb .r3 .rank { background: #e8a46b; color: #2a1606; }
+.lb .who { flex: 1; min-width: 0; display: grid; }
+.lb .who b { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.lb .who small { font-size: 11px; }
+.lb strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+.empty { margin: 0; color: var(--muted); font-size: 13px; text-align: center; }

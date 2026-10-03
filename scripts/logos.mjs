@@ -137,4 +137,52 @@ export const LOGOS = {
     <ellipse cx="370" cy="226" rx="18" ry="10" fill="#fff" opacity=".45" transform="rotate(-30 370 226)"/>
     ${face(392, 262, 0.5, 'w', '#fff')}
     ${sparkle(92, 104, 28, '#ffd23f')}${sparkle(420, 94, 20)}${sparkle(96, 420, 18)}${sparkle(430, 440, 24, '#ffd23f')}`),
+
+  // 2048: ô "2" nhỏ nghiêng và ô 2048 vàng mặt cười.
+  2048: frame('k', '#fff6e0', '#f2c48d', `
+    ${sticker(`<rect x="66" y="80" width="150" height="150" rx="30" fill="#eee4da" stroke="${INK}" stroke-width="12" transform="rotate(-10 141 155)"/>`)}
+    <text x="141" y="190" transform="rotate(-10 141 155)" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="104" fill="#776e65">2</text>
+    ${sticker(`<rect x="168" y="168" width="276" height="276" rx="48" fill="#edc22e" stroke="${INK}" stroke-width="12"/>`)}
+    <ellipse cx="226" cy="206" rx="34" ry="14" fill="#fff" opacity=".55" transform="rotate(-20 226 206)"/>
+    <text x="306" y="282" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="78" fill="#fff" stroke="${INK}" stroke-width="10" paint-order="stroke" stroke-linejoin="round">2048</text>
+    ${face(306, 340, 0.62)}
+    ${sparkle(430, 96, 28)}${sparkle(88, 420, 22, '#ffd23f')}${sparkle(370, 60, 14, '#ff9ec4')}`),
+
+  // Xếp gạch: khối chữ T tím đang rơi xuống chồng gạch, khối vuông vàng mặt cười ở đáy.
+  tetris: frame('x', '#e8f0ff', '#9fb2ff', `
+    ${[[140, 96], [210, 96], [280, 96], [210, 166]].map(([x, y]) => sticker(`<rect x="${x}" y="${y}" width="70" height="70" rx="14" fill="#a855f7" stroke="${INK}" stroke-width="9"/>`)).join('')}
+    <path d="M246 252v22M232 262l14 14 14-14" fill="none" stroke="${INK}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
+    ${[[62, 300], [62, 370], [132, 370]].map(([x, y]) => `<rect x="${x}" y="${y}" width="70" height="70" rx="14" fill="#f97316" stroke="${INK}" stroke-width="9"/>`).join('')}
+    ${[[380, 230], [380, 300], [380, 370]].map(([x, y]) => `<rect x="${x}" y="${y}" width="70" height="70" rx="14" fill="#22d3ee" stroke="${INK}" stroke-width="9"/>`).join('')}
+    ${sticker(`<rect x="210" y="300" width="160" height="140" rx="26" fill="#facc15" stroke="${INK}" stroke-width="12"/>`)}
+    ${face(290, 352, 0.6)}
+    ${sparkle(436, 110, 26)}${sparkle(80, 120, 20, '#ffd23f')}${sparkle(80, 230, 12)}`),
+
+  // Sudoku: tờ giấy kẻ 3×3 có số, ô giữa mặt cười, cây bút chì vàng.
+  sudoku: frame('s', '#eefaf3', '#9ddcb8', `
+    ${sticker(`<rect x="80" y="80" width="330" height="330" rx="30" fill="#fff" stroke="${INK}" stroke-width="12" transform="rotate(-5 245 245)"/>`)}
+    <g transform="rotate(-5 245 245)">
+      <path d="M190 92V398M300 92V398M92 190H398M92 300H398" stroke="${INK}" stroke-width="8" stroke-linecap="round"/>
+      <rect x="194" y="194" width="102" height="102" fill="#d6f5e3"/>
+      <g font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="64" text-anchor="middle">
+        <text x="137" y="167" fill="${INK}">5</text><text x="355" y="167" fill="#2f7fe0">3</text>
+        <text x="137" y="378" fill="#2f7fe0">7</text><text x="245" y="378" fill="${INK}">1</text><text x="355" y="378" fill="${INK}">9</text>
+      </g>
+      ${face(245, 236, 0.45)}
+    </g>
+    ${sticker(`<g transform="rotate(40 400 380)"><rect x="370" y="250" width="56" height="190" rx="10" fill="#ffd23f" stroke="${INK}" stroke-width="10"/><path d="M370 440L398 486L426 440Z" fill="#f3d9b1" stroke="${INK}" stroke-width="10" stroke-linejoin="round"/><rect x="370" y="236" width="56" height="30" rx="8" fill="#ff8fa3" stroke="${INK}" stroke-width="10"/></g>`)}
+    ${sparkle(440, 96, 26)}${sparkle(76, 440, 22, '#ffd23f')}`),
+
+  // Lô tô: phiếu kẻ ô đã đóng dấu đỏ, quả bóng số vàng mặt cười.
+  loto: frame('l', '#fff0d6', '#f08a5d', `
+    ${sticker(`<rect x="56" y="250" width="400" height="190" rx="24" fill="#fff1cf" stroke="${INK}" stroke-width="12" transform="rotate(-6 256 345)"/>`)}
+    <g transform="rotate(-6 256 345)">
+      <path d="M56 313H456M56 377H456M136 250V440M216 250V440M296 250V440M376 250V440" stroke="#c9a978" stroke-width="6"/>
+      <g fill="#d62828" opacity=".85"><circle cx="96" cy="282" r="22"/><circle cx="256" cy="345" r="22"/><circle cx="336" cy="409" r="22"/><circle cx="416" cy="282" r="22"/></g>
+      <g font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="34" text-anchor="middle" fill="${INK}"><text x="176" y="294">17</text><text x="96" y="420">5</text><text x="416" y="357">88</text></g>
+    </g>
+    ${sticker(`<circle cx="316" cy="172" r="104" fill="#ffd23f" stroke="${INK}" stroke-width="12"/>`)}
+    <ellipse cx="270" cy="120" rx="30" ry="15" fill="#fff" opacity=".6" transform="rotate(-30 270 120)"/>
+    ${face(316, 168, 0.72)}
+    ${sparkle(96, 110, 28, '#fff')}${sparkle(150, 190, 14, '#ffd23f')}${sparkle(462, 300, 18)}`),
 };
