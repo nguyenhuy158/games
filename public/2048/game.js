@@ -5,6 +5,7 @@ import { toast } from '../toast.js';
 import { deviceName } from '../names.js';
 import { swipe } from '../swipe.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 // 2048 một người, chạy hết ở client: phím mũi tên, vuốt hoặc phím trên màn. Hết ván thì ghi tên + điểm lên
 // bảng xếp hạng chung (top 10, /api/board?game=2048 — ai cũng ghi được, như bản cũ ở mytools).
@@ -116,3 +117,33 @@ btnUndo.onclick = undo;
 $('#btnRetry').onclick = start;
 $('#btnBoard').onclick = () => $('#side').classList.toggle('open');
 start();
+mountHelp({
+  game: '2048',
+  button: '#btnHelp',
+  content: {
+    vi: {
+      goal: 'Ghép các ô cùng số để tạo được ô 2048 (chơi tiếp được để lên số lớn hơn) và ghi điểm cao nhất.',
+      play: [
+        'Bàn 4×4. Mỗi lượt trượt mọi ô về một hướng, các ô dồn sát nhau.',
+        'Hai ô cùng số chạm nhau thì gộp thành một (mỗi ô chỉ gộp một lần mỗi lượt); điểm cộng bằng số mới.',
+        'Sau mỗi lượt có ô dịch chuyển, một ô mới xuất hiện: 2 (90%) hoặc 4 (10%).',
+        'Hết ô trống và không còn hai ô kề nhau giống nhau là hết ván; nhập tên để lưu điểm lên bảng xếp hạng chung.',
+      ],
+      keys: ['Phím mũi tên: trượt lên / xuống / trái / phải.', 'U hoặc Ctrl+Z: đi lại (tối đa 10 nước).'],
+      touch: ['Vuốt trên bàn chơi hoặc bấm 4 nút mũi tên bên dưới.', 'Nút Đi lại / Ván mới dưới bàn; nút cúp mở bảng xếp hạng.'],
+      tips: ['Giữ ô lớn nhất ở một góc và hạn chế trượt theo hướng kéo nó ra khỏi góc.', 'Đã lưu điểm thì không đi lại được nữa.'],
+    },
+    en: {
+      goal: 'Merge equal tiles to make a 2048 tile (you can keep going for bigger ones) and score as high as you can.',
+      play: [
+        '4×4 board. Each move slides every tile in one direction until they are packed.',
+        'Two equal tiles that touch merge into one (each tile merges once per move); you score the new value.',
+        'After every move that shifts a tile, a new tile appears: 2 (90%) or 4 (10%).',
+        'No empty cell and no equal neighbours left means game over; enter a name to save your score to the shared leaderboard.',
+      ],
+      keys: ['Arrow keys: slide up / down / left / right.', 'U or Ctrl+Z: undo (up to 10 moves).'],
+      touch: ['Swipe on the board or tap the 4 arrow buttons below it.', 'Undo / New game under the board; the trophy button opens the leaderboard.'],
+      tips: ['Keep your biggest tile in a corner and avoid moves that pull it out.', 'Once your score is saved you can no longer undo.'],
+    },
+  },
+});

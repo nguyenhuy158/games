@@ -3,6 +3,7 @@ import { t } from '../i18n.js';
 import { hydrateIcons, icon } from '../icons.js';
 import { toast } from '../toast.js';
 import { $, el, store } from '../dom.js';
+import { mountHelp } from '../help.js';
 
 // Sudoku một người, chạy hết ở client: chọn ô rồi điền bằng bàn phím hoặc dãy số; ghi chú bút chì (N), xoá, 3 gợi ý mỗi ván,
 // đồng hồ (dừng khi tạm dừng / giải xong). Kỷ lục thời gian theo độ khó lưu trong máy (localStorage 'sudoku.best').
@@ -155,3 +156,37 @@ $('#btnResetYes').onclick = () => {
   render();
 };
 startNew();
+// Mở hướng dẫn thì tạm dừng đồng hồ; đóng thì chạy tiếp (chỉ khi chính hướng dẫn đã dừng nó).
+let helpPaused = false;
+mountHelp({
+  game: 'sudoku',
+  button: '#btnHelp',
+  onOpen: () => { if (!paused && !done) { paused = helpPaused = true; render(); } },
+  onClose: () => { if (helpPaused) { paused = helpPaused = false; render(); } },
+  content: {
+    vi: {
+      goal: 'Điền kín bàn 9×9 để mỗi hàng, mỗi cột và mỗi khối 3×3 có đủ các số 1–9, không trùng.',
+      play: [
+        'Chọn ô trống rồi điền số; số đề cho (in đậm) không sửa được.',
+        'Số trùng trong cùng hàng, cột hoặc khối được tô đỏ.',
+        'Ghi chú (bút chì) để đánh dấu các số có thể; mỗi ván có 3 gợi ý, mỗi gợi ý điền đúng một ô trống ngẫu nhiên.',
+        'Độ khó Dễ / Vừa / Khó (41 / 31 / 21 số cho sẵn). Giải xong nhanh nhất là kỷ lục của độ khó đó.',
+      ],
+      keys: ['Bấm chuột chọn ô, mũi tên để di chuyển ô chọn, Esc bỏ chọn.', 'Phím 1–9: điền số; Backspace / Delete: xoá.', 'N: bật / tắt Ghi chú.'],
+      touch: ['Chạm ô để chọn, chạm dãy số 1–9 bên dưới để điền.', 'Nút Ghi chú, Xoá, Gợi ý; nút tạm dừng trên thanh trên dừng đồng hồ.'],
+      tips: ['Chọn một ô có số thì mọi ô cùng số được tô sáng: dễ thấy chỗ còn thiếu.', 'Làm lại xoá mọi số đã điền và đưa đồng hồ về 0.'],
+    },
+    en: {
+      goal: 'Fill the 9×9 grid so every row, column and 3×3 box contains 1–9 with no repeats.',
+      play: [
+        'Select an empty cell and enter a number; given numbers (bold) cannot be changed.',
+        'Numbers that clash in a row, column or box turn red.',
+        'Use Notes (pencil marks) for candidates; each puzzle has 3 hints, each fills one random empty cell correctly.',
+        'Easy / Medium / Hard (41 / 31 / 21 given numbers). Your fastest solve is the best time for that difficulty.',
+      ],
+      keys: ['Click a cell to select it, arrow keys to move the selection, Esc to deselect.', 'Keys 1–9: enter a number; Backspace / Delete: erase.', 'N: toggle Notes.'],
+      touch: ['Tap a cell to select it, then tap 1–9 on the number pad below.', 'Notes, Erase and Hint buttons; the pause button in the top bar stops the clock.'],
+      tips: ['Selecting a filled cell highlights every cell with the same number, so gaps stand out.', 'Reset clears every number you entered and sets the clock back to 0.'],
+    },
+  },
+});
