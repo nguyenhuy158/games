@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script src="/nozoom.js"></script>
+  <script src="/bfcache.js"></script>
+  <meta name="theme-color" content="#0b1b2b">
+  <title>Sudoku</title>
+  <meta name="description" content="Sudoku 9×9 với 3 mức độ, ghi chú bút chì, gợi ý và đồng hồ.">
+  <link rel="icon" href="/logos/sudoku.svg" type="image/svg+xml">
+  <link rel="icon" href="/logos/sudoku-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/logos/sudoku-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/solo.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <a href="/" class="back" title="Các game khác" data-en-title="More games"><i data-icon="arrow-left"></i></a>
+    <img class="logo" src="/logos/sudoku.svg" alt="">
+    <h1>Sudoku</h1>
+    <span class="grow"></span>
+    <div class="stat"><small data-en="Time">Thời gian</small><b id="clock">0:00</b></div>
+    <button type="button" id="btnPause" title="Tạm dừng" data-en-title="Pause"><i data-icon="pause"></i></button>
+    <button type="button" id="btnSide" class="side-toggle" title="Cách chơi · kỷ lục" data-en-title="How to play · best times"><i data-icon="info"></i></button>
+    <span data-lang-toggle></span>
+  </header>
+  <main class="play">
+    <div class="col sdk">
+      <div class="tools">
+        <select id="diff" aria-label="Độ khó" data-en-aria-label="Difficulty"></select>
+        <button type="button" id="btnNew"><i data-icon="refresh-cw"></i> <span data-en="New game">Ván mới</span></button>
+        <button type="button" id="btnReset"><i data-icon="rotate-ccw"></i> <span data-en="Reset">Làm lại</span></button>
+        <button type="button" id="btnHint"><i data-icon="lightbulb"></i> <span data-en="Hint">Gợi ý</span> <b id="hints" class="badge"></b></button>
+      </div>
+      <div id="wrap">
+        <div id="grid"></div>
+        <div id="ovPause" class="overlay" hidden>
+          <button type="button" class="primary big" id="btnResume"><i data-icon="play"></i> <span data-en="Resume game">Chơi tiếp</span></button>
+        </div>
+        <div id="ovReset" class="overlay" hidden>
+          <div class="card">
+            <p data-en="Reset this puzzle? Every number you entered will be cleared.">Làm lại đề này? Mọi số bạn đã điền sẽ bị xoá.</p>
+            <div class="row">
+              <button type="button" class="primary" id="btnResetYes" data-en="Reset">Làm lại</button>
+              <button type="button" id="btnResetNo" data-en="Cancel">Huỷ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="pad" class="numpad"></div>
+      <div class="tools">
+        <button type="button" id="btnNote"><i data-icon="pencil"></i> <span id="noteLbl"></span></button>
+        <button type="button" id="btnErase" class="erase"><i data-icon="eraser"></i> <span data-en="Erase">Xoá</span></button>
+      </div>
+    </div>
+    <aside id="side" class="side">
+      <div class="panel">
+        <h2 data-en="How to play">Cách chơi</h2>
+        <ul>
+          <li data-en="Click a cell to select it.">Chạm một ô để chọn.</li>
+          <li data-en="Use the keyboard or the number pad to fill in numbers.">Dùng bàn phím hoặc dãy số để điền.</li>
+          <li data-en="Use Note mode (N) to add pencil marks.">Bật Ghi chú (N) để điền số bút chì.</li>
+          <li data-en="Complete the grid so every row, column and 3×3 box contains 1–9.">Điền kín bàn để mỗi hàng, cột và khối 3×3 có đủ 1–9.</li>
+          <li data-en="Numbers cannot repeat in any row, column or box.">Không được lặp số trong cùng hàng, cột hoặc khối.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2><i data-icon="trophy"></i> <span data-en="Your best times">Kỷ lục của bạn</span></h2>
+        <div id="bests"></div>
+      </div>
+    </aside>
+  </main>
+  <script type="module" src="game.js"></script>
+</body>
+</html>

@@ -133,6 +133,10 @@
     .thumb.tt div { display: grid; grid-template-columns: repeat(10, 11px); grid-auto-rows: 11px; gap: 1px; }
     .thumb.tt i { border-radius: 2px; }
     .thumb.tt .I { background: #22d3ee; } .thumb.tt .J { background: #3b82f6; } .thumb.tt .L { background: #f97316; } .thumb.tt .O { background: #facc15; } .thumb.tt .S { background: #22c55e; } .thumb.tt .T { background: #a855f7; } .thumb.tt .Z { background: #ef4444; }
+    .thumb.sd { background: #e9f7ef; display: grid; place-items: center; }
+    .thumb.sd div { display: grid; grid-template-columns: repeat(3, 30px); grid-auto-rows: 30px; border: 3px solid #1d2733; background: #fff; }
+    .thumb.sd i { display: grid; place-items: center; border: 1px solid #c7d3df; font: 800 17px/1 inherit; font-style: normal; color: #1d2733; }
+    .thumb.sd i.u { color: #2f7fe0; } .thumb.sd i.s { background: #cfe4ff; }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
     #lang { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; }
     .lang-toggle { background: var(--panel); border: 1px solid var(--line); color: var(--text); }
@@ -236,6 +240,12 @@
       <b><img class="logo" src="/logos/tetris.svg" alt=""> <span data-en="Tetris">Xếp gạch</span></b>
       <span><span data-en="Stack the falling blocks and clear full lines. Keep your best score.">Xếp các khối rơi, lấp kín hàng để xoá. Lưu kỷ lục trên máy.</span></span>
       <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="Classic">Cổ điển</span></i><i><span data-en="Swipe">Vuốt</span></i></div>
+    </a>
+    <a class="game" href="/sudoku/">
+      <div class="thumb sd"><div><i>5</i><i class="u">3</i><i></i><i class="s">6</i><i>7</i><i></i><i></i><i class="u">9</i><i>8</i></div></div>
+      <b><img class="logo" src="/logos/sudoku.svg" alt=""> Sudoku</b>
+      <span><span data-en="Fill the 9×9 grid with 1–9. Three levels, pencil notes, hints and a timer.">Điền 1–9 kín bàn 9×9. Ba mức độ, ghi chú bút chì, gợi ý và đồng hồ.</span></span>
+      <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="3 levels">3 mức</span></i><i><span data-en="Notes">Ghi chú</span></i></div>
     </a>
   </div>
   <h2 class="group"><i data-icon="smartphone"></i> <span data-en="Nokia corner">Góc Nokia</span></h2>

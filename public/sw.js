@@ -1,6 +1,6 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v33';
+const CACHE = 'games-v34';
 const CORE = [
   '/', '/index.html', '/me.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/toast.js', '/nozoom.js', '/bfcache.js', '/public-switch.js', '/room-client.js', '/replay.js', '/tape.js', '/phong/', '/phong/index.html', '/phong/phong.js', '/i18n.js', '/names.js', '/dom.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png',
   '/logos/hub.svg', '/logos/pikachu.svg', '/logos/dao-vang.svg', '/logos/do-min.svg', '/logos/bau-cua.svg', '/logos/co-caro.svg', '/logos/noi-4.svg', '/logos/ban-tau.svg',
@@ -16,6 +16,7 @@ const CORE = [
   '/solo.css', '/swipe.js',
   '/2048/', '/2048/index.html', '/2048/style.css', '/2048/game.js', '/2048/logic.js', '/logos/2048.svg',
   '/tetris/', '/tetris/index.html', '/tetris/style.css', '/tetris/game.js', '/tetris/logic.js', '/logos/tetris.svg',
+  '/sudoku/', '/sudoku/index.html', '/sudoku/style.css', '/sudoku/game.js', '/sudoku/logic.js', '/logos/sudoku.svg',
   '/co-caro/', '/co-caro/index.html', '/co-caro/style.css', '/co-caro/game.js', '/co-caro/logic.js',
   '/noi-4/', '/noi-4/index.html', '/noi-4/style.css', '/noi-4/game.js', '/noi-4/logic.js',
   '/ban-tau/', '/ban-tau/index.html', '/ban-tau/style.css', '/ban-tau/game.js', '/ban-tau/logic.js',
