@@ -21,6 +21,7 @@ let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, veEl, pop, voiceBtn, m
 let cells = [], nums = [], sel = 0, seen = -1, nagAt = 0, timerAt = 0, tickTimer = 0;
 
 const music = createMusic();
+let lastLevel = music.level || 2; // mức âm lượng để bật lại sau khi tắt nhạc
 const voice = createVoice({
   lang: en ? 'en' : 'vi',
   onMissing: (m) => app.toast.warning(m === 'vi' ? t('Máy không có giọng tiếng Việt — chỉ hiện số trên màn hình', 'No Vietnamese voice on this device — numbers are shown on screen only')
@@ -164,7 +165,6 @@ function renderVoice() {
 }
 
 // Nhạc nền: bật/tắt (nhớ mức cũ), thanh trượt 3 mức âm lượng; tách riêng với giọng đọc số.
-let lastLevel = music.level || 2;
 function nextMusic() {
   music.level = music.level ? 0 : lastLevel;
   renderMusic();
