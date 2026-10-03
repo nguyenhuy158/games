@@ -40,11 +40,11 @@ worker/
   ports.js                     #   JSDoc contracts between games and adapters
   adapters/                    #   game-room.js, http.js, top.js
   games/                       #   One module per game (rules glue, timers, views)
-  sso.js  names.js             #   SSO JWT verification, de-duplicated room names
-scripts/                       # smoke.mjs (WebSocket bots), check-deps.mjs, asset generators
+  sso.js  names.js             #   huyab_sso cookie -> player (verified by @huyab/sso), de-duplicated room names
+scripts/                       # smoke.mjs (WebSocket bots), check-deps.mjs, node-ts-hooks.mjs, asset generators
 docs/hexagon-plan.md           # Architecture plan and dependency rules
 screenshots/                   # Per-game, per-device screenshots (README generated)
-e2e/                           # run.mjs (dev e2e), readonly-smoke.mjs (dev + prod), chromium.mjs
+e2e/                           # run.mjs (dev e2e, @huyab/e2e), readonly-smoke.mjs (dev + prod)
 *.test.mjs                     # Tests at repo root, aggregated by logic.test.mjs
 reference/                     # Original game assets for study (gitignored)
 ```
@@ -55,7 +55,8 @@ reference/                     # Original game assets for study (gitignored)
 - `pnpm dev`: run `wrangler dev` (http://localhost:8787).
 - `pnpm test`: run `node logic.test.mjs`, which imports every other
   `*.test.mjs` file plus `scripts/check-deps.mjs`.
-- `pnpm check` / `pnpm lint`: run `biome check .` (lint + format check).
+- `pnpm check`: run `biome lint .` (blocking in CI). `pnpm lint`: run
+  `biome check .` (lint + format check, still reports existing findings).
 - `pnpm format`: run `biome format --write .`.
 - `pnpm icons`: regenerate `public/icons.js` from lucide (`scripts/icons.mjs`).
 - `node scripts/smoke.mjs [url] [game ...]`: multiplayer smoke test with bots
@@ -85,10 +86,11 @@ File names are kebab-case game slugs (`co-tuong`, `rapid-roll`). Keep rules in
 Do not leave magic strings or numbers; name them as constants near the module.
 Code comments are in Vietnamese.
 
-Biome is configured in `biome.json` (2-space, double quotes, recommended
-rules) but the codebase predates it: `pnpm check` currently reports existing
-findings and the repo has not been reformatted. Do not mass-reformat; keep new
-or touched code lint-clean where practical.
+Biome extends `@huyab/config/biome.json` (2-space, double quotes, recommended
+rules) but the codebase predates it: the rules that already had violations are
+set to `"warn"` in `biome.json` so `pnpm check` passes, and the repo has not
+been reformatted. Do not mass-reformat; keep new or touched code lint-clean
+where practical.
 
 UI: no emoji in the interface. Icons come from lucide via `public/icons.js`
 (`iconEl(name)`), toasts from `public/toast.js`. All player-facing text is
@@ -105,16 +107,32 @@ deploy gate) runs it. Cover rules in `logic.js` and server modules in
 refactors of room or connection code. `scripts/smoke.mjs` creates rooms, so
 only CI's post-deploy job runs it against production; ad-hoc production checks
 use the read-only `pnpm e2e:prod`.
+Tests that load the Worker (`sso.test.mjs`, `top.test.mjs`) import
+`scripts/node-ts-hooks.mjs` first: `@huyab/sso` ships TypeScript source, which
+Node will not strip under `node_modules`.
 
 ## Commit & Pull Request Guidelines
 
 History uses Conventional Commits, sometimes with an emoji prefix, for example
 `feat(co-ganh): ...`, `fix(rooms): ...`, `refactor(step 4a): ...`. Pull
 requests should include a short summary, test results, and screenshots for
-visible UI changes. CI (`.github/workflows/ci.yml`) runs `pnpm check`
-(non-blocking until the existing Biome findings are fixed) and `pnpm test` on
-every push/PR, runs `pnpm e2e` against a local `wrangler dev`, then
-smoke-tests production after each deploy to `main`.
+visible UI changes. CI (`.github/workflows/ci.yml`) calls kit's reusable
+`check.yml` (`pnpm check`, `pnpm test`, and `pnpm e2e` against a local
+`wrangler dev`) on every push/PR, then smoke-tests production after each
+deploy to `main` (`smoke-prod`).
+
+## Ecosystem
+
+How this repo fits with the other `*.huyab.click` repos:
+https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md
+
+- Kit packages (`nguyenhuy158/kit@v0.1.0`): `@huyab/sso` (optional sign-in,
+  `worker/sso.js`, cookie only), `@huyab/e2e` (`e2e/run.mjs` server
+  lifecycle, Chromium lookup), `@huyab/config` (`biome.json`), and CI through
+  the reusable `check.yml` workflow.
+- Talks to: `sso` (auth.huyab.click login links in `public/me.js` + JWKS).
+  No D1, no mailer: data lives in Durable Object SQLite.
+- Called by: nobody; `mytools` pings it for uptime.
 
 ## Agent-Specific Instructions
 
