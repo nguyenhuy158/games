@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { ROWS, COLS, drop, winLine, full, botMove, LEVELS } from './public/noi-4/logic.js';
+import { c4 } from './worker/games/caro.js';
 
 const at = (r, c) => r * COLS + c;
 const empty = () => new Array(ROWS * COLS).fill(0);
@@ -55,5 +56,28 @@ assert.ok(moves.size > 1, 'easy is not deterministic');
 const trap = empty();
 trap[at(5, 2)] = 1; trap[at(5, 3)] = 1; trap[at(4, 3)] = 2;
 assert.ok([1, 4].includes(botMove(trap, 2, () => 0.99, 2)), 'hard blocks the open-two trap');
+
+// Server (worker/games/caro.js, module c4) là trọng tài: đúng lượt, cột hợp lệ, cột đầy bị từ chối, thắng do server tính.
+{
+  const ends = [];
+  const ctx = { g: {}, cfg: { ...c4.cfg }, keep: {}, seats: ['a', 'b'], wakeAt: () => {}, end: (r) => ends.push(r), name: (id) => id };
+  c4.start(ctx);
+  const [first, second] = ctx.g.seats;
+  const mv = (id, i) => c4.msg(ctx, { id }, { t: 'move', i });
+  assert.equal(mv(second, 3), false, 'not your turn');
+  for (const bad of [-1, COLS, 2.5, '3', undefined]) assert.equal(mv(first, bad), false, `bad column ${bad}`);
+  assert.equal(mv('watcher', 3), false, 'spectators cannot move');
+  // Lấp đầy cột 6 xen kẽ: quân rơi từ đáy lên, nước thứ 7 vào cột đầy bị từ chối.
+  for (let k = 0; k < ROWS; k++) assert.equal(mv(k % 2 ? second : first, 6), true);
+  assert.equal(ctx.g.board[at(0, 6)], 2);
+  assert.equal(mv(first, 6), false, 'full column');
+  // Quân 1 nối ngang ở đáy cột 1-4 -> thắng, ván khoá.
+  for (const c of [1, 1, 2, 2, 3, 3]) mv(ctx.g.turn === 1 ? first : second, c);
+  assert.equal(mv(first, 4), true);
+  assert.equal(ctx.g.winner, 1);
+  assert.deepEqual(ctx.g.line, [at(5, 1), at(5, 2), at(5, 3), at(5, 4)]);
+  assert.equal(ends.length, 1);
+  assert.equal(mv(second, 5), false, 'game over');
+}
 
 console.log('noi-4 ok');
