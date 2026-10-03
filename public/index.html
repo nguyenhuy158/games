@@ -137,6 +137,11 @@
     .thumb.sd div { display: grid; grid-template-columns: repeat(3, 30px); grid-auto-rows: 30px; border: 3px solid #1d2733; background: #fff; }
     .thumb.sd i { display: grid; place-items: center; border: 1px solid #c7d3df; font: 800 17px/1 inherit; font-style: normal; color: #1d2733; }
     .thumb.sd i.u { color: #2f7fe0; } .thumb.sd i.s { background: #cfe4ff; }
+    .thumb.lt { background: radial-gradient(circle at 50% 0%, #b3261e, #5a0f12); display: grid; place-items: center; }
+    .thumb.lt div { display: grid; grid-template-columns: repeat(9, 22px); grid-auto-rows: 22px; border: 3px solid #3a1a10; border-radius: 6px; background: #fff1cf; overflow: hidden; }
+    .thumb.lt i { display: grid; place-items: center; border: 1px solid #c9a978; font: 800 10px/1 inherit; font-style: normal; color: #3a1a10; background: #fffaf0; }
+    .thumb.lt i:empty { background: repeating-linear-gradient(45deg, #e9c98f 0 3px, #f3dcae 3px 6px); }
+    .thumb.lt i.x { background: #2e9e5b; color: #fff; }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
     #lang { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; }
     .lang-toggle { background: var(--panel); border: 1px solid var(--line); color: var(--text); }
@@ -225,6 +230,12 @@
       <b><img class="logo" src="/logos/dao-vang.svg" alt=""> <span data-en="Gold Miner">Đào Vàng</span></b>
       <span><span data-en="Swing the claw to grab gold and diamonds. Hit the target before time runs out.">Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span></span>
       <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Shared mine">Chung mỏ</span></i><i><span data-en="Gold rush">Tranh vàng</span></i><i><span data-en="Shop">Tiệm đồ</span></i></div>
+    </a>
+    <a class="game" href="/loto/">
+      <div class="thumb lt"><div><i>3</i><i></i><i class="x">24</i><i></i><i>41</i><i class="x">55</i><i></i><i>72</i><i></i><i></i><i class="x">17</i><i></i><i>36</i><i></i><i>58</i><i></i><i class="x">79</i><i>86</i><i>8</i><i></i><i>29</i><i class="x">38</i><i></i><i></i><i>63</i><i></i><i class="x">90</i></div></div>
+      <b><img class="logo" src="/logos/loto.svg" alt=""> <span data-en="Lo To">Lô tô</span></b>
+      <span><span data-en="Vietnamese bingo: everyone gets a card, the host calls numbers, first full row shouts KINH!">Mỗi người một phiếu, chủ phòng gọi số 1–90, ai kín một hàng trước là KINH!</span></span>
+      <div class="tags"><i><span data-en="1–12 players">1–12 người</span></i><i><span data-en="Host calls">Chủ phòng gọi số</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
     </a>
   </div>
   <h2 class="group"><i data-icon="puzzle"></i> <span data-en="Puzzles &amp; solo">Giải đố &amp; một mình</span></h2>

@@ -17,12 +17,13 @@ import bauCua from './games/bau-cua.js';
 import doMin from './games/do-min.js';
 import daoVang from './games/dao-vang.js';
 import pikachu from './games/pikachu.js';
+import loto from './games/loto.js';
 
 export { http as default } from './adapters/http.js';
 export { Top } from './adapters/top.js';
 
-// /api/nk/<game>/room/CODE -> DO "<game>:<CODE>".
-export const NOKIA_GAMES = { snake, bantumi, pairs, logic, 'rapid-roll': rapidRoll, 'space-impact': spaceImpact, bounce, 'o-an-quan': oAnQuan, 'co-ganh': coGanh, 'co-tuong': coTuong };
+// /api/nk/<game>/room/CODE -> DO "<game>:<CODE>" (ngoài game Nokia còn Ô ăn quan, Cờ gánh, Cờ tướng, Lô tô: class này là phòng dùng chung).
+export const NOKIA_GAMES = { snake, bantumi, pairs, logic, 'rapid-roll': rapidRoll, 'space-impact': spaceImpact, bounce, 'o-an-quan': oAnQuan, 'co-ganh': coGanh, 'co-tuong': coTuong, loto };
 export class NokiaRoom extends gameRoom(NOKIA_GAMES) {}
 // /api/room/CODE (Pikachu), /api/cc|c4/room/CODE (Cờ caro / Nối 4 chung class), /api/bt/room/CODE, /api/bc/room/CODE, /api/ms/room/CODE, /api/dv/room/CODE.
 export class CaroRoom extends gameRoom({ caro, c4 }) {}

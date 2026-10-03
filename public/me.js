@@ -8,8 +8,8 @@ hydrateIcons();
 
 const SSO = 'https://auth.huyab.click';
 const GAMES = en
-  ? { pikachu: 'Pikachu', 'dao-vang': 'Gold Miner', 'do-min': 'Minesweeper', 'bau-cua': 'Bau Cua', 'co-caro': 'Gomoku', 'noi-4': 'Connect 4', 'ban-tau': 'Battleship', snake: 'Snake', bantumi: 'Bantumi', pairs: 'Pairs', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'O An Quan', 'co-ganh': 'Co Ganh', 'co-tuong': 'Xiangqi' }
-  : { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', snake: 'Rắn săn mồi', bantumi: 'Bantumi', pairs: 'Lật hình', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'Ô ăn quan', 'co-ganh': 'Cờ gánh', 'co-tuong': 'Cờ tướng' };
+  ? { pikachu: 'Pikachu', 'dao-vang': 'Gold Miner', 'do-min': 'Minesweeper', 'bau-cua': 'Bau Cua', 'co-caro': 'Gomoku', 'noi-4': 'Connect 4', 'ban-tau': 'Battleship', snake: 'Snake', bantumi: 'Bantumi', pairs: 'Pairs', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'O An Quan', 'co-ganh': 'Co Ganh', 'co-tuong': 'Xiangqi', loto: 'Lo To' }
+  : { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', snake: 'Rắn săn mồi', bantumi: 'Bantumi', pairs: 'Lật hình', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'Ô ăn quan', 'co-ganh': 'Cờ gánh', 'co-tuong': 'Cờ tướng', loto: 'Lô tô' };
 const MODES = en
   ? { coop: 'Co-op', race: 'Race', team: 'Team 2v2', versus: 'Gold rush', solo: 'Solo', rotate: 'Rotating dealer', house: 'Bot dealer', pvp: 'PvP', bot: 'Vs bot', multi: 'Multiplayer' }
   : { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình', rotate: 'Xoay cái', house: 'Máy làm cái', pvp: 'Đối kháng', bot: 'Với máy', multi: 'Nhiều người' };
@@ -20,11 +20,13 @@ const moves = (v) => t(`${v} nước`, `${v} moves`);
 const SCORE = {
   'dao-vang': (v) => `$${v}`, 'do-min': mmss, 'bau-cua': (v) => `${v > 0 ? '+' : ''}${v} ${t('xu', 'coins')}`, 'co-caro': moves, 'noi-4': moves,
   'ban-tau': (v) => t(`${v} phát`, `${v} shots`), snake: (v) => t(`${v} điểm`, `${v} pts`), bantumi: (v) => t(`${v} sỏi`, `${v} seeds`), 'rapid-roll': (v) => `${v} m`, bounce: (v) => t(`${v} giây`, `${v} s`), 'space-impact': (v) => t(`${v} điểm`, `${v} pts`), logic: (v) => (v ? t(`${v} lượt`, `${v} guesses`) : t('chưa giải', 'unsolved')), 'o-an-quan': (v) => t(`${v} điểm`, `${v} pts`), 'co-ganh': (v) => t(`${v} quân`, `${v} pieces`), 'co-tuong': moves,
+  loto: (v) => t(`${v} số đã dò`, `${v} marked`),
 };
 const scoreText = (game, v) => (SCORE[game] ?? String)(v);
 // "level" mỗi game mang nghĩa khác nhau.
 const LEVEL = { 'do-min': () => '', 'bau-cua': (l) => t(` · ${l} ván`, ` · ${l} rounds`), 'co-caro': (l) => t(` · bàn ${l}×${l}`, ` · ${l}×${l} board`), 'noi-4': () => '', 'ban-tau': () => '',
-  snake: (l) => t(` · tốc độ ${l}`, ` · speed ${l}`), bantumi: (l) => t(` · ${l} sỏi/hố`, ` · ${l} seeds/pit`), pairs: () => '', logic: () => '', 'rapid-roll': () => '', 'co-ganh': () => '', 'co-tuong': () => '', 'o-an-quan': () => '' };
+  snake: (l) => t(` · tốc độ ${l}`, ` · speed ${l}`), bantumi: (l) => t(` · ${l} sỏi/hố`, ` · ${l} seeds/pit`), pairs: () => '', logic: () => '', 'rapid-roll': () => '', 'co-ganh': () => '', 'co-tuong': () => '', 'o-an-quan': () => '',
+  loto: (l) => t(` · gọi ${l} số`, ` · ${l} numbers called`) };
 const levelText = (game, l) => (LEVEL[game] ?? ((x) => t(` · màn ${x}`, ` · level ${x}`)))(l);
 
 const ago = (at) => {

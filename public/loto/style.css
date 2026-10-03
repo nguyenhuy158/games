@@ -1,0 +1,51 @@
+/* Lô tô: nền đỏ hội chợ, phiếu giấy vàng kem kẻ ô; số vừa gọi là quả bóng vàng. Ghi đè màu của nokia.css. */
+:root {
+  --bg: #5a0f12; --panel: #fff7e8; --line: #e9cfa4; --text: #3a1a10; --muted: #8a5a3c; --accent: #d62828;
+  --good: #2e9e5b; --bad: #d9412b;
+}
+body { background: radial-gradient(circle at 50% 0%, #b3261e, #5a0f12 75%) fixed; color: #fff7e8; }
+.card, #players li { color: var(--text); }
+input { background: #fff; color: var(--text); }
+button.primary { color: #fff; }
+#overlay { background: #2a0607b0; }
+header button { color: var(--text); }
+
+.board-stage { width: 100%; height: 100%; display: grid; place-items: center; }
+.lt { --w: min(96vw, 640px); width: var(--w); max-height: 100%; display: grid; gap: 10px; grid-template-rows: auto minmax(44px, 1fr) auto auto; }
+.now { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 16px; background: #fff7e8; color: var(--text); box-shadow: 0 6px 18px #0005; }
+.ball {
+  width: 64px; height: 64px; flex: none; display: grid; place-items: center; border-radius: 50%;
+  font-size: 30px; font-weight: 800; color: #3a1a10; font-variant-numeric: tabular-nums;
+  background: radial-gradient(circle at 35% 30%, #fff6b0, #ffd23f 55%, #d99a00); box-shadow: 0 4px 10px #0005, inset 0 -4px 0 #0002;
+}
+.ball.pulse { animation: ring 1.2s ease-out 1; }
+@keyframes ring { 0% { box-shadow: 0 0 0 0 #ffd23fcc; transform: scale(1.12); } 100% { box-shadow: 0 0 0 18px #ffd23f00; transform: scale(1); } }
+.now .meta { flex: 1; display: grid; }
+.now small { color: var(--muted); font-size: 12px; }
+.now .count { font-weight: 700; font-variant-numeric: tabular-nums; }
+.now .call { padding: 10px 16px; font-size: 16px; }
+.now .wait { color: var(--muted); font-size: 13px; }
+.called { min-height: 0; overflow-y: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; padding: 8px; border-radius: 14px; background: #2a0607aa; }
+.called span { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #fff7e8; color: var(--text); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.called span.cur { background: #ffd23f; box-shadow: 0 0 0 3px #fff; }
+.called em { color: #ffd9c9; font-size: 13px; }
+.ticket {
+  display: grid; grid-template-columns: repeat(9, 1fr); border: 4px solid #3a1a10; border-radius: 10px; overflow: hidden;
+  background: #fff1cf; box-shadow: 0 10px 24px #0007;
+}
+.ticket .cell {
+  aspect-ratio: 1; min-width: 0; padding: 0; border: 0; border-radius: 0; border-right: 1px solid #c9a978; border-bottom: 1px solid #c9a978;
+  background: #fffaf0; color: #3a1a10; font-size: calc(var(--w) / 9 * .42); font-weight: 800; font-variant-numeric: tabular-nums; position: relative;
+}
+.ticket .cell:nth-child(9n) { border-right: 0; }
+.ticket .cell:nth-last-child(-n + 9) { border-bottom: 0; }
+.ticket .cell:disabled { opacity: 1; cursor: default; } /* nokia.css làm mờ nút disabled */
+.ticket .blank { background: repeating-linear-gradient(45deg, #e9c98f 0 6px, #f3dcae 6px 12px); }
+.ticket .can { background: #cfe4ff; cursor: pointer; animation: glow 1.4s ease-in-out infinite; }
+.ticket .cur.can { background: #ffe066; }
+@keyframes glow { 50% { filter: brightness(1.08); } }
+.ticket .hit { background: #2e9e5b; color: #fff; }
+.ticket .hit::after { content: ''; position: absolute; inset: 14%; border-radius: 50%; border: 3px solid #fff9; }
+.ticket .win { box-shadow: inset 0 0 0 3px #ffd23f; }
+.hint { margin: 0; min-height: 1.4em; text-align: center; font-weight: 600; color: #fff7e8; text-shadow: 0 1px 3px #0008; opacity: 1; font-size: 14px; }
+@media (max-width: 480px) { .ball { width: 52px; height: 52px; font-size: 24px; } .now .call { padding: 8px 12px; } }

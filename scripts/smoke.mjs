@@ -234,6 +234,25 @@ const GAMES = {
     await until(() => r.socks[0].last.status === 'ended', 240000, 'co-tuong ends');
     return JSON.stringify(r.socks[0].last.result.title);
   },
+  // Lô tô 2 người: mỗi bot dò số đã gọi trên phiếu của mình, chủ phòng dò xong thì gọi số tiếp, tới khi có người kinh.
+  async loto() {
+    const r = await nokia('loto', 2, (ws, m) => {
+      const v = m.view;
+      if (m.status !== 'playing' || !v?.card) return;
+      const i = v.card.flat().findIndex((n, k) => n != null && v.called.includes(n) && !v.marked.includes(k));
+      if (i >= 0) {
+        if (ws.marking !== `${i}:${v.marked.length}`) { ws.marking = `${i}:${v.marked.length}`; r.send(ws, { t: 'g', a: 'mark', i }); }
+      } else if (m.host === ws.me && ws.called !== v.called.length) {
+        ws.called = v.called.length;
+        r.send(ws, { t: 'g', a: 'call' });
+      }
+    });
+    await until(() => r.socks[0].last.status === 'ended', 60000, 'loto ends');
+    const res = r.socks[0].last.result;
+    if (!res.ranks[0].won || res.ranks[0].score < 5) throw new Error(JSON.stringify(res));
+    r.close();
+    return `${JSON.stringify(res.title)} after ${r.socks[0].last.view.called.length} calls`;
+  },
   // Bantumi với máy: tới hết ván.
   async bantumi() {
     const r = await nokia('bantumi', 1, (ws, m) => {
