@@ -49,18 +49,27 @@ export function nokiaApp(opt) {
   const pad = el('div', { className: 'pad' });
   const ov = el('div', { id: 'overlay', hidden: true });
   const btnLeave = el('button', { title: t('Rời phòng', 'Leave room'), innerHTML: icon('arrow-left'), onclick: () => leave() });
+  // Luật chơi (opt.help) mở được ngay trong phòng, không chỉ ở trang vào phòng.
+  const help = el('div', { id: 'help', hidden: true, onclick: (e) => { if (e.target === help) help.hidden = true; } },
+    el('div', { className: 'card', role: 'dialog' },
+      el('h2', {}, iconEl('info'), ` ${t('Luật chơi', 'How to play')}`),
+      el('p', { className: 'rules', textContent: opt.help }),
+      el('button', { className: 'primary', textContent: t('Đã hiểu', 'Got it'), onclick: () => { help.hidden = true; } })));
+  const btnHelp = el('button', { title: t('Luật chơi', 'How to play'), innerHTML: icon('info'), hidden: !opt.help, onclick: () => { help.hidden = false; } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !help.hidden) help.hidden = true; });
   const btnInvite = el('button', { title: t('Mời bạn: mã QR / link', 'Invite: QR code / link'), onclick: () => invite(`${location.origin}${opt.path ?? `/nokia/${opt.game}/`}?r=${code}`, code) },
     el('span', { className: 'lbl', textContent: t('Phòng ', 'Room ') }), roomCode, iconEl('qr-code'));
   const hint = el('div', { className: 'hint' },
     el('span', { className: 'touch', textContent: t('Vuốt ở đây hoặc bấm phím bên dưới', 'Swipe here or use the keys below') }),
     el('span', { className: 'keys', textContent: t('Phím mũi tên / WASD · Enter hoặc 5 = OK', 'Arrow keys / WASD · Enter or 5 = OK') }));
   const roomEl = el('section', { id: 'room', hidden: true },
-    el('header', {}, btnLeave, btnInvite, conn, el('span', { className: 'grow' }), btnSound),
+    el('header', {}, btnLeave, btnInvite, conn, el('span', { className: 'grow' }), btnHelp, btnSound),
     players,
     el('main', { className: 'stage' },
       opt.mount ? el('div', { className: 'board-stage' })
         : el('div', { className: 'phone' }, el('div', { className: 'screen' }, canvas), hint, pad),
       ov),
+    help,
   );
   document.body.append(home, roomEl);
   hydrateIcons();
@@ -139,7 +148,7 @@ export function nokiaApp(opt) {
     if (!quiet) render();
   }
 
-  if (opt.draw) bindKeys(pad, (k, down) => opt.onKey?.(k, down, room, app), () => !rp && !!room && roomEl.hidden === false);
+  if (opt.draw) bindKeys(pad, (k, down) => opt.onKey?.(k, down, room, app), () => !rp && !!room && roomEl.hidden === false && help.hidden);
   canvas.onpointerdown = (e) => { if (!rp && room && opt.onTap) { e.preventDefault(); opt.onTap(...app.lcdPoint(e), room, app); } };
   // Vuốt = bấm 1 mũi tên (nhấn + nhả). Vùng trống quanh màn luôn vuốt được; trên màn LCD thì chỉ khi game không dùng chạm
   // (Lật hình, Logic, Bantumi, Bounce chạm thẳng lên màn nên vuốt ở đó sẽ lẫn với chạm).
