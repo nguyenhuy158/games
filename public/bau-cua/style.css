@@ -51,6 +51,12 @@ header .grow { flex: 1; }
   header button { padding: 6px 8px; }
   .lbl { display: none; }
 }
+/* ≤430px: thanh trên đủ chỗ cho cả công tắc Công khai — bỏ chữ cạnh công tắc (vẫn đọc được qua label), gọn khoảng cách. */
+@media (max-width: 430px) {
+  header { gap: 3px; padding-inline: 6px; }
+  header button { padding: 6px 6px; }
+  header label.pub-switch { font-size: 0; gap: 0; }
+}
 #players { list-style: none; margin: 4px 12px 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
 #players li {
   display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;

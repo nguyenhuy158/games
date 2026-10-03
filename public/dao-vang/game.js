@@ -88,11 +88,16 @@ function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 
 $('#btnSound').onclick = () => { soundOn = !soundOn; store.set('dv.sound', soundOn ? '1' : '0'); if (!soundOn) stop('up'); renderSound(); };
 renderSound();
 
-// Khung trong atlas dùng làm ảnh CSS (tiệm, menu).
-function spriteEl(name, scale = 1) {
+// Khung trong atlas dùng làm ảnh CSS (tiệm, menu). Nền tính theo % + aspect-ratio nên khung co theo
+// max-width (màn hẹp) mà vẫn đủ hình; fit = cạnh dài nhất tối đa (px).
+const ATLAS_W = 1024, ATLAS_H = 2048;
+function spriteEl(name, scale = 1, fit = Infinity) {
   const f = FRAMES[name];
+  const s = Math.min(scale, fit / f.w, fit / f.h);
   const d = el('span', { className: 'sprite' });
-  d.style.cssText = `width:${f.w * scale}px;height:${f.h * scale}px;background-position:${-f.x * scale}px ${-f.y * scale}px;background-size:${1024 * scale}px ${2048 * scale}px`;
+  d.style.cssText = `width:${f.w * s}px;aspect-ratio:${f.w}/${f.h};` +
+    `background-size:${(ATLAS_W / f.w) * 100}% ${(ATLAS_H / f.h) * 100}%;` +
+    `background-position:${(f.x / (ATLAS_W - f.w)) * 100}% ${(f.y / (ATLAS_H - f.h)) * 100}%`;
   return d;
 }
 
@@ -400,7 +405,7 @@ const solo = {
 function shopItem(o, owned, affordable, onBuy) {
   const def = SHOP[o.key], enDef = SHOP_EN[o.key];
   return el('button', { className: 'shop-item', disabled: owned || !affordable, onclick: onBuy },
-    spriteEl(def.frame), el('strong', { textContent: t(def.name, enDef.name) }), el('small', { textContent: t(def.desc, enDef.desc) }),
+    spriteEl(def.frame, 1, 56), el('strong', { textContent: t(def.name, enDef.name) }), el('small', { textContent: t(def.desc, enDef.desc) }),
     el('em', { textContent: owned ? t('Đã mua', 'Bought') : `$${o.price}` }));
 }
 

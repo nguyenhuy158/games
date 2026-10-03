@@ -86,6 +86,11 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
   header .lbl { display: none; }
   header #modeTag { display: none; }
 }
+/* 360–380px (Galaxy S8/S9, iPhone SE zoom): thanh trên gọn thêm để nút âm thanh không bị đẩy khuất. */
+@media (max-width: 380px) {
+  header { gap: 3px; padding-inline: 6px; }
+  header button { padding: 6px 6px; }
+}
 #modeTag { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); flex: none; }
 .dot.on { background: var(--good); }
