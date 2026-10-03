@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { W, H, SHAPES, TYPES, newGame, spawn, shift, rotate, rotateShape, hardDrop, tick, collides } from './public/tetris/logic.js';
+import { W, H, SHAPES, TYPES, TICK_MS, LEVELS, DEFAULT_LEVEL, tickMs, newGame, spawn, shift, rotate, rotateShape, hardDrop, tick, collides } from './public/tetris/logic.js';
 
 const pick = (type) => () => (TYPES.indexOf(type) + 0.5) / TYPES.length; // rand cho ra đúng loại khối
 
@@ -73,5 +73,13 @@ const pick = (type) => () => (TYPES.indexOf(type) + 0.5) / TYPES.length; // rand
   assert.equal(s.over, true);
   assert.equal(s.piece, null);
   assert.equal(tick(s), -1);
+}
+// Độ khó: càng khó nhịp rơi càng ngắn; mức lạ thì về mặc định.
+{
+  assert.equal(tickMs(DEFAULT_LEVEL), TICK_MS);
+  assert.ok(tickMs('normal') > tickMs('hard') && tickMs('hard') > tickMs('expert'));
+  assert.equal(tickMs('nope'), TICK_MS);
+  assert.equal(tickMs('toString'), TICK_MS);
+  assert.equal(Object.keys(LEVELS)[0], DEFAULT_LEVEL);
 }
 console.log('tetris ok');

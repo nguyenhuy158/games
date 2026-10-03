@@ -4,6 +4,10 @@
 export const W = 10;
 export const H = 20;
 export const TICK_MS = 800;
+// Độ khó = hệ số tốc độ rơi (nhịp = TICK_MS / hệ số). Mức đầu là mặc định.
+export const LEVELS = { normal: 1, hard: 1.6, expert: 2.5 };
+export const DEFAULT_LEVEL = 'normal';
+export const tickMs = (level) => Math.round(TICK_MS / (Object.hasOwn(LEVELS, level) ? LEVELS[level] : LEVELS[DEFAULT_LEVEL]));
 // Điểm theo số hàng xoá cùng lúc (0..4 hàng).
 export const POINTS = [0, 40, 100, 300, 1200];
 

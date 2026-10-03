@@ -1,19 +1,31 @@
-import { W, H, TICK_MS, newGame, spawn, shift, rotate, hardDrop, tick } from './logic.js';
+import { W, H, LEVELS, DEFAULT_LEVEL, tickMs, newGame, spawn, shift, rotate, hardDrop, tick } from './logic.js';
 import { t } from '../i18n.js';
 import { hydrateIcons, icon } from '../icons.js';
 import { swipe } from '../swipe.js';
 import { $, el, store } from '../dom.js';
 
-// Xếp gạch một người, chạy hết ở client. Kỷ lục lưu trong máy (localStorage 'tetris.best').
+// Xếp gạch một người, chạy hết ở client. Kỷ lục lưu trong máy theo từng độ khó (localStorage 'tetris.best', 'tetris.best.hard', ...).
 // Phím: ← → di chuyển, ↑ xoay, ↓ rơi nhanh, Cách thả xuống đáy, P tạm dừng (Cách lúc chưa chơi = bắt đầu).
 // Cảm ứng: vuốt trái / phải / xuống, vuốt lên hoặc chạm = xoay; hoặc 4 nút dưới bàn.
+// Độ khó (Thường / Khó / Siêu khó) chọn trên màn bắt đầu / hết ván, nhớ ở 'tetris.level'.
 const BEST_KEY = 'tetris.best';
+const LEVEL_KEY = 'tetris.level';
+const bestKey = (lv) => (lv === DEFAULT_LEVEL ? BEST_KEY : `${BEST_KEY}.${lv}`);
 
 hydrateIcons();
 const cells = Array.from({ length: W * H }, () => el('div'));
 $('#cells').append(...cells);
 let s = newGame(), playing = false, paused = false, timer = 0;
-let best = Number(store.get(BEST_KEY)) || 0;
+let level = Object.hasOwn(LEVELS, store.get(LEVEL_KEY) ?? '') ? store.get(LEVEL_KEY) : DEFAULT_LEVEL;
+let best = Number(store.get(bestKey(level))) || 0;
+
+function setLevel(lv) {
+  if (playing || !Object.hasOwn(LEVELS, lv)) return;
+  level = lv;
+  store.set(LEVEL_KEY, lv);
+  best = Number(store.get(bestKey(lv))) || 0;
+  draw();
+}
 
 function start() {
   s = newGame();
@@ -27,13 +39,13 @@ function start() {
 // Nhịp rơi đều chỉ chạy lúc đang chơi và không tạm dừng.
 function loop() {
   clearInterval(timer);
-  if (playing && !paused) timer = setInterval(step, TICK_MS);
+  if (playing && !paused) timer = setInterval(step, tickMs(level));
 }
 
 function step() {
   if (!playing || paused) return;
   tick(s);
-  if (s.score > best) { best = s.score; store.set(BEST_KEY, String(best)); }
+  if (s.score > best) { best = s.score; store.set(bestKey(level), String(best)); }
   if (s.over) { playing = false; loop(); }
   draw();
 }
@@ -76,6 +88,8 @@ function draw() {
   bp.disabled = !playing;
   bp.innerHTML = `${icon(paused ? 'play' : 'pause')} <span>${paused ? t('Chơi tiếp', 'Resume') : t('Tạm dừng', 'Pause')}</span>`;
   for (const b of document.querySelectorAll('.moves button')) b.disabled = !playing || paused;
+  for (const b of document.querySelectorAll('[data-level]')) b.classList.toggle('on', b.dataset.level === level);
+  $('#lvlName').textContent = document.querySelector(`[data-level="${level}"]`).textContent;
 }
 
 const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'rotate', ArrowDown: 'down', ' ': 'drop' };
@@ -91,4 +105,5 @@ swipe($('#board'), {
 });
 // Bỏ focus khỏi nút vừa bấm: phím Cách (thả khối) không được bấm lại nút đó.
 for (const b of document.querySelectorAll('[data-act]')) b.onclick = () => { b.blur(); act(b.dataset.act); };
+for (const b of document.querySelectorAll('[data-level]')) b.onclick = () => { b.blur(); setLevel(b.dataset.level); };
 draw();
