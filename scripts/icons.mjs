@@ -6,7 +6,7 @@ const NAMES = ['arrow-left', 'link', 'lightbulb', 'shuffle', 'volume-2', 'volume
   'crown', 'bot', 'party-popper', 'frown', 'coins', 'dices', 'bomb', 'timer', 'heart', 'heart-off', 'pickaxe',
   'arrow-down', 'gamepad-2', 'moon', 'handshake', 'medal', 'circle-check', 'circle-x', 'info', 'triangle-alert',
   'thumbs-up', 'laugh', 'flame', 'sparkles', 'hourglass', 'smartphone', 'pause', 'x', 'circle', 'chevron-up', 'chevron-down', 'chevron-left', 'chevron-right', 'smartphone-nfc', 'gamepad', 'rotate-cw', 'hand', 'arrow-right',
-  'arrow-up', 'refresh-cw', 'pencil', 'eraser', 'save', 'puzzle', 'megaphone', 'megaphone-off', 'music'];
+  'arrow-up', 'refresh-cw', 'pencil', 'eraser', 'save', 'puzzle', 'megaphone', 'megaphone-off', 'music', 'undo-2', 'gauge'];
 
 const attrs = (o) => Object.entries(o).map(([k, v]) => `${k}="${v}"`).join(' ');
 const out = {};

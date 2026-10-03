@@ -1,6 +1,7 @@
 /* 2048: bàn vừa một màn hình (máy cảm ứng chừa chỗ cho phím trên màn), màu ô kiểu 2048 gốc. */
 .sub { margin: 0; color: var(--muted); }
 .hint { color: var(--muted); font-size: 13px; align-self: center; }
+.row button { min-height: 44px; }
 #board {
   --w: min(92vw, 460px, calc(100dvh - 290px)); --gap: calc(var(--w) * .03);
   position: relative; width: var(--w); aspect-ratio: 1; padding: var(--gap); border-radius: 14px;

@@ -11,16 +11,26 @@ import { $, el, store } from '../dom.js';
 const API = '/api/board?game=2048';
 const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
 const BIGGEST = 2048; // ô lớn hơn dùng chung một màu
+const UNDO_MAX = 10; // nhớ tối đa 10 nước để đi lại
 
 hydrateIcons();
 const cells = Array.from({ length: CELLS }, () => el('div', { className: 'tile' }));
 $('#tiles').append(...cells);
-const over = $('#over'), btnSave = $('#btnSave'), nameIn = $('#name');
-let grid, score, saved;
+const over = $('#over'), btnSave = $('#btnSave'), nameIn = $('#name'), btnUndo = $('#btnUndo');
+let grid, score, saved, history;
 
 function start() {
   grid = newGame();
   score = 0;
+  history = [];
+  over.hidden = true;
+  draw(-1);
+}
+
+// Đi lại nước trước (tối đa UNDO_MAX nước). Đã lưu điểm lên bảng xếp hạng thì không đi lại được nữa.
+function undo() {
+  if (saved || !history.length) return;
+  ({ grid, score } = history.pop());
   over.hidden = true;
   draw(-1);
 }
@@ -29,6 +39,8 @@ function move(dir) {
   if (!over.hidden) return;
   const r = slide(grid, dir);
   if (!r.moved) return;
+  history.push({ grid, score });
+  if (history.length > UNDO_MAX) history.shift();
   grid = addTile(r.grid);
   score += r.gain;
   draw(grid.findIndex((v, i) => v && !r.grid[i]));
@@ -44,6 +56,7 @@ function draw(fresh) {
     c.dataset.len = v ? String(v).length : '';
   });
   $('#score').textContent = score;
+  btnUndo.disabled = saved || !history.length;
 }
 
 function gameOver() {
@@ -63,6 +76,7 @@ $('#saveForm').onsubmit = async (e) => {
     const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, score }) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     saved = true;
+    btnUndo.disabled = true;
     store.set('pk.name', name);
     toast.success(t('Đã lưu điểm thành công!', 'Score saved successfully!'));
     renderBoard(await res.json());
@@ -83,14 +97,22 @@ function renderBoard(rows) {
 fetch(API, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : [])).then(renderBoard).catch(() => renderBoard([]));
 
 addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement) return;
+  const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+  if ((k === 'z' && mod) || (k === 'u' && !mod && !e.altKey)) {
+    e.preventDefault();
+    undo();
+    return;
+  }
   const dir = KEYS[e.key];
-  if (!dir || e.target instanceof HTMLInputElement) return;
+  if (!dir) return;
   e.preventDefault();
   move(dir);
 });
 swipe($('#board'), { onSwipe: move });
 for (const b of document.querySelectorAll('.pad [data-dir]')) b.onclick = () => move(b.dataset.dir);
 $('#btnNew').onclick = start;
+btnUndo.onclick = undo;
 $('#btnRetry').onclick = start;
 $('#btnBoard').onclick = () => $('#side').classList.toggle('open');
 start();
