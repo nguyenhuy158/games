@@ -1,11 +1,16 @@
 import { nokiaApp } from '../room.js';
 import { t } from '../../i18n.js';
 import { COLS, ROWS } from './logic.js';
+import { DIM } from '../lcd.js';
+import { store } from '../../dom.js';
 
 // Ô 3px, sân bắt đầu từ y = 8 (hàng trên ghi điểm). Rắn của mình tô đặc, rắn người khác chỉ viền (LCD 2 màu).
 const CELL = 3, X0 = 1, Y0 = 8;
 const SPEED_NAMES = ['1', '2', '3', '4', '5'];
-let lastStep = -1;
+// Kỷ lục của máy này (mọi chế độ), hiện mờ cạnh điểm trên LCD và ở sảnh chờ.
+const BEST_KEY = 'nk.best.snake';
+let lastStep = -1, best = Number(store.get(BEST_KEY)) || 0;
+const bestText = () => (best ? t(` Kỷ lục máy này: ${best} điểm.`, ` Best on this device: ${best} pts.`) : '');
 
 nokiaApp({
   game: 'snake',
@@ -15,7 +20,7 @@ nokiaApp({
     'Arrow keys / WASD / 2-4-6-8 or the on-screen keypad. Eat food to grow; the bonus bug vanishes after a few seconds. Hitting a wall (if on), a maze wall or a snake body loses. Shared arena: hit another snake and you die, last snake alive wins. Own field: everyone plays until they crash, highest score wins.'),
   lobbyText: (r) => (r.players.length < 2 ? t('Chơi một mình — mời bạn bè để đua điểm hoặc chung sân.', 'Playing solo — invite friends for a score race or a shared arena.')
     : r.cfg.mode === 'solo' ? t(`${Math.min(4, r.players.length)} người, mỗi người một sân — so điểm.`, `${Math.min(4, r.players.length)} players, one field each — highest score wins.`)
-      : t(`${Math.min(4, r.players.length)} con rắn chung một sân — tranh mồi, đâm nhau là thua.`, `${Math.min(4, r.players.length)} snakes in one arena — fight for food, crash and you lose.`)),
+      : t(`${Math.min(4, r.players.length)} con rắn chung một sân — tranh mồi, đâm nhau là thua.`, `${Math.min(4, r.players.length)} snakes in one arena — fight for food, crash and you lose.`)) + bestText(),
   lobby(box, r, isHost, setCfg) {
     const seg = document.createElement('div');
     seg.className = 'seg';
@@ -51,16 +56,20 @@ nokiaApp({
       if (e.t === 'bug') app.beep(1600, 90);
       if (e.t === 'die') app.beep(180, 300, 'sawtooth');
     }
+    const me = !app.replay && v.snakes.find((s) => s.id === app.id);
+    if (me && me.score > best) { best = me.score; store.set(BEST_KEY, String(best)); }
   },
   draw(lcd, r, now, app) {
     const v = r.view;
     if (!v) {
       lcd.center(10, 'SNAKE');
       drawSnakeArt(lcd);
+      if (best) lcd.center(36, `TOP ${String(best).padStart(4, '0')}`);
       return;
     }
     const me = v.snakes.find((s) => s.id === app.pov);
     lcd.text(1, 1, String(me?.score ?? v.snakes[0].score).padStart(4, '0'));
+    if (best) lcd.text(19, 1, String(best).padStart(4, '0'), DIM); // kỷ lục máy này
     if (v.bug) { lcd.sprite(58, 1, ['#.#', '.#.', '###', '.#.', '#.#']); lcd.text(64, 1, String(v.bug.left).padStart(2, '0')); }
     const board = v.board ?? v.snakes;
     if (board.length > 1) lcd.text(38, 1, `${board.filter((s) => s.alive).length}/${board.length}`);
