@@ -1,7 +1,7 @@
 // Smoke test nhiều người qua WebSocket thật: mỗi game vào phòng, bắt đầu ván, bot chơi tới hết (hoặc đủ xa để thấy chạy).
 // Chạy trước / sau mỗi bước refactor để chắc hành vi không đổi:
 //   node scripts/smoke.mjs                         (mặc định http://localhost:8789, wrangler dev)
-//   node scripts/smoke.mjs https://games.huyab.click [tên game ...]
+//   node scripts/smoke.mjs https://games.huyab.cfd [tên game ...]
 import { botMove as oaqBot } from '../public/o-an-quan/logic.js';
 import { botMove as bantumiBot } from '../public/nokia/bantumi/logic.js';
 import { COLS } from '../public/noi-4/logic.js';

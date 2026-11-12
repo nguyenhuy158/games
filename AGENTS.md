@@ -5,7 +5,7 @@
 Classic browser games (Pikachu, Đào Vàng, Bầu cua, Cờ caro, Nối 4, Ô ăn quan,
 Bắn tàu, Cờ tướng, Cờ gánh, Dò mìn, Lô tô, Nokia corner, and the client-only
 solo games 2048, Xếp gạch, Sudoku) served by one Cloudflare
-Worker at https://games.huyab.click. The client is plain static HTML/CSS/ES
+Worker at https://games.huyab.cfd. The client is plain static HTML/CSS/ES
 modules in `public/` with no build step; the Worker in `worker/` routes
 `/api/*`, proxies WebSockets into Durable Objects and serves `public/` through
 the `ASSETS` binding (`wrangler.toml`).
@@ -68,7 +68,7 @@ reference/                     # Original game assets for study (gitignored)
   smoke (`e2e/readonly-smoke.mjs`) and then `scripts/smoke.mjs`, then stop the
   server. Extra args filter games: `pnpm e2e caro c4`.
 - `pnpm e2e:prod`: run only the read-only smoke against
-  https://games.huyab.click (GET `/api/version`, `/api/rooms`, `/api/me`, the
+  https://games.huyab.cfd (GET `/api/version`, `/api/rooms`, `/api/me`, the
   hub, every game page without `?r=`, `/phong/`; no rooms, no WebSocket).
   Needs Chromium: `pnpm exec playwright-core install chromium`, or set
   `PLAYWRIGHT_CHROMIUM_PATH` (local Google Chrome is picked up on macOS).
@@ -125,14 +125,14 @@ deploy to `main` (`smoke-prod`).
 
 ## Ecosystem
 
-How this repo fits with the other `*.huyab.click` repos:
+How this repo fits with the other `*.huyab.cfd` repos:
 https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md
 
 - Kit packages (`nguyenhuy158/kit@v0.1.0`): `@huyab/sso` (optional sign-in,
   `worker/sso.js`, cookie only), `@huyab/e2e` (`e2e/run.mjs` server
   lifecycle, Chromium lookup), `@huyab/config` (`biome.json`), and CI through
   the reusable `check.yml` workflow.
-- Talks to: `sso` (auth.huyab.click login links in `public/me.js` + JWKS).
+- Talks to: `sso` (auth.huyab.cfd login links in `public/me.js` + JWKS).
   No D1, no mailer: data lives in Durable Object SQLite.
 - Called by: nobody; `mytools` pings it for uptime.
 

@@ -1,6 +1,6 @@
 # Game Cổ Điển
 
-Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.click — mỗi game một đường dẫn con. Domain cũ `pikachu.huyab.click` tự 301 sang (xem `OLD_HOSTS` ở `worker/adapters/http.js`).
+Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.cfd — mỗi game một đường dẫn con. Domain cũ `pikachu.huyab.cfd` tự 301 sang (xem `OLD_HOSTS` ở `worker/adapters/http.js`).
 
 | Game | Đường dẫn | Ghi chú |
 |---|---|---|
@@ -33,7 +33,7 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 
 ## Tài khoản & lịch sử
 
-- Đăng nhập Google qua SSO dùng chung `auth.huyab.click` (giống chia-keo): cookie `huyab_sso` (Domain=.huyab.click), JWT RS256 kiểm bằng JWKS ở `worker/sso.js`. Không đăng nhập vẫn chơi bình thường (khách theo thiết bị).
+- Đăng nhập Google qua SSO dùng chung `auth.huyab.cfd` (giống chia-keo): cookie `huyab_sso` (Domain=.huyab.cfd), JWT RS256 kiểm bằng JWKS ở `worker/sso.js`. Không đăng nhập vẫn chơi bình thường (khách theo thiết bị).
 - Worker xác thực rồi gắn `X-User` khi chuyển WebSocket vào phòng; header client tự gửi luôn bị xoá trước.
 - Lịch sử lưu ở bảng `plays` trong DO `Top` (chỉ `sub` + tên, không lưu email). Ván nhiều người do server ghi; Đào Vàng 1 người do client gửi `POST /api/me/history` (tự báo nên chỉ là lịch sử cá nhân).
 - `GET /api/me` (user + thống kê), `GET /api/me/history` (30 ván gần nhất). Trang chủ hiển thị cả hai.

@@ -1,4 +1,4 @@
-// Đăng nhập Google qua SSO auth.huyab.click (dùng chung với chia-keo) + lịch sử chơi ở trang chủ.
+// Đăng nhập Google qua SSO auth.huyab.cfd (dùng chung với chia-keo) + lịch sử chơi ở trang chủ.
 import { iconEl, hydrateIcons } from './icons.js';
 import { t, en } from './i18n.js';
 import { replayLinks } from './replay.js';
@@ -6,7 +6,7 @@ import { $, el } from './dom.js';
 
 hydrateIcons();
 
-const SSO = 'https://auth.huyab.click';
+const SSO = 'https://auth.huyab.cfd';
 const GAMES = en
   ? { pikachu: 'Pikachu', 'dao-vang': 'Gold Miner', 'do-min': 'Minesweeper', 'bau-cua': 'Bau Cua', 'co-caro': 'Gomoku', 'noi-4': 'Connect 4', 'ban-tau': 'Battleship', snake: 'Snake', bantumi: 'Bantumi', pairs: 'Pairs', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'O An Quan', 'co-ganh': 'Co Ganh', 'co-tuong': 'Xiangqi', loto: 'Lo To' }
   : { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', snake: 'Rắn săn mồi', bantumi: 'Bantumi', pairs: 'Lật hình', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'Ô ăn quan', 'co-ganh': 'Cờ gánh', 'co-tuong': 'Cờ tướng', loto: 'Lô tô' };

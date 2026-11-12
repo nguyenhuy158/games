@@ -1,6 +1,6 @@
 // Smoke CHỈ ĐỌC: chỉ GET trang/API công khai và kiểm trang render; không vào phòng,
 // không mở WebSocket, không ghi gì. An toàn để chạy vào production:
-// `pnpm e2e:prod` (games.huyab.click). `pnpm e2e` chạy nó trước scripts/smoke.mjs
+// `pnpm e2e:prod` (games.huyab.cfd). `pnpm e2e` chạy nó trước scripts/smoke.mjs
 // để dev và prod dùng chung một bộ kiểm tra.
 //
 // Biến môi trường:
