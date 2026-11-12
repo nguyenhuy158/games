@@ -4,14 +4,14 @@ Xem nhanh từng game theo thiết bị — bấm ảnh để mở ảnh gốc. 
 
 | Bộ | Chụp | Thiết bị |
 |---|---|---|
-| **A** | Playwright + Chrome headless trên prod https://games.huyab.click, sau commit `0d8c435` (tên ngẫu nhiên, nút bốc tên, XO 3×3) | `desktop`, `tablet`, `phone` |
-| **B** (mới nhất) | browser-use (Chrome CDP) trên prod https://games.huyab.click, sau commit `2a72320` (trang chủ chia nhóm, Nokia màn tràn, song ngữ, công tắc Công khai) — mọi game: sảnh → phòng chờ → đang chơi | `desktop-1440`, `iphone-portrait`, `iphone-landscape` |
+| **A** | Playwright + Chrome headless trên prod https://games.huyab.cfd, sau commit `0d8c435` (tên ngẫu nhiên, nút bốc tên, XO 3×3) | `desktop`, `tablet`, `phone` |
+| **B** (mới nhất) | browser-use (Chrome CDP) trên prod https://games.huyab.cfd, sau commit `2a72320` (trang chủ chia nhóm, Nokia màn tràn, song ngữ, công tắc Công khai) — mọi game: sảnh → phòng chờ → đang chơi | `desktop-1440`, `iphone-portrait`, `iphone-landscape` |
 
 **Mục lục:** [Trang chủ](#trang-chủ) · [Phòng đang mở](#phòng-đang-mở) · [Pikachu](#pikachu) · [Dò mìn](#dò-mìn) · [Bầu cua](#bầu-cua) · [Ô ăn quan](#ô-ăn-quan) · [Cờ caro](#cờ-caro) · [Nối 4](#nối-4) · [Bắn tàu](#bắn-tàu) · [Đào Vàng](#đào-vàng) · [Rắn săn mồi](#rắn-săn-mồi) · [Bantumi](#bantumi) · [Lật hình](#lật-hình) · [Logic](#logic) · [Rapid Roll](#rapid-roll) · [Space Impact](#space-impact) · [Bounce](#bounce)
 
 ## Trang chủ
 
-https://games.huyab.click/
+https://games.huyab.cfd/
 
 ### Desktop 1280×800 · bộ A · `hub/desktop/`
 
@@ -39,7 +39,7 @@ https://games.huyab.click/
 
 ## Phòng đang mở
 
-https://games.huyab.click/phong/
+https://games.huyab.cfd/phong/
 
 ### Desktop 1440×900 · bộ B · `phong/desktop-1440/`
 
@@ -55,7 +55,7 @@ https://games.huyab.click/phong/
 
 ## Pikachu
 
-https://games.huyab.click/pikachu/
+https://games.huyab.cfd/pikachu/
 
 ### Desktop 1280×800 · bộ A · `pikachu/desktop/`
 
@@ -83,7 +83,7 @@ https://games.huyab.click/pikachu/
 
 ## Dò mìn
 
-https://games.huyab.click/do-min/
+https://games.huyab.cfd/do-min/
 
 ### Desktop 1280×800 · bộ A · `do-min/desktop/`
 
@@ -111,7 +111,7 @@ https://games.huyab.click/do-min/
 
 ## Bầu cua
 
-https://games.huyab.click/bau-cua/
+https://games.huyab.cfd/bau-cua/
 
 ### Desktop 1280×800 · bộ A · `bau-cua/desktop/`
 
@@ -139,7 +139,7 @@ https://games.huyab.click/bau-cua/
 
 ## Ô ăn quan
 
-https://games.huyab.click/o-an-quan/
+https://games.huyab.cfd/o-an-quan/
 
 ### Desktop 1440×900 · bộ B · `o-an-quan/desktop-1440/`
 
@@ -155,7 +155,7 @@ https://games.huyab.click/o-an-quan/
 
 ## Cờ caro
 
-https://games.huyab.click/co-caro/
+https://games.huyab.cfd/co-caro/
 
 ### Desktop 1280×800 · bộ A · `co-caro/desktop/`
 
@@ -183,7 +183,7 @@ https://games.huyab.click/co-caro/
 
 ## Nối 4
 
-https://games.huyab.click/noi-4/
+https://games.huyab.cfd/noi-4/
 
 ### Desktop 1440×900 · bộ B · `noi-4/desktop-1440/`
 
@@ -199,7 +199,7 @@ https://games.huyab.click/noi-4/
 
 ## Bắn tàu
 
-https://games.huyab.click/ban-tau/
+https://games.huyab.cfd/ban-tau/
 
 ### Desktop 1440×900 · bộ B · `ban-tau/desktop-1440/`
 
@@ -215,7 +215,7 @@ https://games.huyab.click/ban-tau/
 
 ## Đào Vàng
 
-https://games.huyab.click/dao-vang/
+https://games.huyab.cfd/dao-vang/
 
 ### Desktop 1280×800 · bộ A · `dao-vang/desktop/`
 
@@ -243,7 +243,7 @@ https://games.huyab.click/dao-vang/
 
 ## Rắn săn mồi
 
-https://games.huyab.click/nokia/snake/
+https://games.huyab.cfd/nokia/snake/
 
 ### Desktop 1440×900 · bộ B · `snake/desktop-1440/`
 
@@ -259,7 +259,7 @@ https://games.huyab.click/nokia/snake/
 
 ## Bantumi
 
-https://games.huyab.click/nokia/bantumi/
+https://games.huyab.cfd/nokia/bantumi/
 
 ### Desktop 1440×900 · bộ B · `bantumi/desktop-1440/`
 
@@ -275,7 +275,7 @@ https://games.huyab.click/nokia/bantumi/
 
 ## Lật hình
 
-https://games.huyab.click/nokia/pairs/
+https://games.huyab.cfd/nokia/pairs/
 
 ### Desktop 1440×900 · bộ B · `pairs/desktop-1440/`
 
@@ -291,7 +291,7 @@ https://games.huyab.click/nokia/pairs/
 
 ## Logic
 
-https://games.huyab.click/nokia/logic/
+https://games.huyab.cfd/nokia/logic/
 
 ### Desktop 1440×900 · bộ B · `logic/desktop-1440/`
 
@@ -307,7 +307,7 @@ https://games.huyab.click/nokia/logic/
 
 ## Rapid Roll
 
-https://games.huyab.click/nokia/rapid-roll/
+https://games.huyab.cfd/nokia/rapid-roll/
 
 ### Desktop 1440×900 · bộ B · `rapid-roll/desktop-1440/`
 
@@ -323,7 +323,7 @@ https://games.huyab.click/nokia/rapid-roll/
 
 ## Space Impact
 
-https://games.huyab.click/nokia/space-impact/
+https://games.huyab.cfd/nokia/space-impact/
 
 ### Desktop 1440×900 · bộ B · `space-impact/desktop-1440/`
 
@@ -339,7 +339,7 @@ https://games.huyab.click/nokia/space-impact/
 
 ## Bounce
 
-https://games.huyab.click/nokia/bounce/
+https://games.huyab.cfd/nokia/bounce/
 
 ### Desktop 1440×900 · bộ B · `bounce/desktop-1440/`
 

@@ -1,5 +1,5 @@
-// Đăng nhập = SSO dùng chung của auth.huyab.click (Google), xác thực bằng @huyab/sso.
-// Cookie `huyab_sso` gắn Domain=.huyab.click nên games.huyab.click nhận được luôn.
+// Đăng nhập = SSO dùng chung của auth.huyab.cfd (Google), xác thực bằng @huyab/sso.
+// Cookie `huyab_sso` gắn Domain=.huyab.cfd nên games.huyab.cfd nhận được luôn.
 import { DEFAULT_SSO_ISSUER, SSO_COOKIE, verifySsoToken } from '@huyab/sso';
 
 // Chỉ đọc cookie: game không nhận `Authorization: Bearer` (readSsoToken của kit nhận cả hai).

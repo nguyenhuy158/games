@@ -4,8 +4,8 @@ import { SIZES } from '../../public/pikachu/logic.js';
 import { MODES } from '../games/pikachu.js';
 
 // Adapter HTTP: domain cũ -> mới, file tĩnh, /api/* (tài khoản, lịch sử, bảng xếp hạng, phòng công khai) và nối WebSocket vào DO phòng.
-const HOME = 'games.huyab.click';
-const OLD_HOSTS = ['pikachu.huyab.click'];
+const HOME = 'games.huyab.cfd';
+const OLD_HOSTS = ['pikachu.huyab.cfd'];
 // Phòng chạy trên adapter phòng chung: tiền tố URL -> key game (header X-Game). Nokia / Ô ăn quan lấy key từ URL.
 const ADAPTER_GAME = { '': 'pikachu', 'cc/': 'caro', 'c4/': 'c4', 'bt/': 'ban-tau', 'bc/': 'bau-cua', 'ms/': 'do-min', 'dv/': 'dao-vang' };
 

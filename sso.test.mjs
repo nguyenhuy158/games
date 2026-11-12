@@ -17,8 +17,8 @@ async function token(claims, key = good.privateKey) {
   const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${h}.${p}`));
   return `${h}.${p}.${b64(sig)}`;
 }
-const req = (t) => new Request('https://games.huyab.click/api/me', { headers: t ? { Cookie: `other=1; huyab_sso=${t}; x=2` } : {} });
-const base = { iss: 'https://auth.huyab.click', sub: 'u1', email: 'a@b.c', name: 'An', exp: Math.floor(Date.now() / 1000) + 3600 };
+const req = (t) => new Request('https://games.huyab.cfd/api/me', { headers: t ? { Cookie: `other=1; huyab_sso=${t}; x=2` } : {} });
+const base = { iss: 'https://auth.huyab.cfd', sub: 'u1', email: 'a@b.c', name: 'An', exp: Math.floor(Date.now() / 1000) + 3600 };
 
 assert.deepEqual(await userFrom(req(await token(base))), { sub: 'u1', name: 'An', picture: null });
 assert.equal(await userFrom(req(null)), null, 'no cookie');

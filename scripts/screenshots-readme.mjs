@@ -28,8 +28,8 @@ Xem nhanh từng game theo thiết bị — bấm ảnh để mở ảnh gốc. 
 
 | Bộ | Chụp | Thiết bị |
 |---|---|---|
-| **A** | Playwright + Chrome headless trên prod https://games.huyab.click, sau commit \`0d8c435\` (tên ngẫu nhiên, nút bốc tên, XO 3×3) | ${Object.entries(DEVICES).filter(([, d]) => d[1] === 'A').map(([k]) => `\`${k}\``).join(', ')} |
-| **B** (mới nhất) | browser-use (Chrome CDP) trên prod https://games.huyab.click, sau commit \`2a72320\` (trang chủ chia nhóm, Nokia màn tràn, song ngữ, công tắc Công khai) — mọi game: sảnh → phòng chờ → đang chơi | ${Object.entries(DEVICES).filter(([, d]) => d[1] === 'B').map(([k]) => `\`${k}\``).join(', ')} |
+| **A** | Playwright + Chrome headless trên prod https://games.huyab.cfd, sau commit \`0d8c435\` (tên ngẫu nhiên, nút bốc tên, XO 3×3) | ${Object.entries(DEVICES).filter(([, d]) => d[1] === 'A').map(([k]) => `\`${k}\``).join(', ')} |
+| **B** (mới nhất) | browser-use (Chrome CDP) trên prod https://games.huyab.cfd, sau commit \`2a72320\` (trang chủ chia nhóm, Nokia màn tràn, song ngữ, công tắc Công khai) — mọi game: sảnh → phòng chờ → đang chơi | ${Object.entries(DEVICES).filter(([, d]) => d[1] === 'B').map(([k]) => `\`${k}\``).join(', ')} |
 
 **Mục lục:** ${Object.entries(GAMES).map(([k, v]) => `[${v}](#${slug(v)})`).join(' · ')}
 `];
@@ -42,7 +42,7 @@ for (const [game, title] of Object.entries(GAMES)) {
   const devs = ls(`${ROOT}/${game}`).filter((d) => d.isDirectory()).map((d) => d.name)
     .sort((a, b) => Object.keys(DEVICES).indexOf(a) - Object.keys(DEVICES).indexOf(b));
   if (!devs.length) continue;
-  out.push(`## ${title}\n\nhttps://games.huyab.click${URL[game]}\n`);
+  out.push(`## ${title}\n\nhttps://games.huyab.cfd${URL[game]}\n`);
   for (const dev of devs) {
     const [label, set, w] = DEVICES[dev] ?? [dev, '?', 200];
     const files = ls(`${ROOT}/${game}/${dev}`).map((f) => f.name).filter((f) => /\.(webp|png|jpe?g)$/.test(f)).sort();
