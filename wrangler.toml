@@ -3,10 +3,11 @@ main = "worker/index.js"
 compatibility_date = "2026-07-03"
 # Chi vao qua custom domain, giong chia-keo.
 workers_dev = false
-# games.huyab.cfd la domain chinh; pikachu.huyab.cfd (cu) chi con 301 sang domain moi.
+# games.huyab.cfd la domain chinh; pikachu.huyab.cfd (cu) chi con 301 sang domain moi; soi.huyab.cfd la ten ngan cua /soi/ (302, xem GAME_HOSTS o worker/adapters/http.js).
 routes = [
   { pattern = "games.huyab.cfd", custom_domain = true },
   { pattern = "pikachu.huyab.cfd", custom_domain = true },
+  { pattern = "soi.huyab.cfd", custom_domain = true },
 ]
 
 # public/ la file tinh. Worker chay truoc (de 301 domain cu), roi tra file qua ASSETS.
