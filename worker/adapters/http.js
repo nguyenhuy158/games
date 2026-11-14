@@ -6,6 +6,8 @@ import { MODES } from '../games/pikachu.js';
 // Adapter HTTP: domain cũ -> mới, file tĩnh, /api/* (tài khoản, lịch sử, bảng xếp hạng, phòng công khai) và nối WebSocket vào DO phòng.
 const HOME = 'games.huyab.cfd';
 const OLD_HOSTS = ['pikachu.huyab.cfd'];
+// Tên miền ngắn của một game: vào là chuyển sang game đó trên domain chính (302, giữ query như ?r=MÃ).
+const GAME_HOSTS = { 'soi.huyab.cfd': '/soi/' };
 // Phòng chạy trên adapter phòng chung: tiền tố URL -> key game (header X-Game). Nokia / Ô ăn quan lấy key từ URL.
 const ADAPTER_GAME = { '': 'pikachu', 'cc/': 'caro', 'c4/': 'c4', 'bt/': 'ban-tau', 'bc/': 'bau-cua', 'ms/': 'do-min', 'dv/': 'dao-vang' };
 
@@ -28,6 +30,11 @@ export const http = {
     if (OLD_HOSTS.includes(url.hostname) && !api) {
       url.hostname = HOME;
       return Response.redirect(url.toString(), 301);
+    }
+    if (GAME_HOSTS[url.hostname] && !api) {
+      if (url.pathname === '/') url.pathname = GAME_HOSTS[url.hostname];
+      url.hostname = HOME;
+      return Response.redirect(url.toString(), 302);
     }
     // Link chia sẻ gọn /replay/<id> -> trang game ?replay=<id> (trang game tự phát lại, xem public/replay.js).
     const short = url.pathname.match(/^\/replay\/([A-Za-z0-9]{12})\/?$/);

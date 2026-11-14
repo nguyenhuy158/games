@@ -185,4 +185,16 @@ export const LOGOS = {
     <ellipse cx="270" cy="120" rx="30" ry="15" fill="#fff" opacity=".6" transform="rotate(-30 270 120)"/>
     ${face(316, 168, 0.72)}
     ${sparkle(96, 110, 28, '#fff')}${sparkle(150, 190, 14, '#ffd23f')}${sparkle(462, 300, 18)}`),
+
+  // Sói: đầu sói xám tai nhọn (tai trong hồng) dưới trăng tròn trên nền trời đêm.
+  soi: frame('so', '#4a5aa8', '#141c3d', `
+    <circle cx="392" cy="124" r="54" fill="#ffe9a8" stroke="${INK}" stroke-width="10"/>
+    <circle cx="376" cy="108" r="9" fill="#f3d27a"/><circle cx="410" cy="138" r="6" fill="#f3d27a"/>
+    ${sticker(`<path d="M112 262L146 100L232 190Q256 183 280 190L366 100L400 262Q414 340 344 396Q304 424 256 424Q208 424 168 396Q98 340 112 262Z" fill="#cdd5e8" stroke="${INK}" stroke-width="10" stroke-linejoin="round"/>`)}
+    <path d="M150 138L180 196L146 232Z" fill="#ff9ec4" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M362 138L332 196L366 232Z" fill="#ff9ec4" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>
+    <ellipse cx="256" cy="344" rx="64" ry="46" fill="#fff" stroke="${INK}" stroke-width="8"/>
+    ${face(256, 262, 0.78, 'w')}
+    <ellipse cx="256" cy="320" rx="19" ry="13" fill="${INK}"/><ellipse cx="250" cy="316" rx="5" ry="3" fill="#fff"/>
+    ${sparkle(86, 96, 26)}${sparkle(60, 300, 14, '#ffe9a8')}${sparkle(452, 392, 20)}`),
 };

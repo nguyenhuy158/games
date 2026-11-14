@@ -223,6 +223,20 @@ const GAMES = {
     await until(() => r.socks[0].last.status === 'ended', 180000, 'co-ganh ends');
     return JSON.stringify(r.socks[0].last.result.title);
   },
+  // Sói, 3 người: đúng 1 Sói, mỗi người chỉ thấy vai của mình (không lộ ai); chủ phòng lật bài thì ván kết thúc và lộ Sói.
+  async soi() {
+    const r = await nokia('soi', 3, () => {});
+    await until(() => r.socks.every((s) => s.last.status === 'playing' && s.last.view?.role), 5000, 'soi roles');
+    const roles = r.socks.map((s) => s.last.view.role);
+    if (roles.filter((x) => x === 'wolf').length !== 1 || roles.filter((x) => x === 'villager').length !== 2) throw new Error(`bad roles ${roles}`);
+    if (r.socks.some((s) => s.last.view.wolf !== null)) throw new Error('wolf leaked before reveal');
+    r.send(r.host(), { t: 'g', a: 'reveal' });
+    await until(() => r.socks.every((s) => s.last.status === 'ended'), 5000, 'soi reveal');
+    const wolf = r.socks[roles.indexOf('wolf')].me;
+    if (r.socks.some((s) => s.last.view.wolf !== wolf)) throw new Error('reveal names the wrong wolf');
+    r.close();
+    return JSON.stringify(r.socks[0].last.result.title);
+  },
   // Cờ tướng với máy (máy dễ): bot smoke đi nước tốt nhất sâu 2, ván hết khi có người bị chiếu bí (hoặc 300 nước).
   async 'co-tuong'() {
     const r = await nokia('co-tuong', 1, (ws, m) => {

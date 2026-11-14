@@ -1,0 +1,21 @@
+/* Sói: nền đêm, thẻ vai úp / lật. Dùng khung tối của /room.css, chỉ đổi màu nhấn. */
+:root { --accent: #8ea2ff; --good: #3ddc84; --bad: #ff6b57; }
+button.primary { color: #0e1530; }
+#overlay { background: #0a1020c0; }
+
+.board-stage { width: 100%; display: grid; place-items: center; }
+.soi { width: min(94vw, 420px); display: grid; gap: 14px; }
+
+.role {
+  display: grid; justify-items: center; gap: 10px; padding: 34px 20px; text-align: center;
+  background: var(--panel); border: 3px solid var(--line); border-radius: 22px; box-shadow: 0 8px 0 #0005, 0 18px 40px #0007;
+}
+.role .ic { width: 72px; height: 72px; vertical-align: 0; color: var(--muted); }
+.role h2 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: .02em; }
+.role p { margin: 0; color: var(--muted); }
+.role button { margin-top: 6px; }
+.role.wolf { background: #3b1c22; border-color: var(--bad); }
+.role.wolf .ic, .role.wolf h2 { color: var(--bad); }
+.role.villager { background: #153221; border-color: var(--good); }
+.role.villager .ic, .role.villager h2 { color: var(--good); }
+.role.watching { border-style: dashed; }

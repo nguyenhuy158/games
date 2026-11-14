@@ -15,7 +15,7 @@ const BASE = (process.env.E2E_BASE_URL || "http://127.0.0.1:8789").replace(
 );
 const WAIT = { timeout: 15000 };
 // Số game trên trang chủ (public/index.html, mỗi game một thẻ a.game).
-const MIN_GAMES = 21;
+const MIN_GAMES = 22;
 // Game chuyển từ mytools: trang phải vẽ đủ bàn chơi (selector -> số phần tử).
 const BOARDS = {
   "/2048/": ["#tiles .tile", 16],

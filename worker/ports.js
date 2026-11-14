@@ -23,6 +23,7 @@
  * @property {string[]} [messages]             tin riêng của game ({ t: 'move' ... }) chuyển cho msg() ở mọi pha (module tự kiểm)
  * @property {number} [emotes]                 số emote; adapter xử lý { t: 'emo', e } (chống spam) và phát lại cho cả phòng
  * @property {boolean} [autostart]             không có sảnh chờ: ván chạy luôn từ lúc mở phòng (Bầu cua)
+ * @property {boolean} [replay]               false = không ghi bản xem lại (game có thông tin bí mật như vai của Sói); mặc định có
  * @property {boolean} [persist]               cả phòng rớt mạng giữa ván thì giữ ván (hẹn giờ vẫn chạy), không xoá phòng
  * @property {number} [maxOnline]              số người tối đa trong phòng (mặc định 12)
  * @property {(ctx: Ctx, p: Player) => void} [join]                 có người vào giữa ván
