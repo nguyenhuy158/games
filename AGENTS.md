@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 
 Classic browser games (Pikachu, Đào Vàng, Bầu cua, Cờ caro, Nối 4, Ô ăn quan,
-Bắn tàu, Cờ tướng, Cờ gánh, Dò mìn, Lô tô, Nokia corner, and the client-only
+Bắn tàu, Cờ tướng, Cờ gánh, Dò mìn, Lô tô, Sói, Nokia corner, and the client-only
 solo games 2048, Xếp gạch, Sudoku) served by one Cloudflare
 Worker at https://games.huyab.cfd. The client is plain static HTML/CSS/ES
 modules in `public/` with no build step; the Worker in `worker/` routes

@@ -135,7 +135,7 @@ export function gameRoom(games) {
       Object.assign(s, { status: 'playing', g: {}, result: null, startedAt: Date.now(), wake: 0 });
       // Ghi lại ván để xem lại (chỉ trong bộ nhớ: DO ngủ đông / khởi động lại giữa ván thì ván đó không có bản xem lại).
       // Tạo trước mod.start để ghi cả tin game gửi lúc bắt đầu (Dò mìn gửi bàn 'grid').
-      this.tape = new Tape(tickMsOf(this.mod, s.cfg) ? 100 : 0);
+      this.tape = this.mod.replay === false ? null : new Tape(tickMsOf(this.mod, s.cfg) ? 100 : 0);
       this.clipRp = null;
       this.mod.start(this.ctxFor());
       this.arm();
