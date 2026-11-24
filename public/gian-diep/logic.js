@@ -4,6 +4,8 @@ export const NAME_LIMIT = 20;
 export const NAME_ERROR = Object.freeze({ EMPTY: 'empty', DUPLICATE: 'duplicate', LONG: 'long', LIMIT: 'limit' });
 export const DURATIONS = Object.freeze([5, 10, 15]);
 export const DEFAULT_CONFIG = Object.freeze({ spies: 1, whites: 0, seconds: 15, pack: 'food' });
+export const AI_PACK = 'ai';
+export const AI_TOPIC_LIMIT = 100;
 export const PHASE = Object.freeze({ DEAL: 'deal', DESCRIBE: 'describe', DISCUSS: 'discuss', COUNTDOWN: 'countdown', VOTE: 'vote', TIE: 'tie', GUESS: 'guess', ENDED: 'ended' });
 export const ACTION = Object.freeze({ NEXT: 'next', VOTING: 'voting', VOTE: 'vote', ELIMINATE: 'eliminate', GUESS: 'guess' });
 export const ROLE = Object.freeze({ CIVILIAN: 'civilian', SPY: 'spy', WHITE: 'white' });
@@ -45,6 +47,9 @@ const MS_PER_SECOND = 1000;
 const COUNTDOWN_MS = 3 * MS_PER_SECOND;
 const PAIR_WORDS = 2;
 const MAX_GUESS_LENGTH = 120;
+const AI_WORD_LIMIT = 64;
+const AI_PACK_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const WORD_CONTROLS = /[\p{Cc}\p{Cf}]/u;
 const NORMALIZATION = 'NFD';
 const DIACRITICS = /\p{M}/gu;
 const STROKED_D = /đ/g;
@@ -52,7 +57,8 @@ const WHITESPACE = /\s+/gu;
 const PLAIN_D = 'd';
 const WORD_SPACE = ' ';
 const ORDER_FIELD = 'order';
-const CONFIG_FIELDS = new Set([...Object.keys(DEFAULT_CONFIG), ORDER_FIELD]);
+const AI_CONFIG_FIELDS = ['aiPackId', 'aiTopic'];
+const CONFIG_FIELDS = new Set([...Object.keys(DEFAULT_CONFIG), ORDER_FIELD, ...AI_CONFIG_FIELDS]);
 const MAX_PLAYER_ID_LENGTH = 64;
 const NAME_LINES = /\r\n|\n|\r/u;
 const NAME_NORMALIZATION = 'NFC';
@@ -117,7 +123,16 @@ export function normalizeConfig(cfg) {
   if (!Number.isInteger(next.spies) || next.spies < MIN_SPIES || next.spies > limits(MAX_PLAYERS).spies) return null;
   if (!Number.isInteger(next.whites) || next.whites < 0 || next.whites > MAX_WHITES) return null;
   if (next.spies + next.whites > hiddenCap(MAX_PLAYERS)) return null;
-  if (!DURATIONS.includes(next.seconds) || !PACKS.some((pack) => pack.id === next.pack)) return null;
+  if (!DURATIONS.includes(next.seconds)) return null;
+  if (next.pack === AI_PACK) {
+    if (typeof next.aiPackId !== 'string' || !AI_PACK_ID.test(next.aiPackId) ||
+        typeof next.aiTopic !== 'string' || !next.aiTopic.trim() || next.aiTopic.length > AI_TOPIC_LIMIT || WORD_CONTROLS.test(next.aiTopic)) return null;
+    next.aiTopic = next.aiTopic.trim();
+  } else {
+    if (!PACKS.some((pack) => pack.id === next.pack)) return null;
+    delete next.aiPackId;
+    delete next.aiTopic;
+  }
   if (Object.hasOwn(next, ORDER_FIELD)) {
     if (!validOrder(next.order)) return null;
     next.order = [...next.order];
@@ -137,13 +152,16 @@ function randomIndex(length, rand) {
   return Math.min(length - 1, Math.max(0, Math.floor((Number.isFinite(value) ? value : 0) * length)));
 }
 
-export function createGame(ids, cfg, rand, now) {
+export function createGame(ids, cfg, rand, now, aiPair) {
   if (!Array.isArray(ids) || !validateSetup(ids.length, cfg) || typeof rand !== 'function' || !validTime(now)) throw new RangeError('Invalid game setup');
   if (ids.some((id) => typeof id !== 'string' || id.trim() === '' || id === ROLE.CIVILIAN || id === HIDDEN_TEAM) || new Set(ids).size !== ids.length) throw new RangeError('Invalid player ids');
   const config = normalizeConfig(cfg);
   const playerIds = orderedIds(ids, config.order);
   const pack = PACKS.find((item) => item.id === config.pack);
-  const pair = pack.pairs[randomIndex(pack.pairs.length, rand)];
+  const pair = config.pack === AI_PACK ? aiPair : pack.pairs[randomIndex(pack.pairs.length, rand)];
+  if (!Array.isArray(pair) || pair.length !== PAIR_WORDS ||
+      pair.some((word) => typeof word !== 'string' || !word.trim() || word.length > AI_WORD_LIMIT || WORD_CONTROLS.test(word)) ||
+      normalizedWord(pair[0]) === normalizedWord(pair[1])) throw new RangeError('Invalid word pair');
   const civilianIndex = randomIndex(PAIR_WORDS, rand);
   const civilianWord = pair[civilianIndex];
   const spyWord = pair[1 - civilianIndex];
