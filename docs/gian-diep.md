@@ -32,6 +32,8 @@ Dùng đường tích hợp DOM tĩnh chính thức của [nguyenhuy158/ui-kit](
 - `src/styles/tokens.css` → cùng thư mục: giữ token, base CSS, màu sáng/tối và chuyển động; bỏ `@import tailwindcss`, `@custom-variant`, `@theme` vì trang không dùng build/Tailwind runtime.
 - UI riêng dùng biến `--ui-*`, danh sách chia trang, khu vực chạm 44px và input 16px. Không tải CSS Nokia, React hay CDN runtime. Không lấy thay đổi chưa commit từ checkout UI kit.
 
+Trang tải `public/ui-kit.css` dùng chung trước token sáng/tối của game. Icon dùng cùng Lucide 0.468.0 như UI kit qua `public/icons.js`; nút phụ dùng icon kèm nhãn truy cập, luật đầy đủ nằm trong Cách chơi.
+
 ## Kiểm thử
 
 ```sh
