@@ -24,6 +24,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.cfd — m
 Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node scripts/smoke.mjs [url] [game ...]`, mặc định `http://localhost:8789` (`wrangler dev --port 8789`). Chạy trước / sau mỗi bước refactor (kế hoạch: `docs/hexagon-plan.md`). CI (`.github/workflows/ci.yml`, job `smoke-prod`) tự chạy vào web thật sau mỗi lần deploy (chờ `/api/version` mới hơn commit); bot smoke (id `smoke-...`) không lên bảng xếp hạng.
 
 `pnpm e2e` chạy đồng thời tối đa 3 game WebSocket và 1 trang browser, ưu tiên game chậm trước. PR chọn game theo diff qua `e2e/selection.mjs` và dùng smoke nhanh (nước đi được server xác nhận, không chờ kết thúc game dài); code chung/file lạ/diff lỗi kiểm mọi game ở chế độ nhanh. `main` và production giữ toàn bộ bài kiểm tra hết ván, không giảm timeout. API chung, hub và sảnh luôn được kiểm.
+Sảnh `/phong/` được kiểm trong trang browser riêng, không dùng response `/api/rooms` từ polling của hub trước khi chuyển trang.
 
 Local mặc định full: `pnpm e2e`; thử PR nhanh: `E2E_SMOKE_MODE=fast pnpm e2e`. Kiểm riêng trang: `E2E_BASE_URL=http://localhost:8789 node e2e/readonly-smoke.mjs /soi/ /gian-diep/`. CI cache pnpm và Chromium theo OS/kiến trúc/phiên bản; cache hit vẫn cài thư viện hệ thống cần thiết.
 
