@@ -13,42 +13,52 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/ui-kit.css">
   <link rel="manifest" href="../manifest.webmanifest">
   <style>
-    :root { --bg: #0b1b2b; --panel: #13283d; --line: #23405c; --text: #e8f1fa; --muted: #8aa4bd; --accent: #ffd23f; --good: #3ddc84; }
+    :root { --bg: var(--ui-bg); --panel: var(--ui-surface); --line: var(--ui-border); --text: var(--ui-fg); --muted: var(--ui-fg-muted); --accent: var(--ui-primary); --good: var(--ui-success); }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
     body {
       margin: 0; min-height: 100vh; padding: max(16px, env(safe-area-inset-top)) 16px 24px; display: grid; align-content: start; justify-items: center; gap: 16px;
-      background: radial-gradient(circle at 50% 0%, #17385a, var(--bg) 70%) fixed; color: var(--text);
-      font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text);
+      font-size: 15px; line-height: 1.5;
     }
     .ic { width: 1.1em; height: 1.1em; vertical-align: -0.18em; }
     .wrap { width: min(760px, 100%); display: grid; gap: 14px; }
     .top { display: flex; align-items: center; gap: 10px; }
     .top h1 { margin: 0; font-size: 24px; flex: 1; display: flex; align-items: center; gap: 8px; }
-    a.back, .lang-toggle { color: var(--text); text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; display: inline-flex; }
+    a.back, .lang-toggle { color: var(--text); text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+    a.back:hover, .lang-toggle:hover { background: var(--ui-surface-muted); }
     .sub { margin: 0; color: var(--muted); }
     .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-    .chips button { flex: none; font: inherit; font-size: 13px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
-    .chips button.on { background: var(--accent); color: #1b1300; border-color: var(--accent); font-weight: 600; }
+    .chips button { flex: none; font: inherit; font-size: 13px; font-weight: 500; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px; min-height: 36px; cursor: pointer; }
+    .chips button:hover { background: var(--ui-surface-muted); }
+    .chips button.on { background: var(--accent); color: var(--ui-primary-fg); border-color: var(--accent); font-weight: 600; }
+    .chips button.on:hover { background: var(--ui-primary-hover); border-color: var(--ui-primary-hover); }
+    button:disabled { pointer-events: none; opacity: .5; }
     h2 { margin: 6px 0 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
     h2 small { color: var(--muted); font-weight: 400; }
     .list { display: grid; gap: 8px; }
     .room {
-      display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px;
-      background: var(--panel); border: 1px solid var(--line); color: inherit; text-decoration: none;
+      display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--ui-radius);
+      background: var(--panel); border: 1px solid var(--line); color: inherit; text-decoration: none; box-shadow: var(--ui-shadow-sm); transition: border-color var(--ui-dur-fast) var(--ui-ease-out);
     }
     .room:hover { border-color: var(--accent); }
     .room img { width: 40px; height: 40px; }
     .room b { display: block; }
     .room span { color: var(--muted); font-size: 13px; }
-    .room .go { font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 999px; background: var(--accent); color: #1b1300; white-space: nowrap; }
+    .room .go { font-weight: 500; font-size: 13px; padding: 8px 12px; min-height: 36px; border: 1px solid transparent; border-radius: var(--ui-radius); background: var(--accent); color: var(--ui-primary-fg); white-space: nowrap; }
+    .room:hover .go { background: var(--ui-primary-hover); }
     .room.watch .go { background: none; border: 1px solid var(--line); color: var(--text); }
     .full { color: var(--muted); }
-    .empty { color: var(--muted); font-size: 14px; padding: 14px; border: 1px dashed var(--line); border-radius: 14px; text-align: center; }
+    .empty { color: var(--muted); font-size: 14px; padding: 16px; border: 1px dashed var(--line); border-radius: var(--ui-radius); text-align: center; }
     .live { width: 8px; height: 8px; border-radius: 50%; background: var(--good); display: inline-block; animation: blink 1.6s infinite; }
     @keyframes blink { 50% { opacity: .3; } }
+    a.back, .lang-toggle, .chips button, .room .go { transition: background-color var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out), transform var(--ui-dur-fast) var(--ui-ease-out); }
+    a.back:active, .lang-toggle:active, .chips button:active { transform: scale(.98); }
+    @media (pointer: coarse) { a.back, .lang-toggle, .chips button, .room .go { min-height: 44px; } }
+    @media (prefers-reduced-motion: reduce) { .live { animation: none; } }
   </style>
 </head>
 <body>

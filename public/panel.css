@@ -1,3 +1,5 @@
+@import "/ui-kit.css";
+
 /* Khung màn hình người chơi khác (public/panel.js). Game đặt #panel + khu chơi chính trong .arena.
    Ngang: khu chơi bên trái, khung cột bên phải. Dọc: khung thành hàng trên cùng, vuốt ngang. */
 .arena { flex: 1; min-height: 0; display: flex; gap: 8px; }
@@ -19,25 +21,25 @@ body.panel-off #panel, body.panel-empty #panel { display: none; }
 }
 
 .tile {
-  position: relative; flex: none; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden;
-  background: #0a1724; border: 2px solid color-mix(in srgb, var(--c, #888) 70%, transparent);
-  box-shadow: 0 4px 14px #0006;
+  position: relative; flex: none; aspect-ratio: 4 / 3; border-radius: var(--ui-radius); overflow: hidden;
+  background: var(--ui-surface); border: 2px solid color-mix(in srgb, var(--c, var(--ui-border)) 70%, transparent);
+  box-shadow: var(--ui-shadow-sm);
 }
 .tile.off { opacity: .45; }
 .tile-board { position: absolute; inset: 0 0 22px; width: 100%; height: calc(100% - 22px); }
 .tile-avatar {
   position: absolute; left: 50%; top: calc(50% - 11px); translate: -50% -50%;
   width: 46%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
-  background: var(--c, #888); color: #0b1b2b; font: 800 clamp(18px, 3vw, 30px) / 1 "Be Vietnam Pro", system-ui, sans-serif;
+  background: var(--c, var(--ui-primary)); color: var(--ui-primary-fg); font: 800 clamp(18px, 3vw, 30px) / 1 "Be Vietnam Pro", system-ui, sans-serif;
 }
 .tile-label {
   position: absolute; left: 0; right: 0; bottom: 0; height: 22px; display: flex; gap: 6px; align-items: center;
-  padding: 0 8px; font-size: 11px; background: #000a; color: #fff; white-space: nowrap; overflow: hidden;
+  padding: 0 8px; font-size: 11px; background: var(--ui-surface-muted); color: var(--ui-fg); white-space: nowrap; overflow: hidden;
 }
-.tile-label b { color: var(--c, #fff); overflow: hidden; text-overflow: ellipsis; }
+.tile-label b { color: var(--c, var(--ui-fg)); overflow: hidden; text-overflow: ellipsis; }
 .tile-label span { opacity: .85; margin-left: auto; }
 .tile-badge {
   position: absolute; top: 6px; right: 6px; font-style: normal; font-size: 16px; line-height: 1;
-  padding: 3px 6px; border-radius: 8px; background: #000a;
+  padding: 3px 6px; border-radius: var(--ui-radius); background: var(--ui-surface-muted);
 }
-#btnPanel.on { border-color: var(--accent, #ffd23f); }
+#btnPanel.on { border-color: var(--ui-primary); }

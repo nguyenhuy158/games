@@ -26,7 +26,7 @@ Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.htm
 
 Song ngữ vi / en (mặc định vi): `public/i18n.js`. JS viết cặp ngay tại chỗ `t('Tạo phòng', 'Create room')`; HTML tĩnh dùng `data-en` / `data-en-html` / `data-en-title` / `data-en-placeholder`; chữ server gửi cho người chơi (lỗi, tiêu đề kết quả) là cặp `['vi', 'en']`, client hiện bằng `tx()`. Chọn bằng nút VI | EN (`langToggle()` hoặc `<span data-lang-toggle>`) hoặc `?lang=en`, nhớ trong localStorage `lang` cho mọi game. Dữ liệu dùng chung server + test (tên con vật, cấp độ, đồ trong tiệm...) giữ tiếng Việt, dịch lúc hiện.
 
-Giao diện không dùng emoji: icon lấy từ lucide (`public/icons.js`, sinh bởi `scripts/icons.mjs`; `iconEl(tên)` cho DOM), toast dùng chung `public/toast.js` bắt chước sonner như chia-keo (`toast()`, `toast.success/.error/.warning`, `{ icon }`).
+Giao diện dùng token dark của [ui-kit](https://github.com/nguyenhuy158/ui-kit/blob/978ff7c2444e094342b5005e5a6879c2bae34c9b/src/styles/tokens.css) trong `public/ui-kit.css`: CSS thuần, không thêm React/Tailwind hay bước build. Trang chủ, sảnh, nút, form, hộp thoại và toast dùng chung màu/radius; bàn game, LCD và skin giữ màu riêng. Đồng bộ token từ nguồn trên khi nâng kit; thêm trang phải tải `ui-kit.css` trực tiếp hoặc qua `room.css`/`solo.css`. Icon dùng lucide (`public/icons.js`, sinh bởi `pnpm icons`); toast dùng `public/toast.js` (`toast()`, `toast.success/.error/.warning`, `{ icon }`).
 
 Tên khách: lần đầu bốc ngẫu nhiên "con vật + tính cách" (`public/names.js`, vd "Mèo Lười", 900 kiểu), dùng chung mọi game. Server chống trùng trong phòng: tên đã có thì thêm số ("Mèo Lười 2", `worker/names.js`).
 

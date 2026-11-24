@@ -1,34 +1,43 @@
+@import "/ui-kit.css";
+
 :root {
-  --bg: #3b0a0d;
-  --panel: #5a1419;
-  --line: #85303a;
-  --text: #fff4e0;
-  --muted: #e4b9a8;
-  --accent: #ffd23f;
-  --good: #3ddc84;
-  --bad: #ff6b6b;
+  --bg: var(--ui-bg);
+  --panel: var(--ui-surface);
+  --line: var(--ui-border);
+  --text: var(--ui-fg);
+  --muted: var(--ui-fg-muted);
+  --accent: var(--ui-primary);
+  --good: var(--ui-success);
+  --bad: var(--ui-danger);
   --felt: #0f6b3f;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: radial-gradient(circle at 50% 0%, #8a1a20, var(--bg) 70%) fixed;
-  color: var(--text); font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text); font-size: 15px; line-height: 1.4;
   user-select: none; -webkit-tap-highlight-color: transparent;
 }
 [hidden] { display: none !important; }
 .ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
 button, input { font: inherit; color: inherit; }
 button {
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px;
   cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; justify-content: center;
 }
-button:disabled { opacity: .4; cursor: default; }
-button.primary { background: var(--accent); color: #3b1d00; border-color: var(--accent); font-weight: 700; }
-input { background: #2a0709; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--ui-primary-fg); border-color: var(--accent); font-weight: 600; box-shadow: var(--ui-shadow-sm); }
+:where(header, .card) button:where(:not(:disabled)):hover { background: var(--ui-surface-muted); }
+button.primary:not(:disabled):hover { background: var(--ui-primary-hover); }
+.card button { min-height: 44px; }
+input { background: var(--ui-surface); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 10px 12px; width: 100%; font-size: 16px; }
+input:not([type="checkbox"]):not([type="range"]) { min-height: 44px; }
+input::placeholder { color: var(--muted); opacity: 1; }
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--ui-ring); }
+input:disabled { opacity: .6; cursor: not-allowed; }
 .card {
-  background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px;
-  width: min(380px, calc(100vw - 32px)); display: grid; gap: 12px; text-align: center; box-shadow: 0 12px 40px #0008;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 24px;
+  width: min(380px, calc(100vw - 32px)); display: grid; gap: 12px; text-align: center; box-shadow: var(--ui-shadow-sm);
 }
 .card h1 { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .card h1 .logo { width: 40px; height: 40px; }
@@ -64,11 +73,11 @@ header .grow { flex: 1; }
 }
 #players { list-style: none; margin: 4px 12px 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
 #players li {
-  display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius);
   padding: 3px 10px; font-size: 13px; white-space: nowrap; box-shadow: inset 4px 0 var(--c);
 }
 #players li.me { border-color: var(--accent); }
-#players li.dealer { background: #7a4a00; }
+#players li.dealer { background: var(--ui-warning-soft); }
 #players b { color: var(--accent); font-variant-numeric: tabular-nums; }
 #players .d { font-weight: 800; }
 .up { color: var(--good); } .down { color: var(--bad); }
@@ -104,6 +113,7 @@ main { flex: 1; display: grid; gap: 10px; justify-items: center; align-content: 
 #status { margin: 0; min-height: 1.4em; font-size: 14px; color: var(--muted); text-align: center; }
 #status b { color: var(--accent); }
 
+#board, #chips { --bet-highlight: #ffd23f; }
 #board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: min(560px, 100%); }
 .cell {
   position: relative; aspect-ratio: 1 / .9; border-radius: 16px; background: linear-gradient(160deg, #1a8a55, var(--felt));
@@ -113,8 +123,8 @@ main { flex: 1; display: grid; gap: 10px; justify-items: center; align-content: 
 .cell:active { transform: translateY(2px); }
 .cell .em { width: min(70%, 130px); aspect-ratio: 1; border-radius: 50%; box-shadow: 0 0 0 3px #f3d27a, 0 3px 8px #0006; }
 .cell .nm { position: absolute; top: 4px; left: 8px; font-weight: 800; font-size: 13px; letter-spacing: .5px; text-shadow: 0 1px 2px #000a; }
-.cell.hit { box-shadow: 0 0 0 4px var(--accent), 0 0 24px 6px #ffd23faa; animation: glow .6s 3; }
-.cell.hit .x { position: absolute; top: 4px; right: 6px; background: var(--accent); color: #3b1d00; font-weight: 800; border-radius: 999px; padding: 0 8px; font-size: 13px; }
+.cell.hit { box-shadow: 0 0 0 4px var(--bet-highlight), 0 0 24px 6px #ffd23faa; animation: glow .6s 3; }
+.cell.hit .x { position: absolute; top: 4px; right: 6px; background: var(--bet-highlight); color: #3b1d00; font-weight: 800; border-radius: 999px; padding: 0 8px; font-size: 13px; }
 @keyframes glow { 50% { transform: scale(1.04); } }
 .cell.miss { opacity: .55; }
 .stack { position: absolute; left: 4px; right: 4px; bottom: 4px; display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; pointer-events: none; }
@@ -127,7 +137,7 @@ main { flex: 1; display: grid; gap: 10px; justify-items: center; align-content: 
   width: 48px; height: 48px; border-radius: 50%; padding: 0; font-weight: 800; font-size: 13px; color: #fff;
   background: var(--cc); border: 4px dashed #fff8; box-shadow: 0 3px 0 #0006;
 }
-.chip.on { transform: translateY(-4px); box-shadow: 0 0 0 3px var(--accent), 0 6px 0 #0006; }
+.chip.on { transform: translateY(-4px); box-shadow: 0 0 0 3px var(--bet-highlight), 0 6px 0 #0006; }
 #btnRoll { min-width: 110px; font-size: 16px; }
 /* Điện thoại xoay ngang: đĩa bên trái, bàn + phỉnh bên phải, vừa một màn không phải cuộn. */
 @media (orientation: landscape) and (max-height: 500px) {

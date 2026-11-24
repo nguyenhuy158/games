@@ -3,9 +3,9 @@
 .tools { width: 100%; display: flex; gap: 6px; }
 .tools > * { flex: 1; min-width: 0; padding: 7px 6px; }
 .tools select { flex: 1.2; cursor: pointer; }
-.badge { min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #f59e0b; color: #1b1300; font-size: 11px; display: inline-grid; place-items: center; }
+.badge { min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--ui-radius); background: var(--ui-warning-soft); color: var(--ui-warning-strong); font-size: 11px; display: inline-grid; place-items: center; }
 .badge:empty { display: none; }
-.erase { color: #ff9ea1; }
+.erase { color: var(--ui-danger-strong); }
 #wrap { position: relative; width: 100%; aspect-ratio: 1; border-radius: 10px; }
 #grid {
   width: 100%; height: 100%; display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr);
@@ -26,7 +26,7 @@
 .notes { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(3, 1fr); padding: 1px; pointer-events: none; }
 .notes i { font-style: normal; font-size: calc(var(--w) * .022); line-height: 1; display: grid; place-items: center; color: var(--muted); font-weight: 600; }
 #grid > .sel .notes i { color: #dbeafe; }
-.overlay .big { font-size: 20px; padding: 12px 28px; border-radius: 999px; }
+.overlay .big { font-size: 20px; padding: 12px 28px; border-radius: var(--ui-radius); }
 .numpad { width: 100%; display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
 .numpad button { padding: 0; aspect-ratio: 4 / 5; max-height: 52px; width: 100%; font-size: calc(var(--w) * .055); font-weight: 600; color: #6cb6ff; }
 @media (hover: hover) and (pointer: fine) { .sdk { --w: min(94vw, 520px, calc(100dvh - 230px)); } }

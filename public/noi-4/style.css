@@ -1,37 +1,46 @@
+@import "/ui-kit.css";
+
 /* Khung xanh lỗ tròn kiểu đồ chơi Connect 4: quân đỏ đi trước, quân vàng đi sau. */
 :root {
-  --bg: #e6eefa;
-  --panel: #fff;
-  --line: #cfdcef;
-  --text: #1c2b44;
-  --muted: #6a7c99;
-  --accent: #2456c9;
+  --bg: var(--ui-bg);
+  --panel: var(--ui-surface);
+  --line: var(--ui-border);
+  --text: var(--ui-fg);
+  --muted: var(--ui-fg-muted);
+  --accent: var(--ui-primary);
   --frame: #2456c9;
   --hole: #eef3fb;
   --p1: #e0312f;
   --p2: #ffc62e;
-  --good: #2e9e5b;
+  --good: var(--ui-success);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
   background: var(--bg); color: var(--text); overflow: hidden;
-  font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px; line-height: 1.4;
   user-select: none; -webkit-tap-highlight-color: transparent;
 }
 [hidden] { display: none !important; }
 .ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
 button, input { font: inherit; color: inherit; }
 button {
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px;
   cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; justify-content: center;
 }
-button:disabled { opacity: .45; cursor: default; }
-button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
-input { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--ui-primary-fg); border-color: var(--accent); font-weight: 600; box-shadow: var(--ui-shadow-sm); }
+:where(header, .card) button:where(:not(:disabled)):hover { background: var(--ui-surface-muted); }
+button.primary:not(:disabled):hover { background: var(--ui-primary-hover); }
+.card button { min-height: 44px; }
+input { background: var(--ui-surface); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 10px 12px; width: 100%; font-size: 16px; }
+input:not([type="checkbox"]):not([type="range"]) { min-height: 44px; }
+input::placeholder { color: var(--muted); opacity: 1; }
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--ui-ring); }
+input:disabled { opacity: .6; cursor: not-allowed; }
 .card {
-  background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px;
-  width: min(380px, calc(100vw - 32px)); display: grid; gap: 12px; text-align: center; box-shadow: 0 12px 40px #1c2b4426;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 24px;
+  width: min(380px, calc(100vw - 32px)); display: grid; gap: 12px; text-align: center; box-shadow: var(--ui-shadow-sm);
 }
 .card h1, .card h2 { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .card h1 .logo { width: 40px; height: 40px; }
@@ -53,11 +62,11 @@ header .grow { flex: 1; }
 @media (max-width: 480px) { header .lbl { display: none; } }
 
 #vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 0 12px; }
-.side { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 6px 10px; border-radius: 12px; border: 2px solid transparent; background: #fff8; }
+.side { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 6px 10px; border-radius: var(--ui-radius); border: 2px solid transparent; background: var(--ui-surface); }
 .side[data-seat="2"] { justify-content: flex-end; }
 .side b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .side .sc { font-weight: 800; font-variant-numeric: tabular-nums; }
-.side.turn { background: #fff; }
+.side.turn { background: var(--ui-surface-muted); }
 .side[data-seat="1"].turn { border-color: var(--p1); } .side[data-seat="2"].turn { border-color: #e0a800; }
 .side.me b::after { content: ' (bạn)'; font-weight: 400; color: var(--muted); }
 html[lang="en"] .side.me b::after { content: ' (you)'; }
@@ -85,7 +94,7 @@ html[lang="en"] .side.me b::after { content: ' (you)'; }
 /* Tới lượt mình: rê chuột lên cột thì sáng cả cột. */
 #board.mine .c.hl::before { background: #d7e4fb; }
 
-#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #e6eefa66; z-index: 5; }
+#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in oklab, var(--ui-bg) 75%, transparent); z-index: 5; }
 #btnResult { position: absolute; left: 50%; bottom: 8px; translate: -50% 0; z-index: 6; box-shadow: 0 6px 20px #1c2b4444; }
 
 #emoBar { display: flex; justify-content: center; gap: 6px; padding: 6px 12px max(8px, env(safe-area-inset-bottom)); }

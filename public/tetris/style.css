@@ -1,5 +1,5 @@
 /* Xếp gạch: bàn 10×20 cao hết cỡ màn hình (máy cảm ứng chừa chỗ cho 4 nút), mỗi loại khối một màu. */
-.stat.best small { color: #ffd23f; display: flex; align-items: center; justify-content: center; gap: 3px; }
+.stat.best small { color: var(--ui-warning-strong); display: flex; align-items: center; justify-content: center; gap: 3px; }
 #board {
   --h: min(640px, calc(100dvh - 200px));
   position: relative; height: var(--h); aspect-ratio: 1 / 2; border-radius: 10px; overflow: hidden;

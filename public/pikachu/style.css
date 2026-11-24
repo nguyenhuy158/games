@@ -1,20 +1,22 @@
+@import "/ui-kit.css";
+
 :root {
-  --bg: #0b1b2b;
-  --panel: #13283d;
-  --line: #23405c;
-  --text: #e8f1fa;
-  --muted: #8aa4bd;
-  --accent: #ffd23f;
-  --good: #3ddc84;
-  --bad: #ff5d5d;
+  --bg: var(--ui-bg);
+  --panel: var(--ui-surface);
+  --line: var(--ui-border);
+  --text: var(--ui-fg);
+  --muted: var(--ui-fg-muted);
+  --accent: var(--ui-primary);
+  --good: var(--ui-success);
+  --bad: var(--ui-danger);
   --peer: #5cc8ff;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: radial-gradient(circle at 50% 0%, #17385a, var(--bg) 70%) fixed;
+  background: var(--bg);
   color: var(--text);
-  font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px; line-height: 1.4;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
@@ -26,31 +28,37 @@ button, input { font: inherit; color: inherit; }
 button {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--ui-radius);
   padding: 8px 12px;
   cursor: pointer;
   white-space: nowrap;
 }
-button:hover { border-color: var(--muted); }
-button:disabled { opacity: .4; cursor: default; }
-button.primary { background: var(--accent); color: #1b1300; border-color: var(--accent); font-weight: 600; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--ui-primary-fg); border-color: var(--accent); font-weight: 600; box-shadow: var(--ui-shadow-sm); }
+button.primary:hover:not(:disabled) { background: var(--ui-primary-hover); }
+.card button { min-height: 44px; }
+input::placeholder { color: var(--muted); opacity: 1; }
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--ui-ring); }
+input:disabled { opacity: .6; cursor: not-allowed; }
 input {
-  background: #0a1724;
+  background: var(--ui-surface); font-size: 16px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--ui-radius);
   padding: 10px 12px;
   width: 100%;
 }
+input:not([type="checkbox"]):not([type="range"]) { min-height: 44px; }
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--ui-radius);
   padding: 24px;
   width: min(360px, calc(100vw - 32px));
   display: grid;
   gap: 12px;
   text-align: center;
-  box-shadow: 0 12px 40px #0008;
+  box-shadow: var(--ui-shadow-sm);
 }
 .card h1, .card h2 { margin: 0; }
 .card label { display: grid; gap: 4px; text-align: left; color: var(--muted); }
@@ -64,7 +72,7 @@ h1 .back:hover { color: var(--text); }
 .seg4 { grid-template-columns: repeat(4, 1fr); }
 .seg4 button { padding-inline: 4px; font-variant-numeric: tabular-nums; }
 .seg button.on { border-color: var(--accent); color: var(--accent); }
-.seg button:disabled { opacity: 1; }
+.seg button:disabled { opacity: .5; }
 #ovTitle { display: flex; align-items: center; justify-content: center; gap: 8px; }
 #code { text-transform: uppercase; letter-spacing: 3px; text-align: center; }
 
@@ -98,13 +106,13 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 #modeTag { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); flex: none; }
 .dot.on { background: var(--good); }
-#timeTrack { height: 6px; margin: 0 12px; background: #0a1724; border-radius: 3px; overflow: hidden; }
+#timeTrack { height: 6px; margin: 0 12px; background: var(--ui-surface-muted); border-radius: 3px; overflow: hidden; }
 #timebar { height: 100%; width: 0; background: var(--good); transition: width .25s linear; }
 #players { list-style: none; margin: 8px 12px 0; padding: 0; display: flex; gap: 6px; overflow-x: auto; }
 #players li {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--ui-radius);
   padding: 4px 10px;
   font-size: 13px;
   white-space: nowrap;
@@ -119,7 +127,7 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 
 #boardWrap { position: relative; flex: 1; min-height: 0; margin: 8px; }
 .arena #boardWrap { margin: 8px; }
-#board { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+#board { --tile-selection: #ffd23f; --tile-hint: #3ddc84; --tile-path: #ff5d5d; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .cell {
   position: absolute;
   background-image: url("images/tiles.webp");
@@ -129,14 +137,14 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
   cursor: pointer;
   transition: transform .08s;
 }
-.cell.sel { outline: 3px solid var(--accent); transform: scale(.92); z-index: 1; }
+.cell.sel { outline: 3px solid var(--tile-selection); transform: scale(.92); z-index: 1; }
 .cell.peer { outline: 3px dashed var(--peer); z-index: 1; }
 .cell.hint { animation: hint .5s ease-in-out 3; }
-@keyframes hint { 50% { outline: 3px solid var(--good); transform: scale(1.1); } }
+@keyframes hint { 50% { outline: 3px solid var(--tile-hint); transform: scale(1.1); } }
 #cells, #fx { position: absolute; inset: 0; }
 #fx { pointer-events: none; z-index: 3; }
 #fx > svg.path { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-#fx polyline { fill: none; stroke: var(--bad); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+#fx polyline { fill: none; stroke: var(--tile-path); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 #board.shake { animation: shake .25s; }
 @keyframes shake { 25% { margin-left: -6px; } 75% { margin-left: 6px; } }
 
@@ -144,12 +152,12 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 .cell.popping { animation: popping .35s ease-out forwards; pointer-events: none; }
 @keyframes popping { to { transform: scale(1.35) rotate(8deg); opacity: 0; filter: brightness(1.8); } }
 .float {
-  position: absolute; transform: translate(-50%, 0); color: var(--c, var(--accent));
+  position: absolute; transform: translate(-50%, 0); color: var(--c, var(--tile-selection));
   font-weight: 800; font-size: 16px; text-shadow: 0 2px 4px #000a; white-space: nowrap;
   animation: floatUp .9s ease-out forwards;
 }
 .float.combo { font-size: 20px; }
-.float b { color: var(--accent); font-size: 1.3em; }
+.float b { color: var(--tile-selection); font-size: 1.3em; }
 @keyframes floatUp { to { transform: translate(-50%, -48px); opacity: 0; } }
 .ping { position: absolute; border: 3px solid var(--c); border-radius: 8px; animation: ping .5s ease-out 3; }
 .ping span {
@@ -160,9 +168,9 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 .banner {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   display: grid; justify-items: center; gap: 4px; padding: 16px 28px; border-radius: 16px;
-  background: #0b1b2be0; border: 2px solid var(--accent); animation: banner 1.8s ease forwards;
+  background: #0b1b2be0; border: 2px solid var(--tile-selection); animation: banner 1.8s ease forwards;
 }
-.banner b { font-size: 28px; color: var(--accent); }
+.banner b { font-size: 28px; color: var(--tile-selection); }
 @keyframes banner { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.7); } 15%, 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; } }
 .emo-fly .ic { filter: drop-shadow(0 2px 3px #0008); }
 .emo-fly { position: fixed; transform: translate(-50%, -100%); font-size: 30px; pointer-events: none; z-index: 20; animation: emo 1.6s ease-out forwards; }
@@ -196,5 +204,5 @@ header #clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weig
 #topList small { color: var(--muted); }
 .credit { margin: 0; text-align: center; font-size: 11px; color: var(--muted); }
 .credit a { color: inherit; }
-#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #0b1b2bb0; z-index: 5; }
+#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in oklab, var(--ui-bg) 75%, transparent); z-index: 5; }
 

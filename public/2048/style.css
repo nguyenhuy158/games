@@ -33,8 +33,8 @@
 #over .card { gap: 8px; }
 
 .lb { list-style: none; padding: 0 !important; }
-.lb li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; background: #0f1822; border: 1px solid var(--line); }
-.lb .rank { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 50%; font-size: 12px; font-weight: 700; background: #23405c; color: var(--text); }
+.lb li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--ui-radius); background: var(--ui-surface-muted); border: 1px solid var(--line); }
+.lb .rank { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 50%; font-size: 12px; font-weight: 700; background: var(--ui-border); color: var(--text); }
 .lb .r1 .rank { background: #ffd23f; color: #1b1300; }
 .lb .r2 .rank { background: #cfd8e3; color: #1c2530; }
 .lb .r3 .rank { background: #e8a46b; color: #2a1606; }

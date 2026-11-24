@@ -1,30 +1,40 @@
+@import "/ui-kit.css";
+
 /* Khung chung của mọi game chạy trên nokiaApp (public/nokia/room.js): trang vào phòng, thanh trên, danh sách người,
    sảnh chờ / kết quả (hộp Cách chơi nằm ở public/help.js). Game bàn cờ (Cờ tướng, Cờ gánh, Ô ăn quan, Lô tô) chỉ cần file này + style.css riêng;
    game LCD Nokia thêm nokia/nokia.css (màn LCD + bàn phím). */
 :root {
-  --bg: #16202c; --panel: #223041; --line: #34485e; --text: #e8f1fa; --muted: #93a8bd; --accent: #9be564; --good: #3ddc84; --bad: #ff5d5d;
+  --bg: var(--ui-bg); --panel: var(--ui-surface); --line: var(--ui-border); --text: var(--ui-fg); --muted: var(--ui-fg-muted); --accent: var(--ui-primary); --good: var(--ui-success); --bad: var(--ui-danger);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: radial-gradient(circle at 50% 0%, #26384c, var(--bg) 70%) fixed; color: var(--text); overflow: hidden;
-  font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text); overflow: hidden;
+  font-size: 15px; line-height: 1.4;
   user-select: none; -webkit-tap-highlight-color: transparent; touch-action: pan-x pan-y;
 }
 [hidden] { display: none !important; }
 .ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
 button, input, select { font: inherit; color: inherit; }
 button {
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px;
   cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; justify-content: center;
 }
-button:disabled { opacity: .45; cursor: default; }
-button.primary { background: var(--accent); color: #142208; border-color: var(--accent); font-weight: 700; }
-button.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
-input { background: #0f1822; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--ui-primary-fg); border-color: var(--accent); font-weight: 600; box-shadow: var(--ui-shadow-sm); }
+button.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+:where(header, .card, .seg) button:where(:not(:disabled)):hover { background: var(--ui-surface-muted); }
+:is(header, .card, .seg) button.primary:not(:disabled):hover { background: var(--ui-primary-hover); }
+.card button { min-height: 44px; }
+input, select { background: var(--ui-surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 10px 12px; }
+input:not([type="range"]):not([type="checkbox"]), select { min-height: 44px; font-size: 16px; }
+input { width: 100%; }
+input::placeholder { color: var(--muted); opacity: 1; }
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--ui-ring); }
+input:disabled, select:disabled { opacity: .6; cursor: not-allowed; }
 .card {
-  background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px;
-  width: min(380px, calc(100vw - 32px)); display: grid; gap: 12px; text-align: center; box-shadow: 0 12px 40px #0008;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 22px;
+  width: min(380px, calc(100vw - 32px)); display: grid; gap: 12px; text-align: center; box-shadow: var(--ui-shadow-sm);
 }
 .card h1, .card h2 { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .card h1 .logo { width: 40px; height: 40px; }
@@ -51,15 +61,15 @@ header button { min-width: 44px; min-height: 44px; }
 .dot.on { background: var(--good); }
 @media (max-width: 480px) { header .lbl { display: none; } }
 #players { list-style: none; margin: 0 12px; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
-#players li { display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px 10px; font-size: 13px; white-space: nowrap; box-shadow: inset 4px 0 var(--c); }
+#players li { display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 3px 10px; font-size: 13px; white-space: nowrap; box-shadow: inset 4px 0 var(--c); }
 #players li.me { border-color: var(--accent); }
 #players b { color: var(--accent); font-variant-numeric: tabular-nums; }
 
 /* Màn chơi: phần còn lại dưới thanh trên; game tính cỡ theo chỗ trống thật của .stage (container query). */
 .stage { position: relative; flex: 1; min-height: 0; display: grid; padding: 8px 12px max(10px, env(safe-area-inset-bottom)); container-type: size; }
 /* Dòng gợi ý dưới màn chơi (LCD: cách điều khiển; bàn cờ: tới lượt ai). */
-.hint { color: var(--muted); font-size: 12px; opacity: .7; text-align: center; }
+.hint { color: var(--muted); font-size: 12px; text-align: center; }
 /* Điện thoại xoay ngang: không đủ cao cho dòng gợi ý. */
 @media (orientation: landscape) and (max-height: 560px) and (pointer: coarse) { .hint { display: none; } }
-#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #16202cb0; z-index: 5; }
+#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in oklab, var(--ui-bg) 75%, transparent); z-index: 5; }
 .lang { display: flex; justify-content: center; align-items: center; gap: 8px; }

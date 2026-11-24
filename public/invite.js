@@ -4,17 +4,19 @@ import { toast } from './toast.js';
 import { t } from './i18n.js';
 
 const CSS = `
-#invite { border: 0; padding: 0; background: none; color: #1b1b1b; max-width: calc(100vw - 32px); }
-#invite::backdrop { background: #000a; }
-#invite .box { background: #fff; border-radius: 20px; padding: 20px; display: grid; gap: 12px; justify-items: center; width: min(340px, calc(100vw - 32px)); font: inherit; }
+#invite { border: 0; padding: 0; background: none; color: var(--ui-fg); max-width: calc(100vw - 32px); }
+#invite::backdrop { background: color-mix(in oklab, var(--ui-bg) 75%, transparent); }
+#invite .box { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow-lg); padding: 24px; display: grid; gap: 12px; justify-items: center; width: min(340px, calc(100vw - 32px)); font: inherit; }
 #invite h2 { margin: 0; font-size: 18px; }
 #invite .code { font-size: 28px; font-weight: 800; letter-spacing: 6px; }
 #invite .qr { width: 100%; max-width: 260px; aspect-ratio: 1; }
 #invite .qr svg { width: 100%; height: 100%; display: block; }
-#invite .link { font-size: 12px; color: #666; word-break: break-all; text-align: center; margin: 0; }
+#invite .link { font-size: 12px; color: var(--ui-fg-muted); word-break: break-all; text-align: center; margin: 0; }
 #invite .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-#invite button { font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid #ddd; background: #f4f4f4; color: #1b1b1b; cursor: pointer; }
-#invite button.primary { background: #1b1b1b; color: #fff; border-color: #1b1b1b; }
+#invite button { font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--ui-radius); border: 1px solid var(--ui-border); background: var(--ui-surface); color: var(--ui-fg); cursor: pointer; }
+#invite button:hover { background: var(--ui-surface-muted); }
+#invite button.primary { background: var(--ui-primary); color: var(--ui-primary-fg); border-color: transparent; }
+#invite button.primary:hover { background: var(--ui-primary-hover); }
 #invite .ic { width: 1.1em; height: 1.1em; }`;
 
 let dlg;
