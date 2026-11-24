@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { MIN_PLAYERS, MAX_PLAYERS, DEFAULT_CONFIG, PACKS, DURATIONS, PHASE, ACTION, ROLE, limits, normalizeConfig, validateSetup, createGame, act, advance, view } from './public/gian-diep/logic.js';
+import { MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, DEFAULT_CONFIG, PACKS, DURATIONS, PHASE, ACTION, ROLE, limits, normalizeConfig, validateSetup, createGame, act, advance, view, parseNames, orderedIds, movePlayer, shufflePlayers } from './public/gian-diep/logic.js';
 import gianDiep from './worker/games/gian-diep.js';
 
 const NOW = 1_000;
@@ -68,6 +68,71 @@ function room(n = 6, cfg = {}, rand = () => 0.999999) {
     end: (result) => ended.push(result), wakeAt: (at) => wakes.push(at),
   };
   return { ctx, ended, wakes, time: (value) => { now = value; }, host: (value) => { host = value; } };
+}
+
+{
+  assert.deepEqual(parseNames(' An \r\nBình\r\nChi '), { names: ['An', 'Bình', 'Chi'] });
+  assert.deepEqual(parseNames('An\nBình\nChi'), { names: ['An', 'Bình', 'Chi'] });
+  for (const text of ['', '   ', 'An\n\nChi', 'An\r\n']) assert.equal(parseNames(text).error, NAME_ERROR.EMPTY);
+  for (const text of ['An\nan', 'Án\nA\u0301n']) assert.equal(parseNames(text).error, NAME_ERROR.DUPLICATE);
+  assert.equal(parseNames(' AN ', ['An']).error, NAME_ERROR.DUPLICATE);
+  assert.equal(parseNames('x'.repeat(NAME_LIMIT + 1)).error, NAME_ERROR.LONG);
+  assert.deepEqual(parseNames('x'.repeat(NAME_LIMIT)), { names: ['x'.repeat(NAME_LIMIT)] });
+  const names = idsFor(MAX_PLAYERS);
+  assert.deepEqual(parseNames(names.join('\n')), { names });
+  assert.equal(parseNames([...names, 'extra'].join('\n')).error, NAME_ERROR.LIMIT);
+  assert.equal(parseNames('extra', names).error, NAME_ERROR.LIMIT);
+  assert.deepEqual(names, idsFor(MAX_PLAYERS));
+}
+
+{
+  const players = idsFor(6).map((id) => ({ id, name: `Tên ${id}` }));
+  const original = structuredClone(players);
+  const host = players[0].id;
+  const moved = movePlayer(players, host, 1);
+  assert.equal(moved[1].id, host);
+  assert.deepEqual(movePlayer(players, host, -1), players);
+  assert.deepEqual(movePlayer(players, 'missing', 1), players);
+  const renamed = moved.map((player) => player.id === host ? { ...player, name: 'Tên chủ mới' } : player);
+  const shuffled = shufflePlayers(renamed, () => 0);
+  assert.deepEqual(players, original);
+  assert.equal(shuffled.find((player) => player.id === host).name, 'Tên chủ mới');
+  assert.deepEqual(new Set(shuffled.map((player) => player.id)), new Set(players.map((player) => player.id)));
+  assert.notDeepEqual(shuffled, renamed);
+  const g = createGame(shuffled.map((player) => player.id), DEFAULT_CONFIG, () => 0.5, NOW);
+  assert.deepEqual(g.players.map((player) => player.id), shuffled.map((player) => player.id));
+  for (const player of shuffled) assert.ok(view(g, player.id).card);
+  const other = shuffled.find((player) => player.id !== host).id;
+  rejected(g, other, { a: ACTION.NEXT }, host);
+  assert.equal(act(g, host, host, { a: ACTION.NEXT }, NOW), true);
+  assert.deepEqual(g.turnOrder, shuffled.map((player) => player.id));
+}
+
+{
+  const ids = idsFor(6);
+  const order = [ids[2], ids[0], 'left-room', ids[1]];
+  assert.deepEqual(orderedIds(ids, order), [ids[2], ids[0], ids[1], ...ids.slice(3)]);
+  assert.deepEqual(orderedIds(ids, [ids[2], ids[2], 'left-room']), [ids[2], ...ids.filter((id) => id !== ids[2])]);
+  for (const invalid of [null, {}, 'first', [ids[0], ids[0]], [''], [1], ['x'.repeat(65)], idsFor(MAX_PLAYERS + 1)]) {
+    assert.equal(normalizeConfig({ order: invalid }), null);
+    assert.equal(gianDiep.config(DEFAULT_CONFIG, { order: invalid }), null);
+  }
+  const cfg = gianDiep.config(DEFAULT_CONFIG, { order });
+  assert.deepEqual(cfg.order, order);
+  assert.notEqual(cfg.order, order);
+  const setup = room(6, cfg);
+  gianDiep.start(setup.ctx);
+  assert.deepEqual(setup.ctx.seats, ids, 'seating preference must not mutate room ownership order');
+  assert.equal(setup.ctx.host(), ids[0]);
+  assert.deepEqual(setup.ctx.g.players.map((player) => player.id), orderedIds(ids, order));
+  assert.equal(gianDiep.msg(setup.ctx, { id: ids[2] }, { a: ACTION.NEXT }), false);
+  assert.equal(gianDiep.msg(setup.ctx, { id: ids[0] }, { a: ACTION.NEXT }), true);
+  assert.equal(setup.ctx.g.speaker, ids[2]);
+  const departed = room(6, cfg);
+  departed.ctx.seats = [...ids.filter((id) => id !== ids[2]), 'new-arrival'];
+  gianDiep.start(departed.ctx);
+  assert.deepEqual(departed.ctx.g.players.map((player) => player.id), [ids[0], ids[1], ...ids.slice(3), 'new-arrival']);
+  assert.equal(new Set(departed.ctx.g.players.map((player) => player.id)).size, departed.ctx.seats.length);
 }
 
 for (const pack of PACKS) {

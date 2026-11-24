@@ -1,5 +1,7 @@
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 20;
+export const NAME_LIMIT = 20;
+export const NAME_ERROR = Object.freeze({ EMPTY: 'empty', DUPLICATE: 'duplicate', LONG: 'long', LIMIT: 'limit' });
 export const DURATIONS = Object.freeze([5, 10, 15]);
 export const DEFAULT_CONFIG = Object.freeze({ spies: 1, whites: 0, seconds: 15, pack: 'food' });
 export const PHASE = Object.freeze({ DEAL: 'deal', DESCRIBE: 'describe', DISCUSS: 'discuss', COUNTDOWN: 'countdown', VOTE: 'vote', TIE: 'tie', GUESS: 'guess', ENDED: 'ended' });
@@ -49,7 +51,11 @@ const STROKED_D = /đ/g;
 const WHITESPACE = /\s+/gu;
 const PLAIN_D = 'd';
 const WORD_SPACE = ' ';
-const CONFIG_FIELDS = new Set(Object.keys(DEFAULT_CONFIG));
+const ORDER_FIELD = 'order';
+const CONFIG_FIELDS = new Set([...Object.keys(DEFAULT_CONFIG), ORDER_FIELD]);
+const MAX_PLAYER_ID_LENGTH = 64;
+const NAME_LINES = /\r\n|\n|\r/u;
+const NAME_NORMALIZATION = 'NFC';
 const MANUAL_PHASES = new Set([PHASE.DESCRIBE, PHASE.DISCUSS, PHASE.COUNTDOWN, PHASE.VOTE]);
 const validObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const validTime = (now) => Number.isFinite(now) && now >= 0;
@@ -57,6 +63,45 @@ const alivePlayers = (g) => g.players.filter((player) => player.alive);
 const normalizedWord = (word) => word.toLowerCase().normalize(NORMALIZATION).replace(DIACRITICS, '').replace(STROKED_D, PLAIN_D).trim().replace(WHITESPACE, WORD_SPACE);
 const hiddenCap = (n) => Math.ceil(n / HIDDEN_DIVISOR);
 
+
+export function parseNames(text, existing = []) {
+  const names = text.split(NAME_LINES).map((name) => name.trim());
+  if (names.some((name) => !name)) return { error: NAME_ERROR.EMPTY };
+  if (names.some((name) => name.length > NAME_LIMIT)) return { error: NAME_ERROR.LONG };
+  const combined = [...existing, ...names];
+  const keys = combined.map((name) => name.normalize(NAME_NORMALIZATION).toLocaleLowerCase());
+  if (new Set(keys).size !== keys.length) return { error: NAME_ERROR.DUPLICATE };
+  if (combined.length > MAX_PLAYERS) return { error: NAME_ERROR.LIMIT };
+  return { names };
+}
+
+export function validOrder(order) {
+  return Array.isArray(order) && order.length <= MAX_PLAYERS && order.every((id) => typeof id === 'string' && id.trim() !== '' && id.length <= MAX_PLAYER_ID_LENGTH) && new Set(order).size === order.length;
+}
+
+export function orderedIds(ids, order = []) {
+  const remaining = new Set(ids);
+  const result = [];
+  for (const id of order) if (remaining.delete(id)) result.push(id);
+  return result.concat([...remaining]);
+}
+
+export function movePlayer(players, id, offset) {
+  const index = players.findIndex((player) => player.id === id);
+  const target = index + offset;
+  const next = [...players];
+  if (index >= 0 && target >= 0 && target < next.length) [next[index], next[target]] = [next[target], next[index]];
+  return next;
+}
+
+export function shufflePlayers(players, rand) {
+  const next = [...players];
+  for (let index = next.length - 1; index > 0; index--) {
+    const other = randomIndex(index + 1, rand);
+    [next[index], next[other]] = [next[other], next[index]];
+  }
+  return next;
+}
 export function limits(n, spies = DEFAULT_CONFIG.spies) {
   if (!Number.isInteger(n) || n < MIN_PLAYERS || n > MAX_PLAYERS) return { spies: 0, whites: 0 };
   const maxSpies = n <= SMALL_GROUP_MAX ? MIN_SPIES : hiddenCap(n);
@@ -73,6 +118,10 @@ export function normalizeConfig(cfg) {
   if (!Number.isInteger(next.whites) || next.whites < 0 || next.whites > MAX_WHITES) return null;
   if (next.spies + next.whites > hiddenCap(MAX_PLAYERS)) return null;
   if (!DURATIONS.includes(next.seconds) || !PACKS.some((pack) => pack.id === next.pack)) return null;
+  if (Object.hasOwn(next, ORDER_FIELD)) {
+    if (!validOrder(next.order)) return null;
+    next.order = [...next.order];
+  }
   return next;
 }
 
@@ -92,19 +141,20 @@ export function createGame(ids, cfg, rand, now) {
   if (!Array.isArray(ids) || !validateSetup(ids.length, cfg) || typeof rand !== 'function' || !validTime(now)) throw new RangeError('Invalid game setup');
   if (ids.some((id) => typeof id !== 'string' || id.trim() === '' || id === ROLE.CIVILIAN || id === HIDDEN_TEAM) || new Set(ids).size !== ids.length) throw new RangeError('Invalid player ids');
   const config = normalizeConfig(cfg);
+  const playerIds = orderedIds(ids, config.order);
   const pack = PACKS.find((item) => item.id === config.pack);
   const pair = pack.pairs[randomIndex(pack.pairs.length, rand)];
   const civilianIndex = randomIndex(PAIR_WORDS, rand);
   const civilianWord = pair[civilianIndex];
   const spyWord = pair[1 - civilianIndex];
-  const roles = ids.map((_, index) => index < config.spies ? ROLE.SPY : index < config.spies + config.whites ? ROLE.WHITE : ROLE.CIVILIAN);
+  const roles = playerIds.map((_, index) => index < config.spies ? ROLE.SPY : index < config.spies + config.whites ? ROLE.WHITE : ROLE.CIVILIAN);
   for (let index = roles.length - 1; index > 0; index--) {
     const other = randomIndex(index + 1, rand);
     [roles[index], roles[other]] = [roles[other], roles[index]];
   }
   const g = {
     cfg: config, phase: PHASE.DEAL, deadline: 0, round: 1,
-    players: ids.map((id, index) => ({ id, role: roles[index], word: roles[index] === ROLE.WHITE ? null : roles[index] === ROLE.SPY ? spyWord : civilianWord, alive: true })),
+    players: playerIds.map((id, index) => ({ id, role: roles[index], word: roles[index] === ROLE.WHITE ? null : roles[index] === ROLE.SPY ? spyWord : civilianWord, alive: true })),
     speaker: null, candidates: [], votes: {}, pendingGuess: null, winner: null, lastEliminated: null,
     civilianWord, spyWord, tally: null, startIndex: -1, turnOrder: [], turnIndex: 0,
   };

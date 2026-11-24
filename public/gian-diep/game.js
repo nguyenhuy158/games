@@ -3,10 +3,11 @@ import { el, store } from '../dom.js';
 import { t, tx, langToggle } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
-import { MIN_PLAYERS, MAX_PLAYERS, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from './logic.js';
+import { MIN_PLAYERS, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from './logic.js';
 import { HELP } from './help.js';
 import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results, notify } from './ui.js';
 import { createActionGate, setButtonPending } from './ui-kit/feedback.mjs';
+import { rosterDraft, rosterHasDraft, rosterEditor, seatingRoster, orderedPlayers } from './roster.js';
 
 const GAME = 'gian-diep';
 const GAME_PATH = '/gian-diep/';
@@ -17,7 +18,6 @@ const ROOM_STATUS = Object.freeze({ PLAYING: 'playing', ENDED: 'ended' });
 const MS_PER_SECOND = 1000;
 const CLOCK_INTERVAL_MS = 200;
 const ACTION_TIMEOUT_MS = 6000;
-const NAME_LIMIT = 20;
 const GUESS_LIMIT = 120;
 const THEME_KEY = 'gian-diep.theme';
 const THEME_DARK = 'dark';
@@ -57,7 +57,10 @@ let pendingOnline = null;
 let guessDraft = '';
 let guessOwner = null;
 let localConfig = { ...DEFAULT_CONFIG };
-let localNames = Array.from({ length: MIN_PLAYERS }, (_, index) => defaultName(index));
+let localPlayerSequence = 0;
+let localPlayers = Array.from({ length: MIN_PLAYERS }, (_, index) => newLocalPlayer(defaultName(index)));
+let localHostId = localPlayers[0].id;
+const localRosterDraft = rosterDraft();
 let localGame = null;
 let localStep = LOCAL_STEP.SETUP;
 let revealIndex = 0;
@@ -167,51 +170,51 @@ function startLocalSetup() {
   focusMain();
 }
 
-function paintSetup() {
-  const issue = setupWarning(localNames.length, localConfig);
-  const start = button(t('Chia từ bí mật', 'Deal secret words'), dealLocal, true, 'layers');
-  start.disabled = !!issue;
-  const roster = paginated(localNames.map((name, index) => ({ name, index })), ({ name, index }) => el('div', { className: 'player-row' }, el('span', { className: 'player-name' }, name), index === 0 ? indicator('crown', '', t('Chủ phòng', 'Host')) : ''));
-  content.replaceChildren(el('div', { className: 'setup stack' },
-    el('div', { className: 'section-heading' }, el('h2', {}, iconEl('users'), t(`${localNames.length} người chơi`, `${localNames.length} players`)), iconButton(t('Sửa nhóm', 'Edit players'), editNames, 'pencil')),
-    roster,
-    el('div', { className: 'settings-summary' }, configBadges(localConfig), iconButton(t('Cài đặt', 'Settings'), () => settings(localNames.length, localConfig, (cfg) => { localConfig = cfg; paintSetup(); }), 'gauge')),
-    issue ? note(issue, true) : note(t('Xem thẻ lần lượt. Đủ người xem mới chạy đồng hồ.', 'Pass the cards privately. The timer waits for everyone.')),
-    start));
+function newLocalPlayer(name) {
+  return { id: `${LOCAL_ID_PREFIX}${++localPlayerSequence}`, name };
 }
 
-function editNames() {
-  let names = [...localNames];
-  const list = el('div', { className: 'name-fields' });
-  const count = el('select');
-  count.append(...Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, index) => el('option', { value: index + MIN_PLAYERS, selected: index + MIN_PLAYERS === names.length, textContent: String(index + MIN_PLAYERS) })));
-  const draw = () => list.replaceChildren(...names.map((name, index) => {
-    const input = el('input', { value: name, maxLength: NAME_LIMIT, autocomplete: 'off', required: true, oninput: () => { names[index] = input.value; } });
-    return el('label', {}, index === 0 ? t('Người 1 · Chủ phòng', 'Player 1 · Host') : t(`Người ${index + 1}`, `Player ${index + 1}`), input);
-  }));
-  count.onchange = () => { names = Array.from({ length: Number(count.value) }, (_, index) => names[index] ?? defaultName(index)); draw(); };
-  draw();
-  const form = el('form', { className: 'stack', onsubmit: (event) => {
-    event.preventDefault();
-    const clean = names.map((name) => name.trim());
-    if (clean.some((name) => !name) || new Set(clean.map((name) => name.toLocaleLowerCase())).size !== clean.length) {
-      notify(t('Điền tên khác nhau cho từng người để tránh nhầm phiếu.', 'Use a different, non-empty name for each player to avoid voting mistakes.'), 'error');
-      return;
-    }
-    localNames = clean;
-    modal.close();
-    paintSetup();
-  } }, el('label', {}, t('Số người', 'Player count'), count), list);
-  const save = button(t('Lưu nhóm', 'Save players'), null, true);
-  save.type = 'submit';
-  form.append(save);
-  const modal = dialog(t('Tên người chơi', 'Player names'), form);
+function paintSetup(focus, editing = false) {
+  const issue = setupWarning(localPlayers.length, localConfig);
+  const start = button(t('Chia từ bí mật', 'Deal secret words'), dealLocal, true, 'layers');
+  const draftNote = note(t('Lưu hoặc hủy tên đang sửa; thêm danh sách đang nhập trước khi chia từ.', 'Save or cancel the name edit; apply the draft list before dealing.'));
+  const updateDraft = () => {
+    const pending = rosterHasDraft(localRosterDraft);
+    start.disabled = !!issue || pending;
+    draftNote.hidden = !pending;
+  };
+  const roster = rosterEditor(localPlayers, localHostId, localRosterDraft, (change) => {
+    if (localGame || localStep !== LOCAL_STEP.SETUP) return;
+    if (change.names) {
+      const added = change.names.map(newLocalPlayer);
+      if (change.replacing) { localPlayers = added; localHostId = added[0].id; }
+      else localPlayers = [...localPlayers, ...added];
+    } else localPlayers = change.players;
+    localRosterDraft.customized = true;
+    paintSetup(change.focus, change.editing);
+    if (change.names) content.querySelector('textarea')?.focus();
+  }, random, updateDraft);
+  updateDraft();
+  content.replaceChildren(el('div', { className: 'setup stack' },
+    el('div', { className: 'section-heading' }, el('h2', {}, iconEl('users'), t(`${localPlayers.length} người chơi`, `${localPlayers.length} players`))),
+    roster,
+    el('div', { className: 'setup-options stack' },
+      el('div', { className: 'settings-summary' }, configBadges(localConfig), iconButton(t('Cài đặt', 'Settings'), () => settings(localPlayers.length, localConfig, (cfg) => { localConfig = cfg; paintSetup(); }), 'gauge')),
+      issue ? note(issue, true) : note(t('Xem thẻ lần lượt. Đủ người xem mới chạy đồng hồ.', 'Pass the cards privately. The timer waits for everyone.')),
+      draftNote, start)));
+  if (focus) {
+    const row = [...content.querySelectorAll('[data-player]')].find((item) => item.dataset.player === focus);
+    const control = row?.querySelector(editing ? 'input' : 'button');
+    control?.focus();
+    if (editing) control?.select();
+  }
 }
 
 function dealLocal() {
-  if (!validateSetup(localNames.length, localConfig)) { notify(setupWarning(localNames.length, localConfig), 'error'); return; }
+  if (rosterHasDraft(localRosterDraft) || localGame || localStep !== LOCAL_STEP.SETUP) return;
+  if (!validateSetup(localPlayers.length, localConfig)) { notify(setupWarning(localPlayers.length, localConfig), 'error'); return; }
   localNamesById.clear();
-  const ids = localNames.map((name, index) => { const id = `${LOCAL_ID_PREFIX}${index + 1}`; localNamesById.set(id, name); return id; });
+  const ids = localPlayers.map(({ id, name }) => { localNamesById.set(id, name); return id; });
   localGame = createGame(ids, localConfig, random, Date.now());
   localStep = LOCAL_STEP.REVEAL;
   revealIndex = 0;
@@ -227,7 +230,7 @@ function dealLocal() {
 
 function paintReveal() {
   if (localStep === LOCAL_STEP.READY) {
-    content.replaceChildren(el('div', { className: 'handoff stack' }, iconEl('circle-check'), el('h2', {}, t('Mọi người đã nhận từ', 'Everyone has their word')), note(t(`Trả máy cho ${localNames[0]}. Bấm bắt đầu khi cả nhóm sẵn sàng.`, `Return the device to ${localNames[0]}. Start when everyone is ready.`)), button(t('Bắt đầu lượt mô tả', 'Start giving clues'), () => { localStep = LOCAL_STEP.PLAY; sendAction({ a: ACTION.NEXT }); }, true, 'play')));
+    content.replaceChildren(el('div', { className: 'handoff stack' }, iconEl('circle-check'), el('h2', {}, t('Mọi người đã nhận từ', 'Everyone has their word')), note(t(`Trả máy cho ${playerName(localHostId)}. Bấm bắt đầu khi cả nhóm sẵn sàng.`, `Return the device to ${playerName(localHostId)}. Start when everyone is ready.`)), button(t('Bắt đầu lượt mô tả', 'Start giving clues'), () => { localStep = LOCAL_STEP.PLAY; sendAction({ a: ACTION.NEXT }); }, true, 'play')));
     return;
   }
   const player = localGame.players[revealIndex];
@@ -265,7 +268,7 @@ function localNow() {
 }
 
 function localHost() {
-  return localGame.players[0].id;
+  return localHostId;
 }
 
 function sendAction(message, actor = mode === MODE.LOCAL ? localHost() : app?.id) {
@@ -439,7 +442,12 @@ function enterOnline() {
     lobby(box, room, host, setConfig) {
       const cfg = { ...DEFAULT_CONFIG, ...room.cfg };
       if (room.status === ROOM_STATUS.ENDED && room.view?.reveal) box.append(results(room.view, playerName));
-      else box.append(paginated(room.players, (player) => el('div', { className: 'player-row' }, el('span', { className: 'player-name' }, player.name), player.id === room.host ? indicator('crown', '', t('Chủ phòng', 'Host')) : '')));
+      const players = orderedPlayers(room.players, cfg.order);
+      const changeOrder = host && room.status !== ROOM_STATUS.PLAYING ? (next) => {
+        if (app?.room?.host !== app?.id || app.room.status === ROOM_STATUS.PLAYING) return;
+        setConfig({ order: next.map((player) => player.id) });
+      } : null;
+      box.append(seatingRoster(players, room.host, changeOrder, random));
       box.append(el('div', { className: 'settings-summary' }, configBadges(cfg), host ? iconButton(t('Cài đặt ván', 'Game settings'), () => settings(room.players.length, cfg, setConfig), 'gauge') : ''));
     },
     mount(stage) {
