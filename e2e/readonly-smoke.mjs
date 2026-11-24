@@ -74,6 +74,7 @@ const CONTEXT_OPTIONS = { serviceWorkers: "block" };
 const context = await browser.newContext(CONTEXT_OPTIONS);
 const page = await context.newPage();
 const pageErrors = collectPageErrors(page);
+let lobbyPage;
 
 function collectPageErrors(checkedPage) {
   const errors = [];
@@ -230,14 +231,17 @@ try {
     throw new Error(`/api/board: ${JSON.stringify(board)}`);
   ok(`GET /api/board?game=2048 (${board.length} scores)`);
 
+  lobbyPage = await context.newPage();
+  const lobbyErrors = collectPageErrors(lobbyPage);
   const [roomsResponse] = await Promise.all([
-    page.waitForResponse((response) => response.url() === BASE + ROOMS_PATH, WAIT),
-    page.goto(BASE + LOBBY_PATH),
+    lobbyPage.waitForResponse((response) => response.url() === BASE + ROOMS_PATH, WAIT),
+    lobbyPage.goto(BASE + LOBBY_PATH),
   ]);
   if (!roomsResponse.ok() || !Array.isArray((await roomsResponse.json()).rooms)) {
     throw new Error("Lobby room request failed");
   }
-  await page.locator(LOBBY_READY_SELECTOR).first().waitFor(WAIT);
+  await lobbyPage.locator(LOBBY_READY_SELECTOR).first().waitFor(WAIT);
+  assertNoPageErrors(lobbyErrors);
   ok("open-rooms page /phong/ renders");
 
   assertNoPageErrors(pageErrors);
@@ -245,7 +249,7 @@ try {
 } catch (error) {
   failed += 1;
   console.log("FAIL:", error.message);
-  await captureFailure(page);
+  await captureFailure(lobbyPage ?? page);
 } finally {
   await browser.close();
 }
