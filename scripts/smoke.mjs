@@ -2,6 +2,7 @@
 // Chạy trước / sau mỗi bước refactor để chắc hành vi không đổi:
 //   node scripts/smoke.mjs                         (mặc định http://localhost:8789, wrangler dev)
 //   node scripts/smoke.mjs https://games.huyab.cfd [tên game ...]
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { botMove as oaqBot } from '../public/o-an-quan/logic.js';
 import { botMove as bantumiBot } from '../public/nokia/bantumi/logic.js';
 import { COLS } from '../public/noi-4/logic.js';
@@ -12,17 +13,50 @@ import { botMove as tuongBot } from '../public/co-tuong/logic.js';
 import { kinhRows as lotoKinh } from '../public/loto/logic.js';
 import { ACTION as SPY_ACTION, PHASE as SPY_PHASE, ROLE as SPY_ROLE } from '../public/gian-diep/logic.js';
 
+const MAX_CONCURRENT_GAMES = 3;
+const MAX_ATTEMPTS = 2;
+const LOG_NAME_WIDTH = 13;
+const MILLISECONDS_PER_SECOND = 1000;
+const DURATION_DECIMAL_PLACES = 1;
+const GAME_LIST_SEPARATOR = ', ';
+const EXIT_SUCCESS = 0;
+const EXIT_FAILURE = 1;
+const attemptSockets = new AsyncLocalStorage();
+
 const base = (process.argv[2] ?? 'http://localhost:8789').replace(/^http/, 'ws');
 const only = process.argv.slice(3);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const code = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 24)]).join('');
+
+function connectSocket(url) {
+  const { sockets } = attemptSockets.getStore();
+  const ws = new WebSocket(url);
+  sockets.add(ws);
+  return ws;
+}
+
+async function runAttempt(run) {
+  const sockets = new Set();
+  const messages = new AbortController();
+  return attemptSockets.run({ sockets, messages }, async () => {
+    try {
+      return await run();
+    } finally {
+      messages.abort();
+      for (const ws of sockets) {
+        ws.onmessage = null;
+        ws.close();
+      }
+    }
+  });
+}
 
 // Mở n người vào cùng phòng; trả về socket có .me, .last (state mới nhất), .msgs; host() = socket đang làm chủ phòng.
 async function join(path, n, onState = () => {}) {
   const room = code();
   const socks = await Promise.all(Array.from({ length: n }, (_, k) => new Promise((ok, fail) => {
     const me = `smoke-${k}-${room}-${Math.random().toString(36).slice(2, 8)}`;
-    const ws = new WebSocket(`${base}${path(room)}${path(room).includes('?') ? '&' : '?'}id=${me}&name=Bot${k}`);
+    const ws = connectSocket(`${base}${path(room)}${path(room).includes('?') ? '&' : '?'}id=${me}&name=Bot${k}`);
     Object.assign(ws, { me, last: null, msgs: [] });
     ws.onmessage = (e) => {
       const m = JSON.parse(e.data);
@@ -112,13 +146,13 @@ const GAMES = {
           const pair = findPair(m.board); // lúc bắt đầu board tới trước state
           if (pair) setTimeout(() => r.send(ws, { t: 'pick', a: pair[0], b: pair[1] }), 5);
         }
-      });
+      }, { signal: attemptSockets.getStore().messages.signal });
     }
     r.send(r.host(), { t: 'config', mode: 'race', size: 3 });
     await until(() => r.socks.every((s) => s.last.mode === 'race' && s.last.size === 3), 3000, 'race 8x6');
     r.send(r.host(), { t: 'start' });
     await until(() => r.socks.every((s) => boards[s.me]), 5000, 'boards received');
-    const watcher = new WebSocket(`${base}/api/room/${r.code}?id=smoke-watch-${Date.now()}&name=Watch`);
+    const watcher = connectSocket(`${base}/api/room/${r.code}?id=smoke-watch-${Date.now()}&name=Watch`);
     watcher.msgs = [];
     watcher.onmessage = (e) => watcher.msgs.push(JSON.parse(e.data));
     await until(() => r.socks[0].last.status === 'ended', 60000, 'someone clears 5 levels');
@@ -162,7 +196,7 @@ const GAMES = {
         ws.foreign = m.t === 'grid' && Object.keys(m.grids).some((u) => u !== ws.me);
         if (m.t === 'grid' && m.grids[ws.me]) grid[ws.me] = m.grids[ws.me];
         if (m.t === 'open' && m.unit === ws.me) for (const [i, v] of m.cells) grid[ws.me][i] = v;
-      });
+      }, { signal: attemptSockets.getStore().messages.signal });
     }
     r.send(r.host(), { t: 'config', mode: 'race', size: 0 });
     await until(() => r.socks.every((s) => s.last.mode === 'race'), 3000, 'race mode');
@@ -397,20 +431,32 @@ async function nokiaStart(game) {
   return 'playing';
 }
 
-let fail = 0;
-for (const [name, run] of Object.entries(GAMES)) {
-  if (only.length && !only.includes(name)) continue;
-  // Mạng / lúc vừa deploy có thể chập chờn: game fail thì chạy lại 1 lần, ghi rõ để còn thấy.
-  for (let attempt = 1; attempt <= 2; attempt++) {
+async function runGame(name, run) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const t = Date.now();
     try {
-      const info = await run();
-      console.log(`ok   ${name.padEnd(13)} ${((Date.now() - t) / 1000).toFixed(1)}s  ${info}${attempt > 1 ? '  (lần 2)' : ''}`);
-      break;
+      const info = await runAttempt(run);
+      console.log(`ok   ${name.padEnd(LOG_NAME_WIDTH)} ${((Date.now() - t) / MILLISECONDS_PER_SECOND).toFixed(DURATION_DECIMAL_PLACES)}s  ${info}${attempt > 1 ? '  (lần 2)' : ''}`);
+      return true;
     } catch (e) {
-      console.log(`${attempt < 2 ? 'retry' : 'FAIL '} ${name.padEnd(13)} ${e.message}`);
-      if (attempt === 2) fail++;
+      console.log(`${attempt < MAX_ATTEMPTS ? 'retry' : 'FAIL '} ${name.padEnd(LOG_NAME_WIDTH)} ${e.message}`);
     }
   }
+  return false;
 }
-process.exit(fail ? 1 : 0);
+
+const unknown = only.filter((name) => !Object.hasOwn(GAMES, name));
+if (unknown.length) {
+  console.error(`Unknown smoke games: ${unknown.join(GAME_LIST_SEPARATOR)}`);
+  process.exit(EXIT_FAILURE);
+}
+
+const selected = Object.entries(GAMES).filter(([name]) => !only.length || only.includes(name));
+const queue = selected.values();
+let fail = 0;
+await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENT_GAMES, selected.length) }, async () => {
+  for (const [name, run] of queue) {
+    if (!await runGame(name, run)) fail++;
+  }
+}));
+process.exit(fail ? EXIT_FAILURE : EXIT_SUCCESS);
