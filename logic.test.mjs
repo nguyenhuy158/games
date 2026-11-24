@@ -134,5 +134,6 @@ await import('./room-client.test.mjs');
 await import('./scripts/check-deps.mjs');
 await import('./sso.test.mjs');
 await import('./top.test.mjs');
+await import('./guest-history.test.mjs');
 await import('./http.test.mjs');
 await import('./e2e-selection.test.mjs');

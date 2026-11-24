@@ -2,6 +2,12 @@ import { DurableObject } from 'cloudflare:workers';
 import { uniqueName, otherNames } from '../names.js';
 import { Tape } from '../../public/tape.js';
 import { replayId } from './top.js';
+import { GUEST_HEADER, USER_HEADER } from '../guest.js';
+const PLAYING = 'playing';
+const MODE_SOLO = 'solo';
+const MODE_MULTI = 'multi';
+const RESULT_SEPARATOR = ':';
+const playerOwner = (player) => player?.user ? { sub: player.user.sub, name: player.user.name } : { guest: player?.guest };
 
 // Adapter phòng chơi dùng chung (hexagonal): Durable Object + WebSocket hibernation lo người chơi, chủ phòng, sảnh chờ,
 // view riêng từng người, lưu trạng thái, hẹn giờ, ghi lịch sử, danh sách phòng công khai. Luật + diễn biến ván nằm trong
@@ -75,7 +81,9 @@ export function gameRoom(games) {
       }
       const p = s.players[id];
       p.name = uniqueName(name, otherNames(s.players, id));
-      p.user = JSON.parse(req.headers.get('X-User') || 'null');
+      p.user = JSON.parse(req.headers.get(USER_HEADER) || 'null');
+      p.guest = req.headers.get(GUEST_HEADER);
+      if (s.status === PLAYING) (s.owners ??= {})[id] ??= playerOwner(p);
       for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) ws.close(4000, 'replaced');
       this.ctx.acceptWebSocket(server);
       server.serializeAttachment({ id });
@@ -133,6 +141,8 @@ export function gameRoom(games) {
       for (const id of Object.keys(s.players)) if (!online.has(id)) delete s.players[id];
       s.seats = s.order.slice(0, this.mod.max);
       Object.assign(s, { status: 'playing', g: {}, result: null, startedAt: Date.now(), wake: 0 });
+      s.runId = crypto.randomUUID();
+      s.owners = Object.fromEntries(s.order.map((id) => [id, playerOwner(s.players[id])]));
       // Ghi lại ván để xem lại (chỉ trong bộ nhớ: DO ngủ đông / khởi động lại giữa ván thì ván đó không có bản xem lại).
       // Tạo trước mod.start để ghi cả tin game gửi lúc bắt đầu (Dò mìn gửi bàn 'grid').
       this.tape = this.mod.replay === false ? null : new Tape(tickMsOf(this.mod, s.cfg) ? 100 : 0);
@@ -197,25 +207,35 @@ export function gameRoom(games) {
         clip: () => (this.clipRp ??= this.tape ? replayId() : undefined),
         // Bot kiểm thử (scripts/smoke.mjs, id thiết bị 'smoke-...') không lên bảng xếp hạng.
         rank: (rows) => { if (rows.length && !s.seats.every((id) => id.startsWith('smoke-')) && this.recorder()) this.io(this.recorder().add(rows)); },
-        record: (plays) => { if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays)); },
+        record: (plays) => this.record(plays),
         send: (id, msg, o) => { if (id === s.seats[0] && o?.tape !== false) this.tape?.push(msg); for (const ws of this.sockets()) if (ws.deserializeAttachment()?.id === id) try { ws.send(JSON.stringify(msg)); } catch {} },
         sendAll: (msg, o) => { if (o?.tape !== false) this.tape?.push(msg); const d = JSON.stringify(msg); for (const ws of this.sockets()) try { ws.send(d); } catch {} },
       };
     }
+    record(plays) {
+      const rows = plays.map(({ id, ...play }) => ({
+        ...play, ...(this.s.owners?.[id] ?? playerOwner(this.s.players[id])),
+        eventId: play.eventId ?? crypto.randomUUID(),
+      }));
+      if (rows.length && this.recorder()) this.io(this.recorder().addPlays(rows));
+    }
+
 
     finish(result) {
       const s = this.s;
+      if (s.status !== PLAYING) return;
       clearInterval(this.timer);
       Object.assign(s, { status: 'ended', wake: 0 });
       // rp = mã bản xem lại, lưu khi gửi trạng thái kết thúc (broadcast); client hiện nút "Xem lại / Chia sẻ" theo result.rp.
       const rp = this.tape ? replayId() : undefined;
       s.result = { ...result, rp, ranks: result.ranks.map((r) => ({ ...r, name: s.players[r.id]?.name ?? r.name ?? '' })) };
-      const plays = result.ranks.filter((r) => s.players[r.id]?.user).map((r) => ({
-        sub: s.players[r.id].user.sub, name: s.players[r.id].user.name, game: this.slug, mode: result.mode ?? (s.seats.length > 1 ? 'multi' : 'solo'),
+      s.runId ??= crypto.randomUUID();
+      this.record(result.ranks.map((r) => ({
+        id: r.id, game: this.slug, mode: result.mode ?? (s.seats.length > 1 ? MODE_MULTI : MODE_SOLO),
+        eventId: `${s.runId}${RESULT_SEPARATOR}${r.id}`,
         score: r.score ?? 0, level: r.level ?? result.level ?? 1, won: !!r.won,
         detail: JSON.stringify({ ...(r.detail ?? { rank: result.ranks.indexOf(r) + 1, of: result.ranks.length }), ...(rp ? { rp } : {}) }),
-      }));
-      if (plays.length && this.recorder()) this.io(this.recorder().addPlays(plays));
+      })));
     }
 
     async webSocketClose(ws) {
@@ -225,6 +245,7 @@ export function gameRoom(games) {
       const online = this.onlineIds(ws);
       const gone = id && !online.has(id);
       if (gone && s.status === 'playing') this.mod.leave?.(this.ctxFor(ws), id);
+      if (gone && this.mod.autostart && s.owners) delete s.owners[id];
       if (gone && s.status !== 'playing') {
         s.order = s.order.filter((i) => i !== id);
         delete s.players[id];

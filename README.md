@@ -37,10 +37,11 @@ Mời bạn: nút mã phòng mở hộp **QR** (`public/invite.js`, lib [qrcode-
 
 ## Tài khoản & lịch sử
 
-- Đăng nhập Google qua SSO dùng chung `auth.huyab.cfd` (giống chia-keo): cookie `huyab_sso` (Domain=.huyab.cfd), JWT RS256 kiểm bằng JWKS ở `worker/sso.js`. Không đăng nhập vẫn chơi bình thường (khách theo thiết bị).
-- Worker xác thực rồi gắn `X-User` khi chuyển WebSocket vào phòng; header client tự gửi luôn bị xoá trước.
-- Lịch sử lưu ở bảng `plays` trong DO `Top` (chỉ `sub` + tên, không lưu email). Ván nhiều người do server ghi; Đào Vàng 1 người do client gửi `POST /api/me/history` (tự báo nên chỉ là lịch sử cá nhân).
-- `GET /api/me` (user + thống kê), `GET /api/me/history` (30 ván gần nhất). Trang chủ hiển thị cả hai.
+- Không đăng nhập vẫn chơi bình thường; trình duyệt nhận mã khách riêng bằng cookie bảo mật và lưu lịch sử trên server theo mã đó.
+- Đăng nhập Google sau khi chơi sẽ chuyển lịch sử khách trên trình duyệt đó vào tài khoản, giữ nguyên lịch sử đã có. Lịch sử ván cũ chưa từng lưu không thể khôi phục.
+- Cookie khách bị xóa/đổi hoặc dùng trình duyệt khác thì lịch sử khách không đi theo; đăng xuất tạo phiên khách mới.
+- Lịch sử nhiều người và thống kê: bảng `plays` trong DO `Top`; lịch sử cá nhân solo do client gửi `POST /api/me/history` (tự báo nên chỉ là lịch sử cá nhân).
+- `GET /api/me` (tài khoản/thống kê), `GET /api/me/history` (30 ván gần nhất), `POST /api/me/history/claim` (chuyển lịch sử khách sau đăng nhập). Trang chủ hiển thị lịch sử và thống kê.
 - **Bảng điểm tự báo** `GET /api/board?game=2048` (top 10 tên + điểm), `POST` `{ name, score }` (JSON, không cần đăng nhập, như bản cũ ở mytools; điểm chặn trên bằng `MAX_SCORE` của game). Bảng `boards` trong DO `Top`, chỉ giữ 10 dòng mỗi game.
 - **Bảng xếp hạng vui** `GET /api/fun?period=week|all`: 10 hạng mục (cày nhiều, thắng nhiều, đại gia Đào Vàng, đại gia Bầu cua, kỳ thủ caro, thánh dò mìn, thánh nối thú, thợ mỏ lì đòn, đồng đội quốc dân, cú đêm 0–5h giờ VN), top 5 mỗi mục, chỉ người đã đăng nhập. Tên lấy từ bảng `users` (tên SSO mới nhất).
 

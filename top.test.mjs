@@ -17,7 +17,12 @@ const { DatabaseSync } = sqlite ?? {};
 if (sqlite) {
 const db = new DatabaseSync(':memory:');
 const sql = { exec(q, ...p) { const st = db.prepare(q); const rows = /^\s*SELECT/i.test(q) ? st.all(...p).map((r) => ({ ...r })) : (st.run(...p), []); return { toArray: () => rows }; } };
-const top = new Top({ storage: { sql } }, {});
+const transactionSync = (fn) => {
+  db.exec('BEGIN');
+  try { const result = fn(); db.exec('COMMIT'); return result; }
+  catch (error) { db.exec('ROLLBACK'); throw error; }
+};
+const top = new Top({ storage: { sql, transactionSync } }, {});
 
 const H = 3600_000, now = Date.now();
 const vnMidnight = Math.floor((now + 7 * H) / (24 * H)) * 24 * H - 7 * H; // 0h hôm nay giờ VN (UTC ms)

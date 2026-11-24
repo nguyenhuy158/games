@@ -4,15 +4,18 @@ import { hydrateIcons, icon } from '../icons.js';
 import { toast } from '../toast.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
+import { beginHistory } from '../history.js';
 
 // Sudoku một người, chạy hết ở client: chọn ô rồi điền bằng bàn phím hoặc dãy số; ghi chú bút chì (N), xoá, 3 gợi ý mỗi ván,
 // đồng hồ (dừng khi tạm dừng / giải xong). Kỷ lục thời gian theo độ khó lưu trong máy (localStorage 'sudoku.best').
 const BEST_KEY = 'sudoku.best';
+const HISTORY_GAME = 'sudoku';
 const DIFF_NAMES = { easy: t('Dễ', 'Easy'), medium: t('Vừa', 'Medium'), hard: t('Khó', 'Hard') };
 const ARROWS = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
 
 hydrateIcons();
 let board, solution, difficulty = 'easy', sel = null, timer = 0, paused = false, hints = HINTS, noteMode = false, done = false;
+let historyRun = null, starting = false;
 const readBest = () => { try { return JSON.parse(store.get(BEST_KEY)) ?? {}; } catch { return {}; } };
 
 const diff = $('#diff');
@@ -22,13 +25,21 @@ diff.onchange = () => startNew(diff.value);
 const cellEls = Array.from({ length: N * N }, (_, i) => {
   const r = Math.floor(i / N), c = i % N;
   const d = el('div');
-  d.onclick = () => { if (!paused) { sel = { r, c }; render(); } };
+  d.onclick = () => { if (!paused && board && !starting) { sel = { r, c }; render(); } };
   return d;
 });
 $('#grid').append(...cellEls);
 $('#pad').append(...Array.from({ length: N }, (_, k) => el('button', { textContent: k + 1, onclick: () => input(k + 1) })));
 
-function startNew(d = difficulty) {
+async function startNew(d = difficulty) {
+  if (starting) return;
+  starting = true;
+  diff.disabled = true;
+  const nextRun = await beginHistory(HISTORY_GAME, () => startNew(d));
+  starting = false;
+  diff.disabled = false;
+  if (!nextRun) { diff.value = difficulty; return; }
+  historyRun = nextRun;
   ({ board, solution } = newPuzzle(d));
   difficulty = d;
   diff.value = d;
@@ -41,7 +52,7 @@ function startNew(d = difficulty) {
 }
 
 function input(num) {
-  if (!sel || paused) return;
+  if (!sel || paused || starting) return;
   const cell = board[sel.r][sel.c];
   if (cell.given) return;
   if (noteMode) {
@@ -56,7 +67,7 @@ function input(num) {
 }
 
 function erase() {
-  if (!sel || paused) return;
+  if (!sel || paused || starting) return;
   const cell = board[sel.r][sel.c];
   if (cell.given) return;
   cell.value = null;
@@ -66,7 +77,7 @@ function erase() {
 
 // Gợi ý: điền đúng số vào một ô trống ngẫu nhiên và chọn ô đó.
 function hint() {
-  if (hints <= 0 || paused) return;
+  if (!board || starting || hints <= 0 || paused) return;
   const empty = board.flatMap((row, r) => row.flatMap((cell, c) => (cell.value == null ? [{ r, c }] : [])));
   if (!empty.length) return;
   const { r, c } = empty[Math.floor(Math.random() * empty.length)];
@@ -81,6 +92,7 @@ function hint() {
 function checkWin() {
   if (done || !isFull(board) || !isSolved(board)) return;
   done = true;
+  historyRun.finish({ score: timer, level: DIFFICULTIES.indexOf(difficulty) + 1, won: true });
   toast.success(t(`Giải xong trong ${formatTime(timer)}!`, `Puzzle completed in ${formatTime(timer)}!`), { icon: 'party-popper' });
   const best = readBest();
   if (!best[difficulty] || timer < best[difficulty]) {
@@ -119,13 +131,13 @@ function render() {
 const drawClock = () => { $('#clock').textContent = formatTime(timer); };
 
 setInterval(() => {
-  if (paused || done || !board) return;
+  if (paused || done || !board || starting) return;
   timer++;
   drawClock();
 }, 1000);
 
 addEventListener('keydown', (e) => {
-  if (paused || e.target instanceof HTMLSelectElement) return;
+  if (!board || starting || paused || e.target instanceof HTMLSelectElement) return;
   if (e.key >= '1' && e.key <= '9') return input(Number(e.key));
   if (e.key === 'Backspace' || e.key === 'Delete') return erase();
   const d = ARROWS[e.key];
@@ -138,30 +150,37 @@ addEventListener('keydown', (e) => {
   render();
 });
 
-$('#btnPause').onclick = () => { paused = !paused; render(); };
+$('#btnPause').onclick = () => { if (!board || starting) return; paused = !paused; render(); };
 $('#btnResume').onclick = () => { paused = false; render(); };
 $('#btnNew').onclick = () => startNew();
 $('#btnHint').onclick = hint;
 $('#btnErase').onclick = erase;
-$('#btnNote').onclick = () => { noteMode = !noteMode; render(); };
+$('#btnNote').onclick = () => { if (!board || starting) return; noteMode = !noteMode; render(); };
 $('#btnSide').onclick = () => $('#side').classList.toggle('open');
 // Làm lại: hỏi trước, rồi xoá mọi số đã điền + ghi chú, đồng hồ về 0.
-$('#btnReset').onclick = () => { $('#ovReset').hidden = false; };
+$('#btnReset').onclick = () => { if (board && !starting) $('#ovReset').hidden = false; };
 $('#btnResetNo').onclick = () => { $('#ovReset').hidden = true; };
-$('#btnResetYes').onclick = () => {
+async function resetPuzzle() {
+  if (starting || !board) return;
+  starting = true;
+  const nextRun = await beginHistory(HISTORY_GAME, resetPuzzle);
+  starting = false;
+  if (!nextRun) return;
+  historyRun = nextRun;
   for (const row of board) for (const cell of row) Object.assign(cell, { value: cell.given ? cell.value : null, error: false, notes: [] });
   timer = 0;
   done = false;
   $('#ovReset').hidden = true;
   render();
-};
+}
+$('#btnResetYes').onclick = resetPuzzle;
 startNew();
 // Mở hướng dẫn thì tạm dừng đồng hồ; đóng thì chạy tiếp (chỉ khi chính hướng dẫn đã dừng nó).
 let helpPaused = false;
 mountHelp({
   game: 'sudoku',
   button: '#btnHelp',
-  onOpen: () => { if (!paused && !done) { paused = helpPaused = true; render(); } },
+  onOpen: () => { if (board && !starting && !paused && !done) { paused = helpPaused = true; render(); } },
   onClose: () => { if (helpPaused) { paused = helpPaused = false; render(); } },
   content: {
     vi: {

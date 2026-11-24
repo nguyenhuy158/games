@@ -6,6 +6,7 @@ import { deviceName } from '../names.js';
 import { swipe } from '../swipe.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
+import { beginHistory } from '../history.js';
 
 // 2048 một người, chạy hết ở client: phím mũi tên, vuốt hoặc phím trên màn. Hết ván thì ghi tên + điểm lên
 // bảng xếp hạng chung (top 10, /api/board?game=2048 — ai cũng ghi được, như bản cũ ở mytools).
@@ -13,16 +14,26 @@ const API = '/api/board?game=2048';
 const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
 const BIGGEST = 2048; // ô lớn hơn dùng chung một màu
 const UNDO_MAX = 10; // nhớ tối đa 10 nước để đi lại
+const HISTORY_GAME = '2048';
+const HISTORY_LEVEL = 1;
 
 hydrateIcons();
 const cells = Array.from({ length: CELLS }, () => el('div', { className: 'tile' }));
 $('#tiles').append(...cells);
 const over = $('#over'), btnSave = $('#btnSave'), nameIn = $('#name'), btnUndo = $('#btnUndo');
-let grid, score, saved, history;
+let grid, score, saved, history, historyRun;
+let starting = false;
 
-function start() {
+async function start() {
+  if (starting) return;
+  starting = true;
+  const nextRun = await beginHistory(HISTORY_GAME, start);
+  starting = false;
+  if (!nextRun) return;
+  historyRun = nextRun;
   grid = newGame();
   score = 0;
+  saved = false;
   history = [];
   over.hidden = true;
   draw(-1);
@@ -30,14 +41,14 @@ function start() {
 
 // Đi lại nước trước (tối đa UNDO_MAX nước). Đã lưu điểm lên bảng xếp hạng thì không đi lại được nữa.
 function undo() {
-  if (saved || !history.length) return;
+  if (starting || saved || !history?.length) return;
   ({ grid, score } = history.pop());
   over.hidden = true;
   draw(-1);
 }
 
 function move(dir) {
-  if (!over.hidden) return;
+  if (starting || !historyRun || !over.hidden) return;
   const r = slide(grid, dir);
   if (!r.moved) return;
   history.push({ grid, score });
@@ -66,6 +77,7 @@ function gameOver() {
   nameIn.value = store.get('pk.name') || deviceName();
   btnSave.disabled = false;
   over.hidden = false;
+  historyRun.finish({ score, level: HISTORY_LEVEL, won: grid.some((value) => value >= BIGGEST) });
 }
 
 $('#saveForm').onsubmit = async (e) => {

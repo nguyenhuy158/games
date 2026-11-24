@@ -4,6 +4,7 @@ import { hydrateIcons, icon } from '../icons.js';
 import { swipe } from '../swipe.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
+import { beginHistory } from '../history.js';
 
 // Xếp gạch một người, chạy hết ở client. Kỷ lục lưu trong máy theo từng độ khó (localStorage 'tetris.best', 'tetris.best.hard', ...).
 // Phím: ← → di chuyển, ↑ xoay, ↓ rơi nhanh, Cách thả xuống đáy, P tạm dừng (Cách lúc chưa chơi = bắt đầu).
@@ -11,6 +12,8 @@ import { mountHelp } from '../help.js';
 // Độ khó (Thường / Khó / Siêu khó) chọn trên màn bắt đầu / hết ván, nhớ ở 'tetris.level'.
 const BEST_KEY = 'tetris.best';
 const LEVEL_KEY = 'tetris.level';
+const HISTORY_GAME = 'tetris';
+const HISTORY_LEVELS = Object.keys(LEVELS);
 const bestKey = (lv) => (lv === DEFAULT_LEVEL ? BEST_KEY : `${BEST_KEY}.${lv}`);
 
 hydrateIcons();
@@ -19,16 +22,23 @@ $('#cells').append(...cells);
 let s = newGame(), playing = false, paused = false, timer = 0;
 let level = Object.hasOwn(LEVELS, store.get(LEVEL_KEY) ?? '') ? store.get(LEVEL_KEY) : DEFAULT_LEVEL;
 let best = Number(store.get(bestKey(level))) || 0;
+let historyRun = null, starting = false;
 
 function setLevel(lv) {
-  if (playing || !Object.hasOwn(LEVELS, lv)) return;
+  if (starting || playing || !Object.hasOwn(LEVELS, lv)) return;
   level = lv;
   store.set(LEVEL_KEY, lv);
   best = Number(store.get(bestKey(lv))) || 0;
   draw();
 }
 
-function start() {
+async function start() {
+  if (starting) return;
+  starting = true;
+  const nextRun = await beginHistory(HISTORY_GAME, start);
+  starting = false;
+  if (!nextRun) return;
+  historyRun = nextRun;
   s = newGame();
   spawn(s);
   playing = true;
@@ -47,7 +57,11 @@ function step() {
   if (!playing || paused) return;
   tick(s);
   if (s.score > best) { best = s.score; store.set(bestKey(level), String(best)); }
-  if (s.over) { playing = false; loop(); }
+  if (s.over) {
+    playing = false;
+    loop();
+    historyRun.finish({ score: s.score, level: HISTORY_LEVELS.indexOf(level) + 1, won: false });
+  }
   draw();
 }
 

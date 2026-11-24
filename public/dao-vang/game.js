@@ -14,8 +14,11 @@ import { Tape } from '../tape.js';
 import { replayParam, playReplay, replayLinks, uploadReplay } from '../replay.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
+import { beginHistory } from '../history.js';
 
 hydrateIcons();
+const HISTORY_GAME = 'dao-vang';
+const REPLAY_PAGE = '/dao-vang/';
 
 // Cùng danh tính thiết bị với Pikachu (pk.id / pk.name).
 let deviceId = loadDeviceId();
@@ -262,8 +265,15 @@ function hud({ money, target, level, levelText, time, dynamite: dyn, canDyn }) {
 const best = () => Number(store.get('dv.best') || 0);
 const solo = {
   world: null, money: 0, level: 1, dynamite: 0, buffs: {}, screen: 'menu', tape: null, snapAt: 0,
+  historyRun: null, starting: false,
 
-  start() {
+  async start() {
+    if (this.starting) return;
+    this.starting = true;
+    const nextRun = await beginHistory(HISTORY_GAME, () => this.start());
+    this.starting = false;
+    if (!nextRun || driver !== this) return;
+    this.historyRun = nextRun;
     Object.assign(this, { money: 0, level: 1, dynamite: 0, buffs: {} });
     // Bản xem lại: ghi y như tin server gửi ván nhiều người (world / snap / ev / state) -> phát lại bằng net.onMsg.
     this.tape = new Tape(100);
@@ -312,6 +322,7 @@ const solo = {
     if (ended) this.end();
   },
   end() {
+    if (this.screen !== 'play') return;
     stop('up');
     this.dynamite = this.me().dynamite;
     const target = targetOf(this.level);
@@ -327,15 +338,10 @@ const solo = {
     const frames = this.tape?.done();
     this.tape = null;
     const links = el('div');
-    // Đã đăng nhập thì gửi bản xem lại + lưu vào lịch sử (khách: server trả 401, bỏ qua).
-    (async () => {
-      const rp = frames?.length ? await uploadReplay('dao-vang', '/dao-vang/', frames) : null;
-      links.replaceWith(replayLinks(rp));
-      fetch('/api/me/history', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game: 'dao-vang', score: this.money, level: this.level, ...(rp ? { rp } : {}) }),
-      }).catch(() => {});
-    })();
+    const recording = frames?.length
+      ? uploadReplay(HISTORY_GAME, REPLAY_PAGE, frames).then((rp) => { links.replaceWith(replayLinks(rp)); return rp; })
+      : null;
+    this.historyRun.finish({ score: this.money, level: this.level, won: false }, recording);
     const isBest = this.money > best();
     if (isBest) store.set('dv.best', String(this.money));
     play(isBest ? 'win' : 'hvBad');
