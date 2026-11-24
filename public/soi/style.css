@@ -1,4 +1,10 @@
 
+.soi-intro { margin: 0; display: grid; gap: 8px; }
+.soi-intro-video { width: 100%; min-height: 200px; aspect-ratio: 16 / 9; border: 0; border-radius: 10px; }
+.soi-intro figcaption { font-size: 12px; text-align: center; }
+.soi-intro a { color: #6c387b; text-underline-offset: 3px; }
+.soi-intro a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
 .board-stage { width: 100%; display: grid; place-items: center; }
 .soi { width: min(94vw, 420px); display: grid; gap: 14px; }
 
