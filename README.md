@@ -23,6 +23,8 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.cfd — m
 
 Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node scripts/smoke.mjs [url] [game ...]`, mặc định `http://localhost:8789` (`wrangler dev --port 8789`). Chạy trước / sau mỗi bước refactor (kế hoạch: `docs/hexagon-plan.md`). CI (`.github/workflows/ci.yml`, job `smoke-prod`) tự chạy vào web thật sau mỗi lần deploy (chờ `/api/version` mới hơn commit); bot smoke (id `smoke-...`) không lên bảng xếp hạng.
 
+E2E chạy tối đa 3 game đồng thời. Trong PR, `pnpm e2e` chọn game theo diff base/head qua `e2e/selection.mjs`; code dùng chung, file lạ hoặc không đọc được diff chạy toàn bộ. `main`, production và chạy local không có PR luôn full suite. Kiểm tra riêng trang: `E2E_BASE_URL=http://localhost:8789 node e2e/readonly-smoke.mjs /soi/ /gian-diep/`; API chung, hub và sảnh vẫn được kiểm.
+
 Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.html`, thêm file vào `CORE` trong `public/sw.js` (và tăng `CACHE`), test vào `<ten-game>.test.mjs` rồi import ở cuối `logic.test.mjs`.
 
 Song ngữ vi / en (mặc định vi): `public/i18n.js`. JS viết cặp ngay tại chỗ `t('Tạo phòng', 'Create room')`; HTML tĩnh dùng `data-en` / `data-en-html` / `data-en-title` / `data-en-placeholder`; chữ server gửi cho người chơi (lỗi, tiêu đề kết quả) là cặp `['vi', 'en']`, client hiện bằng `tx()`. Chọn bằng nút VI | EN (`langToggle()` hoặc `<span data-lang-toggle>`) hoặc `?lang=en`, nhớ trong localStorage `lang` cho mọi game. Dữ liệu dùng chung server + test (tên con vật, cấp độ, đồ trong tiệm...) giữ tiếng Việt, dịch lúc hiện.

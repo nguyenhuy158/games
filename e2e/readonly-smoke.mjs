@@ -25,9 +25,24 @@ const BOARDS = {
 };
 // Hướng dẫn (public/help.js): thân hộp phải có ít nhất chừng này ký tự.
 const MIN_HELP_CHARS = 100;
+const CLI_ARGUMENT_OFFSET = 2;
+const REQUESTED_ROUTES = [...new Set(process.argv.slice(CLI_ARGUMENT_OFFSET))];
+const MAX_CONCURRENT_GAMES = 3;
+const FAILURE_SCREENSHOT_PATH = "e2e-failure.png";
+const HTTP_ERROR_STATUS = 400;
+const ERROR_SEPARATOR = " | ";
+const ROUTE_SEPARATOR = ", ";
+const PAGE_EVENTS = { ERROR: "pageerror", RESPONSE: "response" };
+const HELP_DIALOG_SELECTOR = "dialog.help-dlg";
+const HELP_BUTTON_SELECTOR = "[data-help]:visible";
+const HELP_BODY_SELECTOR = ".help-body";
+const ESCAPE_KEY = "Escape";
+const NAVIGATION_OPTIONS = { waitUntil: "load" };
+const HIDDEN_WAIT = { state: "hidden", ...WAIT };
 
 let passed = 0;
 let failed = 0;
+let failureScreenshot;
 
 function ok(name) {
   passed += 1;
@@ -48,18 +63,105 @@ console.log(`Read-only smoke tại ${BASE}\n`);
 
 const browser = await chromium.launch({ executablePath: findChromium() });
 // Chặn service worker để luôn tải file mới từ server, không lấy bản cache cũ.
-const context = await browser.newContext({ serviceWorkers: "block" });
+const CONTEXT_OPTIONS = { serviceWorkers: "block" };
+const context = await browser.newContext(CONTEXT_OPTIONS);
 const page = await context.newPage();
-const pageErrors = [];
-page.on("pageerror", (error) =>
-  pageErrors.push(`${page.url()}: ${error.message}`),
-);
-// Module import hỏng (404) không ném pageerror: bắt mọi request cùng origin lỗi.
-page.on("response", (response) => {
-  if (response.url().startsWith(BASE) && response.status() >= 400) {
-    pageErrors.push(`${response.status()} ${response.url()}`);
+const pageErrors = collectPageErrors(page);
+
+function collectPageErrors(checkedPage) {
+  const errors = [];
+  checkedPage.on(PAGE_EVENTS.ERROR, (error) =>
+    errors.push(`${checkedPage.url()}: ${error.message}`),
+  );
+  // Module import hỏng (404) không ném pageerror: bắt mọi request cùng origin lỗi.
+  checkedPage.on(PAGE_EVENTS.RESPONSE, (response) => {
+    if (
+      response.url().startsWith(BASE) &&
+      response.status() >= HTTP_ERROR_STATUS
+    ) {
+      errors.push(`${response.status()} ${response.url()}`);
+    }
+  });
+  return errors;
+}
+
+function assertNoPageErrors(errors) {
+  if (errors.length > 0)
+    throw new Error(`lỗi JS trên trang: ${errors.join(ERROR_SEPARATOR)}`);
+}
+
+async function captureFailure(failedPage) {
+  failureScreenshot ??= failedPage
+    .screenshot({ path: FAILURE_SCREENSHOT_PATH })
+    .catch(() => {});
+  await failureScreenshot;
+}
+
+async function checkGame(link) {
+  const gameContext = await browser.newContext(CONTEXT_OPTIONS);
+  let gamePage;
+  try {
+    gamePage = await gameContext.newPage();
+    const errors = collectPageErrors(gamePage);
+    const response = await gamePage.goto(BASE + link, NAVIGATION_OPTIONS);
+    if (!response?.ok()) throw new Error(`${link}: HTTP ${response?.status()}`);
+    if (!(await gamePage.title())) throw new Error(`${link}: trang thiếu <title>`);
+    const help = gamePage.locator(HELP_DIALOG_SELECTOR);
+    await help.waitFor(WAIT).catch(() => {
+      throw new Error(`${link}: hướng dẫn không tự mở lần đầu vào`);
+    });
+    await gamePage.keyboard.press(ESCAPE_KEY);
+    await help.waitFor(HIDDEN_WAIT);
+    const button = gamePage.locator(HELP_BUTTON_SELECTOR).first();
+    await button.click(WAIT).catch(() => {
+      throw new Error(`${link}: không có nút hướng dẫn (i) đang hiện`);
+    });
+    await help.waitFor(WAIT);
+    const text = (await help.locator(HELP_BODY_SELECTOR).innerText()).trim();
+    if (text.length < MIN_HELP_CHARS)
+      throw new Error(`${link}: hướng dẫn quá ngắn (${text.length} ký tự)`);
+    await gamePage.keyboard.press(ESCAPE_KEY);
+    await help.waitFor(HIDDEN_WAIT);
+
+    if (Object.hasOwn(BOARDS, link)) {
+      const [selector, count] = BOARDS[link];
+      const cells = gamePage.locator(selector);
+      await cells.first().waitFor(WAIT);
+      const n = await cells.count();
+      if (n !== count)
+        throw new Error(`${link}: ${selector} có ${n}, cần ${count}`);
+    }
+    assertNoPageErrors(errors);
+  } catch (error) {
+    if (gamePage) await captureFailure(gamePage);
+    throw error;
+  } finally {
+    await gameContext.close();
   }
-});
+}
+
+async function checkGames(links) {
+  let nextIndex = 0;
+  const errors = [];
+  const workerCount = Math.min(MAX_CONCURRENT_GAMES, links.length);
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < links.length) {
+        const link = links[nextIndex++];
+        try {
+          await checkGame(link);
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+    }),
+  );
+  if (errors.length > 0)
+    throw new AggregateError(
+      errors,
+      errors.map((error) => error.message).join(ERROR_SEPARATOR),
+    );
+}
 
 try {
   const version = await (await get("/api/version", "application/json")).json();
@@ -91,42 +193,28 @@ try {
     );
   ok(`hub renders ${links.length} game cards`);
 
+  for (const route of REQUESTED_ROUTES) {
+    if (!links.includes(route))
+      throw new Error(`trang chủ không có game được yêu cầu: ${route}`);
+  }
+  const selectedLinks = REQUESTED_ROUTES.length > 0 ? REQUESTED_ROUTES : links;
+  const boardPaths =
+    REQUESTED_ROUTES.length > 0
+      ? selectedLinks.filter((link) => Object.hasOwn(BOARDS, link))
+      : Object.keys(BOARDS);
+  for (const path of boardPaths) {
+    if (!links.includes(path)) throw new Error(`trang chủ thiếu thẻ ${path}`);
+  }
+
   // Mở từng trang game (không có ?r= nên không vào phòng, không mở WebSocket):
   // trang phải tải được và chạy hết module mà không lỗi, và có hướng dẫn: lần đầu vào
   // tự mở hộp "Cách chơi", Esc đóng được, nút (i) đang hiện mở lại được, nội dung không rỗng.
-  const help = page.locator("dialog.help-dlg");
-  for (const link of links) {
-    const response = await page.goto(BASE + link, { waitUntil: "load" });
-    if (!response?.ok()) throw new Error(`${link}: HTTP ${response?.status()}`);
-    if (!(await page.title())) throw new Error(`${link}: trang thiếu <title>`);
-    await help.waitFor(WAIT).catch(() => {
-      throw new Error(`${link}: hướng dẫn không tự mở lần đầu vào`);
-    });
-    await page.keyboard.press("Escape");
-    await help.waitFor({ state: "hidden", ...WAIT });
-    const button = page.locator("[data-help]:visible").first();
-    await button.click(WAIT).catch(() => {
-      throw new Error(`${link}: không có nút hướng dẫn (i) đang hiện`);
-    });
-    await help.waitFor(WAIT);
-    const text = (await help.locator(".help-body").innerText()).trim();
-    if (text.length < MIN_HELP_CHARS)
-      throw new Error(`${link}: hướng dẫn quá ngắn (${text.length} ký tự)`);
-    await page.keyboard.press("Escape");
-    await help.waitFor({ state: "hidden", ...WAIT });
-  }
-  ok(`every game page loads and has a help dialog (${links.length})`);
-
-  for (const [path, [selector, count]] of Object.entries(BOARDS)) {
-    if (!links.includes(path)) throw new Error(`trang chủ thiếu thẻ ${path}`);
-    await page.goto(BASE + path, { waitUntil: "load" });
-    const cells = page.locator(selector);
-    await cells.first().waitFor(WAIT);
-    const n = await cells.count();
-    if (n !== count)
-      throw new Error(`${path}: ${selector} có ${n}, cần ${count}`);
-  }
-  ok(`2048 / tetris / sudoku / loto render their boards`);
+  await checkGames(selectedLinks);
+  ok(
+    `game pages load and have a help dialog (${selectedLinks.join(ROUTE_SEPARATOR)})`,
+  );
+  if (boardPaths.length > 0)
+    ok(`${boardPaths.join(ROUTE_SEPARATOR)} render their boards`);
 
   const board = await (
     await get("/api/board?game=2048", "application/json")
@@ -139,13 +227,12 @@ try {
   await page.waitForLoadState("networkidle", WAIT);
   ok("open-rooms page /phong/ renders");
 
-  if (pageErrors.length > 0)
-    throw new Error(`lỗi JS trên trang: ${pageErrors.join(" | ")}`);
+  assertNoPageErrors(pageErrors);
   ok("no uncaught page errors");
 } catch (error) {
   failed += 1;
   console.log("FAIL:", error.message);
-  await page.screenshot({ path: "e2e-failure.png" }).catch(() => {});
+  await captureFailure(page);
 } finally {
   await browser.close();
 }
