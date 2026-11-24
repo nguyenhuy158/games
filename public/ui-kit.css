@@ -1,0 +1,86 @@
+:root {
+  color-scheme: dark;
+  --ui-bg: oklch(16% 0.008 280);
+  --ui-surface: oklch(21% 0.01 280);
+  --ui-surface-muted: oklch(25% 0.01 280);
+  --ui-border: oklch(32% 0.012 280);
+  --ui-fg: oklch(94% 0.005 280);
+  --ui-fg-muted: oklch(68% 0.015 280);
+  --ui-primary: oklch(72% 0.18 300);
+  --ui-primary-hover: oklch(78% 0.16 300);
+  --ui-primary-fg: oklch(18% 0.02 300);
+  --ui-primary-soft: oklch(30% 0.06 300);
+  --ui-success: oklch(70% 0.14 155);
+  --ui-success-soft: oklch(30% 0.05 155);
+  --ui-success-strong: oklch(70% 0.14 155);
+  --ui-warning: oklch(78% 0.14 75);
+  --ui-warning-soft: oklch(32% 0.05 75);
+  --ui-warning-strong: oklch(78% 0.14 75);
+  --ui-danger: oklch(68% 0.17 20);
+  --ui-danger-soft: oklch(30% 0.06 20);
+  --ui-danger-strong: oklch(72% 0.16 20);
+  --ui-danger-fg: oklch(18% 0.02 20);
+  --ui-ring: oklch(72% 0.18 300 / 45%);
+  --ui-radius: 0.5rem;
+  --ui-grid-cols: 4;
+  --ui-grid-gutter: 1rem;
+  --ui-grid-margin: 1rem;
+  --ui-container-max: 80rem;
+  --ui-space-section: 1.5rem;
+  --ui-ease-out: cubic-bezier(0.1, 0.9, 0.2, 1);
+  --ui-ease-in: cubic-bezier(0.9, 0.1, 1, 0.2);
+  --ui-dur-fast: 150ms;
+  --ui-dur: 200ms;
+  --ui-dur-gentle: 250ms;
+  --ui-shadow-sm: 0 0 2px rgb(0 0 0 / 24%), 0 2px 4px rgb(0 0 0 / 28%);
+  --ui-shadow-md: 0 0 2px rgb(0 0 0 / 24%), 0 4px 8px rgb(0 0 0 / 28%);
+  --ui-shadow-lg: 0 0 2px rgb(0 0 0 / 24%), 0 8px 16px rgb(0 0 0 / 28%);
+  --ui-shadow-xl: 0 0 8px rgb(0 0 0 / 24%), 0 14px 28px rgb(0 0 0 / 28%);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-color: var(--ui-border) var(--ui-bg);
+}
+
+body {
+  text-rendering: optimizeLegibility;
+  font-family: "Be Vietnam Pro", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+::selection {
+  background: var(--ui-primary);
+  color: var(--ui-primary-fg);
+}
+
+input, textarea {
+  caret-color: var(--ui-primary);
+}
+
+a {
+  text-underline-offset: 0.2em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 3px;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --ui-grid-cols: 12;
+    --ui-grid-gutter: 1.5rem;
+    --ui-grid-margin: 2rem;
+    --ui-space-section: 2rem;
+  }
+}

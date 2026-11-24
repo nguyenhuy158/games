@@ -35,12 +35,12 @@ export function langToggle() {
   b.className = 'lang-toggle';
   b.title = en ? 'Chuyển sang tiếng Việt' : 'Switch to English';
   b.setAttribute('aria-label', b.title);
-  b.style.cssText = 'display:inline-flex;gap:6px;align-items:center;padding:4px 6px;border-radius:999px;cursor:pointer;line-height:0';
+  b.style.cssText = 'display:inline-flex;gap:8px;align-items:center;min-height:44px;padding:8px;border:1px solid var(--ui-border);border-radius:var(--ui-radius);background:var(--ui-surface);color:var(--ui-fg);cursor:pointer;line-height:0';
   for (const k of ['vi', 'en']) {
     const f = document.createElement('span');
     f.innerHTML = FLAGS[k];
     const on = k === lang;
-    f.style.cssText = `display:inline-block;width:24px;height:16px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 ${on ? 2 : 1}px ${on ? '#ffd23f' : '#0003'};opacity:${on ? 1 : 0.45};transition:opacity .15s`;
+    f.style.cssText = `display:inline-block;width:24px;height:16px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 ${on ? 2 : 1}px var(${on ? '--ui-primary' : '--ui-border'});opacity:${on ? 1 : 0.45};transition:opacity var(--ui-dur-fast)`;
     f.firstChild.setAttribute('width', '24');
     f.firstChild.setAttribute('height', '16');
     f.firstChild.setAttribute('preserveAspectRatio', 'xMidYMid slice'); // cờ Anh 2:1 -> cắt vừa khung 3:2

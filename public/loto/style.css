@@ -1,22 +1,14 @@
 /* Lô tô: nền đỏ hội chợ; tờ dò 9×9 in màu (đỏ, xanh, vàng…) ô số trắng chữ đậm, hạt đỏ khi dò; số vừa hô là quả bóng vàng.
    Ghi đè màu của /room.css. Điện thoại: một cột (số vừa hô, bảng 90 số, tờ dò, thanh KINH); máy tính: bảng bên trái, tờ bên phải. */
-:root {
-  --bg: #5a0f12; --panel: #fff7e8; --line: #e9cfa4; --text: #3a1a10; --muted: #8a5a3c; --accent: #d62828;
-  --good: #2e9e5b; --bad: #d9412b;
-}
-body { background: radial-gradient(circle at 50% 0%, #b3261e, #5a0f12 75%) fixed; color: #fff7e8; }
-.card, #players li { color: var(--text); }
-input { background: #fff; color: var(--text); }
-button.primary { color: #fff; }
-#overlay { background: #2a0607b0; }
-header button { color: var(--text); }
+:root { --ticket-ink: #3a1a10; --ticket-muted: #8a5a3c; }
+.stage { background: radial-gradient(circle at 50% 0%, #b3261e, #5a0f12 75%) fixed; }
 
 .board-stage { width: 100%; height: 100%; display: grid; justify-items: center; min-height: 0; }
 .lt {
   width: min(100%, 560px); height: 100%; min-height: 0; display: grid; gap: 8px;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
-.now { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 6px 10px 8px; border-radius: 14px; background: #fff7e8; color: var(--text); box-shadow: 0 6px 18px #0005; min-width: 0; }
+.now { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 6px 10px 8px; border-radius: var(--ui-radius); background: var(--ui-surface); color: var(--text); border: 1px solid var(--ui-border); box-shadow: var(--ui-shadow-sm); min-width: 0; }
 .ball {
   width: 50px; height: 50px; flex: none; display: grid; place-items: center; border-radius: 50%;
   font-size: 24px; font-weight: 800; color: #3a1a10; font-variant-numeric: tabular-nums;
@@ -29,14 +21,14 @@ header button { color: var(--text); }
 .now .count { font-variant-numeric: tabular-nums; }
 .now .call { padding: 9px 14px; font-size: 15px; }
 .now .wait { color: var(--muted); font-size: 13px; text-align: right; }
-.now .pace-note { color: #b3261e; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.now .pace-note { color: var(--ui-warning-strong); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .now .pace { padding: 8px 10px; font-size: 14px; font-weight: 700; color: var(--text); }
-.now .pace.on { background: #ffd23f; border-color: #e0a100; }
+.now .pace.on { background: var(--ui-primary-soft); border-color: var(--ui-primary); color: var(--ui-primary); }
 /* Vạch đếm ngược tới số tự hô kế tiếp, chạy dọc đáy thanh. */
 .now .timer { position: absolute; left: 14px; right: 14px; bottom: 2px; height: 3px; border-radius: 2px; background: #e0a100; transform-origin: left; transform: scaleX(0); }
 @keyframes countdown { from { transform: scaleX(var(--from, 0)); } to { transform: scaleX(1); } }
 /* Câu vè của số vừa hô: một dòng dưới bóng số. */
-.now .ve { flex: 1 0 100%; margin: 0; font-size: 13px; font-style: italic; font-weight: 600; color: #8a2a12; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.now .ve { flex: 1 0 100%; margin: 0; font-size: 13px; font-style: italic; font-weight: 600; color: var(--ui-fg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Số mới: bóng số to giữa màn ~1,5 giây (không chặn chạm). */
 .pop { position: fixed; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 10px; pointer-events: none; opacity: 0; }
 .pop b {
@@ -56,7 +48,7 @@ header button { color: var(--text); }
 header .voice { color: var(--text); font-weight: 800; font-size: 13px; }
 header .music { color: var(--text); opacity: .55; }
 header .music.on { opacity: 1; }
-header .music-vol { width: 56px; accent-color: #d99a00; }
+header .music-vol { width: 56px; accent-color: var(--ui-primary); }
 /* Điện thoại hẹp: thanh trên có 8 nút, bỏ thanh trượt âm lượng (nút nhạc vẫn bật / tắt) cho vừa một hàng. */
 @media (max-width: 420px) { header { gap: 4px; } header .music-vol { display: none; } }
 
@@ -66,11 +58,11 @@ header .music-vol { width: 56px; accent-color: #d99a00; }
   height: clamp(13px, 2.1cqh, 30px); display: grid; place-items: center; border-radius: 4px; font-size: clamp(10px, 1.5cqh, 15px);
   font-weight: 700; font-variant-numeric: tabular-nums; color: #ffd9c955; background: #ffffff0d;
 }
-.board span.on { background: #fff7e8; color: var(--text); }
+.board span.on { background: #fff7e8; color: var(--ticket-ink); }
 .board span.cur { background: #ffd23f; color: #3a1a10; box-shadow: 0 0 0 2px #fff; }
 
 /* Mua tờ (trước số đầu tiên, thay chỗ bảng số): 8 ô màu, ô đã chọn ghi số thứ tự tờ. */
-.shop { display: grid; gap: 8px; align-content: start; padding: 10px; border-radius: 12px; background: #fff7e8; color: var(--text); box-shadow: 0 6px 18px #0005; }
+.shop { display: grid; gap: 8px; align-content: start; padding: 10px; border-radius: var(--ui-radius); background: var(--ui-surface); color: var(--text); border: 1px solid var(--ui-border); box-shadow: var(--ui-shadow-sm); }
 .shop p { margin: 0; font-weight: 700; font-size: 14px; }
 .swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
 .swatches button {
@@ -137,7 +129,7 @@ header .music-vol { width: 56px; accent-color: #d99a00; }
 .pen { position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; }
 .pen-card {
   pointer-events: auto; width: min(340px, 88vw); display: grid; gap: 10px; padding: 18px 16px 12px; border-radius: 18px; text-align: center;
-  background: #fff7e8; color: var(--text); border: 4px solid #c4161c; box-shadow: 0 20px 60px #000c; animation: penIn .35s cubic-bezier(.2, 1.6, .4, 1);
+  background: #fff7e8; color: var(--ticket-ink); border: 4px solid #c4161c; box-shadow: 0 20px 60px #000c; animation: penIn .35s cubic-bezier(.2, 1.6, .4, 1);
 }
 @keyframes penIn { from { transform: scale(.5) rotate(-6deg); opacity: 0; } }
 .pen-card h3 { margin: 0; font-size: 22px; font-weight: 900; color: #c4161c; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -147,18 +139,18 @@ header .music-vol { width: 56px; accent-color: #d99a00; }
 .pen-card .reel b { min-height: 1.4em; font-size: 20px; }
 .pen-card .reel.landed { background: #c4161c; color: #fff; animation: landed .5s ease-out; }
 @keyframes landed { 40% { transform: scale(1.08); } }
-.pen-card .tap { color: var(--muted); font-size: 11px; }
+.pen-card .tap { color: var(--ticket-muted); font-size: 11px; }
 
 /* Sảnh chờ: nút sửa danh sách phạt vui; hộp thoại sửa (thêm / bỏ từng câu). */
 .party-edit { color: var(--text); }
 .party-dlg { border: 1px solid var(--line); max-height: 86vh; overflow: auto; }
-.party-dlg::backdrop { background: #2a0607b0; }
+.party-dlg::backdrop { background: color-mix(in oklab, var(--ui-bg) 75%, transparent); }
 .plist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; text-align: left; max-height: 44vh; overflow: auto; }
-.plist li { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-radius: 10px; background: #fff; border: 1px solid var(--line); }
+.plist li { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-radius: var(--ui-radius); background: var(--ui-surface-muted); border: 1px solid var(--line); }
 .plist li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .plist .rm { padding: 4px 6px; color: var(--text); }
 .party-dlg .seg button { color: var(--text); }
-.party-dlg .seg button.primary { color: #fff; }
+.party-dlg .seg button.primary { color: var(--ui-primary-fg); }
 
 /* Máy tính / màn rộng: bảng số + nút bên trái, tờ dò bên phải cao hết cỡ. */
 @container (min-width: 760px) {

@@ -1,19 +1,21 @@
+@import "/ui-kit.css";
+
 :root {
-  --bg: #1a1008;
-  --panel: #2b1c0e;
-  --line: #5a3d1c;
-  --text: #fff6e2;
-  --muted: #c9ae86;
+  --bg: var(--ui-bg);
+  --panel: var(--ui-surface);
+  --line: var(--ui-border);
+  --text: var(--ui-fg);
+  --muted: var(--ui-fg-muted);
   --gold: #ffc71f;
-  --bad: #ff5d5d;
-  --good: #7dff9a;
+  --bad: var(--ui-danger);
+  --good: var(--ui-success);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: radial-gradient(circle at 50% 0%, #3a2410, var(--bg) 70%) fixed;
+  background: var(--bg);
   color: var(--text);
-  font: 15px/1.4 "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px; line-height: 1.4;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -24,11 +26,17 @@ body {
 .ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
 button, .btn {
   font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line);
-  border-radius: 10px; padding: 6px 10px; cursor: pointer; white-space: nowrap; text-decoration: none;
+  border-radius: var(--ui-radius); padding: 6px 10px; cursor: pointer; white-space: nowrap; text-decoration: none;
   display: inline-flex; align-items: center; gap: 4px;
 }
-button:disabled { opacity: .4; cursor: default; }
-button.primary { background: var(--gold); color: #2b1600; border-color: var(--gold); font-weight: 700; justify-content: center; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: var(--ui-primary); color: var(--ui-primary-fg); border-color: var(--ui-primary); font-weight: 600; justify-content: center; box-shadow: var(--ui-shadow-sm); }
+:where(button, .btn):where(:not(:disabled)):hover { background: var(--ui-surface-muted); }
+button.primary:not(:disabled):hover { background: var(--ui-primary-hover); }
+.card button { min-height: 44px; }
+input::placeholder { color: var(--muted); opacity: 1; }
+input:focus { border-color: var(--ui-primary); box-shadow: 0 0 0 2px var(--ui-ring); }
+input:disabled { opacity: .6; cursor: not-allowed; }
 
 #hud {
   display: flex; align-items: center; gap: 8px; padding: 8px 12px;
@@ -63,7 +71,7 @@ button.primary { background: var(--gold); color: #2b1600; border-color: var(--go
 #stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; padding: 0 8px 8px; }
 #game { border-radius: 10px; box-shadow: 0 10px 40px #000a; touch-action: none; cursor: pointer; }
 
-#overlay { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; background: #1a1008c0; padding: 16px; overflow-y: auto; }
+#overlay { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; background: color-mix(in oklab, var(--ui-bg) 75%, transparent); padding: 16px; overflow-y: auto; }
 #loading {
   position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px;
   padding: 16px; text-align: center; color: var(--muted);
@@ -72,9 +80,9 @@ button.primary { background: var(--gold); color: #2b1600; border-color: var(--go
 #loading .bar { width: min(240px, 70vw); height: 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); overflow: hidden; }
 #loading .bar i { display: block; width: 0; height: 100%; background: var(--gold); border-radius: inherit; transition: width .15s; }
 .card {
-  background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 20px;
   width: min(420px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; justify-items: center; text-align: center;
-  box-shadow: 0 12px 40px #000a;
+  box-shadow: var(--ui-shadow-sm);
 }
 .card h2, .card p { margin: 0; }
 .card .primary { width: 100%; }
@@ -84,14 +92,15 @@ button.primary { background: var(--gold); color: #2b1600; border-color: var(--go
 .row { display: flex; gap: 8px; width: 100%; justify-content: center; flex-wrap: wrap; }
 .field { display: grid; gap: 4px; width: 100%; text-align: left; color: var(--muted); font-size: 13px; }
 input {
-  font: inherit; color: inherit; background: #1a1008; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; width: 100%;
+  font: inherit; font-size: 16px; color: var(--text); background: var(--ui-surface); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px; width: 100%;
 }
+input:not([type="checkbox"]):not([type="range"]) { min-height: 44px; }
 input.code { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 3px; text-align: center; }
 .card > button:not(.primary) { width: 100%; justify-content: center; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
 .seg button { justify-content: center; }
-.seg button.on { border-color: var(--gold); color: var(--gold); }
-.seg button:disabled { opacity: 1; }
+.seg button.on { border-color: var(--ui-primary); color: var(--ui-primary); }
+.seg button:disabled { opacity: .5; }
 .plist { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .plist li { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; }
 .plist li.off { opacity: .45; }
