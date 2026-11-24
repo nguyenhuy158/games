@@ -102,13 +102,12 @@ export default {
     Object.assign(g, { phase: 'bet', phaseAt: Date.now(), round: g.round + 1, bets: {}, dice: null, deltas: null, dealer: null, rp: undefined });
     return true;
   },
-  // Rời phòng: lưu lãi/lỗ cả buổi (người đã đăng nhập), bỏ cược đang đặt. Vào lại thì tính buổi mới.
   leave(ctx, id) {
     const g = ctx.g;
-    const p = g.purse[id], user = ctx.players[id]?.user;
-    if (p && user && p.rounds) {
+    const p = g.purse[id];
+    if (p?.rounds) {
       ctx.record([{
-        sub: user.sub, name: user.name, game: 'bau-cua', mode: g.mode, score: p.net, level: p.rounds, won: p.net > 0,
+        id, game: 'bau-cua', mode: g.mode, score: p.net, level: p.rounds, won: p.net > 0,
         detail: JSON.stringify({ coins: p.coins, rescues: p.rescues }),
       }]);
       p.net = 0;

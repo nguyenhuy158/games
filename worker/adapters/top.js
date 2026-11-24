@@ -2,8 +2,6 @@ import { DurableObject } from 'cloudflare:workers';
 import { MAX_SCORE as MAX_2048 } from '../../public/2048/logic.js';
 
 // Adapter lưu trữ (port Recorder trong worker/ports.js): một DO SQLite duy nhất "global" (gói free đã hết quota D1).
-// Bảng: scores (top Pikachu), plays (lịch sử người đã đăng nhập), users (tên hiển thị), rooms (phòng công khai),
-// boards (bảng điểm tự báo của game chạy ở client, chỉ tên + điểm: 2048).
 const TOP_LIMIT = 10;
 // Game có bảng điểm tự báo (POST /api/board?game=...): điểm tối đa hợp lệ của từng game.
 export const BOARDS = { 2048: MAX_2048 };
@@ -18,9 +16,13 @@ export const replayId = () => Array.from(crypto.getRandomValues(new Uint8Array(1
 // [key, tên, đơn vị, giá trị gộp theo người, điều kiện, thứ tự]. order 'ASC' = càng nhỏ càng giỏi (thời gian dò mìn, số phát bắn).
 // Giờ Việt Nam = UTC+7; "cú đêm" = ván kết thúc từ 0h tới trước 5h sáng.
 const VN_HOUR = '((p.at / 3600000 + 7) % 24)';
-// Ván do client tự báo (Đào Vàng 1 người, POST /api/me/history): chỉ vào lịch sử cá nhân, không vào bảng xếp hạng vui.
-// ponytail: muốn tính cả loại này thì server phải chạy lại bản ghi (replay) để kiểm điểm.
-const SELF_REPORTED = "(p.game = 'dao-vang' AND p.mode = 'solo')";
+const SELF_REPORTED = "(p.mode = 'solo' AND p.game IN ('dao-vang', '2048', 'tetris', 'sudoku'))";
+const GUEST_PREFIX = 'guest:';
+const SNAPSHOT_TTL_MS = 2_000;
+const SNAPSHOT_LIMIT = 128;
+const SNAPSHOT_KIND = { PROFILE: 'profile', HISTORY: 'history', STATS: 'stats' };
+const HISTORY_LIMIT = 30;
+const guestSub = (guest) => `${GUEST_PREFIX}${guest}`;
 
 export const FUN = [
   ['plays', 'Chiến thần cày game', 'ván', 'COUNT(*)'],
@@ -46,12 +48,14 @@ export class Top extends DurableObject {
       mode TEXT NOT NULL, size INTEGER NOT NULL, names TEXT NOT NULL,
       score INTEGER NOT NULL, level INTEGER NOT NULL, cleared INTEGER NOT NULL, at INTEGER NOT NULL)`);
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS scores_top ON scores (mode, size, score DESC)');
-    // Lịch sử chơi của người đã đăng nhập (sub = id tài khoản SSO). Không lưu email.
     ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS plays (
       id INTEGER PRIMARY KEY AUTOINCREMENT, sub TEXT NOT NULL, game TEXT NOT NULL, mode TEXT NOT NULL,
       score INTEGER NOT NULL, level INTEGER NOT NULL, won INTEGER NOT NULL, detail TEXT NOT NULL, at INTEGER NOT NULL)`);
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS plays_user ON plays (sub, at DESC)');
     ctx.storage.sql.exec('CREATE INDEX IF NOT EXISTS plays_at ON plays (at)');
+    ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS guest_owners (guest TEXT PRIMARY KEY, sub TEXT)');
+    ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS play_events (event TEXT PRIMARY KEY, sub TEXT NOT NULL)');
+    this.snapshots = new Map();
     // Tên hiển thị cho bảng xếp hạng vui (tên SSO mới nhất của mỗi tài khoản).
     ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS users (sub TEXT PRIMARY KEY, name TEXT NOT NULL, at INTEGER NOT NULL)');
     // Danh sách phòng công khai: phòng tự báo khi đổi + mỗi 30s; im quá ROOM_TTL thì coi như đã đóng.
@@ -122,26 +126,86 @@ export class Top extends DurableObject {
     return this.ctx.storage.sql.exec('SELECT page FROM replays WHERE id = ?', id).toArray()[0]?.page ?? null;
   }
 
+  cached(key, load) {
+    const now = Date.now();
+    const entry = this.snapshots.get(key);
+    if (entry && entry.until > now) return entry.value;
+    if (this.snapshots.size >= SNAPSHOT_LIMIT) this.snapshots.delete(this.snapshots.keys().next().value);
+    const value = load();
+    this.snapshots.set(key, { value, until: now + SNAPSHOT_TTL_MS });
+    return value;
+  }
+
+  guestOwner(guest) {
+    return this.ctx.storage.sql.exec('SELECT sub FROM guest_owners WHERE guest = ?', guest).toArray()[0]?.sub ?? null;
+  }
+
   addPlays(rows) {
-    for (const r of rows) {
-      if (r.name) {
+    this.ctx.storage.transactionSync(() => {
+      for (const r of rows) {
+        if (!r.sub && !r.guest) continue;
+        if (r.eventId && this.ctx.storage.sql.exec('SELECT event FROM play_events WHERE event = ?', r.eventId).toArray().length) continue;
+        let sub = r.sub;
+        if (!sub) {
+          this.ctx.storage.sql.exec('INSERT OR IGNORE INTO guest_owners (guest) VALUES (?)', r.guest);
+          sub = this.guestOwner(r.guest) ?? guestSub(r.guest);
+        }
+        if (r.sub && r.name) this.updateName(sub, r.name);
         this.ctx.storage.sql.exec(
-          'INSERT INTO users (sub, name, at) VALUES (?, ?, ?) ON CONFLICT(sub) DO UPDATE SET name = excluded.name, at = excluded.at',
-          r.sub, r.name, Date.now(),
+          'INSERT INTO plays (sub, game, mode, score, level, won, detail, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          sub, r.game, r.mode, r.score, r.level, r.won ? 1 : 0, r.detail ?? '', Date.now(),
         );
+        if (r.eventId) this.ctx.storage.sql.exec('INSERT INTO play_events (event, sub) VALUES (?, ?)', r.eventId, sub);
       }
+    });
+    this.snapshots.clear();
+  }
+
+  updateName(sub, name) {
+    this.ctx.storage.sql.exec(
+      'INSERT INTO users (sub, name, at) VALUES (?, ?, ?) ON CONFLICT(sub) DO UPDATE SET name = excluded.name, at = excluded.at',
+      sub, name, Date.now(),
+    );
+  }
+
+  claimGuest(guest, sub, name) {
+    const result = this.ctx.storage.transactionSync(() => {
+      const owner = this.guestOwner(guest);
+      if (owner) return { ok: owner === sub, claimed: 0 };
+      const source = guestSub(guest);
+      const claimed = this.ctx.storage.sql.exec('SELECT COUNT(*) AS count FROM plays WHERE sub = ?', source).toArray()[0].count;
       this.ctx.storage.sql.exec(
-        'INSERT INTO plays (sub, game, mode, score, level, won, detail, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        r.sub, r.game, r.mode, r.score, r.level, r.won ? 1 : 0, r.detail ?? '', Date.now(),
+        'INSERT INTO guest_owners (guest, sub) VALUES (?, ?) ON CONFLICT(guest) DO UPDATE SET sub = excluded.sub',
+        guest, sub,
       );
-    }
+      this.ctx.storage.sql.exec('UPDATE plays SET sub = ? WHERE sub = ?', sub, source);
+      this.ctx.storage.sql.exec('UPDATE play_events SET sub = ? WHERE sub = ?', sub, source);
+      this.updateName(sub, name);
+      return { ok: true, claimed };
+    });
+    this.snapshots.clear();
+    return result;
+  }
+
+  profile(sub, guest) {
+    return this.cached(JSON.stringify([SNAPSHOT_KIND.PROFILE, sub, guest]), () => {
+      const claimed = !!this.guestOwner(guest);
+      const pending = !claimed && this.ctx.storage.sql.exec('SELECT id FROM plays WHERE sub = ? LIMIT 1', guestSub(guest)).toArray().length > 0;
+      return { stats: sub ? this.stats(sub) : claimed ? [] : this.stats(guestSub(guest)), guestPending: pending };
+    });
+  }
+
+  historyFor(sub, guest, before) {
+    if (sub) return this.history(sub, before);
+    if (this.guestOwner(guest)) return [];
+    return this.history(guestSub(guest), before);
   }
 
   // Trang lịch sử: 30 ván trước mốc `before` (ms), mới nhất trước.
   history(sub, before = Number.MAX_SAFE_INTEGER) {
-    return this.ctx.storage.sql
-      .exec('SELECT game, mode, score, level, won, detail, at FROM plays WHERE sub = ? AND at < ? ORDER BY at DESC LIMIT 30', sub, before)
-      .toArray();
+    return this.cached(JSON.stringify([SNAPSHOT_KIND.HISTORY, sub, before]), () => this.ctx.storage.sql
+      .exec('SELECT game, mode, score, level, won, detail, at FROM plays WHERE sub = ? AND at < ? ORDER BY at DESC, id DESC LIMIT ?', sub, before, HISTORY_LIMIT)
+      .toArray());
   }
 
   // Bảng xếp hạng "cho vui" (icon mỗi hạng mục chọn ở client theo key, xem public/me.js) giữa người đã đăng nhập, top 5 mỗi hạng mục.
@@ -151,16 +215,17 @@ export class Top extends DurableObject {
       key, title, unit,
       rows: this.ctx.storage.sql.exec(
         `SELECT COALESCE(u.name, 'Ẩn danh') AS name, ${agg} AS value FROM plays p LEFT JOIN users u ON u.sub = p.sub
-         WHERE p.at >= ? AND NOT ${SELF_REPORTED} AND (${where}) GROUP BY p.sub HAVING value > 0 ORDER BY value ${order}, MIN(p.at) ASC LIMIT 5`, since,
+         WHERE p.at >= ? AND NOT EXISTS (SELECT 1 FROM guest_owners g WHERE g.guest = SUBSTR(p.sub, ${GUEST_PREFIX.length + 1}) AND p.sub = '${GUEST_PREFIX}' || g.guest)
+         AND NOT ${SELF_REPORTED} AND (${where}) GROUP BY p.sub HAVING value > 0 ORDER BY value ${order}, MIN(p.at) ASC LIMIT 5`, since,
       ).toArray(),
     });
     return FUN.map((c) => q(...c));
   }
 
   stats(sub) {
-    return this.ctx.storage.sql
+    return this.cached(JSON.stringify([SNAPSHOT_KIND.STATS, sub]), () => this.ctx.storage.sql
       .exec('SELECT game, COUNT(*) AS plays, SUM(won) AS wins, MAX(score) AS best, MIN(CASE WHEN won = 1 THEN score END) AS fastest, MAX(level) AS maxLevel FROM plays WHERE sub = ? GROUP BY game', sub)
-      .toArray();
+      .toArray());
   }
 
   add(rows) {

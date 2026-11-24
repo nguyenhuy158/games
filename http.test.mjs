@@ -3,14 +3,17 @@ import assert from 'node:assert/strict';
 import { register } from 'node:module';
 import './scripts/node-ts-hooks.mjs';
 
-register('data:text/javascript,' + encodeURIComponent(`
+register(`data:text/javascript,${encodeURIComponent(`
   export async function resolve(spec, ctx, next) {
     if (spec === 'cloudflare:workers') return { url: 'data:text/javascript,export class DurableObject{constructor(c,e){this.ctx=c;this.env=e}}', shortCircuit: true };
     return next(spec, ctx);
-  }`));
+  }`)}`);
 const { http } = await import('./worker/adapters/http.js');
 
-const env = { ASSETS: { fetch: async () => new Response('asset') } };
+const env = {
+  ASSETS: { fetch: async () => new Response('asset') },
+  TOP: { idFromName: (name) => name, get: () => ({ profile: () => ({ stats: [], guestPending: false }) }) },
+};
 const get = (url) => http.fetch(new Request(url), env);
 
 // soi.huyab.cfd: tên ngắn của /soi/ (302, giữ query như ?r=MÃ)

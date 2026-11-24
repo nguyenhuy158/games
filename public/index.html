@@ -87,13 +87,17 @@
     #me { width: min(760px, 100%); display: grid; gap: 10px; }
     #me h2, #me h3 { margin: 0; }
     #me h3 { font-size: 15px; color: var(--muted); }
+    #meNotice, #meError, #historyError { margin: 0; line-height: 1.5; }
+    #meError, #historyError { color: var(--ui-danger); }
+    #meNotice a { color: var(--accent); }
+    #meRetry, #historyRetry, #historyMore { justify-self: start; }
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
     .stat { padding: 16px; border-radius: var(--ui-radius); background: var(--panel); border: 1px solid var(--line); box-shadow: var(--ui-shadow-sm); display: grid; gap: 4px; }
     .stat b { font-size: 16px; }
     .stat span { color: var(--muted); font-size: 13px; }
     .stat strong { color: var(--accent); }
     #history { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
-    #history li { display: flex; gap: 12px; align-items: baseline; padding: 8px 12px; border-radius: var(--ui-radius); background: var(--panel); border: 1px solid var(--line); font-size: 13px; }
+    #history li { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: baseline; padding: 8px 12px; border-radius: var(--ui-radius); background: var(--panel); border: 1px solid var(--line); font-size: 13px; overflow-wrap: anywhere; }
     #history .when { color: var(--muted); margin-left: auto; white-space: nowrap; }
     #history .won { color: var(--ui-success); }
     #history .score { color: var(--accent); font-weight: 700; }
@@ -171,7 +175,7 @@
   <div id="account"></div>
   <div id="lang"><span data-lang-toggle></span></div>
   <h1><img class="logo" src="/logos/hub-192.png" alt=""> <span data-en="Classic Games">Game Cổ Điển</span></h1>
-  <p class="sub"><span data-en="Play right in your browser, no sign-up needed. Sign in to keep your game history.">Chơi ngay trên trình duyệt, không cần đăng ký. Đăng nhập để lưu lịch sử các lần chơi.</span></p>
+  <p class="sub"><span data-en="Play without signing up. Your guest history stays with this browser; sign in here to keep it in your account.">Chơi không cần đăng ký. Lịch sử khách gắn với trình duyệt này; đăng nhập tại đây để giữ trong tài khoản.</span></p>
   <!-- Hiện khi server đã có /api/rooms (danh sách phòng công khai của mọi game). -->
   <a id="roomsLink" class="btn" href="/phong/" hidden><i data-icon="users"></i> <span data-en="Open rooms">Phòng đang mở</span> <b id="roomsCount"></b></a>
   <script type="module">
@@ -366,11 +370,17 @@
     <div id="funList" class="fun-grid"></div>
     <p class="sub hint" id="funHint"><span data-en="Sign in with Google to get on the boards — guests can still play, just not ranked.">Đăng nhập Google để có tên trên bảng — khách vẫn chơi được, chỉ không được xếp hạng.</span></p>
   </section>
-  <section id="me" hidden>
-    <h2><span data-en="Your stats">Thành tích của bạn</span></h2>
+  <section id="me" aria-labelledby="meTitle">
+    <h2 id="meTitle"><span data-en="Your stats">Thành tích của bạn</span></h2>
+    <p id="meNotice" class="sub hint" role="status"></p>
+    <p id="meError" role="alert" hidden></p>
+    <button id="meRetry" class="btn" hidden><span data-en="Retry saving guest history">Thử lưu lại lịch sử khách</span></button>
     <div id="stats" class="stats"></div>
     <h3><span data-en="Recent games">Các ván gần đây</span></h3>
     <ol id="history"></ol>
+    <p id="historyError" role="alert" hidden></p>
+    <button id="historyRetry" class="btn" hidden><span data-en="Retry loading history">Thử tải lại lịch sử</span></button>
+    <button id="historyMore" class="btn" hidden><span data-en="Show more">Xem thêm</span></button>
   </section>
   <footer data-en-html="Animal art: &lt;a href=&quot;https://github.com/jdecked/twemoji&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Twemoji&lt;/a&gt; (CC-BY 4.0) · Minesweeper skin: &lt;a href=&quot;https://github.com/Minesweeper-World/MS-Texture&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;MS-Texture&lt;/a&gt; (MIT) · Bau Cua art: folk print (photo by Bách Hóa Xanh) · Icons: Lucide · A learning project">Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Skin dò mìn: <a href="https://github.com/Minesweeper-World/MS-Texture" target="_blank" rel="noopener">MS-Texture</a> (MIT) · Hình bầu cua: tờ in dân gian (ảnh Bách Hóa Xanh) · Icon: Lucide · Dự án học tập</footer>
   <script>
