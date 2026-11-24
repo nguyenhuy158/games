@@ -10,6 +10,7 @@ import { findPair } from '../public/pikachu/logic.js';
 import { botMove as ganhBot } from '../public/co-ganh/logic.js';
 import { botMove as tuongBot } from '../public/co-tuong/logic.js';
 import { kinhRows as lotoKinh } from '../public/loto/logic.js';
+import { ACTION as SPY_ACTION, PHASE as SPY_PHASE, ROLE as SPY_ROLE } from '../public/gian-diep/logic.js';
 
 const base = (process.argv[2] ?? 'http://localhost:8789').replace(/^http/, 'ws');
 const only = process.argv.slice(3);
@@ -236,6 +237,57 @@ const GAMES = {
     if (r.socks.some((s) => s.last.view.wolf !== wolf)) throw new Error('reveal names the wrong wolf');
     r.close();
     return JSON.stringify(r.socks[0].last.result.title);
+  },
+  async 'gian-diep'() {
+    const r = await nokia('gian-diep', 6, () => {}, { spies: 1, whites: 1, seconds: 15, pack: 'food' });
+    const phase = () => r.host().last.view?.phase;
+    const send = (ws, a, extra = {}) => r.send(ws, { t: 'g', a, ...extra });
+    try {
+      await until(() => r.socks.every((s) => s.last.view?.card), 5000, 'private spy cards');
+      const white = r.socks.find((s) => s.last.view.card.white);
+      const words = r.socks.map((s) => s.last.view.card.word).filter(Boolean);
+      const civilianWord = words.find((word) => words.filter((candidate) => candidate === word).length > 1);
+      const spy = r.socks.find((s) => s.last.view.card.word && s.last.view.card.word !== civilianWord);
+      if (!white || !spy) throw new Error('missing white or distinct spy word');
+      if (r.socks.some((s) => s.last.view.reveal || s.last.view.players.some((p) => p.role))) throw new Error('private roles leaked');
+      send(r.host(), SPY_ACTION.NEXT);
+      await until(() => phase() === SPY_PHASE.DESCRIBE, 5000, 'host starts descriptions after dealing');
+      send(r.host(), SPY_ACTION.ELIMINATE, { target: white.me });
+      await until(() => phase() === SPY_PHASE.GUESS, 5000, 'white gets eliminated guess');
+      send(white, SPY_ACTION.GUESS, { text: 'not-a-word-in-any-pack' });
+      await until(() => phase() !== SPY_PHASE.GUESS, 5000, 'wrong white guess resumes');
+      while (phase() === SPY_PHASE.DESCRIBE) {
+        const speaker = r.host().last.view.speaker;
+        send(r.host(), SPY_ACTION.NEXT);
+        await until(() => phase() !== SPY_PHASE.DESCRIBE || r.host().last.view.speaker !== speaker, 5000, 'speaker advances');
+      }
+      send(r.host(), SPY_ACTION.VOTING);
+      await until(() => phase() === SPY_PHASE.VOTE, 6000, 'vote countdown completes');
+      const alive = r.socks.filter((s) => s !== white);
+      for (const [index, s] of alive.entries()) send(s, SPY_ACTION.VOTE, { target: alive[(index + 1) % alive.length].me });
+      await until(() => phase() === SPY_PHASE.TIE, 5000, 'tied vote needs more clues');
+      send(r.host(), SPY_ACTION.NEXT);
+      await until(() => phase() === SPY_PHASE.VOTE, 6000, 'runoff opens');
+      for (const s of alive) send(s, SPY_ACTION.VOTE, { target: s === spy ? alive.find((p) => p !== spy).me : spy.me });
+      await until(() => r.socks.every((s) => s.last.status === 'ended'), 5000, 'civilians win runoff');
+      if (r.host().last.view.winner !== SPY_ROLE.CIVILIAN) throw new Error('wrong runoff winner');
+      if (r.host().last.result.rp) throw new Error('secret game recorded replay');
+      r.send(r.host(), { t: 'start' });
+      await until(() => r.socks.every((s) => s.last.status === 'playing'), 5000, 'fresh deal');
+      const nextWhite = r.socks.find((s) => s.last.view.card.white);
+      const nextWords = r.socks.map((s) => s.last.view.card.word).filter(Boolean);
+      const answer = nextWords.find((word) => nextWords.filter((candidate) => candidate === word).length > 1);
+      send(r.host(), SPY_ACTION.NEXT);
+      await until(() => phase() === SPY_PHASE.DESCRIBE, 5000, 'host starts fresh descriptions');
+      send(r.host(), SPY_ACTION.ELIMINATE, { target: nextWhite.me });
+      await until(() => phase() === SPY_PHASE.GUESS, 5000, 'new white guess');
+      send(nextWhite, SPY_ACTION.GUESS, { text: answer });
+      await until(() => r.socks.every((s) => s.last.status === 'ended'), 5000, 'white wins immediately');
+      if (r.host().last.view.winner !== nextWhite.me) throw new Error('white guess winner is wrong');
+      return '6 private cards; wrong white guess; tied vote; civilian runoff win; correct white guess win';
+    } finally {
+      r.close();
+    }
   },
   // Cờ tướng với máy (máy dễ): bot smoke đi nước tốt nhất sâu 2, ván hết khi có người bị chiếu bí (hoặc 300 nước).
   async 'co-tuong'() {

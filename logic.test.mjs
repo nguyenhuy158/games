@@ -129,6 +129,7 @@ await import('./tetris.test.mjs');
 await import('./sudoku.test.mjs');
 await import('./loto.test.mjs');
 await import('./soi.test.mjs');
+await import('./gian-diep.test.mjs');
 await import('./room-client.test.mjs');
 await import('./scripts/check-deps.mjs');
 await import('./sso.test.mjs');

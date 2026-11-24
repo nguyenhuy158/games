@@ -16,6 +16,8 @@ const CORE = [
   '/co-tuong/', '/co-tuong/index.html', '/co-tuong/style.css', '/co-tuong/game.js', '/co-tuong/logic.js', '/logos/co-tuong.svg',
   '/loto/', '/loto/index.html', '/loto/style.css', '/loto/game.js', '/loto/logic.js', '/loto/voice.js', '/loto/penalty.js', '/loto/music.js', '/logos/loto.svg',
   '/soi/', '/soi/index.html', '/soi/style.css', '/soi/game.js', '/soi/logic.js', '/logos/soi.svg',
+  '/gian-diep/', '/gian-diep/index.html', '/gian-diep/style.css', '/gian-diep/game.js', '/gian-diep/logic.js', '/logos/gian-diep.svg',
+  '/gian-diep/ui.js', '/gian-diep/help.js', '/gian-diep/ui-kit/tokens.css', '/gian-diep/ui-kit/feedback.css', '/gian-diep/ui-kit/feedback.mjs',
   '/solo.css', '/swipe.js',
   '/2048/', '/2048/index.html', '/2048/style.css', '/2048/game.js', '/2048/logic.js', '/logos/2048.svg',
   '/tetris/', '/tetris/index.html', '/tetris/style.css', '/tetris/game.js', '/tetris/logic.js', '/logos/tetris.svg',
