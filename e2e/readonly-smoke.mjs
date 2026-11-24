@@ -27,7 +27,11 @@ const BOARDS = {
 const MIN_HELP_CHARS = 100;
 const CLI_ARGUMENT_OFFSET = 2;
 const REQUESTED_ROUTES = [...new Set(process.argv.slice(CLI_ARGUMENT_OFFSET))];
-const MAX_CONCURRENT_GAMES = 3;
+const PAGE_CONCURRENCY_LIMIT = 3;
+const MAX_CONCURRENT_GAMES = Number(process.env.E2E_PAGE_CONCURRENCY ?? PAGE_CONCURRENCY_LIMIT);
+if (!Number.isInteger(MAX_CONCURRENT_GAMES) || MAX_CONCURRENT_GAMES < 1 || MAX_CONCURRENT_GAMES > PAGE_CONCURRENCY_LIMIT) {
+  throw new Error("E2E_PAGE_CONCURRENCY must be an integer from 1 to 3");
+}
 const FAILURE_SCREENSHOT_PATH = "e2e-failure.png";
 const HTTP_ERROR_STATUS = 400;
 const ERROR_SEPARATOR = " | ";
@@ -39,6 +43,9 @@ const HELP_BODY_SELECTOR = ".help-body";
 const ESCAPE_KEY = "Escape";
 const NAVIGATION_OPTIONS = { waitUntil: "load" };
 const HIDDEN_WAIT = { state: "hidden", ...WAIT };
+const ROOMS_PATH = "/api/rooms";
+const LOBBY_PATH = "/phong/";
+const LOBBY_READY_SELECTOR = "#filter button";
 
 let passed = 0;
 let failed = 0;
@@ -223,8 +230,14 @@ try {
     throw new Error(`/api/board: ${JSON.stringify(board)}`);
   ok(`GET /api/board?game=2048 (${board.length} scores)`);
 
-  await page.goto(`${BASE}/phong/`);
-  await page.waitForLoadState("networkidle", WAIT);
+  const [roomsResponse] = await Promise.all([
+    page.waitForResponse((response) => response.url() === BASE + ROOMS_PATH, WAIT),
+    page.goto(BASE + LOBBY_PATH),
+  ]);
+  if (!roomsResponse.ok() || !Array.isArray((await roomsResponse.json()).rooms)) {
+    throw new Error("Lobby room request failed");
+  }
+  await page.locator(LOBBY_READY_SELECTOR).first().waitFor(WAIT);
   ok("open-rooms page /phong/ renders");
 
   assertNoPageErrors(pageErrors);
