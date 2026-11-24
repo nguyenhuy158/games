@@ -43,7 +43,7 @@ console.log(`WebSocket coverage: ${smokeMode}; at most 3 games and 1 browser pag
 
 const server = await startServer({
   command: "pnpm",
-  args: ["exec", "wrangler", "dev", "--ip", "127.0.0.1", "--port", PORT],
+  args: ["exec", "wrangler", "dev", "--local", "--ip", "127.0.0.1", "--port", PORT],
   readyUrl: `${BASE}/api/version`,
 });
 

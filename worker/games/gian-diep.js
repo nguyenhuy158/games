@@ -1,4 +1,5 @@
-import { MIN_PLAYERS, MAX_PLAYERS, DEFAULT_CONFIG, PHASE, ROLE, normalizeConfig, validateSetup, createGame, act, advance, view, resultTitle } from '../../public/gian-diep/logic.js';
+import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, DEFAULT_CONFIG, PHASE, ROLE, normalizeConfig, validateSetup, createGame, act, advance, view, resultTitle } from '../../public/gian-diep/logic.js';
+import { resolveAiPair } from './gian-diep-ai.js';
 
 const GAME_SLUG = 'gian-diep';
 const GAME_PAGE = '/gian-diep/';
@@ -7,6 +8,7 @@ const MULTIPLAYER = 'multi';
 const WIN_SCORE = 1;
 const LOSS_SCORE = 0;
 const INVALID_SETUP = [`Cần ${MIN_PLAYERS}–${MAX_PLAYERS} người và số vai hợp lệ; phải còn ít nhất 2 dân thường`, `Need ${MIN_PLAYERS}–${MAX_PLAYERS} players and valid role counts, with at least 2 civilians`];
+const INVALID_AI_PACK = ['Bộ từ AI đã hết hạn hoặc không hợp lệ. Tạo lại bộ từ hoặc chọn bộ có sẵn.', 'The AI pack expired or is invalid. Generate a new pack or choose a built-in pack.'];
 
 function publish(ctx) {
   const g = ctx.g;
@@ -46,11 +48,11 @@ export default {
       return;
     }
     try {
-      Object.assign(ctx.g, createGame(ctx.seats, ctx.cfg, ctx.rand, ctx.now()));
+      Object.assign(ctx.g, createGame(ctx.seats, ctx.cfg, ctx.rand, ctx.now(), resolveAiPair(ctx)));
     } catch (error) {
       if (!(error instanceof RangeError)) throw error;
       ctx.wakeAt(0);
-      ctx.end({ title: INVALID_SETUP, ranks: [] });
+      ctx.end({ title: ctx.cfg.pack === AI_PACK ? INVALID_AI_PACK : INVALID_SETUP, ranks: [] });
       return;
     }
     publish(ctx);

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, DEFAULT_CONFIG, PACKS, DURATIONS, PHASE, ACTION, ROLE, limits, normalizeConfig, validateSetup, createGame, act, advance, view, parseNames, orderedIds, movePlayer, shufflePlayers } from './public/gian-diep/logic.js';
+import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, DEFAULT_CONFIG, PACKS, DURATIONS, PHASE, ACTION, ROLE, limits, normalizeConfig, validateSetup, createGame, act, advance, view, parseNames, orderedIds, movePlayer, shufflePlayers } from './public/gian-diep/logic.js';
 import gianDiep from './worker/games/gian-diep.js';
 
 const NOW = 1_000;
@@ -135,6 +135,24 @@ function room(n = 6, cfg = {}, rand = () => 0.999999) {
   assert.equal(new Set(departed.ctx.g.players.map((player) => player.id)).size, departed.ctx.seats.length);
 }
 
+{
+  const cfg = { ...DEFAULT_CONFIG, pack: AI_PACK, aiPackId: '12345678-1234-4123-8123-123456789abc', aiTopic: 'Ẩm thực' };
+  assert.equal(normalizeConfig({ ...cfg, aiPackId: '' }), null);
+  assert.equal(normalizeConfig({ ...cfg, aiTopic: ' ' }), null);
+  assert.deepEqual(normalizeConfig({ ...cfg, pack: DEFAULT_CONFIG.pack }), DEFAULT_CONFIG);
+  for (const pair of [undefined, ['Phở'], ['Phở', ' phở '], ['Phở', ''], ['Phở', 'Bún\nchả']]) {
+    assert.throws(() => createGame(idsFor(3), cfg, () => 0.9, NOW, pair), RangeError);
+  }
+  const pair = ['Phở bò', 'Bún bò'];
+  const g = createGame(idsFor(3), cfg, () => 0.9, NOW, pair);
+  const civilian = playerOf(g, ROLE.CIVILIAN);
+  const spy = playerOf(g, ROLE.SPY);
+  assert.ok(pair.includes(view(g, civilian.id).card.word));
+  assert.ok(pair.includes(view(g, spy.id).card.word));
+  assert.notEqual(view(g, civilian.id).card.word, view(g, spy.id).card.word);
+  assert.equal(view(g, spy.id).card.role, undefined);
+  assert.equal(view(g, 'spectator').card, null);
+}
 for (const pack of PACKS) {
   assert.equal(pack.label.length, 2);
   assert.ok(pack.label.every((label) => typeof label === 'string' && label.length > 0));

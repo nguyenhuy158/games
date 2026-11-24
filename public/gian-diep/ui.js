@@ -1,7 +1,7 @@
 import { el } from '../dom.js';
 import { t, tx } from '../i18n.js';
 import { iconEl } from '../icons.js';
-import { DEFAULT_CONFIG, DURATIONS, PACKS, MIN_PLAYERS, MAX_PLAYERS, ROLE, limits, validateSetup } from './logic.js';
+import { AI_PACK, DEFAULT_CONFIG, DURATIONS, PACKS, MIN_PLAYERS, MAX_PLAYERS, ROLE, limits, validateSetup } from './logic.js';
 import { createToasts } from './ui-kit/feedback.mjs';
 
 export const PAGE_SIZE = 4;
@@ -67,7 +67,7 @@ export function configBadges(config) {
     indicator('eye', String(cfg.spies), t(`${cfg.spies} gián điệp`, `${cfg.spies} spies`)),
     indicator('layers', String(cfg.whites), t(`${cfg.whites} Mũ Trắng`, `${cfg.whites} Mr. White roles`)),
     indicator('timer', `${cfg.seconds}s`, t(`${cfg.seconds} giây mỗi lượt`, `${cfg.seconds} seconds per clue`)),
-    indicator('grid-3x3', tx(pack?.label)));
+    indicator(cfg.pack === AI_PACK ? 'sparkles' : 'grid-3x3', cfg.pack === AI_PACK ? cfg.aiTopic : tx(pack?.label)));
 }
 
 export function setupWarning(count, cfg) {
@@ -77,7 +77,7 @@ export function setupWarning(count, cfg) {
   return '';
 }
 
-export function settings(count, config, save) {
+export function settings(count, config, save, generateAi) {
   const cfg = { ...DEFAULT_CONFIG, ...config };
   const fields = el('div', { className: 'settings-grid' });
   const warning = note('', true);
@@ -105,9 +105,9 @@ export function settings(count, config, save) {
   field('spies', t('Gián điệp', 'Spies'));
   field('whites', t('Mũ Trắng', 'Mr. White'));
   field('seconds', t('Thời gian mô tả', 'Clue timer'), DURATIONS.map((seconds) => [seconds, seconds === LIGHTNING_SECONDS ? t('5 giây · Chớp nhoáng', '5 sec · Lightning') : t(`${seconds} giây`, `${seconds} sec`)]));
-  field('pack', t('Bộ từ', 'Word pack'), PACKS.map((pack) => [pack.id, tx(pack.label)]));
+  field('pack', t('Bộ từ', 'Word pack'), [...PACKS.map((pack) => [pack.id, tx(pack.label)]), ...(cfg.pack === AI_PACK ? [[AI_PACK, cfg.aiTopic]] : [])]);
   update();
-  const modal = dialog(t('Cài đặt ván', 'Game settings'), el('div', { className: 'stack' }, summary, fields, note(t('Bộ từ dùng tiếng Việt. Dân và gián điệp chỉ thấy từ, không thấy tên vai.', 'Word packs are in Vietnamese. Civilians and spies see only a word, not their role.')), warning, apply));
+  const modal = dialog(t('Cài đặt ván', 'Game settings'), el('div', { className: 'stack' }, summary, fields, ...(generateAi ? [button(t('Tạo bộ từ AI', 'Create AI pack'), () => { modal.close(); generateAi(); }, false, 'sparkles')] : []), note(t('Bộ từ dùng tiếng Việt. Dân và gián điệp chỉ thấy từ, không thấy tên vai.', 'Word packs are in Vietnamese. Civilians and spies see only a word, not their role.')), warning, apply));
 }
 
 export function paginated(items, renderItem, label = t('Người chơi', 'Players')) {

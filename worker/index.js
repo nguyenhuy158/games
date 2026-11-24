@@ -21,12 +21,16 @@ import loto from './games/loto.js';
 import soi from './games/soi.js';
 import gianDiep from './games/gian-diep.js';
 
+export { SpyAi } from './adapters/spy-ai.js';
+import { generateRoomAi } from './spy-ai.js';
 export { http as default } from './adapters/http.js';
 export { Top } from './adapters/top.js';
 
 // /api/nk/<game>/room/CODE -> DO "<game>:<CODE>" (ngoài game Nokia còn Ô ăn quan, Cờ gánh, Cờ tướng, Lô tô, Sói: class này là phòng dùng chung).
 export const NOKIA_GAMES = { snake, bantumi, pairs, logic, 'rapid-roll': rapidRoll, 'space-impact': spaceImpact, bounce, 'o-an-quan': oAnQuan, 'co-ganh': coGanh, 'co-tuong': coTuong, loto, soi, 'gian-diep': gianDiep };
-export class NokiaRoom extends gameRoom(NOKIA_GAMES) {}
+export class NokiaRoom extends gameRoom(NOKIA_GAMES) {
+  generateSpyAi(topic, deviceId, guestId) { return generateRoomAi(this, topic, deviceId, guestId); }
+}
 // /api/room/CODE (Pikachu), /api/cc|c4/room/CODE (Cờ caro / Nối 4 chung class), /api/bt/room/CODE, /api/bc/room/CODE, /api/ms/room/CODE, /api/dv/room/CODE.
 export class CaroRoom extends gameRoom({ caro, c4 }) {}
 export class ShipRoom extends gameRoom({ 'ban-tau': banTau }) {}

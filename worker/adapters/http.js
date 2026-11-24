@@ -3,6 +3,8 @@ import { REPLAY_ID, REPLAY_MAX, replayId, BOARDS } from './top.js';
 import { SIZES } from '../../public/pikachu/logic.js';
 import { MODES } from '../games/pikachu.js';
 import { GUEST_HEADER, USER_HEADER, GAME_HEADER, ROOM_HEADER, PRIVATE_CACHE, guestSession, resultOwner, withGuestCookie } from '../guest.js';
+import { AI_PATH, AI_ERROR, AI_STATUS, AI_LIMIT, aiFailure } from '../spy-ai.js';
+import { routeAi } from './spy-ai-http.js';
 
 const METHOD = { GET: 'GET', POST: 'POST' };
 const STATUS = { BAD_REQUEST: 400, UNAUTHORIZED: 401, FORBIDDEN: 403, METHOD_NOT_ALLOWED: 405, CONFLICT: 409, TOO_LARGE: 413, UNSUPPORTED: 415 };
@@ -28,7 +30,7 @@ const SOLO_LIMITS = {
 const privateJson = (value, status) => Response.json(value, { status, headers: { [HEADER.CACHE]: PRIVATE_CACHE } });
 const badRequest = () => privateJson({ error: 'invalid_result' }, STATUS.BAD_REQUEST);
 
-async function readHistoryBody(req) {
+async function readHistoryBody(req, bodyLimit = HISTORY_BODY_LIMIT) {
   const site = req.headers.get(HEADER.FETCH_SITE);
   if (req.headers.get(HEADER.ORIGIN) !== new URL(req.url).origin || (site && site !== SAME_ORIGIN)) {
     return privateJson({ error: 'origin' }, STATUS.FORBIDDEN);
@@ -45,7 +47,7 @@ async function readHistoryBody(req) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > HISTORY_BODY_LIMIT) {
+      if (size > bodyLimit) {
         await reader.cancel();
         return privateJson({ error: 'too_large' }, STATUS.TOO_LARGE);
       }
@@ -111,6 +113,16 @@ async function route(req, env, guest) {
     }
     if (!api) return env.ASSETS.fetch(req);
     const top = () => env.TOP.get(env.TOP.idFromName('global'));
+    if (url.pathname === AI_PATH) {
+      const respond = (result) => {
+        const { status = AI_STATUS.OK, ...body } = result;
+        return privateJson(body, status);
+      };
+      if (req.method !== METHOD.POST) return respond(aiFailure(AI_ERROR.REQUEST, AI_STATUS.METHOD));
+      const body = await readHistoryBody(req, AI_LIMIT.BODY);
+      if (body instanceof Response) return respond(aiFailure(AI_ERROR.REQUEST, body.status));
+      return respond(await routeAi(body, env, guest.id));
+    }
     if (url.pathname === ME_PATH) {
       if (req.method !== METHOD.GET) return privateJson({ error: 'method' }, STATUS.METHOD_NOT_ALLOWED);
       const user = await userFrom(req);
@@ -212,7 +224,7 @@ async function route(req, env, guest) {
 export const http = {
   async fetch(req, env) {
     const url = new URL(req.url);
-    const privatePath = [ME_PATH, HISTORY_PATH, CLAIM_PATH].includes(url.pathname);
+    const privatePath = [ME_PATH, HISTORY_PATH, CLAIM_PATH, AI_PATH].includes(url.pathname);
     const websocket = req.headers.get(HEADER.UPGRADE) === WEBSOCKET;
     let guest = privatePath || websocket ? guestSession(req) : null;
     const response = await route(req, env, guest);

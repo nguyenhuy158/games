@@ -31,7 +31,34 @@ Không bật biến thể hai gián điệp biết nhau vì trái với luật �
 
 **Nhiều máy:** dùng phòng `NokiaRoom`, WebSocket `/api/nk/gian-diep/room/CODE`. Server lưu trạng thái qua mất kết nối, gửi mỗi người đúng thẻ của họ; người vào giữa ván chỉ xem. Cùng thiết bị vào lại bằng mã phòng để tiếp tục. Đợi người đang mất mạng quay lại bỏ phiếu/đoán, hoặc host loại trực tiếp khi luật cho phép. Không ghi replay chứa từ bí mật. Thẻ đang mở tự che khi chuyển tab, ẩn trang hoặc bấm Escape.
 
-Luật dùng chung trong `public/gian-diep/logic.js`; server chỉ điều phối thời gian, quyền, kết quả và lưu trạng thái qua `worker/games/gian-diep.js`. Không thêm schema hay migration Durable Object.
+Luật dùng chung trong `public/gian-diep/logic.js`; server điều phối thời gian, quyền, kết quả và lưu trạng thái qua `worker/games/gian-diep.js`.
+
+## Bộ từ AI
+
+Vào **Cài đặt → Tạo bộ từ AI**, nhập chủ đề tiếng Việt tối đa 100 ký tự hoặc chọn một trong 3–5 gợi ý AI. Sau khi tạo chỉ hiện chủ đề và số cặp từ, không có xem trước từ. Chọn lại bộ từ có sẵn nếu không muốn dùng AI; lỗi AI không tự thay bằng bộ từ cố định.
+
+- **Một máy:** `POST /api/gian-diep/ai` với `{action:"generate",topic}` trả `{packId,title,count}`. Khi chia thẻ, `{action:"deal",packId}` chỉ trả một cặp ngẫu nhiên cho đúng chủ cookie đã tạo bộ từ. Trình duyệt giữ cặp vừa chia như chế độ một máy hiện có, không nhận toàn bộ bộ từ.
+- **Nhiều máy:** thêm `room` (mã 4 ký tự) và `deviceId` vào yêu cầu tạo. Server kiểm tra chủ phòng đang trực tuyến, cookie trùng người chơi và phòng ở sảnh/đã kết thúc **trước** khi gọi AI; sau khi chờ AI còn kiểm tra lại chủ phòng, trạng thái, cấu hình và ván. Bộ từ nằm riêng trong `keep.aiPack`; WebSocket chỉ phát metadata `cfg.pack`, `cfg.aiPackId`, `cfg.aiTopic`. Endpoint chia cặp một máy không đọc được bộ từ phòng.
+- Mọi yêu cầu phải là POST JSON cùng origin, body tối đa 2.048 byte. Owner là cookie bearer ngẫu nhiên 256-bit `__Host-games_guest` hiện có (`HttpOnly`, `Secure`, `SameSite=Lax`), **không phải cookie có chữ ký**. Không tin header `X-Guest` từ client; không gửi tên người chơi cho model.
+
+### Provider và hạn mức
+
+`wrangler.toml` thêm binding Workers AI `AI`, Durable Object `SPY_AI` (class `SpyAi`, singleton `global`) và migration SQLite **v9**, giữ nguyên v1–v8. Không cần API key, SDK hay secret mới. Model thật là [`@cf/meta/llama-3.3-70b-instruct-fp8-fast`](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/), dùng [JSON Schema mode](https://developers.cloudflare.com/workers-ai/features/json-mode/).
+
+| Giới hạn | Giá trị |
+| --- | --- |
+| Lượt gọi provider | Tối đa **60/ngày UTC toàn ứng dụng**, **5/ngày UTC mỗi guest**; gợi ý chủ đề cũng tính lượt |
+| Đầu ra | Yêu cầu 12 cặp, nhận tối thiểu 10 cặp hợp lệ; tối đa 1.400 token, hoặc 240 token cho gợi ý |
+| Chờ provider | 20 giây; không tự retry, không hoàn lượt khi provider lỗi/đầu ra sai |
+| Cache và bộ từ | 24 giờ từ lúc tạo thành công, chủ đề cùng tên sau chuẩn hóa dùng chung cache; đọc cache không tính lượt |
+| Bộ từ một máy lưu đồng thời | Tối đa 1.000 grant chủ sở hữu trong 24 giờ |
+
+DO nạp snapshot một lần rồi dùng bộ nhớ; reservation được ghi bền vững và tuần tự **trước** suy luận. Yêu cầu trùng chủ đề đang chờ được gộp thành một lần gọi. Sau DO reset, reservation chưa hoàn tất chặn gọi trùng tối đa 24 giờ; hạn mức không mất khi restart. Cache/grant được kiểm tra hạn bằng thời gian hiện tại mỗi lần dùng. Không giữ khóa chung của phòng trong lúc suy luận.
+
+Model không được quyết định schema: server kiểm lại trường, kiểu, độ dài, ký tự Latin/Vietnamese, chuỗi đã chuẩn hóa và tính khác nhau; loại cặp trùng hoặc dùng lại từ, từ chối nếu còn dưới 10 cặp. Mỗi từ tối đa 48 ký tự; gợi ý tối đa 60. Không thể bảo đảm chất lượng ngữ nghĩa chỉ bằng schema, nên model còn nhận hướng dẫn danh từ tiếng Việt phổ biến, gần nghĩa và phù hợp gia đình.
+
+Lỗi phân biệt `ai_unavailable`, `ai_quota`, `ai_invalid_topic`, `ai_invalid_output`, `ai_forbidden`, `ai_room_changed`, `ai_pack_expired`, `ai_invalid_request`; response lỗi có `error` và `msg` Việt/Anh. Bộ từ hết hạn phải tạo lại trước khi chia ván mới, không đổi từ của ván đang chơi.
+
 
 ## UI kit
 
@@ -48,8 +75,12 @@ Trang tải `public/ui-kit.css` dùng chung trước token sáng/tối của gam
 ```sh
 pnpm test
 pnpm check
-pnpm exec wrangler dev --ip 127.0.0.1 --port 8797
+pnpm exec wrangler dev --local --ip 127.0.0.1 --port 8797
 node scripts/smoke.mjs http://127.0.0.1:8797 gian-diep soi
 ```
 
 `gian-diep.test.mjs` kiểm parser tên, trùng/giới hạn, thứ tự/ID/chủ phòng, thành viên vào/rời giữa cấu hình và chia bài, giới hạn mọi quy mô, phân vai, quyền, dữ liệu riêng, đồng hồ, hòa, lượt đoán và kết quả. Smoke WebSocket thật chơi sáu người: Mũ Trắng đoán sai, hòa và bầu lại dân thắng, ván tiếp Mũ Trắng đoán đúng thắng ngay. Chỉ chạy smoke tạo phòng trên local; production để CI post-deploy kiểm theo quy ước repo.
+
+`spy-ai.test.mjs` kiểm quyền owner, quota qua reset, reservation/gộp đồng thời, cache/TTL, đầu ra sai, quyền chủ phòng trước provider, race trong lúc chờ, và không lộ cặp trong HTTP/broadcast. Test dùng provider fixture, không gọi AI tính phí; xác minh inference thật cần binding Workers AI remote trong môi trường kiểm tra riêng.
+
+`pnpm e2e` luôn chạy Wrangler với `--local`: không kết nối provider hay yêu cầu Cloudflare token trong CI. Để kiểm AI thật, chạy lệnh Wrangler trên nhưng bỏ `--local`; binding AI truy cập dịch vụ remote và có tính usage. Không coi provider fixture hoặc E2E không có remote là bằng chứng inference thật.

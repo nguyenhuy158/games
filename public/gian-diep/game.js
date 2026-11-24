@@ -3,11 +3,12 @@ import { el, store } from '../dom.js';
 import { t, tx, langToggle } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
-import { MIN_PLAYERS, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from './logic.js';
+import { AI_PACK, MIN_PLAYERS, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from './logic.js';
 import { HELP } from './help.js';
 import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results, notify } from './ui.js';
 import { createActionGate, setButtonPending } from './ui-kit/feedback.mjs';
 import { rosterDraft, rosterHasDraft, rosterEditor, seatingRoster, orderedPlayers } from './roster.js';
+import { aiPicker, dealAiPair } from './ai.js';
 
 const GAME = 'gian-diep';
 const GAME_PATH = '/gian-diep/';
@@ -62,6 +63,7 @@ let localPlayers = Array.from({ length: MIN_PLAYERS }, (_, index) => newLocalPla
 let localHostId = localPlayers[0].id;
 const localRosterDraft = rosterDraft();
 let localGame = null;
+let localDealing = false;
 let localStep = LOCAL_STEP.SETUP;
 let revealIndex = 0;
 let revealSeen = false;
@@ -180,7 +182,7 @@ function paintSetup(focus, editing = false) {
   const draftNote = note(t('Lưu hoặc hủy tên đang sửa; thêm danh sách đang nhập trước khi chia từ.', 'Save or cancel the name edit; apply the draft list before dealing.'));
   const updateDraft = () => {
     const pending = rosterHasDraft(localRosterDraft);
-    start.disabled = !!issue || pending;
+    start.disabled = !!issue || pending || localDealing;
     draftNote.hidden = !pending;
   };
   const roster = rosterEditor(localPlayers, localHostId, localRosterDraft, (change) => {
@@ -199,7 +201,7 @@ function paintSetup(focus, editing = false) {
     el('div', { className: 'section-heading' }, el('h2', {}, iconEl('users'), t(`${localPlayers.length} người chơi`, `${localPlayers.length} players`))),
     roster,
     el('div', { className: 'setup-options stack' },
-      el('div', { className: 'settings-summary' }, configBadges(localConfig), iconButton(t('Cài đặt', 'Settings'), () => settings(localPlayers.length, localConfig, (cfg) => { localConfig = cfg; paintSetup(); }), 'gauge')),
+      el('div', { className: 'settings-summary' }, configBadges(localConfig), iconButton(t('Cài đặt', 'Settings'), () => settings(localPlayers.length, localConfig, (cfg) => { localConfig = cfg; paintSetup(); }, localAiPicker), 'gauge')),
       issue ? note(issue, true) : note(t('Xem thẻ lần lượt. Đủ người xem mới chạy đồng hồ.', 'Pass the cards privately. The timer waits for everyone.')),
       draftNote, start)));
   if (focus) {
@@ -210,12 +212,34 @@ function paintSetup(focus, editing = false) {
   }
 }
 
-function dealLocal() {
-  if (rosterHasDraft(localRosterDraft) || localGame || localStep !== LOCAL_STEP.SETUP) return;
+function localAiPicker() {
+  aiPicker(({ packId, title }) => {
+    localConfig = { ...localConfig, pack: AI_PACK, aiPackId: packId, aiTopic: title };
+    if (mode === MODE.LOCAL && localStep === LOCAL_STEP.SETUP) paintSetup();
+  });
+}
+
+async function dealLocal() {
+  if (localDealing || rosterHasDraft(localRosterDraft) || localGame || localStep !== LOCAL_STEP.SETUP) return;
   if (!validateSetup(localPlayers.length, localConfig)) { notify(setupWarning(localPlayers.length, localConfig), 'error'); return; }
-  localNamesById.clear();
-  const ids = localPlayers.map(({ id, name }) => { localNamesById.set(id, name); return id; });
-  localGame = createGame(ids, localConfig, random, Date.now());
+  localDealing = true;
+  content.inert = true;
+  backButton.disabled = true;
+  const restore = setButtonPending(content.querySelector('[data-variant="primary"]'), t('Đang chia từ…', 'Dealing…'));
+  try {
+    const pair = localConfig.pack === AI_PACK ? await dealAiPair(localConfig.aiPackId) : undefined;
+    localNamesById.clear();
+    const ids = localPlayers.map(({ id, name }) => { localNamesById.set(id, name); return id; });
+    localGame = createGame(ids, localConfig, random, Date.now(), pair);
+  } catch (error) {
+    notify(error.message, 'error');
+    return;
+  } finally {
+    restore();
+    localDealing = false;
+    content.inert = false;
+    backButton.disabled = false;
+  }
   localStep = LOCAL_STEP.REVEAL;
   revealIndex = 0;
   revealSeen = false;
@@ -448,7 +472,7 @@ function enterOnline() {
         setConfig({ order: next.map((player) => player.id) });
       } : null;
       box.append(seatingRoster(players, room.host, changeOrder, random));
-      box.append(el('div', { className: 'settings-summary' }, configBadges(cfg), host ? iconButton(t('Cài đặt ván', 'Game settings'), () => settings(room.players.length, cfg, setConfig), 'gauge') : ''));
+      box.append(el('div', { className: 'settings-summary' }, configBadges(cfg), host ? iconButton(t('Cài đặt ván', 'Game settings'), () => settings(room.players.length, cfg, setConfig, () => aiPicker(() => notify(t('Bộ từ AI đã sẵn sàng.', 'AI pack is ready.'), 'success'), { room: new URLSearchParams(location.search).get('r'), deviceId: app.id })), 'gauge') : ''));
     },
     mount(stage) {
       onlineBoard = stage;
