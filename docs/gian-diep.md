@@ -2,6 +2,15 @@
 
 Mở `/gian-diep/`, chọn **Chuyền một máy** hoặc **Mỗi người một máy**. Host cũng chơi; thẻ của host không có đặc quyền xem từ hay vai người khác. Thảo luận trực tiếp hoặc qua cuộc gọi riêng, không tích hợp thoại/chat.
 
+## Nhập nhóm và thứ tự
+
+- **Một máy:** dùng ngay ba tên mẫu hoặc dán tối đa 20 tên, mỗi dòng một tên (hỗ trợ LF/CRLF). Mặc định **Thay cả nhóm · tên đầu làm chủ** để không phải xóa tên mẫu; sau khi nhập thành công chuyển sang **Thêm vào nhóm**. Enter áp dụng danh sách, Shift+Enter xuống dòng.
+- Bấm tên để sửa ngay trên hàng; Enter lưu, Escape hủy. Tên trống, trùng (không phân biệt hoa/thường), dài hơn 20 ký tự hoặc nhóm quá 20 người đều bị từ chối và giữ nguyên bản nháp. Chia từ bị khóa khi chưa lưu tên hoặc nhóm chưa đủ 3–20 người.
+- Mũi tên lên/xuống và **Xáo thứ tự** chỉ đổi thứ tự nhận thẻ/mô tả trước ván. ID người chơi và chủ phòng giữ nguyên khi sửa tên hoặc đổi chỗ. Không xóa trực tiếp chủ phòng; thay cả nhóm cần xác nhận rõ tên đầu tiên làm chủ mới.
+- **Nhiều máy:** mỗi người tự nhập tên. Chỉ chủ phòng được đổi thứ tự tại sảnh; khách chỉ xem. `cfg.order` chứa ID, không sửa `room.order` hay quyền chủ phòng. Server kiểm tra cấu trúc và đối chiếu thành viên khi chia: bỏ ID đã rời, thêm người mới cuối danh sách, không bỏ sót hoặc nhân đôi người chơi.
+- Danh sách cuộn bên trong, nút có nhãn truy cập và vùng chạm 44px. Không có nút sửa nhóm/đổi chỗ trong ván đang chơi.
+
+
 ## Luật
 
 - 3–20 người, mặc định 1 gián điệp và 0 Mũ Trắng. Gián điệp tối đa lần lượt là 1/2/3/4/5/6/7 cho nhóm 3–4/5–6/7–9/10–12/13–15/16–18/19–20.
@@ -30,7 +39,7 @@ Dùng đường tích hợp DOM tĩnh chính thức của [nguyenhuy158/ui-kit](
 
 - `src/dom/feedback.mjs` và `feedback.css` → `public/gian-diep/ui-kit/`: nút, trạng thái chờ, khóa thao tác và toast.
 - `src/styles/tokens.css` → cùng thư mục: giữ token, base CSS, màu sáng/tối và chuyển động; bỏ `@import tailwindcss`, `@custom-variant`, `@theme` vì trang không dùng build/Tailwind runtime.
-- UI riêng dùng biến `--ui-*`, danh sách chia trang, khu vực chạm 44px và input 16px. Không tải CSS Nokia, React hay CDN runtime. Không lấy thay đổi chưa commit từ checkout UI kit.
+- UI riêng dùng biến `--ui-*`, danh sách thiết lập cuộn bên trong và danh sách trong ván chia trang, khu vực chạm 44px và input 16px. Không tải CSS Nokia, React hay CDN runtime. Không lấy thay đổi chưa commit từ checkout UI kit.
 
 Trang tải `public/ui-kit.css` dùng chung trước token sáng/tối của game. Icon dùng cùng Lucide 0.468.0 như UI kit qua `public/icons.js`; nút phụ dùng icon kèm nhãn truy cập, luật đầy đủ nằm trong Cách chơi.
 
@@ -43,4 +52,4 @@ pnpm exec wrangler dev --ip 127.0.0.1 --port 8797
 node scripts/smoke.mjs http://127.0.0.1:8797 gian-diep soi
 ```
 
-`gian-diep.test.mjs` kiểm giới hạn mọi quy mô, phân vai, quyền, dữ liệu riêng, đồng hồ, hòa, lượt đoán và kết quả. Smoke WebSocket thật chơi sáu người: Mũ Trắng đoán sai, hòa và bầu lại dân thắng, ván tiếp Mũ Trắng đoán đúng thắng ngay. Chỉ chạy smoke tạo phòng trên local; production để CI post-deploy kiểm theo quy ước repo.
+`gian-diep.test.mjs` kiểm parser tên, trùng/giới hạn, thứ tự/ID/chủ phòng, thành viên vào/rời giữa cấu hình và chia bài, giới hạn mọi quy mô, phân vai, quyền, dữ liệu riêng, đồng hồ, hòa, lượt đoán và kết quả. Smoke WebSocket thật chơi sáu người: Mũ Trắng đoán sai, hòa và bầu lại dân thắng, ván tiếp Mũ Trắng đoán đúng thắng ngay. Chỉ chạy smoke tạo phòng trên local; production để CI post-deploy kiểm theo quy ước repo.

@@ -8,7 +8,7 @@ body { font-size: 16px; line-height: 1.5; }
 * { scrollbar-color: var(--ui-border) var(--ui-surface); scrollbar-width: thin; }
 :focus-visible { outline: 3px solid var(--ui-ring); outline-offset: 3px; }
 a { color: var(--ui-primary); text-underline-offset: .2em; }
-button, input, select { min-height: 44px; }
+button, input, select, textarea { min-height: 44px; }
 button { color: var(--ui-fg); }
 button:not(.ui-button) { border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); padding: .625rem 1rem; cursor: pointer; }
 button:not(.ui-button):hover { background: var(--ui-surface-muted); }
@@ -18,8 +18,9 @@ button.primary { color: var(--ui-primary-fg); background: var(--ui-primary); bor
 .ui-button[aria-busy="true"] { display: inline-grid; }
 .ui-button.icon-only { width: 44px; min-width: 44px; padding: .625rem; flex: none; }
 .ui-button.icon-only > span { display: none; }
-input, select { width: 100%; min-width: 0; color: var(--ui-fg); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); padding: .625rem .75rem; font-size: 16px; caret-color: var(--ui-primary); }
-input::placeholder { color: var(--ui-fg-muted); opacity: 1; }
+input, select, textarea { width: 100%; min-width: 0; color: var(--ui-fg); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); padding: .625rem .75rem; font-size: 16px; caret-color: var(--ui-primary); }
+input::placeholder, textarea::placeholder { color: var(--ui-fg-muted); opacity: 1; }
+textarea { resize: vertical; font-family: inherit; max-height: 10rem; }
 label { display: grid; gap: .5rem; font-size: .875rem; font-weight: 600; text-align: left; }
 h1, h2, h3, p { margin: 0; }
 h1 { font-size: 1.125rem; font-weight: 700; line-height: 1.3; }
@@ -55,6 +56,25 @@ h3 { font-size: 1rem; }
 .mode-choices .ui-button { min-height: 56px; font-size: 1rem; }
 .entry-footer { justify-content: center; }
 .setup { max-width: 640px; }
+.spy-content:has(.setup) { align-items: start; overflow: auto; overscroll-behavior: contain; }
+.setup-options { min-width: 0; }
+.roster-editor { display: grid; gap: .5rem; min-width: 0; }
+.roster-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+.roster-heading h3 { font-size: .875rem; }
+.roster-heading > .ui-button { font-size: .8125rem; padding-inline: .75rem; }
+.roster-add { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.roster-add select { flex: 1; }
+.roster-add > .ui-button { flex: none; padding-inline: .75rem; }
+.roster-list { display: grid; align-content: start; gap: .25rem; max-height: min(30dvh, 18rem); min-height: 3rem; margin: 0; padding: .25rem; list-style: none; overflow: auto; overscroll-behavior: contain; border-block: 1px solid var(--ui-border); scrollbar-gutter: stable; }
+.roster-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .25rem .5rem; min-width: 0; padding-block: .25rem; }
+.roster-row + .roster-row { border-top: 1px solid var(--ui-border); }
+.roster-person { display: flex; align-items: center; gap: .375rem; flex: 1; min-width: 8rem; }
+.roster-position { flex: none; min-width: 1.25rem; font-size: .75rem; color: var(--ui-fg-muted); font-variant-numeric: tabular-nums; }
+.roster-name { min-width: 0; overflow-wrap: anywhere; font-size: .875rem; }
+.roster-edit-name { justify-content: flex-start; text-align: left; border-color: transparent; padding-inline: .25rem; min-width: 0; overflow-wrap: anywhere; font-size: .875rem; }
+.roster-actions { display: flex; gap: .25rem; margin-left: auto; }
+.roster-rename { display: flex; align-items: center; gap: .25rem; width: 100%; min-width: 0; }
+.roster-rename input { flex: 1; }
 .section-heading, .phase-heading, .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 .settings-summary { display: flex; align-items: center; gap: .75rem; justify-content: space-between; padding: 1rem 0; border-block: 1px solid var(--ui-border); }
 .settings-summary .ui-button { flex: none; }
@@ -102,7 +122,7 @@ h3 { font-size: 1rem; }
 .dialog-head h2 { font-size: 1.125rem; }
 .dialog-head .ui-button { flex: none; }
 .dialog-body { padding: 1rem; overflow: auto; overscroll-behavior: contain; }
-.settings-grid, .name-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 #home { height: 100dvh; display: grid; align-items: center; justify-items: center; padding: var(--ui-grid-margin); }
 .card { width: min(100%, 480px); display: grid; gap: 1rem; padding: 1.5rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); box-shadow: var(--ui-shadow-md); }
 .card h1, .card h2 { display: flex; align-items: center; gap: .75rem; justify-content: center; }
@@ -122,7 +142,7 @@ input.code { text-transform: uppercase; letter-spacing: .15em; }
 .dot.on { background: var(--ui-success); }
 .stage { position: relative; }
 .board-stage { width: 100%; min-height: 0; }
-#overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 1rem; background: var(--ui-bg); }
+#overlay { position: absolute; inset: 0; display: grid; place-items: safe center; padding: 1rem; background: var(--ui-bg); overflow: auto; overscroll-behavior: contain; }
 #overlay .card { max-width: 560px; }
 #overlay .ranks { display: none; }
 .cfg { display: grid; gap: .75rem; }
@@ -168,10 +188,10 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
   .game-layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
   .setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; max-width: 800px; gap: .75rem 1.5rem; }
   .setup > .section-heading { grid-column: 1 / -1; }
-  .setup > .roster { grid-column: 1; grid-row: 2 / span 3; }
-  .setup > .settings-summary { grid-column: 2; padding-block: .5rem; }
-  .setup > .sub, .setup > .notice { grid-column: 2; font-size: .75rem; }
-  .setup > .ui-button { grid-column: 2; }
+  .setup > .roster-editor { grid-column: 1; grid-row: 2; }
+  .setup > .setup-options { grid-column: 2; grid-row: 2; }
+  .setup .settings-summary { padding-block: .5rem; }
+  .setup-options > .sub, .setup-options > .notice { font-size: .75rem; }
   .entry-logo { display: none; }
   .entry { gap: .75rem; }
   .mode-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
