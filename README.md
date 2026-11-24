@@ -23,7 +23,9 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.cfd — m
 
 Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node scripts/smoke.mjs [url] [game ...]`, mặc định `http://localhost:8789` (`wrangler dev --port 8789`). Chạy trước / sau mỗi bước refactor (kế hoạch: `docs/hexagon-plan.md`). CI (`.github/workflows/ci.yml`, job `smoke-prod`) tự chạy vào web thật sau mỗi lần deploy (chờ `/api/version` mới hơn commit); bot smoke (id `smoke-...`) không lên bảng xếp hạng.
 
-E2E chạy tối đa 3 game đồng thời. Trong PR, `pnpm e2e` chọn game theo diff base/head qua `e2e/selection.mjs`; code dùng chung, file lạ hoặc không đọc được diff chạy toàn bộ. `main`, production và chạy local không có PR luôn full suite. Kiểm tra riêng trang: `E2E_BASE_URL=http://localhost:8789 node e2e/readonly-smoke.mjs /soi/ /gian-diep/`; API chung, hub và sảnh vẫn được kiểm.
+`pnpm e2e` chạy đồng thời tối đa 3 game WebSocket và 1 trang browser, ưu tiên game chậm trước. PR chọn game theo diff qua `e2e/selection.mjs` và dùng smoke nhanh (nước đi được server xác nhận, không chờ kết thúc game dài); code chung/file lạ/diff lỗi kiểm mọi game ở chế độ nhanh. `main` và production giữ toàn bộ bài kiểm tra hết ván, không giảm timeout. API chung, hub và sảnh luôn được kiểm.
+
+Local mặc định full: `pnpm e2e`; thử PR nhanh: `E2E_SMOKE_MODE=fast pnpm e2e`. Kiểm riêng trang: `E2E_BASE_URL=http://localhost:8789 node e2e/readonly-smoke.mjs /soi/ /gian-diep/`. CI cache pnpm và Chromium theo OS/kiến trúc/phiên bản; cache hit vẫn cài thư viện hệ thống cần thiết.
 
 Thêm game mới: tạo `public/<ten-game>/`, thêm thẻ vào `public/index.html`, thêm file vào `CORE` trong `public/sw.js` (và tăng `CACHE`), test vào `<ten-game>.test.mjs` rồi import ở cuối `logic.test.mjs`.
 

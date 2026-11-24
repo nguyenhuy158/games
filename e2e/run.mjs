@@ -1,20 +1,17 @@
-// Chạy cả bộ E2E dev một lệnh: bật `wrangler dev` (Durable Object local) -> smoke chỉ đọc
-// (e2e/readonly-smoke.mjs, Chromium) -> bot chơi thử mọi game qua WebSocket
-// (scripts/smoke.mjs) -> tắt server.
-//
-// Biến môi trường:
-// - E2E_PORT: cổng cho wrangler dev (mặc định 8789, khớp scripts/smoke.mjs)
-// - PLAYWRIGHT_CHROMIUM_PATH: chỉ định Chromium cụ thể
-// Tham số thêm được chuyển cho scripts/smoke.mjs (lọc game): `pnpm e2e caro c4`.
 import { run, startServer } from "@huyab/e2e";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { selectGames } from "./selection.mjs";
+import { PR_EVENT, selectGames, smokeModeForEvent } from "./selection.mjs";
 
 const PORT = process.env.E2E_PORT || "8789";
 const BASE = `http://127.0.0.1:${PORT}`;
-const SMOKE_ENV = { E2E_BASE_URL: BASE };
-const PR_EVENT = "pull_request";
+const smokeMode = smokeModeForEvent(process.env.GITHUB_EVENT_NAME, process.env.E2E_SMOKE_MODE);
+const SMOKE_ENV = {
+  E2E_BASE_URL: BASE,
+  E2E_SMOKE_MODE: smokeMode,
+  E2E_PAGE_CONCURRENCY: "1",
+  E2E_GAME_CONCURRENCY: "3",
+};
 const UTF8 = "utf8";
 const NULL_SEPARATOR = "\0";
 const GIT_TIMEOUT_MS = 60000;
@@ -34,7 +31,7 @@ function pullRequestSelection() {
       .split(NULL_SEPARATOR).filter(Boolean);
     return selectGames(paths);
   } catch (error) {
-    console.warn(`Cannot select PR games; running full suite: ${error.message}`);
+    console.warn(`Cannot select PR games; checking all games: ${error.message}`);
     return null;
   }
 }
@@ -42,6 +39,7 @@ function pullRequestSelection() {
 const selection = pullRequestSelection();
 const gameArgs = manualGames.length ? manualGames : selection?.games ?? [];
 console.log(selection ? `Selected routes: ${selection.routes.join(", ")}` : "Running full page suite");
+console.log(`WebSocket coverage: ${smokeMode}; at most 3 games and 1 browser page concurrently`);
 
 const server = await startServer({
   command: "pnpm",
@@ -52,16 +50,19 @@ const server = await startServer({
 let failed = false;
 try {
   console.log(`\nServer sẵn sàng tại ${BASE}\n`);
-  await run("node", ["e2e/readonly-smoke.mjs", ...(selection?.routes ?? [])], {
+  const checks = [run("node", ["e2e/readonly-smoke.mjs", ...(selection?.routes ?? [])], {
     label: "read-only smoke",
     env: SMOKE_ENV,
-  });
+  })];
   if (!selection || gameArgs.length) {
-    await run("node", ["scripts/smoke.mjs", BASE, ...gameArgs], {
+    checks.push(run("node", ["scripts/smoke.mjs", BASE, ...gameArgs], {
       label: "game smoke",
       env: SMOKE_ENV,
-    });
+    }));
   }
+  const results = await Promise.allSettled(checks);
+  const errors = results.filter((result) => result.status === "rejected").map((result) => result.reason);
+  if (errors.length) throw new AggregateError(errors, errors.map((error) => error.message).join("; "));
 } catch (error) {
   failed = true;
   console.error("E2E FAIL:", error.message);

@@ -12,6 +12,9 @@ import { botMove as ganhBot } from '../public/co-ganh/logic.js';
 import { botMove as tuongBot } from '../public/co-tuong/logic.js';
 import { kinhRows as lotoKinh } from '../public/loto/logic.js';
 import { ACTION as SPY_ACTION, PHASE as SPY_PHASE, ROLE as SPY_ROLE } from '../public/gian-diep/logic.js';
+import { SLOTS as LOGIC_SLOTS } from '../public/nokia/logic/logic.js';
+import { createSim as rapidSim, step as rapidStep, score as rapidScore } from '../public/nokia/rapid-roll/logic.js';
+import { createSim as bounceSim, step as bounceStep, timeScore as bounceScore } from '../public/nokia/bounce/logic.js';
 
 const MAX_CONCURRENT_GAMES = 3;
 const MAX_ATTEMPTS = 2;
@@ -21,6 +24,33 @@ const DURATION_DECIMAL_PLACES = 1;
 const GAME_LIST_SEPARATOR = ', ';
 const EXIT_SUCCESS = 0;
 const EXIT_FAILURE = 1;
+const SMOKE_MODE = { FULL: 'full', FAST: 'fast' };
+const smokeMode = process.env.E2E_SMOKE_MODE ?? SMOKE_MODE.FULL;
+const concurrencyInput = process.env.E2E_GAME_CONCURRENCY ?? String(MAX_CONCURRENT_GAMES);
+const gameConcurrency = Number(concurrencyInput);
+const MIN_CONCURRENT_GAMES = 1;
+const INTEGER_INPUT = /^[1-9]\d*$/;
+const ACK_TIMEOUT_MS = 5000;
+const CONFIG_TIMEOUT_MS = 3000;
+const FAST_MOVES = 2;
+const FULL_BATTLESHIP_SHOTS = 5;
+const FAST_BATTLESHIP_SHOTS = 1;
+const THREE_PLAYER_BOARD = 3;
+const SIMULATION_STEPS = 20;
+const SIMULATION_STEP_SECONDS = 0.05;
+const POSITION_PRECISION = 10;
+const SLOW_FIRST = ['co-tuong', 'dao-vang', 'o-an-quan-3', 'co-ganh', 'o-an-quan', 'bantumi'];
+
+if (!Object.values(SMOKE_MODE).includes(smokeMode)) {
+  console.error('E2E_SMOKE_MODE must be full or fast');
+  process.exit(EXIT_FAILURE);
+}
+if (!INTEGER_INPUT.test(concurrencyInput) || !Number.isInteger(gameConcurrency) ||
+    gameConcurrency < MIN_CONCURRENT_GAMES || gameConcurrency > MAX_CONCURRENT_GAMES) {
+  console.error(`E2E_GAME_CONCURRENCY must be an integer from ${MIN_CONCURRENT_GAMES} to ${MAX_CONCURRENT_GAMES}`);
+  process.exit(EXIT_FAILURE);
+}
+const fast = smokeMode === SMOKE_MODE.FAST;
 const attemptSockets = new AsyncLocalStorage();
 
 const base = (process.argv[2] ?? 'http://localhost:8789').replace(/^http/, 'ws');
@@ -107,11 +137,12 @@ const GAMES = {
   },
   // Bắn tàu với máy: xếp tàu ngẫu nhiên, sẵn sàng, bắn 5 phát (cả ván quá lâu cho smoke).
   async 'ban-tau'() {
+    const targetShots = fast ? FAST_BATTLESHIP_SHOTS : FULL_BATTLESHIP_SHOTS;
     let shots = 0;
     const r = await join((c) => `/api/bt/room/${c}`, 1, (ws, m) => {
       const seat = m.seats.indexOf(ws.me) + 1;
       if (m.status === 'placing' && !m.ready[seat - 1] && !ws.readied) { ws.readied = true; r.send(ws, { t: 'ready' }); }
-      if (m.status === 'playing' && m.turn === seat && shots < 5 && ws.at !== String(m.fired)) {
+      if (m.status === 'playing' && m.turn === seat && shots < targetShots && ws.at !== String(m.fired)) {
         ws.at = String(m.fired);
         const mine = m.shots?.[seat - 1] ?? []; // shots[k] = các phát người ghế k+1 đã bắn
         const i = [...Array(N * N).keys()].find((k) => !mine[k]);
@@ -120,9 +151,13 @@ const GAMES = {
       }
     });
     r.send(r.host(), { t: 'start' });
-    await until(() => shots >= 5, 30000, 'ban-tau 5 shots');
-    await sleep(800);
-    return `status=${r.socks[0].last.status} shots=${shots}`;
+    await until(() => {
+      const s = r.socks[0], seat = s.last.seats.indexOf(s.me);
+      return s.last.fired[seat] >= targetShots;
+    }, 30000, `ban-tau ${targetShots} acknowledged shots`);
+    const s = r.socks[0], seat = s.last.seats.indexOf(s.me);
+    if (s.last.status !== 'ended' && s.last.fleets[1 - seat] !== null) throw new Error('opponent fleet leaked');
+    return `status=${s.last.status} shots=${s.last.fired[seat]}`;
   },
   // Bầu cua 2 người, máy làm cái: người khách đặt, chủ phòng mở bát.
   async 'bau-cua'() {
@@ -143,8 +178,9 @@ const GAMES = {
         const m = JSON.parse(e.data);
         if ((m.t === 'board' || m.t === 'match') && m.unit === ws.me) {
           boards[ws.me] = m.board;
-          const pair = findPair(m.board); // lúc bắt đầu board tới trước state
-          if (pair) setTimeout(() => r.send(ws, { t: 'pick', a: pair[0], b: pair[1] }), 5);
+          if (m.t === 'match') ws.matched = true;
+          const pair = findPair(m.board);
+          if (pair && (!fast || !ws.matched)) r.send(ws, { t: 'pick', a: pair[0], b: pair[1] });
         }
       }, { signal: attemptSockets.getStore().messages.signal });
     }
@@ -155,9 +191,15 @@ const GAMES = {
     const watcher = connectSocket(`${base}/api/room/${r.code}?id=smoke-watch-${Date.now()}&name=Watch`);
     watcher.msgs = [];
     watcher.onmessage = (e) => watcher.msgs.push(JSON.parse(e.data));
+    await until(() => watcher.msgs.some((m) => m.t === 'board') && watcher.msgs.some((m) => m.t === 'minis') &&
+      watcher.msgs.some((m) => m.t === 'state' && m.players.some((p) => p.name === 'Watch' && p.spec)),
+    ACK_TIMEOUT_MS, 'watcher receives spectator state, board and minis');
+    if (fast) {
+      await until(() => r.socks.every((s) => s.matched && s.last.units[s.me].score > 0), ACK_TIMEOUT_MS, 'both players match a pair');
+      return 'both players matched a pair; watcher receives board and minis as spectator';
+    }
     await until(() => r.socks[0].last.status === 'ended', 60000, 'someone clears 5 levels');
     const w = r.socks[0].last;
-    await sleep(300);
     const seen = new Set(watcher.msgs.map((m) => m.t));
     watcher.close();
     if (!seen.has('board') || !seen.has('minis')) throw new Error(`watcher got ${[...seen]}`);
@@ -171,6 +213,15 @@ const GAMES = {
     await until(() => r.socks.every((s) => s.last.mode === 'versus'), 3000, 'versus mode');
     r.send(r.host(), { t: 'start' });
     await until(() => r.socks.every((s) => s.msgs.some((m) => m.t === 'world') && s.last.status === 'playing'), 5000, 'world received');
+    if (fast) {
+      for (const s of r.socks) r.send(s, { t: 'shoot' });
+      await until(() => r.socks.every((s) => r.socks.every((player) =>
+        s.msgs.some((m) => m.t === 'ev' && m.evs.some((e) => e.k === 'shoot' && e.id === player.me)) &&
+        s.msgs.some((m) => m.t === 'snap' && m.miners.some((miner) => miner.id === player.me && miner.m === 'out' &&
+          miner.l > s.msgs.find((event) => event.t === 'world').world.miners.find((miner) => miner.id === player.me).len))
+      )), ACK_TIMEOUT_MS, 'both miners shoot and extend hooks on both clients');
+      return 'both miners shoot; both clients observe extending hooks';
+    }
     const pump = setInterval(() => r.socks.forEach((s) => r.send(s, { t: 'shoot' })), 500);
     try { await until(() => r.socks.every((s) => s.last.status === 'shop'), 75000, 'level 1 -> shop'); } finally { clearInterval(pump); }
     const snaps = r.socks[0].msgs.filter((m) => m.t === 'snap').length, grabs = r.socks[0].msgs.filter((m) => m.t === 'ev').length;
@@ -205,14 +256,30 @@ const GAMES = {
     // Mỗi bot mở ô ẩn chưa gửi (mạng chậm thì bàn về trễ: khỏi gửi lại ô đang chờ kết quả).
     const sent = Object.fromEntries(r.socks.map((ws) => [ws.me, new Set()]));
     for (const end = Date.now() + 45000; r.socks[0].last.status === 'playing' && Date.now() < end;) {
+      const pending = [];
       for (const ws of r.socks) {
         const hidden = grid[ws.me].flatMap((v, i) => (v === -1 && !sent[ws.me].has(i) ? [i] : []));
         if (!hidden.length) continue;
         const i = hidden[Math.floor(Math.random() * hidden.length)];
         sent[ws.me].add(i);
+        pending.push([ws, i]);
         r.send(ws, { t: 'open', i });
       }
-      await sleep(40);
+      if (!pending.length) {
+        await until(() => r.socks[0].last.status === 'ended', ACK_TIMEOUT_MS, 'exhausted mine boards end');
+        break;
+      }
+      await until(() => r.socks[0].last.status === 'ended' || pending.every(([ws, i]) => grid[ws.me][i] !== -1),
+        ACK_TIMEOUT_MS, 'mine opens acknowledged');
+      if (fast) {
+        await until(() => r.socks.every((s) => pending.every(([ws, i]) =>
+          s.last.status === 'ended' || (s.last.players.find((p) => p.id === ws.me).opened +
+            s.last.players.find((p) => p.id === ws.me).booms > 0 && grid[ws.me][i] !== -1))),
+        ACK_TIMEOUT_MS, 'both players receive open progress');
+        if (r.socks[0].last.status === 'ended') break;
+        if (leak || r.socks.some((s) => s.foreign || s.msgs.some((m) => m.t === 'reveal'))) throw new Error('race: private mine data leaked');
+        return 'both players opened a hidden cell; opponent grids and mines stay private';
+      }
     }
     await until(() => r.socks[0].last.status === 'ended', 5000, 'do-min ends');
     await until(() => r.socks.every((s) => s.msgs.some((m) => m.t === 'reveal')), 3000, 'mines revealed');
@@ -224,11 +291,12 @@ const GAMES = {
   async 'o-an-quan'() {
     const r = await nokia('o-an-quan', 1, (ws, m) => {
       const v = m.view;
-      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
+      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves || (fast && v.moves >= FAST_MOVES)) return;
       ws.moved = v.moves;
       const [k, d] = oaqBot({ b: v.b, big: v.big, cap: v.cap, debt: v.debt, turn: v.turn, quanNon: v.quanNon, over: false, moves: v.moves }, 1);
       r.send(ws, { t: 'g', k, d });
     }, { level: 0 });
+    if (fast) return nokiaMoves(r, 'o-an-quan', 300000);
     await until(() => r.socks[0].last.status === 'ended', 300000, 'o-an-quan ends'); // ván dài: mỗi nước còn chờ client diễn lại
     return JSON.stringify(r.socks[0].last.result.title);
   },
@@ -236,11 +304,16 @@ const GAMES = {
   async 'o-an-quan-3'() {
     const r = await nokia('o-an-quan', 1, (ws, m) => {
       const v = m.view;
-      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
+      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves || (fast && v.moves >= FAST_MOVES)) return;
       ws.moved = v.moves;
       const [k, d] = oaqBot({ b: v.b, big: v.big, cap: v.cap, debt: v.debt, turn: v.turn, quanNon: v.quanNon, over: false, moves: v.moves }, 1);
       r.send(ws, { t: 'g', k, d });
     }, { level: 0, n: 3 });
+    if (fast) {
+      const progress = await nokiaMoves(r, 'o-an-quan-3', 400000);
+      if (r.socks[0].last.view.side.length !== THREE_PLAYER_BOARD) throw new Error('not a 3-player board');
+      return progress;
+    }
     await until(() => r.socks[0].last.status === 'ended', 400000, 'o-an-quan-3 ends');
     const v = r.socks[0].last;
     if (v.result.ranks[0].detail.of !== 3) throw new Error('not a 3-player board');
@@ -250,11 +323,12 @@ const GAMES = {
   async 'co-ganh'() {
     const r = await nokia('co-ganh', 1, (ws, m) => {
       const v = m.view;
-      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
+      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves || (fast && v.moves >= FAST_MOVES)) return;
       ws.moved = v.moves;
       const [from, to] = ganhBot({ b: v.b, turn: v.turn, open: v.open, over: false, winner: 0, moves: v.moves }, 1);
       r.send(ws, { t: 'g', from, to });
     }, { level: 0 });
+    if (fast) return nokiaMoves(r, 'co-ganh', 180000);
     await until(() => r.socks[0].last.status === 'ended', 180000, 'co-ganh ends');
     return JSON.stringify(r.socks[0].last.result.title);
   },
@@ -327,11 +401,12 @@ const GAMES = {
   async 'co-tuong'() {
     const r = await nokia('co-tuong', 1, (ws, m) => {
       const v = m.view;
-      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
+      if (m.status !== 'playing' || !v || v.over || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves || (fast && v.moves >= FAST_MOVES)) return;
       ws.moved = v.moves;
       const [from, to] = tuongBot({ b: v.b, turn: v.turn, over: false, winner: 0, moves: v.moves }, 2, 60);
       r.send(ws, { t: 'g', from, to });
     }, { level: 0 });
+    if (fast) return nokiaMoves(r, 'co-tuong', 240000);
     await until(() => r.socks[0].last.status === 'ended', 240000, 'co-tuong ends');
     return JSON.stringify(r.socks[0].last.result.title);
   },
@@ -378,10 +453,11 @@ const GAMES = {
   async bantumi() {
     const r = await nokia('bantumi', 1, (ws, m) => {
       const v = m.view;
-      if (m.status !== 'playing' || !v || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves) return;
+      if (m.status !== 'playing' || !v || v.side[v.turn - 1] !== ws.me || ws.moved === v.moves || (fast && v.moves >= FAST_MOVES)) return;
       ws.moved = v.moves;
       r.send(ws, { t: 'g', i: bantumiBot(v.board, v.turn, 2) });
     });
+    if (fast) return nokiaMoves(r, 'bantumi', 120000);
     await until(() => r.socks[0].last.status === 'ended', 120000, 'bantumi ends');
     return JSON.stringify(r.socks[0].last.result.title);
   },
@@ -420,15 +496,80 @@ const GAMES = {
 
 async function nokia(game, n, onState, cfg) {
   const r = await join((c) => `/api/nk/${game}/room/${c}`, n, onState);
-  if (cfg) { r.send(r.host(), { t: 'config', cfg }); await sleep(200); }
+  if (cfg) {
+    const previous = r.socks.map((s) => s.last);
+    r.send(r.host(), { t: 'config', cfg });
+    await until(() => r.socks.every((s, i) => s.last !== previous[i] &&
+      Object.entries(cfg).every(([key, value]) => s.last.cfg?.[key] === value)),
+    CONFIG_TIMEOUT_MS, `${game} config acknowledged`);
+  }
   r.send(r.host(), { t: 'start' });
   return r;
+}
+async function nokiaMoves(r, game, timeout) {
+  await until(() => r.socks.every((s) => s.moved !== undefined && s.last.view?.moves >= FAST_MOVES),
+    timeout, `${game} ${FAST_MOVES} acknowledged moves`);
+  return `acknowledged moves=${r.socks[0].last.view.moves}`;
 }
 async function nokiaStart(game) {
   const r = await nokia(game, 2, () => {});
   await until(() => r.socks.every((s) => s.last.status === 'playing' && s.last.view), 5000, `${game} playing`);
+  if (fast) return nokiaProgress(r, game);
   r.close();
   return 'playing';
+}
+
+async function nokiaProgress(r, game) {
+  if (game === 'pairs') {
+    if (r.socks.some((s) => s.last.view.cards.some((card) => card !== -1))) throw new Error('face-down pairs leaked');
+    const player = r.socks.find((s) => s.me === s.last.view.turn);
+    const firstCard = 0;
+    r.send(player, { t: 'g', i: firstCard });
+    await until(() => r.socks.every((s) => s.last.view.open.includes(firstCard) && s.last.view.cards[firstCard] >= 0),
+      ACK_TIMEOUT_MS, 'first card revealed to both players');
+    if (r.socks.some((s) => s.last.view.cards.some((card, i) => i !== firstCard && card !== -1))) throw new Error('unflipped pairs leaked');
+    return 'legal flip broadcast to both players; other cards stay hidden';
+  }
+  if (game === 'logic') {
+    const guess = Array(LOGIC_SLOTS).fill(0);
+    for (const s of r.socks) r.send(s, { t: 'g', guess });
+    await until(() => r.socks.every((s) => s.last.view.mine.guesses.length === 1 &&
+      r.socks.every((player) => s.last.view.others[player.me].n === 1)),
+    ACK_TIMEOUT_MS, 'both guesses scored and progress broadcast');
+    for (const s of r.socks) {
+      const { mine, others, secret } = s.last.view;
+      const result = mine.guesses[0];
+      if (result.guess.some((value, i) => value !== guess[i]) ||
+          !Number.isInteger(result.exact) || !Number.isInteger(result.near) ||
+          result.exact < 0 || result.near < 0 || result.exact + result.near > LOGIC_SLOTS) throw new Error('invalid guess score');
+      if ((s.last.status === 'playing' && secret !== null) || Object.values(others).some((player) => player.guesses)) throw new Error('private logic data leaked');
+    }
+    return 'both guesses scored; only aggregate opponent progress exposed';
+  }
+  if (game === 'space-impact') {
+    const initial = new Map(r.socks.map((s) => [s.me, s.last.view.ships.find((ship) => ship.id === s.me).x]));
+    for (const s of r.socks) r.send(s, { t: 'g', keys: { right: true, fire: true } });
+    await until(() => r.socks.every((s) => s.last.view.bullets.length > 0 &&
+      r.socks.every((player) => s.last.view.ships.find((ship) => ship.id === player.me).x > initial.get(player.me))),
+    ACK_TIMEOUT_MS, 'both ships move and fire');
+    return 'both ships moved; firing produced bullets on both clients';
+  }
+  await until(() => r.socks.every((s) => s.last.now >= s.last.view.startAt), ACK_TIMEOUT_MS, `${game} countdown completes`);
+  const expected = new Map();
+  for (const s of r.socks) {
+    const simulation = game === 'rapid-roll' ? rapidSim(s.last.view.seed) : bounceSim(s.last.view.level);
+    const step = game === 'rapid-roll' ? rapidStep : bounceStep;
+    for (let i = 0; i < SIMULATION_STEPS; i++) step(simulation, SIMULATION_STEP_SECONDS, { right: true });
+    const score = Math.round(game === 'rapid-roll' ? rapidScore(simulation) : bounceScore(simulation));
+    const at = [simulation.x, simulation.y].map((value) => Math.round(value * POSITION_PRECISION) / POSITION_PRECISION);
+    expected.set(s.me, { at, score });
+    r.send(s, { t: 'g', at, score });
+  }
+  await until(() => r.socks.every((s) => [...expected].every(([id, progress]) => {
+    const runner = s.last.view.runners[id];
+    return runner.score === progress.score && runner.at?.every((value, i) => value === progress.at[i]);
+  })), ACK_TIMEOUT_MS, `${game} simulated positions and scores broadcast`);
+  return 'both simulated runners progressed; positions and scores broadcast to both clients';
 }
 
 async function runGame(name, run) {
@@ -452,9 +593,11 @@ if (unknown.length) {
 }
 
 const selected = Object.entries(GAMES).filter(([name]) => !only.length || only.includes(name));
+const priority = (name) => SLOW_FIRST.includes(name) ? SLOW_FIRST.indexOf(name) : SLOW_FIRST.length;
+selected.sort(([left], [right]) => priority(left) - priority(right));
 const queue = selected.values();
 let fail = 0;
-await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENT_GAMES, selected.length) }, async () => {
+await Promise.all(Array.from({ length: Math.min(gameConcurrency, selected.length) }, async () => {
   for (const [name, run] of queue) {
     if (!await runGame(name, run)) fail++;
   }

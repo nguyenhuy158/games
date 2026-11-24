@@ -11,20 +11,57 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # pnpm check (biome lint) + pnpm test; E2E riêng: wrangler dev local, smoke chỉ đọc bằng
-  # Chromium rồi bot chơi thử mọi game (pnpm e2e).
   check:
     uses: nguyenhuy158/kit/.github/workflows/check.yml@v0.1.0
     with:
       run-test: true
-      run-e2e: true
+      run-e2e: false
+
+  e2e:
+    name: E2E smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Chromium
+        id: chromium-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright-version.outputs.version }}
+      - name: Install Chromium system dependencies
+        run: pnpm exec playwright-core install-deps chromium
+      - name: Install Chromium
+        if: steps.chromium-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright-core install chromium
+      - name: E2E
+        run: pnpm e2e
+      - name: Upload failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure
+          path: e2e-failure.png
+          if-no-files-found: ignore
 
   # Sau khi Cloudflare deploy xong commit này (bản trên web mới hơn commit), chạy bot chơi thử mọi game vào web thật.
   smoke-prod:
     if: github.event_name == 'push'
-    needs: check
+    needs: [check, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      E2E_SMOKE_MODE: full
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -47,5 +84,25 @@ jobs:
       - run: node scripts/smoke.mjs https://games.huyab.cfd
       # Smoke chỉ đọc bằng Chromium: trang chủ, mọi trang game, /phong/ render không lỗi JS.
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright-core install --with-deps chromium
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Chromium
+        id: chromium-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright-version.outputs.version }}
+      - name: Install Chromium system dependencies
+        run: pnpm exec playwright-core install-deps chromium
+      - name: Install Chromium
+        if: steps.chromium-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright-core install chromium
       - run: pnpm e2e:prod
+      - name: Upload failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-prod-failure
+          path: e2e-failure.png
+          if-no-files-found: ignore

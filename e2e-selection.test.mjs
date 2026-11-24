@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { selectGames } from './e2e/selection.mjs';
+import { selectGames, smokeModeForEvent } from './e2e/selection.mjs';
 
 assert.deepEqual(selectGames(['public/gian-diep/style.css', 'worker/games/gian-diep.js']), {
   routes: ['/gian-diep/'], games: ['gian-diep'],
@@ -15,8 +15,13 @@ assert.equal(selectGames([]), null);
 assert.deepEqual(selectGames(['public/soi/old.js', 'public/loto/new.js']), {
   routes: ['/soi/', '/loto/'], games: ['soi', 'loto'],
 });
-console.log('e2e selection ok');
 assert.deepEqual(selectGames(['README.md', 'docs/gian-diep.md', 'public/gian-diep/game.js']), {
   routes: ['/gian-diep/'], games: ['gian-diep'],
 });
 assert.equal(selectGames(['README.md']), null);
+assert.equal(smokeModeForEvent('pull_request'), 'fast');
+assert.equal(smokeModeForEvent('push', 'fast'), 'full');
+assert.equal(smokeModeForEvent('workflow_dispatch', 'fast'), 'full');
+assert.equal(smokeModeForEvent(undefined, 'fast'), 'fast');
+assert.throws(() => smokeModeForEvent(undefined, 'fas'), /Invalid E2E_SMOKE_MODE/);
+console.log('e2e selection and coverage policy ok');

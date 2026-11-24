@@ -51,3 +51,13 @@ export function selectGames(paths) {
     games: [...games].flatMap((game) => GAME_SMOKES[game] ?? []),
   };
 }
+
+export const PR_EVENT = 'pull_request';
+const FAST_MODE = 'fast';
+const FULL_MODE = 'full';
+
+export function smokeModeForEvent(eventName, requestedMode = FULL_MODE) {
+  if (eventName) return eventName === PR_EVENT ? FAST_MODE : FULL_MODE;
+  if (requestedMode !== FAST_MODE && requestedMode !== FULL_MODE) throw new Error('Invalid E2E_SMOKE_MODE');
+  return requestedMode;
+}
