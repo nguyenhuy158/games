@@ -75,10 +75,12 @@ Trang tải `public/ui-kit.css` dùng chung trước token sáng/tối của gam
 ```sh
 pnpm test
 pnpm check
-pnpm exec wrangler dev --ip 127.0.0.1 --port 8797
+pnpm exec wrangler dev --local --ip 127.0.0.1 --port 8797
 node scripts/smoke.mjs http://127.0.0.1:8797 gian-diep soi
 ```
 
 `gian-diep.test.mjs` kiểm parser tên, trùng/giới hạn, thứ tự/ID/chủ phòng, thành viên vào/rời giữa cấu hình và chia bài, giới hạn mọi quy mô, phân vai, quyền, dữ liệu riêng, đồng hồ, hòa, lượt đoán và kết quả. Smoke WebSocket thật chơi sáu người: Mũ Trắng đoán sai, hòa và bầu lại dân thắng, ván tiếp Mũ Trắng đoán đúng thắng ngay. Chỉ chạy smoke tạo phòng trên local; production để CI post-deploy kiểm theo quy ước repo.
 
 `spy-ai.test.mjs` kiểm quyền owner, quota qua reset, reservation/gộp đồng thời, cache/TTL, đầu ra sai, quyền chủ phòng trước provider, race trong lúc chờ, và không lộ cặp trong HTTP/broadcast. Test dùng provider fixture, không gọi AI tính phí; xác minh inference thật cần binding Workers AI remote trong môi trường kiểm tra riêng.
+
+`pnpm e2e` luôn chạy Wrangler với `--local`: không kết nối provider hay yêu cầu Cloudflare token trong CI. Để kiểm AI thật, chạy lệnh Wrangler trên nhưng bỏ `--local`; binding AI truy cập dịch vụ remote và có tính usage. Không coi provider fixture hoặc E2E không có remote là bằng chứng inference thật.
