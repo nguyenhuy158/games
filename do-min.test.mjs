@@ -1,8 +1,8 @@
 // Chạy chung với logic.test.mjs.
 import assert from 'node:assert/strict';
-import { SIZES, HIDDEN, FLAG, BOOM, neighbors, newField, newVis, reveal, chord, toggleFlag, openedCount, safeTotal, cleared } from './public/do-min/logic.js';
-import { seeded } from './public/dao-vang/logic.js';
-import mod from './worker/games/do-min.js';
+import { SIZES, HIDDEN, FLAG, BOOM, neighbors, newField, newVis, reveal, chord, toggleFlag, openedCount, safeTotal, cleared } from './shared/games/do-min/logic.js';
+import { seeded } from './shared/games/dao-vang/logic.js';
+import mod from './backend/src/application/games/do-min.js';
 
 assert.deepEqual(neighbors(0, 3, 3).sort(), [1, 3, 4]);
 assert.equal(neighbors(4, 3, 3).length, 8);

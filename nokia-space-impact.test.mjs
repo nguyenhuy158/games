@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createWorld, step, KINDS, TOP, H, LIVES } from './public/nokia/space-impact/logic.js';
+import { createWorld, step, KINDS, TOP, H, LIVES } from './shared/games/nokia/space-impact/logic.js';
 
 const r0 = () => 0.5;
 const tick = (w, n) => { for (let i = 0; i < n && !w.over; i++) step(w); return w; };

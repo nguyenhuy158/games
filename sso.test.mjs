@@ -1,4 +1,3 @@
-// Test xác thực JWT SSO (worker/sso.js) bằng khoá RSA tự tạo + JWKS giả.
 import assert from 'node:assert/strict';
 import './scripts/node-ts-hooks.mjs';
 
@@ -8,7 +7,7 @@ const evil = await crypto.subtle.generateKey(alg, true, ['sign', 'verify']);
 const jwk = await crypto.subtle.exportKey('jwk', good.publicKey);
 const realFetch = globalThis.fetch;
 globalThis.fetch = async (url) => (String(url).endsWith('/.well-known/jwks.json') ? Response.json({ keys: [jwk] }) : realFetch(url));
-const { userFrom } = await import('./worker/sso.js');
+const { userFrom } = await import('./backend/src/adapters/sso.js');
 
 const b64 = (buf) => Buffer.from(buf).toString('base64url');
 async function token(claims, key = good.privateKey) {

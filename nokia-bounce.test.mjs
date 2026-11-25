@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { LEVELS, createSim, step, jump, tileAt, T, ROWS } from './public/nokia/bounce/logic.js';
+import { LEVELS, createSim, step, jump, tileAt, T, ROWS } from './shared/games/nokia/bounce/logic.js';
 
 // Màn hợp lệ: đủ 8 hàng cùng độ dài, có viền, có cửa đích và vòng
 for (const lv of LEVELS) {

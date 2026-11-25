@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { COLS, K, A, E, H, R, C, P, newGame, move, legal, moves, inCheck, botMove } from './public/co-tuong/logic.js';
+import { COLS, K, A, E, H, R, C, P, newGame, move, legal, moves, inCheck, botMove } from './shared/games/co-tuong/logic.js';
 
 const at = (r, c) => r * COLS + c;
 const empty = (turn = 1) => ({ b: Array(90).fill(0), turn, over: false, winner: 0, moves: 0 });

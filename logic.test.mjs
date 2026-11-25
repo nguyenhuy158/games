@@ -1,6 +1,6 @@
 // node logic.test.mjs
 import assert from 'node:assert/strict';
-import { SIZES, TYPES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, countLeft, reshuffle } from './public/pikachu/logic.js';
+import { SIZES, TYPES, LEVELS, SLIDES, durationOf, slide, newBoard, findPath, findPair, countLeft, reshuffle } from './shared/games/pikachu/logic.js';
 
 const [COLS, ROWS] = SIZES[0];
 
@@ -132,6 +132,7 @@ await import('./soi.test.mjs');
 await import('./gian-diep.test.mjs');
 await import('./room-client.test.mjs');
 await import('./scripts/check-deps.mjs');
+await import('./architecture.test.mjs');
 await import('./sso.test.mjs');
 await import('./top.test.mjs');
 await import('./guest-history.test.mjs');

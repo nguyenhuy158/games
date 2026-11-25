@@ -7,7 +7,10 @@ import { join } from 'node:path';
 
 const files = [];
 const walk = (d) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) { if (f !== 'vendor') walk(p); } else if (p.endsWith('.js') || p.endsWith('.html')) files.push(p); } };
-walk('public');
+const FRONTEND_ROOT = 'frontend/src';
+const ROOT_DOCUMENT = 'index.html';
+walk(FRONTEND_ROOT);
+files.push(ROOT_DOCUMENT);
 const bad = files.flatMap((f) => readFileSync(f, 'utf8').split('\n').map((l, i) => [f, i + 1, l])
   .filter(([, , l]) => /\.on[a-z]+\s*=\s*\([^)]*\)\s*=>\s*[^{\s][^;]*(&&|\|\|)/.test(l)));
 assert.deepEqual(bad.map(([f, n, l]) => `${f}:${n}: ${l.trim()}`), [], 'on<event> handler returns a && / || expression (may cancel the event)');

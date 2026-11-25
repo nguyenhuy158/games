@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { newBoard, move, legal, winner, botMove } from './public/nokia/bantumi/logic.js';
+import { newBoard, move, legal, winner, botMove } from './shared/games/nokia/bantumi/logic.js';
 
 // Rải + đi tiếp khi hạt cuối vào kho mình
 {

@@ -11,7 +11,7 @@ register('data:text/javascript,' + encodeURIComponent(`
 // node:sqlite chỉ có sẵn (không cần cờ) từ Node 22.13; máy build cũ hơn thì bỏ qua thay vì chặn deploy.
 const sqlite = await import('node:sqlite').catch(() => null);
 if (!sqlite) { console.log('top skipped (no node:sqlite)'); }
-const { Top } = sqlite ? await import('./worker/index.js') : {};
+const { Top } = sqlite ? await import('./backend/src/index.js') : {};
 const { DatabaseSync } = sqlite ?? {};
 
 if (sqlite) {

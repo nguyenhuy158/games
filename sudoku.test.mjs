@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { N, HOLES, formatTime, isValid, solvedBoard, newPuzzle, markConflicts, isFull, isSolved } from './public/sudoku/logic.js';
+import { N, HOLES, formatTime, isValid, solvedBoard, newPuzzle, markConflicts, isFull, isSolved } from './shared/games/sudoku/logic.js';
 
 const digits = (a) => [...a].sort((x, y) => x - y).join('');
 const ALL = '123456789';

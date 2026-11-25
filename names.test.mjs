@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { uniqueName, otherNames } from './worker/names.js';
+import { uniqueName, otherNames } from './backend/src/domain/names.js';
 
 assert.equal(uniqueName('Mèo Lười', []), 'Mèo Lười');
 assert.equal(uniqueName('Mèo Lười', ['Mèo Lười']), 'Mèo Lười 2');

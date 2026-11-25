@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createActionGate } from './public/ui/feedback.mjs';
+import { createActionGate } from './frontend/src/ui/feedback.mjs';
 
 const gate = createActionGate();
 const releaseSave = gate.claim('save');

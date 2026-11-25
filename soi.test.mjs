@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { MIN_PLAYERS, MAX_PLAYERS, ROUND_TTL_MS, WOLF, VILLAGER, pickWolf, roleOf } from './public/soi/logic.js';
-import soi from './worker/games/soi.js';
+import { MIN_PLAYERS, MAX_PLAYERS, ROUND_TTL_MS, WOLF, VILLAGER, pickWolf, roleOf } from './shared/games/soi/logic.js';
+import soi from './backend/src/application/games/soi.js';
 
 const seats = ['a', 'b', 'c', 'd', 'e'];
 

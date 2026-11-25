@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { ROWS, COLS, BLOCK, PER_ROW, PER_CARD, CELLS, MAX_NUMBER, colRange, newCard, cardKey, nextNumber, canMark, cellsOf, kinhRows, waitRows, numberWords, callLine } from './public/loto/logic.js';
-import mod from './worker/games/loto.js';
+import { ROWS, COLS, BLOCK, PER_ROW, PER_CARD, CELLS, MAX_NUMBER, colRange, newCard, cardKey, nextNumber, canMark, cellsOf, kinhRows, waitRows, numberWords, callLine } from './shared/games/loto/logic.js';
+import mod from './backend/src/application/games/loto.js';
 
 // Tờ dò: 9 hàng × 9 cột, mỗi hàng đúng 5 số, số đúng khoảng của cột, tăng dần trong cột, không trùng; khối 3 hàng nào cũng đủ 9 cột.
 for (let k = 0; k < 300; k++) {

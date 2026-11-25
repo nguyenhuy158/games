@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { W, H, SHAPES, TYPES, TICK_MS, LEVELS, DEFAULT_LEVEL, tickMs, newGame, spawn, shift, rotate, rotateShape, hardDrop, tick, collides } from './public/tetris/logic.js';
+import { W, H, SHAPES, TYPES, TICK_MS, LEVELS, DEFAULT_LEVEL, tickMs, newGame, spawn, shift, rotate, rotateShape, hardDrop, tick, collides } from './shared/games/tetris/logic.js';
 
 const pick = (type) => () => (TYPES.indexOf(type) + 0.5) / TYPES.length; // rand cho ra đúng loại khối
 

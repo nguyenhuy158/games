@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { newGame, move, legal, score, winner, botMove, moves, side, owner, players, QUAN } from './public/o-an-quan/logic.js';
+import { newGame, move, legal, score, winner, botMove, moves, side, owner, players, QUAN } from './shared/games/o-an-quan/logic.js';
 
 const total = (g) => g.b.reduce((a, x) => a + x, 0) + g.cap[1].small + g.cap[2].small + (g.big.reduce((a, x) => a + x, 0) + g.cap[1].big + g.cap[2].big) * 100;
 // Rải: bốc ô 1 (5 dân) sang phải -> 2..6; ô sau (7) có dân -> bốc rải tiếp
@@ -118,7 +118,7 @@ for (const n of [3, 4, 5]) {
 }
 // Server: đi lại chỉ cho ván 1 người + máy, quay về trước nước gần nhất của người (bỏ nước máy), tối đa 10 nước, hết ván thì thôi.
 {
-  const mod = (await import('./worker/games/o-an-quan.js')).default;
+  const mod = (await import('./backend/src/application/games/o-an-quan.js')).default;
   const room = (seats) => ({ g: {}, seats, cfg: { ...mod.cfg }, keep: {}, wakeAt() {}, end() {}, name: (id) => id });
   const me = { id: 'human-01' }, other = { id: 'human-02' };
   // Cho máy đi tới lượt mình (bỏ qua hạn giờ).

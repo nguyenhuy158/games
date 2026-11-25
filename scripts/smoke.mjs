@@ -3,18 +3,18 @@
 //   node scripts/smoke.mjs                         (mặc định http://localhost:8789, wrangler dev)
 //   node scripts/smoke.mjs https://games.huyab.cfd [tên game ...]
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { botMove as oaqBot } from '../public/o-an-quan/logic.js';
-import { botMove as bantumiBot } from '../public/nokia/bantumi/logic.js';
-import { COLS } from '../public/noi-4/logic.js';
-import { N } from '../public/ban-tau/logic.js';
-import { findPair } from '../public/pikachu/logic.js';
-import { botMove as ganhBot } from '../public/co-ganh/logic.js';
-import { botMove as tuongBot } from '../public/co-tuong/logic.js';
-import { kinhRows as lotoKinh } from '../public/loto/logic.js';
-import { ACTION as SPY_ACTION, PHASE as SPY_PHASE, ROLE as SPY_ROLE } from '../public/gian-diep/logic.js';
-import { SLOTS as LOGIC_SLOTS } from '../public/nokia/logic/logic.js';
-import { createSim as rapidSim, step as rapidStep, score as rapidScore } from '../public/nokia/rapid-roll/logic.js';
-import { createSim as bounceSim, step as bounceStep, timeScore as bounceScore } from '../public/nokia/bounce/logic.js';
+import { botMove as oaqBot } from '../shared/games/o-an-quan/logic.js';
+import { botMove as bantumiBot } from '../shared/games/nokia/bantumi/logic.js';
+import { COLS } from '../shared/games/noi-4/logic.js';
+import { N } from '../shared/games/ban-tau/logic.js';
+import { findPair } from '../shared/games/pikachu/logic.js';
+import { botMove as ganhBot } from '../shared/games/co-ganh/logic.js';
+import { botMove as tuongBot } from '../shared/games/co-tuong/logic.js';
+import { kinhRows as lotoKinh } from '../shared/games/loto/logic.js';
+import { ACTION as SPY_ACTION, PHASE as SPY_PHASE, ROLE as SPY_ROLE } from '../shared/games/gian-diep/logic.js';
+import { SLOTS as LOGIC_SLOTS } from '../shared/games/nokia/logic/logic.js';
+import { createSim as rapidSim, step as rapidStep, score as rapidScore } from '../shared/games/nokia/rapid-roll/logic.js';
+import { createSim as bounceSim, step as bounceStep, timeScore as bounceScore } from '../shared/games/nokia/bounce/logic.js';
 
 const MAX_CONCURRENT_GAMES = 3;
 const MAX_ATTEMPTS = 2;

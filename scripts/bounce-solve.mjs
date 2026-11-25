@@ -1,6 +1,6 @@
 // Kiểm tra các màn Bounce qua được (beam search trên chính mô phỏng của game). Sửa màn xong thì chạy:
 //   node scripts/bounce-solve.mjs [chỉ-số-màn]
-import { LEVELS, createSim, step, jump, T } from '../public/nokia/bounce/logic.js';
+import { LEVELS, createSim, step, jump, T } from '../shared/games/nokia/bounce/logic.js';
 const clone = (s) => ({ ...s, rings: new Set(s.rings), lifeTaken: new Set(s.lifeTaken), safe: { ...s.safe }, events: [] });
 const ACTS = [{ right: true }, { right: true, j: 1 }, { left: true }, { left: true, j: 1 }, {}, { j: 1 }];
 const value = (s) => (s.finished ? 1e9 : s.dead ? -1e9 : s.rings.size * 400 + s.x - s.t * 2 + s.lives * 50);
