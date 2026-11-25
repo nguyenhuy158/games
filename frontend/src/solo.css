@@ -40,8 +40,6 @@ header.bar .grow { flex: 1; }
   header.bar { flex-wrap: wrap; gap: 4px; }
   header.bar h1 { display: none; }
 }
-.lang-toggle { background: var(--panel); border: 1px solid var(--line); }
-
 .stat small { display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .stat { min-width: 64px; padding: 3px 10px; border-radius: var(--ui-radius); background: var(--panel); border: 1px solid var(--line); text-align: center; line-height: 1.15; }
 .stat b { font-size: 18px; font-variant-numeric: tabular-nums; }

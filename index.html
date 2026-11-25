@@ -179,19 +179,15 @@
       .thumb.ct svg { max-height: 100%; }
     }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
-    #lang { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; }
-    .lang-toggle { background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: var(--ui-radius); min-height: 36px; padding: 8px 12px; }
-    .lang-toggle:hover { background: var(--ui-surface-muted); }
-    #account a, .btn, .seg button, .recent a, .lang-toggle { transition: background-color var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out), transform var(--ui-dur-fast) var(--ui-ease-out); }
-    #account a:active, .btn:active, .seg button:active, .recent a:active, .lang-toggle:active { transform: scale(.98); }
-    @media (pointer: coarse) { #account a, .btn, .seg button, .recent a, .lang-toggle { min-height: 44px; } }
+    #account a, .btn, .seg button, .recent a { transition: background-color var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out), transform var(--ui-dur-fast) var(--ui-ease-out); }
+    #account a:active, .btn:active, .seg button:active, .recent a:active { transform: scale(.98); }
+    @media (pointer: coarse) { #account a, .btn, .seg button, .recent a { min-height: 44px; } }
     @media (prefers-reduced-motion: reduce) { .game:hover { transform: none; } }
-    @media (max-width: 640px) { #account { position: static; justify-self: end; margin-bottom: -8px; } #lang { position: static; justify-self: start; margin-bottom: -8px; } }
+    @media (max-width: 640px) { #account { position: static; justify-self: end; margin-bottom: -8px; } }
   </style>
 </head>
 <body>
   <div id="account"></div>
-  <div id="lang"><span data-lang-toggle></span></div>
   <h1><img class="logo" src="/logos/hub-192.png" alt=""> <span data-en="Classic Games">Game Cổ Điển</span></h1>
   <p class="sub"><span data-en="Play without signing up. Your guest history stays with this browser; sign in here to keep it in your account.">Chơi không cần đăng ký. Lịch sử khách gắn với trình duyệt này; đăng nhập tại đây để giữ trong tài khoản.</span></p>
   <!-- Hiện khi server đã có /api/rooms (danh sách phòng công khai của mọi game). -->
