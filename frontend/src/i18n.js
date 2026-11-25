@@ -50,14 +50,21 @@ function flagButton(k) {
 export function langToggle() {
   const box = document.createElement('span');
   box.className = 'lang-toggle';
-  box.style.cssText = 'display:inline-flex;align-items:center;min-height:44px;padding:0;border:1px solid var(--ui-border);border-radius:var(--ui-radius);background:var(--ui-surface);color:var(--ui-fg);line-height:0';
+  box.style.cssText = 'display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:none;color:var(--ui-primary);line-height:0';
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.title = 'Ngôn ngữ / Language';
   btn.setAttribute('aria-label', btn.title);
   btn.setAttribute('aria-expanded', 'false');
-  btn.style.cssText = 'display:inline-flex;align-items:center;align-self:stretch;padding:0 10px;border:0;background:none;color:inherit;cursor:pointer;font-size:18px';
-  btn.append(iconEl('languages'));
+  btn.style.cssText = 'position:relative;display:inline-flex;align-items:center;justify-content:center;align-self:stretch;min-width:44px;padding:0;border:0;background:none;color:inherit;cursor:pointer;font-size:22px';
+  const dot = document.createElement('span');
+  dot.style.cssText = 'position:absolute;top:6px;right:3px;width:10px;height:10px;border-radius:50%;overflow:hidden;line-height:0;box-shadow:0 0 0 2px var(--ui-bg)';
+  dot.innerHTML = FLAGS[lang];
+  dot.firstChild.setAttribute('width', '10');
+  dot.firstChild.setAttribute('height', '10');
+  dot.firstChild.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+  dot.firstChild.style.display = 'block';
+  btn.append(iconEl('arrow-right-left'), dot);
   const flags = document.createElement('span');
   flags.style.cssText = 'display:inline-flex;gap:8px;align-items:center;max-width:0;opacity:0;overflow:hidden;padding:3px 0 3px 2px;transition:max-width var(--ui-dur-fast) var(--ui-ease-out),opacity var(--ui-dur-fast),padding var(--ui-dur-fast)';
   for (const k of ['vi', 'en']) {
