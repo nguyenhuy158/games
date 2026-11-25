@@ -1,17 +1,17 @@
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
 import './scripts/node-ts-hooks.mjs';
-import { AI_ACTION, AI_ERROR, AI_LIMIT, AI_MODEL, AI_PATH, SpyAiService, parseAiOutput, normalizeAiTopic } from './worker/spy-ai.js';
-import { resolveAiPair } from './worker/games/gian-diep-ai.js';
-import { GUEST_COOKIE } from './worker/guest.js';
+import { AI_ACTION, AI_ERROR, AI_LIMIT, AI_MODEL, AI_PATH, SpyAiService, parseAiOutput, normalizeAiTopic } from './backend/src/application/spy-ai.js';
+import { resolveAiPair } from './backend/src/application/games/gian-diep-ai.js';
+import { GUEST_COOKIE } from './backend/src/adapters/guest.js';
 
 register(`data:text/javascript,${encodeURIComponent(`
   export async function resolve(spec, ctx, next) {
     if (spec === 'cloudflare:workers') return { url: 'data:text/javascript,export class DurableObject{constructor(c,e){this.ctx=c;this.env=e}}', shortCircuit: true };
     return next(spec, ctx);
   }`)}`);
-const { http } = await import('./worker/adapters/http.js');
-const { NokiaRoom } = await import('./worker/index.js');
+const { http } = await import('./backend/src/adapters/http.js');
+const { NokiaRoom } = await import('./backend/src/index.js');
 
 const PAIRS = [
   ['Bánh mì', 'Bánh bao'], ['Cà phê', 'Trà xanh'], ['Cơm rang', 'Cơm tấm'], ['Phở bò', 'Bún bò'],

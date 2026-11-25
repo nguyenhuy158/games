@@ -1,64 +1,55 @@
-# Kế hoạch refactor: kiến trúc hexagonal (ports & adapters)
+# Kiến trúc frontend/backend và hexagonal
 
-## Hiện trạng
+## Cấu trúc hiện tại
 
-- **Domain đã có sẵn:** luật 15 game là hàm thuần ở `public/<game>/logic.js` (không I/O), dùng chung server + client + test.
-- **Trùng lặp lớn nhất ở "phòng chơi":** 7 class Durable Object (`Room`, `MinerRoom`, `MineRoom`, `DiceRoom`, `CaroRoom`, `ShipRoom`, `NokiaRoom`)
-  mỗi class tự viết lại ~80–120 dòng hạ tầng: nhận WebSocket, định danh thiết bị, chống trùng tên, X-User, online / chủ phòng,
-  broadcast, lưu trạng thái, hẹn giờ, ghi kết quả vào bảng xếp hạng.
-- **Mẫu hexagon nhỏ đã có:** `NokiaRoom` = adapter chung; mỗi game là module `{max, cfg, config, start, msg, tick, view, leave}`
-  nhận `ctx` (`now`, `rand`, `end`, `send`…) nên không đụng I/O.
-- **`worker/index.js` (572 dòng)** gộp 4 việc: router HTTP, SSO, DO bảng xếp hạng `Top` (SQLite) và phòng Pikachu.
-- **Client:** mỗi game tự viết kết nối / nối lại / vào-rời phòng; chỉ Nokia + Ô ăn quan dùng chung `public/nokia/room.js`.
+Theo layout của [kit v0.5.0](https://github.com/nguyenhuy158/kit/blob/v0.5.0/docs/AGENTS-SKELETON.md):
 
-=> Hướng đi: đưa mọi phòng về mẫu `NokiaRoom`, không làm hexagon "sách giáo khoa" (không interface / class / DI container cho từng port).
-
-## Cấu trúc đích
-
-```
-public/<game>/logic.js        DOMAIN: luật thuần. Giữ nguyên chỗ (client phải tải được -> nằm trong public/)
-worker/
-  games/<game>.js             APPLICATION: module game, chỉ import domain, mọi I/O qua ctx
-  ports.js                    JSDoc typedef: GameModule, Ctx { now, rand, end, send, sendAll, wakeAt, name, online }, Recorder, Identity
-  adapters/
-    game-room.js              DO chung: WebSocket hibernation, online, chủ phòng, lưu, hẹn giờ (interval hoặc alarm),
-                              view riêng từng người, người xem, emote, ghi kết quả qua Recorder
-    top.js                    DO Top (SQLite): addPlays / stats / history / fun / list — giữ nguyên schema
-    http.js                   router /api/*, gắn X-User, chuyển domain cũ
-    sso.js                    kiểm tra JWT (file hiện có)
-  index.js                    chỉ nối dây: export default http;
-                              export class CaroRoom extends gameRoom({ caro, c4 }) {} … (giữ nguyên tên class)
-public/room-client.js         ADAPTER CLIENT: kết nối, nối lại, lệch giờ, vào / rời phòng, lỗi server qua tx()
-                              (tách phần mạng khỏi public/nokia/room.js; khung giao diện Nokia vẫn ở nokia/)
+```text
+index.html                         Trang chủ
+frontend/src/                      HTML, CSS, ES modules của trình duyệt
+  <game>/                          Giao diện từng game
+  ui/                              DOM primitives từ ui-kit và notifications
+  room-client.js                   Adapter WebSocket phía client
+backend/src/
+  index.js                         Composition root: nối adapter với game, export DO
+  ports.js                         Hợp đồng GameModule, Ctx, Recorder, Identity
+  domain/names.js                   Luật chống trùng tên trong phòng
+  application/games/               Điều phối từng game qua ctx
+  application/spy-ai.js            Dịch vụ bộ từ AI, nhận storage/provider
+  adapters/                        HTTP, SSO, guest, Durable Object, SQLite, WebSocket
+shared/
+  games/<game>/logic.js             Luật dùng chung client/server/test
+  games/nokia/<game>/logic.js       Luật các game Nokia
+  tape.js                          Bản ghi replay dùng chung
+public/                            Ảnh, âm thanh, logo, manifest và giấy phép
+scripts/build-assets.mjs            Ghép static assets vào dist/
+dist/                              Đầu ra sinh tự động, không commit
 ```
 
-**Chiều phụ thuộc:** domain không import gì → application chỉ import domain → adapter import application.
-Kiểm bằng `scripts/check-deps.mjs` (đọc dòng import), gọi trong `logic.test.mjs` nên build Cloudflare fail nếu có file import sai chiều.
+## Ranh giới phụ thuộc
 
-**Không đổi:** URL `/api/...`, tên class DO (không cần migration mới), schema SQLite bảng xếp hạng. Không thêm thư viện, không TypeScript.
+- `shared` chỉ import `shared`; không phụ thuộc trình duyệt, Node, Cloudflare hay network/storage.
+- Backend domain chỉ dùng domain/shared. Application chỉ dùng application/domain/shared và hợp đồng ports; I/O của game qua `ctx`.
+- Adapter dùng application/domain/shared và hạ tầng, không import composition root hoặc frontend.
+- `backend/src/index.js` nối các lớp. Frontend chỉ dùng frontend/shared, không import backend.
+- `scripts/check-deps.mjs` phân tích AST bằng Acorn: import tĩnh/động, re-export, script HTML, module thiếu và các global runtime bị cấm trong shared. `architecture.test.mjs` kiểm các chiều phụ thuộc sai.
 
-## Giai đoạn (mỗi giai đoạn = 1 commit, test xanh, deploy được)
+Đây là hexagonal thực dụng, không DI container hay interface cho từng hàm. `shared` độc lập runtime, không đồng nghĩa thuần toán học: replay và deadline tìm kiếm Cờ tướng vẫn dùng `Date.now()`, nhiều hàm giữ RNG mặc định `Math.random()`. Refactor không đổi đồng hồ hoặc thuật toán chơi.
 
-Tiến độ: 0 xong (`scripts/smoke.mjs`) · 1 xong (`worker/adapters/game-room.js`, `worker/ports.js`, `worker/games/*`, `scripts/check-deps.mjs`, phòng công khai) · 2 xong (Caro + Nối 4, Bắn tàu, Bầu cua chạy trên adapter; giữ nguyên giao thức client) · 3 xong (`adapters/http.js`, `adapters/top.js` + mảng `FUN`, `worker/pikachu.js`; `index.js` chỉ nối dây) · 4a xong (Dò mìn = `worker/games/do-min.js`; adapter thêm hook `hello` gửi bàn riêng khi vào / vào lại) · 4b xong (Đào Vàng = `worker/games/dao-vang.js`; tiệm là pha trong ván; adapter lưu định kỳ game nhịp đều, `sendAll(msg, { tape: false })`) · 4c xong (Pikachu = `worker/games/pikachu.js`; adapter thêm `ctx.rank` cho bảng xếp hạng, mỗi người một `level` trong lịch sử) — không còn DO phòng tự viết · 5 xong (`public/room-client.js`: kết nối / nối lại / 4000 / 4001 cho 7 game tự viết + khung Nokia)
+Adapter `room-ai.js` giữ quyền truy cập DO namespace, kiểm quyền chủ phòng và cập nhật phòng sau khi tạo từ. Application `SpyAiService` nhận storage/provider từ adapter; không biết room Durable Object.
 
-| # | Việc | File | Rủi ro |
-|---|---|---|---|
-| 0 | Lưới an toàn: `scripts/smoke.mjs <url>` (bot WebSocket chơi 1 ván với máy + 1 ván 2 người mỗi game); test mức module cho game chưa có | scripts, *.test.mjs | thấp |
-| 1 | Tách `worker/nokia.js` → `adapters/game-room.js` + `ports.js`; thêm `ctx.wakeAt(ms)` dùng alarm (game theo lượt khỏi giữ `setInterval`, DO được ngủ) | worker/nokia* | thấp |
-| 2 | Game theo lượt thành module: Cờ caro + Nối 4, Bắn tàu, Bầu cua (adapter thêm người xem, emote, view ẩn thông tin) | worker/co-caro, ban-tau, bau-cua | trung bình |
-| 3 | Tách `index.js` → `http.js` + `top.js`; danh sách hạng mục bảng xếp hạng vui thành cấu hình | worker/index.js | thấp |
-| 4 | Game thời gian thực: Dò mìn, Đào Vàng, Pikachu (~360 dòng, lớn nhất) | worker/do-min, dao-vang, index | cao |
-| 5 | Client dùng `room-client.js` cho các game còn tự viết kết nối (Bầu cua, Caro, Nối 4, Bắn tàu, Dò mìn, Đào Vàng, Pikachu) | public/*/game.js | trung bình |
+## Build và URL
 
-Ước tính bỏ ~600–900 dòng hạ tầng lặp. Thêm game mới sau đó chỉ cần `logic.js` + `worker/games/<x>.js` + giao diện.
+`pnpm build` xóa đầu ra cũ trong `dist/`, chép `public/` và nội dung `frontend/src/` vào đó, thêm `index.html` gốc và `shared/`. Không bundler, React hay TypeScript. Wrangler chạy cùng build khi dev/deploy và theo dõi nguồn frontend/shared/static.
 
-## Rủi ro & cách giữ
+URL trang game và client vẫn như cũ (`/co-caro/`, `/co-caro/game.js`). Luật dùng chung được phục vụ tại `/shared/games/co-caro/logic.js`; replay tại `/shared/tape.js`. Import tương đối được dùng chung bởi Node test và trình duyệt. Service worker cache các URL đầu ra mới; không giữ bản sao luật ở đường dẫn cũ.
 
-- **Phòng đang chơi lúc deploy:** phòng là trạng thái tạm (hết người là xoá); adapter bỏ qua trạng thái cũ không đọc được (như `NokiaRoom`) → tệ nhất phòng đang chơi bị reset.
-- **Đổi hành vi âm thầm:** chạy `scripts/smoke.mjs` trên local + prod trước / sau mỗi giai đoạn.
-- **Hai phiên cùng sửa:** báo trước khi đụng file của phiên kia (`co-caro.js`, `ban-tau.js`, `noi-4/`…); chỉ stage file của mình.
+Không đổi `/api/*`, tên class/binding/namespace Durable Object, migration hay schema SQLite. `public/` không còn chứa mã nguồn ứng dụng; backend không được chép vào static assets.
 
-## Đề xuất
+## Kiểm thử và thêm game
 
-Làm 0 → 1 → 2 → 3 (lợi nhiều, rủi ro thấp). Giai đoạn 4 chỉ khi sắp sửa nhiều Pikachu / Đào Vàng / Dò mìn.
-Giai đoạn 5 làm được ngay (giao diện Nokia mới đã xong ở `c8b518f`).
+- `pnpm test`: luật game, application/adapter, quyền/lịch sử/AI, ranh giới kiến trúc và service worker trên `dist/` thực sự được build.
+- `node scripts/smoke.mjs <url>`: WebSocket thật, bot chơi và kiểm state server; CI chạy toàn bộ trên main/production.
+- `pnpm e2e`: browser và WebSocket; PR chọn game từ cả frontend, backend, shared và public assets. Thay đổi code chung chạy toàn bộ.
+- Game mới: thêm luật trong `shared/games/<game>/`, UI trong `frontend/src/<game>/`, module nhiều người trong `backend/src/application/games/` nếu cần; nối ở composition root.
+- Thêm thẻ ở `index.html`, cập nhật `CORE` và tăng `CACHE` trong `frontend/src/sw.js`, thêm test hành vi và khai báo lựa chọn E2E.

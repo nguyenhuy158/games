@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createGame, turn, step, over, ranking, freeCell, COLS, ROWS, MAZES } from './public/nokia/snake/logic.js';
+import { createGame, turn, step, over, ranking, freeCell, COLS, ROWS, MAZES } from './shared/games/nokia/snake/logic.js';
 
 const r0 = () => 0; // mồi luôn rơi vào ô trống đầu tiên -> dễ đoán
 // Đi thẳng, ăn mồi thì dài ra
@@ -83,7 +83,7 @@ const r0 = () => 0; // mồi luôn rơi vào ô trống đầu tiên -> dễ đo
 }
 // Module server, sân riêng: mỗi người 1 thế giới, hết khi tất cả chết, xếp theo điểm
 {
-  const mod = (await import('./worker/games/snake.js')).default;
+  const mod = (await import('./backend/src/application/games/snake.js')).default;
   let result = null;
   const ctx = { g: {}, seats: ['a', 'b'], cfg: mod.config(mod.cfg, { mode: 'solo', walls: true }), rand: r0, end: (r) => { result = r; } };
   mod.start(ctx);

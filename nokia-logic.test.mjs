@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { score, valid, newSecret, SHAPES } from './public/nokia/logic/logic.js';
+import { score, valid, newSecret, SHAPES } from './shared/games/nokia/logic/logic.js';
 
 assert.deepEqual(score([0, 1, 2, 3], [0, 1, 2, 3]), { exact: 4, near: 0 });
 assert.deepEqual(score([0, 1, 2, 3], [3, 2, 1, 0]), { exact: 0, near: 4 });

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { ROWS, COLS, drop, winLine, full, botMove, LEVELS } from './public/noi-4/logic.js';
-import { c4 } from './worker/games/caro.js';
+import { ROWS, COLS, drop, winLine, full, botMove, LEVELS } from './shared/games/noi-4/logic.js';
+import { c4 } from './backend/src/application/games/caro.js';
 
 const at = (r, c) => r * COLS + c;
 const empty = () => new Array(ROWS * COLS).fill(0);
@@ -57,7 +57,6 @@ const trap = empty();
 trap[at(5, 2)] = 1; trap[at(5, 3)] = 1; trap[at(4, 3)] = 2;
 assert.ok([1, 4].includes(botMove(trap, 2, () => 0.99, 2)), 'hard blocks the open-two trap');
 
-// Server (worker/games/caro.js, module c4) là trọng tài: đúng lượt, cột hợp lệ, cột đầy bị từ chối, thắng do server tính.
 {
   const ends = [];
   const ctx = { g: {}, cfg: { ...c4.cfg }, keep: {}, seats: ['a', 'b'], wakeAt: () => {}, end: (r) => ends.push(r), name: (id) => id };

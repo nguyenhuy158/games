@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { newDeck, flip, done, ICONS } from './public/nokia/pairs/logic.js';
+import { newDeck, flip, done, ICONS } from './shared/games/nokia/pairs/logic.js';
 
 assert.equal(ICONS.length, 12);
 for (const ic of ICONS) assert.ok(ic.length === 7 && ic.every((r) => r.length === 7), 'icons are 7x7');

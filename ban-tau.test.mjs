@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { N, FLEET, MISS, HIT, SUNK, randomFleet, shoot, botShot, shipAt, validFleet } from './public/ban-tau/logic.js';
+import { N, FLEET, MISS, HIT, SUNK, randomFleet, shoot, botShot, shipAt, validFleet } from './shared/games/ban-tau/logic.js';
 
 // Xếp ngẫu nhiên: đủ tàu, đúng độ dài, thẳng hàng liền nhau, không chồng / không chạm nhau (kể cả chéo).
 for (let k = 0; k < 200; k++) {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, DEFAULT_CONFIG, PACKS, DURATIONS, PHASE, ACTION, ROLE, limits, normalizeConfig, validateSetup, createGame, act, advance, view, parseNames, orderedIds, movePlayer, shufflePlayers } from './public/gian-diep/logic.js';
-import gianDiep from './worker/games/gian-diep.js';
+import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, DEFAULT_CONFIG, PACKS, DURATIONS, PHASE, ACTION, ROLE, limits, normalizeConfig, validateSetup, createGame, act, advance, view, parseNames, orderedIds, movePlayer, shufflePlayers } from './shared/games/gian-diep/logic.js';
+import gianDiep from './backend/src/application/games/gian-diep.js';
 
 const NOW = 1_000;
 const SECOND = 1_000;

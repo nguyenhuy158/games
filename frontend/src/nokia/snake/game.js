@@ -1,0 +1,157 @@
+import { nokiaApp } from '../room.js';
+import { t } from '../../i18n.js';
+import { COLS, ROWS } from '../../../../shared/games/nokia/snake/logic.js';
+import { DIM } from '../lcd.js';
+import { store } from '../../dom.js';
+
+// Ô 3px, sân bắt đầu từ y = 8 (hàng trên ghi điểm). Rắn của mình tô đặc, rắn người khác chỉ viền (LCD 2 màu).
+const CELL = 3, X0 = 1, Y0 = 8;
+const SPEED_NAMES = ['1', '2', '3', '4', '5'];
+// Kỷ lục của máy này (mọi chế độ), hiện mờ cạnh điểm trên LCD và ở sảnh chờ.
+const BEST_KEY = 'nk.best.snake';
+let lastStep = -1, best = Number(store.get(BEST_KEY)) || 0;
+const bestText = () => (best ? t(` Kỷ lục máy này: ${best} điểm.`, ` Best on this device: ${best} pts.`) : '');
+
+nokiaApp({
+  game: 'snake',
+  title: t('Rắn săn mồi', 'Snake'),
+  sub: t('Snake huyền thoại của Nokia — một mình, đua điểm mỗi người một sân, hoặc chung sân tranh mồi.', 'The legendary Nokia Snake — solo, a score race on separate fields, or one shared arena fighting for food.'),
+  help: {
+    vi: {
+      goal: 'Điều khiển rắn ăn mồi để dài ra và ghi điểm, đừng đâm vào tường hay thân rắn.',
+      play: [
+        'Mồi thường: +1 điểm, rắn dài thêm 1 ô.',
+        'Cứ 5 mồi có 1 con bọ thưởng: 5–20 điểm (ăn càng sớm càng nhiều), biến mất sau 24 bước.',
+        'Chết khi đâm thân rắn, tường mê cung, hoặc mép sân nếu bật Có tường (tắt thì đi xuyên mép).',
+        'Chung sân (2–4 rắn): đâm rắn khác hoặc đối đầu là chết; con sống sót cuối cùng thắng.',
+        'Sân riêng: mỗi người một sân, chơi tới khi chết; điểm cao nhất thắng.',
+        'Chủ phòng chọn chế độ, tốc độ 1–5, mê cung (Bốn góc / Đường hầm / Chữ thập) và tường.',
+      ],
+      keys: [
+        'Mũi tên / WASD / 2-4-6-8 để rẽ; không quay đầu 180° được.',
+        'Bấm nhanh 2 phím liên tiếp vẫn nhận cả hai (rẽ gấp chữ U).',
+      ],
+      touch: [
+        'Bấm 2 / 4 / 6 / 8 trên bàn phím ảo dưới màn hình.',
+        'Hoặc vuốt lên / xuống / trái / phải ngay trên màn hình.',
+      ],
+      tips: [
+        'Chơi một mình: tới khi chết thì hết ván; kỷ lục của máy này hiện cạnh điểm.',
+      ],
+    },
+    en: {
+      goal: 'Steer the snake to eat food, grow and score, without crashing into walls or snakes.',
+      play: [
+        'Food: +1 point and the snake grows by 1 cell.',
+        'Every 5 foods a bonus bug appears: 5–20 points (sooner = more), gone after 24 steps.',
+        'You die hitting a snake body, a maze wall, or the edge when Walls is on (off = wrap around).',
+        'Shared arena (2–4 snakes): hitting another snake or a head-on crash kills; last snake alive wins.',
+        'Own field: everyone gets a separate field and plays until they crash; highest score wins.',
+        'The host picks mode, speed 1–5, maze (Corners / Tunnel / Cross) and walls.',
+      ],
+      keys: [
+        'Arrow keys / WASD / 2-4-6-8 to turn; no 180° reversing.',
+        'Two quick presses in a row both count (tight U-turns).',
+      ],
+      touch: [
+        'Press 2 / 4 / 6 / 8 on the on-screen keypad.',
+        'Or swipe up / down / left / right on the screen.',
+      ],
+      tips: [
+        'Solo: the game ends when you crash; this device\'s best score shows next to yours.',
+      ],
+    },
+  },
+  lobbyText: (r) => (r.players.length < 2 ? t('Chơi một mình — mời bạn bè để đua điểm hoặc chung sân.', 'Playing solo — invite friends for a score race or a shared arena.')
+    : r.cfg.mode === 'solo' ? t(`${Math.min(4, r.players.length)} người, mỗi người một sân — so điểm.`, `${Math.min(4, r.players.length)} players, one field each — highest score wins.`)
+      : t(`${Math.min(4, r.players.length)} con rắn chung một sân — tranh mồi, đâm nhau là thua.`, `${Math.min(4, r.players.length)} snakes in one arena — fight for food, crash and you lose.`)) + bestText(),
+  lobby(box, r, isHost, setCfg) {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.append(t('Tốc độ ', 'Speed '), ...SPEED_NAMES.map((n, i) => Object.assign(document.createElement('button'), {
+      textContent: n, className: r.cfg.speed === i ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ speed: i }),
+    })));
+    const walls = Object.assign(document.createElement('button'), {
+      textContent: r.cfg.walls ? t('Có tường (đâm là chết)', 'Walls (crash = die)') : t('Không tường (đi xuyên)', 'No walls (wrap around)'), disabled: !isHost, onclick: () => setCfg({ walls: !r.cfg.walls }),
+    });
+    const mode = document.createElement('div');
+    mode.className = 'seg';
+    mode.append(t('Chế độ ', 'Mode '), ...[['arena', t('Chung sân', 'Shared arena')], ['solo', t('Sân riêng', 'Own field')]].map(([m, n]) => Object.assign(document.createElement('button'), {
+      textContent: n, className: (r.cfg.mode ?? 'arena') === m ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ mode: m }),
+    })));
+    const maze = document.createElement('div');
+    maze.className = 'seg';
+    maze.append(t('Mê cung ', 'Maze '), ...[t('Không', 'None'), t('Bốn góc', 'Corners'), t('Đường hầm', 'Tunnel'), t('Chữ thập', 'Cross')].map((n, i) => Object.assign(document.createElement('button'), {
+      textContent: n, className: (r.cfg.maze ?? 0) === i ? 'on' : '', disabled: !isHost, onclick: () => setCfg({ maze: i }),
+    })));
+    box.append(mode, seg, maze, walls);
+  },
+  badge: (p, r) => (r.view?.board ?? r.view?.snakes)?.find((s) => s.id === p.id)?.score ?? '',
+  scoreText: (v) => t(`${v} điểm`, `${v} pts`),
+  onKey(k, down, r, app) {
+    if (down && k !== 'ok' && r?.status === 'playing') app.send({ d: k });
+  },
+  onState(r, prev, app) {
+    const v = r.view;
+    if (!v || v.step === lastStep) return;
+    lastStep = v.step;
+    for (const e of v.events ?? []) {
+      if (e.t === 'eat') app.beep(e.id === app.pov ? 1200 : 700, 40);
+      if (e.t === 'bug') app.beep(1600, 90);
+      if (e.t === 'die') app.beep(180, 300, 'sawtooth');
+    }
+    const me = !app.replay && v.snakes.find((s) => s.id === app.id);
+    if (me && me.score > best) { best = me.score; store.set(BEST_KEY, String(best)); }
+  },
+  draw(lcd, r, now, app) {
+    const v = r.view;
+    if (!v) {
+      lcd.center(10, 'SNAKE');
+      drawSnakeArt(lcd);
+      if (best) lcd.center(36, `TOP ${String(best).padStart(4, '0')}`);
+      return;
+    }
+    const me = v.snakes.find((s) => s.id === app.pov);
+    lcd.text(1, 1, String(me?.score ?? v.snakes[0].score).padStart(4, '0'));
+    if (best) lcd.text(19, 1, String(best).padStart(4, '0'), DIM); // kỷ lục máy này
+    if (v.bug) { lcd.sprite(58, 1, ['#.#', '.#.', '###', '.#.', '#.#']); lcd.text(64, 1, String(v.bug.left).padStart(2, '0')); }
+    const board = v.board ?? v.snakes;
+    if (board.length > 1) lcd.text(38, 1, `${board.filter((s) => s.alive).length}/${board.length}`);
+    // Viền sân (có tường thì viền đậm 2px trên/dưới cho dễ thấy).
+    lcd.frame(X0 - 1, Y0 - 1, COLS * CELL + 2, ROWS * CELL + 2);
+    if (v.walls) lcd.frame(X0 - 1, Y0 - 2, COLS * CELL + 2, ROWS * CELL + 4);
+    const at = ([x, y]) => [X0 + x * CELL, Y0 + y * CELL];
+    for (const k of v.maze ?? []) { const [x, y] = at([k % COLS, Math.floor(k / COLS)]); lcd.rect(x, y, CELL, CELL); lcd.px(x + 1, y + 1, '#c7f0d8'); } // tường mê cung: ô đặc, chấm sáng giữa cho khác thân rắn
+    if (v.food) { const [x, y] = at(v.food); lcd.sprite(x, y, ['.#.', '#.#', '.#.']); }
+    if (v.bug && Math.floor(now / 250) % 2) { const [x, y] = at(v.bug.at); lcd.sprite(x, y, ['#.#', '.#.', '#.#']); }
+    for (const s of v.snakes) {
+      if (!s.alive && Math.floor(now / 300) % 2) continue; // rắn chết nhấp nháy
+      const mine = s.id === app.pov;
+      s.body.forEach((c, i) => {
+        const [x, y] = at(c);
+        if (mine || i === 0) lcd.rect(x, y, CELL, CELL);
+        else lcd.frame(x, y, CELL, CELL);
+      });
+      // Mắt: 1 điểm sáng trên đầu theo hướng đi.
+      const [hx, hy] = at(s.body[0]);
+      const eye = { up: [1, 0], down: [1, 2], left: [0, 1], right: [2, 1] }[s.dir];
+      if (eye) lcd.px(hx + eye[0], hy + eye[1], '#c7f0d8');
+    }
+    if (r.status === 'playing' && !me && r.seats.length) lcd.banner([t('DANG XEM', 'WATCHING')]);
+    else if (r.status === 'playing' && v.solo && me && !me.alive) lcd.banner([t('HET VAN', 'GAME OVER'), t('CHO BAN BE', 'WAIT FOR ALL')]);
+  },
+});
+
+// Hình rắn trang trí ở sảnh chờ.
+function drawSnakeArt(lcd) {
+  lcd.sprite(22, 22, [
+    '..........................####......',
+    '.........................#.#..#.....',
+    '###############..........#....##....',
+    '#.............#..........######.....',
+    '#..##########.#...........#.........',
+    '#..#........#.##############........',
+    '####........#...............#.......',
+    '............#################.......',
+  ]);
+}

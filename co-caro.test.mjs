@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { winLine, botMove, full, SIZES } from './public/co-caro/logic.js';
+import { winLine, botMove, full, SIZES } from './shared/games/co-caro/logic.js';
 
 const n = 15;
 const at = (r, c) => r * n + c;

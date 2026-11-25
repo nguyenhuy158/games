@@ -14,7 +14,6 @@ const BASE = (process.env.E2E_BASE_URL || "http://127.0.0.1:8789").replace(
   "",
 );
 const WAIT = { timeout: 15000 };
-// Số game trên trang chủ (public/index.html, mỗi game một thẻ a.game).
 const MIN_GAMES = 22;
 // Game chuyển từ mytools: trang phải vẽ đủ bàn chơi (selector -> số phần tử).
 const BOARDS = {
@@ -23,7 +22,6 @@ const BOARDS = {
   "/sudoku/": ["#grid > div", 81],
   "/loto/": ["#home button.primary", 1],
 };
-// Hướng dẫn (public/help.js): thân hộp phải có ít nhất chừng này ký tự.
 const MIN_HELP_CHARS = 100;
 const CLI_ARGUMENT_OFFSET = 2;
 const REQUESTED_ROUTES = [...new Set(process.argv.slice(CLI_ARGUMENT_OFFSET))];

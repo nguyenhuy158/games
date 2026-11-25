@@ -13,11 +13,11 @@ if (process.argv[1] && pathToFileURL(process.argv[1]).href !== import.meta.url) 
       return next(spec, ctx);
     }`)}`);
   const { DatabaseSync } = await import('node:sqlite');
-  const { Top } = await import('./worker/adapters/top.js');
-  const { http } = await import('./worker/adapters/http.js');
-  const { gameRoom } = await import('./worker/adapters/game-room.js');
-  const { default: bauCua } = await import('./worker/games/bau-cua.js');
-  const { GUEST_COOKIE, GUEST_HEADER, USER_HEADER, GAME_HEADER, ROOM_HEADER, withGuestCookie } = await import('./worker/guest.js');
+  const { Top } = await import('./backend/src/adapters/top.js');
+  const { http } = await import('./backend/src/adapters/http.js');
+  const { gameRoom } = await import('./backend/src/adapters/game-room.js');
+  const { default: bauCua } = await import('./backend/src/application/games/bau-cua.js');
+  const { GUEST_COOKIE, GUEST_HEADER, USER_HEADER, GAME_HEADER, ROOM_HEADER, withGuestCookie } = await import('./backend/src/adapters/guest.js');
   const db = new DatabaseSync(':memory:');
   const sql = { exec(query, ...params) {
     const statement = db.prepare(query);

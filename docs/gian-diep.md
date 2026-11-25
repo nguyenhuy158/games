@@ -31,7 +31,7 @@ Không bật biến thể hai gián điệp biết nhau vì trái với luật �
 
 **Nhiều máy:** dùng phòng `NokiaRoom`, WebSocket `/api/nk/gian-diep/room/CODE`. Server lưu trạng thái qua mất kết nối, gửi mỗi người đúng thẻ của họ; người vào giữa ván chỉ xem. Cùng thiết bị vào lại bằng mã phòng để tiếp tục. Đợi người đang mất mạng quay lại bỏ phiếu/đoán, hoặc host loại trực tiếp khi luật cho phép. Không ghi replay chứa từ bí mật. Thẻ đang mở tự che khi chuyển tab, ẩn trang hoặc bấm Escape.
 
-Luật dùng chung trong `public/gian-diep/logic.js`; server điều phối thời gian, quyền, kết quả và lưu trạng thái qua `worker/games/gian-diep.js`.
+Luật dùng chung trong `shared/games/gian-diep/logic.js`; server điều phối thời gian, quyền, kết quả và lưu trạng thái qua `backend/src/application/games/gian-diep.js`.
 
 ## Bộ từ AI
 
@@ -64,13 +64,13 @@ Lỗi phân biệt `ai_unavailable`, `ai_quota`, `ai_invalid_topic`, `ai_invalid
 
 Dùng đường tích hợp DOM tĩnh chính thức của [nguyenhuy158/ui-kit](https://github.com/nguyenhuy158/ui-kit), pin commit `978ff7c2444e094342b5005e5a6879c2bae34c9b`:
 
-- `src/dom/feedback.mjs` và `feedback.css` → `public/ui/`: nút, trạng thái chờ, khóa thao tác và toast dùng chung toàn bộ game; không giữ bản sao riêng cho Gián điệp.
-- `src/styles/tokens.css` → `public/gian-diep/ui-kit/tokens.css`: giữ token, base CSS, màu sáng/tối và chuyển động; bỏ `@import tailwindcss`, `@custom-variant`, `@theme` vì trang không dùng build/Tailwind runtime.
+- `src/dom/feedback.mjs` và `feedback.css` → `frontend/src/ui/`: nút, trạng thái chờ, khóa thao tác và toast dùng chung toàn bộ game; không giữ bản sao riêng cho Gián điệp.
+- `src/styles/tokens.css` → `frontend/src/gian-diep/ui-kit/tokens.css`: giữ token, base CSS, màu sáng/tối và chuyển động; bỏ `@import tailwindcss`, `@custom-variant`, `@theme` vì trang không biên dịch CSS bằng Tailwind.
 - UI riêng dùng biến `--ui-*`, danh sách thiết lập cuộn bên trong và danh sách trong ván chia trang, khu vực chạm 44px và input 16px. Không tải CSS Nokia, React hay CDN runtime. Không lấy thay đổi chưa commit từ checkout UI kit.
 
-Trang tải `public/ui-kit.css` dùng chung trước token sáng/tối của game. Icon dùng cùng Lucide 0.468.0 như UI kit qua `public/icons.js`; nút phụ dùng icon kèm nhãn truy cập, luật đầy đủ nằm trong Cách chơi.
+Trang tải `frontend/src/ui-kit.css` dùng chung trước token sáng/tối của game. Icon dùng cùng Lucide 0.468.0 như UI kit qua `frontend/src/icons.js`; nút phụ dùng icon kèm nhãn truy cập, luật đầy đủ nằm trong Cách chơi.
 
-`public/ui/notifications.js` giữ một instance `createToasts` dùng chung; gọi trực tiếp `notifications.show(tone, message, options)`. Bản DOM thêm nhãn đóng Việt/Anh và renderer Lucide để giữ icon của game. Toast gộp thông báo trùng, tối đa ba thông báo; mặc định 4 giây, lỗi 8 giây, dừng đếm khi hover/focus, `duration: 0` giữ tới khi đóng. Trong dialog đang mở, toast nằm trong dialog để không bị backdrop che.
+`frontend/src/ui/notifications.js` giữ một instance `createToasts` dùng chung; gọi trực tiếp `notifications.show(tone, message, options)`. Bản DOM thêm nhãn đóng Việt/Anh và renderer Lucide để giữ icon của game. Toast gộp thông báo trùng, tối đa ba thông báo; mặc định 4 giây, lỗi 8 giây, dừng đếm khi hover/focus, `duration: 0` giữ tới khi đóng. Trong dialog đang mở, toast nằm trong dialog để không bị backdrop che.
 
 Ngoại lệ áp dụng ui-kit: giữ HTML/CSS/ES modules và bố cục game hiện có, không chuyển sang React `Screen`, `PagedList` hay `ConfirmProvider`. Các game dùng dialog native có giao diện riêng, không gọi `alert`/`confirm`/`prompt`. Token dark dùng chung đã khớp commit trên; token sáng/tối đầy đủ của Gián điệp vẫn giữ riêng để không đổi màu các game khác. Không coi đây là chuyển đổi toàn bộ màn hình sang chuẩn một-viewport.
 

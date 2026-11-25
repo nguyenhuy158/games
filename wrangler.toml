@@ -1,5 +1,5 @@
 name = "pikachu-online"
-main = "worker/index.js"
+main = "backend/src/index.js"
 compatibility_date = "2026-07-03"
 # Chi vao qua custom domain, giong chia-keo.
 workers_dev = false
@@ -10,11 +10,14 @@ routes = [
   { pattern = "soi.huyab.cfd", custom_domain = true },
 ]
 
-# public/ la file tinh. Worker chay truoc (de 301 domain cu), roi tra file qua ASSETS.
 [assets]
-directory = "./public"
+directory = "./dist"
 binding = "ASSETS"
 run_worker_first = true
+
+[build]
+command = "node scripts/build-assets.mjs"
+watch_dir = ["frontend/src", "shared", "public", "index.html"]
 
 # Thông tin bản đang chạy (id, thời điểm tạo) cho /api/version — CI chờ bản mới rồi mới chạy smoke trên web thật.
 [version_metadata]

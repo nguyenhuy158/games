@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { SYMBOLS, roll, settle, betTotal } from './public/bau-cua/logic.js';
+import { SYMBOLS, roll, settle, betTotal } from './shared/games/bau-cua/logic.js';
 
 // Cua(4) ra 2 mặt, Tôm(5) 1 mặt, Nai(0) không ra.
 const dice = [4, 4, 5];

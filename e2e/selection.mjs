@@ -1,5 +1,5 @@
-const PUBLIC_PREFIX = 'public';
-const WORKER_PREFIX = 'worker/games';
+const GAME_ROOTS = ['public', 'frontend/src', 'shared/games'];
+const APPLICATION_PREFIX = 'backend/src/application/games';
 const JS_SUFFIX = '.js';
 const TEST_SUFFIX = '.test.mjs';
 const NOKIA_PREFIX = 'nokia/';
@@ -31,8 +31,8 @@ const GAME_SMOKES = {
 const KNOWN_GAMES = new Set([...Object.keys(GAME_SMOKES), ...SOLO_GAMES]);
 const GAME_PATHS = [...KNOWN_GAMES].map((game) => ({
   game,
-  directory: `${PUBLIC_PREFIX}/${NOKIA_GAMES.has(game) ? NOKIA_PREFIX : ''}${game}/`,
-  worker: `${WORKER_PREFIX}/${game}${JS_SUFFIX}`,
+  directories: GAME_ROOTS.map((root) => `${root}/${NOKIA_GAMES.has(game) ? NOKIA_PREFIX : ''}${game}/`),
+  application: `${APPLICATION_PREFIX}/${game}${JS_SUFFIX}`,
   test: `${NOKIA_GAMES.has(game) ? 'nokia-' : ''}${game}${TEST_SUFFIX}`,
 }));
 
@@ -41,7 +41,7 @@ export function selectGames(paths) {
   const games = new Set();
   for (const path of paths) {
     if (DOCUMENTATION_PATH.test(path)) continue;
-    const match = GAME_PATHS.find(({ directory, worker, test }) => path.startsWith(directory) || path === worker || path === test);
+    const match = GAME_PATHS.find(({ directories, application, test }) => directories.some((directory) => path.startsWith(directory)) || path === application || path === test);
     if (!match) return null;
     games.add(match.game);
   }

@@ -1,22 +1,25 @@
 import assert from 'node:assert/strict';
 import { selectGames, smokeModeForEvent } from './e2e/selection.mjs';
 
-assert.deepEqual(selectGames(['public/gian-diep/style.css', 'worker/games/gian-diep.js']), {
+assert.deepEqual(selectGames(['frontend/src/gian-diep/style.css', 'backend/src/application/games/gian-diep.js']), {
   routes: ['/gian-diep/'], games: ['gian-diep'],
 });
-assert.deepEqual(selectGames(['public/o-an-quan/logic.js', 'public/nokia/pairs/game.js']), {
+assert.deepEqual(selectGames(['shared/games/o-an-quan/logic.js', 'frontend/src/nokia/pairs/game.js']), {
   routes: ['/o-an-quan/', '/nokia/pairs/'], games: ['o-an-quan', 'o-an-quan-3', 'pairs'],
 });
-assert.deepEqual(selectGames(['public/sudoku/game.js']), { routes: ['/sudoku/'], games: [] });
-for (const path of ['public/dom.js', 'public/nokia/room.js', 'worker/games/race.js', 'worker/index.js', 'public/new-game/game.js', 'public/soi-extra/game.js', '.github/workflows/ci.yml', 'package.json']) {
-  assert.equal(selectGames(['public/soi/game.js', path]), null, path);
+assert.deepEqual(selectGames(['frontend/src/sudoku/game.js']), { routes: ['/sudoku/'], games: [] });
+for (const path of ['frontend/src/dom.js', 'frontend/src/nokia/room.js', 'shared/tape.js', 'shared/games/common.js', 'backend/src/application/games/race.js', 'backend/src/application/spy-ai.js', 'backend/src/index.js', 'frontend/src/new-game/game.js', 'frontend/src/soi-extra/game.js', 'public/logos/hub.svg', '.github/workflows/ci.yml', 'package.json']) {
+  assert.equal(selectGames(['frontend/src/soi/game.js', path]), null, path);
 }
 assert.equal(selectGames([]), null);
-assert.deepEqual(selectGames(['public/soi/old.js', 'public/loto/new.js']), {
+assert.deepEqual(selectGames(['frontend/src/soi/old.js', 'frontend/src/loto/new.js']), {
   routes: ['/soi/', '/loto/'], games: ['soi', 'loto'],
 });
-assert.deepEqual(selectGames(['README.md', 'docs/gian-diep.md', 'public/gian-diep/game.js']), {
+assert.deepEqual(selectGames(['README.md', 'docs/gian-diep.md', 'frontend/src/gian-diep/game.js']), {
   routes: ['/gian-diep/'], games: ['gian-diep'],
+});
+assert.deepEqual(selectGames(['public/pikachu/images/tiles.webp', 'public/dao-vang/assets/atlas.json', 'shared/games/nokia/bounce/logic.js', 'backend/src/application/games/bounce.js']), {
+  routes: ['/pikachu/', '/dao-vang/', '/nokia/bounce/'], games: ['pikachu', 'dao-vang', 'bounce'],
 });
 assert.equal(selectGames(['README.md']), null);
 assert.equal(smokeModeForEvent('pull_request'), 'fast');

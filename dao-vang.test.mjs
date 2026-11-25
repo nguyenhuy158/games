@@ -1,6 +1,6 @@
 // Chạy chung với logic.test.mjs (được import ở cuối file đó).
 import assert from 'node:assert/strict';
-import { W, H, GROUND, ITEMS, targetOf, teamTarget, genLevel, bagOutcome, valueOf, shopOffer, seeded, createWorld, step, shoot, dynamite, mouseX } from './public/dao-vang/logic.js';
+import { W, H, GROUND, ITEMS, targetOf, teamTarget, genLevel, bagOutcome, valueOf, shopOffer, seeded, createWorld, step, shoot, dynamite, mouseX } from './shared/games/dao-vang/logic.js';
 
 assert.deepEqual([1, 2, 3].map(targetOf), [650, 1195, 2010]);
 assert.ok(targetOf(10) > targetOf(9));

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createSim, step, score, scrollAt, TOP, H, BALL } from './public/nokia/rapid-roll/logic.js';
+import { createSim, step, score, scrollAt, TOP, H, BALL } from './shared/games/nokia/rapid-roll/logic.js';
 
 const run = (sim, secs, keys = {}) => { for (let i = 0; i < secs * 60; i++) step(sim, 1 / 60, keys); return sim; };
 // Cùng hạt giống -> cùng đề

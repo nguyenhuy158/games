@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mergeLine, slide, addTile, newGame, isOver, emptyCells } from './public/2048/logic.js';
+import { mergeLine, slide, addTile, newGame, isOver, emptyCells } from './shared/games/2048/logic.js';
 
 // Gộp: mỗi ô chỉ gộp một lần mỗi lượt, gộp từ phía dồn tới.
 assert.deepEqual(mergeLine([2, 2, 2, 0]), { line: [4, 2, 0, 0], gain: 4 });

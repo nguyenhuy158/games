@@ -1,4 +1,3 @@
-// Nhịp tim của public/room-client.js: ping định kỳ, im quá lâu thì đóng + nối lại + hiện băng "Mất kết nối".
 // Chạy với WebSocket / document giả và đồng hồ giả của node:test.
 import assert from 'node:assert/strict';
 import { mock } from 'node:test';
@@ -27,7 +26,7 @@ define('document', {
 
 mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
 try {
-  const { roomClient, PING, PONG } = await import('./public/room-client.js');
+  const { roomClient, PING, PONG } = await import('./frontend/src/room-client.js');
   const got = [];
   const conn = { on: false, classList: { add() { conn.on = true; }, remove() { conn.on = false; } } };
   const net = roomClient({ path: () => '/api/c4/room/ABCD', query: () => ({ id: 'device-1' }), onMsg: (m) => got.push(m), onLeave: () => {}, conn });

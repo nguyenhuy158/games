@@ -8,7 +8,7 @@ register(`data:text/javascript,${encodeURIComponent(`
     if (spec === 'cloudflare:workers') return { url: 'data:text/javascript,export class DurableObject{constructor(c,e){this.ctx=c;this.env=e}}', shortCircuit: true };
     return next(spec, ctx);
   }`)}`);
-const { http } = await import('./worker/adapters/http.js');
+const { http } = await import('./backend/src/adapters/http.js');
 
 const env = {
   ASSETS: { fetch: async () => new Response('asset') },
