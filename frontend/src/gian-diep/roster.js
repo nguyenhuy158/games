@@ -2,6 +2,7 @@ import { el } from '../dom.js';
 import { t } from '../i18n.js';
 import { NAME_LIMIT, NAME_ERROR, MAX_PLAYERS, parseNames, movePlayer, shufflePlayers, orderedIds } from '../../../shared/games/gian-diep/logic.js';
 import { button, iconButton, indicator, note, confirmAction } from './ui.js';
+import { listbox } from '../ui/listbox.mjs';
 
 const MOVE_UP = -1;
 const MOVE_DOWN = 1;
@@ -78,6 +79,7 @@ export function rosterEditor(players, host, draft, change, rand, onDraft) {
   const mode = el('select', { value: draft.mode, ariaLabel: t('Cách thêm tên', 'How to add names'), onchange: () => { draft.mode = mode.value; } },
     el('option', { value: BULK_MODE.REPLACE, selected: draft.mode === BULK_MODE.REPLACE }, t('Thay cả nhóm · tên đầu làm chủ', 'Replace group · first name hosts')),
     el('option', { value: BULK_MODE.ADD, selected: draft.mode === BULK_MODE.ADD }, t('Thêm vào nhóm', 'Add to group')));
+  const modePicker = listbox(mode);
   function submit() {
     if (draft.editing) { onDraft(); return; }
     const replacing = draft.mode === BULK_MODE.REPLACE;
@@ -134,7 +136,7 @@ export function rosterEditor(players, host, draft, change, rand, onDraft) {
   submitButton.disabled = !!draft.editing;
   root.append(el('div', { className: 'roster-heading' }, el('h3', {}, t('Tên & thứ tự mô tả', 'Names & speaking order')), shuffle),
     el('label', {}, t('Dán danh sách, mỗi dòng một tên', 'Paste names, one per line'), input),
-    el('div', { className: 'roster-add' }, mode, submitButton),
+    el('div', { className: 'roster-add' }, modePicker, submitButton),
     note(t('Enter để thêm · Shift+Enter xuống dòng · Bấm tên để sửa. Chỉ thay cả nhóm mới đổi chủ phòng.', 'Enter to apply · Shift+Enter for a new line · Tap a name to edit. Only replacing the group changes the host.')),
     error, list);
   return root;
