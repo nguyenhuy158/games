@@ -17,7 +17,7 @@ test-results
 .turbo
 .cache
 .eslintcache
-e2e-failure.png
+e2e-failure*.png
 
 # Environment and Cloudflare local dev
 .env
