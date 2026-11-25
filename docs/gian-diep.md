@@ -65,6 +65,7 @@ Lỗi phân biệt `ai_unavailable`, `ai_quota`, `ai_invalid_topic`, `ai_invalid
 Dùng đường tích hợp DOM tĩnh chính thức của [nguyenhuy158/ui-kit](https://github.com/nguyenhuy158/ui-kit), pin commit `978ff7c2444e094342b5005e5a6879c2bae34c9b`:
 
 - `src/dom/feedback.mjs` và `feedback.css` → `frontend/src/ui/`: nút, trạng thái chờ, khóa thao tác và toast dùng chung toàn bộ game; không giữ bản sao riêng cho Gián điệp.
+- `src/ui/Listbox.tsx` (React, chưa có bản `src/dom/`) → chép hành vi sang `frontend/src/ui/listbox.mjs`: `listbox(select)` bọc một `<select>` có sẵn thành nút + danh sách kiểu ui-kit (bàn phím ↑ ↓ Home End Enter Esc, dấu ✓, mục tắt mờ, mở trong dialog không bị cắt). `<select>` vẫn giữ giá trị và phát `change`, nên code gán `.value` / `.disabled` / thay `<option>` không đổi. Dùng ở Gián điệp (cách thêm tên, Cài đặt ván) và Sudoku (độ khó). Khi ui-kit có `src/dom/listbox`, thay file này bằng bản chép.
 - `src/styles/tokens.css` → `frontend/src/gian-diep/ui-kit/tokens.css`: giữ token, base CSS, màu sáng/tối và chuyển động; bỏ `@import tailwindcss`, `@custom-variant`, `@theme` vì trang không biên dịch CSS bằng Tailwind.
 - UI riêng dùng biến `--ui-*`, danh sách thiết lập cuộn bên trong và danh sách trong ván chia trang, khu vực chạm 44px và input 16px. Không tải CSS Nokia, React hay CDN runtime. Không lấy thay đổi chưa commit từ checkout UI kit.
 

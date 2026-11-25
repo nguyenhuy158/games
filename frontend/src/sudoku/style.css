@@ -2,7 +2,7 @@
 .sdk { --w: min(94vw, 480px, calc(100dvh - 250px)); width: var(--w); gap: 10px; }
 .tools { width: 100%; display: flex; gap: 6px; }
 .tools > * { flex: 1; min-width: 0; padding: 7px 6px; }
-.tools select { flex: 1.2; cursor: pointer; }
+.tools > .ui-listbox { flex: 1.2; padding: 0; }
 .badge { min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--ui-radius); background: var(--ui-warning-soft); color: var(--ui-warning-strong); font-size: 11px; display: inline-grid; place-items: center; }
 .badge:empty { display: none; }
 .erase { color: var(--ui-danger-strong); }

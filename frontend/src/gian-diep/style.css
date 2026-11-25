@@ -63,7 +63,7 @@ h3 { font-size: 1rem; }
 .roster-heading h3 { font-size: .875rem; }
 .roster-heading > .ui-button { font-size: .8125rem; padding-inline: .75rem; }
 .roster-add { display: flex; align-items: center; gap: .5rem; min-width: 0; }
-.roster-add select { flex: 1; }
+.roster-add > .ui-listbox { flex: 1; }
 .roster-add > .ui-button { flex: none; padding-inline: .75rem; }
 .roster-list { display: grid; align-content: start; gap: .25rem; max-height: min(30dvh, 18rem); min-height: 3rem; margin: 0; padding: .25rem; list-style: none; overflow: auto; overscroll-behavior: contain; border-block: 1px solid var(--ui-border); scrollbar-gutter: stable; }
 .roster-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .25rem .5rem; min-width: 0; padding-block: .25rem; }

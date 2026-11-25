@@ -5,6 +5,7 @@ import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
 import { beginHistory } from '../history.js';
+import { listbox } from '../ui/listbox.mjs';
 
 // Sudoku một người, chạy hết ở client: chọn ô rồi điền bằng bàn phím hoặc dãy số; ghi chú bút chì (N), xoá, 3 gợi ý mỗi ván,
 // đồng hồ (dừng khi tạm dừng / giải xong). Kỷ lục thời gian theo độ khó lưu trong máy (localStorage 'sudoku.best').
@@ -20,6 +21,7 @@ const readBest = () => { try { return JSON.parse(store.get(BEST_KEY)) ?? {}; } c
 
 const diff = $('#diff');
 diff.append(...DIFFICULTIES.map((d) => el('option', { value: d, textContent: DIFF_NAMES[d] })));
+listbox(diff);
 diff.onchange = () => startNew(diff.value);
 
 const cellEls = Array.from({ length: N * N }, (_, i) => {

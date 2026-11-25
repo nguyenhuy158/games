@@ -1,6 +1,7 @@
 import { el } from '../dom.js';
 import { t, tx } from '../i18n.js';
 import { iconEl } from '../icons.js';
+import { listbox } from '../ui/listbox.mjs';
 import { AI_PACK, DEFAULT_CONFIG, DURATIONS, PACKS, MIN_PLAYERS, MAX_PLAYERS, ROLE, limits, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 
 export const PAGE_SIZE = 4;
@@ -92,7 +93,7 @@ export function settings(count, config, save, generateAi) {
     const select = el('select', { onchange: () => { cfg[key] = key === 'pack' ? select.value : Number(select.value); update(); } });
     selects[key] = select;
     if (items) options(select, items, cfg[key]);
-    fields.append(el('label', {}, indicator(SETTING_ICONS[key], label), select));
+    fields.append(el('label', {}, indicator(SETTING_ICONS[key], label), listbox(select)));
   };
   field('spies', t('Gián điệp', 'Spies'));
   field('whites', t('Mũ Trắng', 'Mr. White'));
