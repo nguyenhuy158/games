@@ -69,7 +69,8 @@ const PATHS = {
   "megaphone-off": "<path d=\"M9.26 9.26 3 11v3l14.14 3.14\"/><path d=\"M21 15.34V6l-7.31 2.03\"/><path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\"/><line x1=\"2\" x2=\"22\" y1=\"2\" y2=\"22\"/>",
   "music": "<path d=\"M9 18V5l12-2v13\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><circle cx=\"18\" cy=\"16\" r=\"3\"/>",
   "undo-2": "<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>",
-  "gauge": "<path d=\"m12 14 4-4\"/><path d=\"M3.34 19a10 10 0 1 1 17.32 0\"/>"
+  "gauge": "<path d=\"m12 14 4-4\"/><path d=\"M3.34 19a10 10 0 1 1 17.32 0\"/>",
+  "languages": "<path d=\"m5 8 6 6\"/><path d=\"m4 14 6-6 2-3\"/><path d=\"M2 5h12\"/><path d=\"M7 2h1\"/><path d=\"m22 22-5-10-5 10\"/><path d=\"M14 18h6\"/>"
 };
 
 export const icon = (name) =>
