@@ -1,6 +1,6 @@
 import { nokiaApp } from '../nokia/room.js';
 import { el, store } from '../dom.js';
-import { t, tx, langToggle } from '../i18n.js';
+import { t, tx } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
 import { AI_PACK, MIN_PLAYERS, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
@@ -148,7 +148,7 @@ function showHome() {
       button(t('Chuyền một máy', 'Pass one device'), startLocalSetup, true, 'smartphone'),
       button(t('Mỗi người một máy', 'One device each'), enterOnline, false, 'users')),
     note(t('Nhận từ bí mật, nói gợi ý, tìm người khác biệt. Chơi trực tiếp hoặc qua cuộc gọi riêng.', 'Get a secret word, give clues and find the odd one out. Talk in person or on your own call.')),
-    el('div', { className: 'entry-footer' }, langToggle(), button(t('Luật chơi', 'Read the rules'), () => help.open(), false, 'info'))));
+    el('div', { className: 'entry-footer' }, button(t('Luật chơi', 'Read the rules'), () => help.open(), false, 'info'))));
 }
 
 function goBack() {

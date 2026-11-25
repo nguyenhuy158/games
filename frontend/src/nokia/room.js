@@ -11,7 +11,7 @@ import { invite } from '../invite.js';
 import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { createLCD, bindKeys } from './lcd.js';
-import { t, tx, langToggle } from '../i18n.js';
+import { t, tx } from '../i18n.js';
 import { roomClient, newRoomCode } from '../room-client.js';
 import { isSoundOn, setSoundOn, onSoundChange } from '../sound.js';
 import { publicSwitch } from '../public-switch.js';
@@ -37,7 +37,7 @@ export function nokiaApp(opt) {
     el('label', {}, t('Tên của bạn', 'Your name'), name),
     el('button', { className: 'primary', textContent: t('Tạo phòng mới', 'Create room'), onclick: () => enter(newRoomCode()) }),
     el('div', { className: 'join' }, codeIn, el('button', { textContent: t('Vào phòng', 'Join'), onclick: joinCode })),
-    el('div', { className: 'lang' }, el('button', { type: 'button', className: 'help-home' }, iconEl('info'), t('Cách chơi', 'How to play')), langToggle()),
+    el('div', { className: 'lang' }, el('button', { type: 'button', className: 'help-home' }, iconEl('info'), t('Cách chơi', 'How to play'))),
   ));
   addReroll(name);
   codeIn.onkeydown = (e) => { if (e.key === 'Enter') joinCode(); };

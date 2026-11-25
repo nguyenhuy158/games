@@ -7,7 +7,7 @@ import { invite } from '../invite.js';
 import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { deviceName, randomName, addReroll, loadDeviceId } from '../names.js';
 import { createPanel } from '../panel.js';
-import { t, tx, langToggle } from '../i18n.js';
+import { t, tx } from '../i18n.js';
 import { roomClient, newRoomCode } from '../room-client.js';
 import { publicSwitch } from '../public-switch.js';
 import { Tape } from '../../../shared/tape.js';
@@ -680,7 +680,7 @@ function menu() {
   };
   code.onkeydown = (e) => { if (e.key === 'Enter') joinCode(); };
   showOverlay(el('div', { className: 'card menu' },
-    el('div', { className: 'row', style: 'justify-content:flex-end' }, helpHome, langToggle()),
+    el('div', { className: 'row', style: 'justify-content:flex-end' }, helpHome),
     spriteEl('goldMiner', 0.8),
     spriteEl('goldBig_0001', 0.5),
     el('p', { className: 'muted', textContent: t('Bấm / chạm (hoặc ↓, Space) để thả móc. Có thuốc nổ thì bấm ↑ để phá vật đang kéo.', 'Click / tap (or ↓, Space) to drop the hook. With dynamite, press ↑ to blow up what you\'re pulling.') }),

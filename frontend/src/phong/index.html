@@ -30,8 +30,8 @@
     .wrap { width: min(760px, 100%); display: grid; gap: 14px; }
     .top { display: flex; align-items: center; gap: 10px; }
     .top h1 { margin: 0; font-size: 24px; flex: 1; display: flex; align-items: center; gap: 8px; }
-    a.back, .lang-toggle { color: var(--text); text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
-    a.back:hover, .lang-toggle:hover { background: var(--ui-surface-muted); }
+    a.back { color: var(--text); text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+    a.back:hover { background: var(--ui-surface-muted); }
     .sub { margin: 0; color: var(--muted); }
     .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
     .chips button { flex: none; font: inherit; font-size: 13px; font-weight: 500; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: var(--ui-radius); padding: 8px 12px; min-height: 36px; cursor: pointer; }
@@ -57,9 +57,9 @@
     .empty { color: var(--muted); font-size: 14px; padding: 16px; border: 1px dashed var(--line); border-radius: var(--ui-radius); text-align: center; }
     .live { width: 8px; height: 8px; border-radius: 50%; background: var(--good); display: inline-block; animation: blink 1.6s infinite; }
     @keyframes blink { 50% { opacity: .3; } }
-    a.back, .lang-toggle, .chips button, .room .go { transition: background-color var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out), transform var(--ui-dur-fast) var(--ui-ease-out); }
-    a.back:active, .lang-toggle:active, .chips button:active { transform: scale(.98); }
-    @media (pointer: coarse) { a.back, .lang-toggle, .chips button, .room .go { min-height: 44px; } }
+    a.back, .chips button, .room .go { transition: background-color var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out), transform var(--ui-dur-fast) var(--ui-ease-out); }
+    a.back:active, .chips button:active { transform: scale(.98); }
+    @media (pointer: coarse) { a.back, .chips button, .room .go { min-height: 44px; } }
     @media (prefers-reduced-motion: reduce) { .live { animation: none; } }
   </style>
 </head>
@@ -68,7 +68,6 @@
     <div class="top">
       <a href="/" class="back" title="Các game khác" data-en-title="Other games"><i data-icon="arrow-left"></i></a>
       <h1><i data-icon="users"></i> <span data-en="Open rooms">Phòng đang mở</span></h1>
-      <span data-lang-toggle></span>
     </div>
     <p class="sub"><span data-en="Public rooms from every game. Hosts can make their room public from its lobby.">Phòng công khai của mọi game. Chủ phòng bật "Công khai" ở sảnh chờ để phòng hiện ở đây.</span></p>
     <div class="chips" id="filter"></div>
