@@ -43,7 +43,19 @@ export function setButtonPending(button, label = "Đang xử lý…") {
   };
 }
 
-export function createToasts(doc = document) {
+export const TOAST_TONE = Object.freeze({
+  INFO: "info",
+  SUCCESS: "success",
+  WARNING: "warning",
+  ERROR: "error",
+});
+const TOAST_TONES = new Set(Object.values(TOAST_TONE));
+const MAX_TOASTS = 3;
+const DEFAULT_DURATION_MS = 4000;
+const ERROR_DURATION_MS = 8000;
+const DEFAULT_CLOSE_LABEL = "Đóng thông báo";
+
+export function createToasts(doc = document, { closeLabel = DEFAULT_CLOSE_LABEL, renderIcon } = {}) {
   const region = doc.createElement("div");
   region.className = "ui-toasts";
   region.setAttribute("aria-live", "polite");
@@ -56,18 +68,18 @@ export function createToasts(doc = document) {
     entry.node.remove();
     entries.delete(key);
   }
-  function show(tone, message, { duration, description = "" } = {}) {
-    const key = `${tone}:${message}:${description}`;
+  function show(tone, message, { duration, description = "", icon = "" } = {}) {
+    const key = `${tone}:${message}:${description}:${icon}`;
     const parent = doc.querySelector("dialog[open]") || doc.body;
     if (region.parentElement !== parent) parent.append(region);
     if (entries.has(key)) return () => dismiss(key);
-    if (entries.size >= 3) dismiss(entries.keys().next().value);
+    if (entries.size >= MAX_TOASTS) dismiss(entries.keys().next().value);
     const node = doc.createElement("div");
     node.className = "ui-toast";
-    node.dataset.tone = ["info", "success", "warning", "error"].includes(tone)
-      ? tone
-      : "info";
+    node.dataset.tone = TOAST_TONES.has(tone) ? tone : TOAST_TONE.INFO;
     node.setAttribute("role", "status");
+    const symbol = renderIcon?.(icon, node.dataset.tone);
+    if (symbol) node.append(symbol);
     const content = doc.createElement("div");
     const title = doc.createElement("strong");
     title.textContent = message;
@@ -80,14 +92,14 @@ export function createToasts(doc = document) {
     const close = doc.createElement("button");
     close.type = "button";
     close.className = "ui-toast-close";
-    close.setAttribute("aria-label", "Đóng thông báo");
+    close.setAttribute("aria-label", closeLabel);
     close.textContent = "×";
     close.addEventListener("click", () => dismiss(key));
     node.append(content, close);
     region.append(node);
     const entry = { node, timer: null };
     entries.set(key, entry);
-    const ms = duration ?? (tone === "error" ? 8000 : 4000);
+    const ms = duration ?? (tone === TOAST_TONE.ERROR ? ERROR_DURATION_MS : DEFAULT_DURATION_MS);
     const schedule = () => {
       clearTimeout(entry.timer);
       if (ms > 0 && !node.matches(":hover, :focus-within"))

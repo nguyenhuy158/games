@@ -1,7 +1,7 @@
 import { SIZES, HIDDEN, FLAG, BOOM, LIVES } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx } from '../i18n.js';
@@ -78,7 +78,7 @@ function leave(msg) {
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
-  if (msg) toast(tx(msg));
+  if (msg) notifications.show(TOAST_TONE.INFO, tx(msg));
 }
 const net = roomClient({
   path: () => `/api/ms/room/${code}`, query: () => ({ id: deviceId, name: myName() }), onMsg, onLeave: leave, conn: $('#conn'),
@@ -113,7 +113,7 @@ function onMsg(m) {
       if (!g) return;
       for (const [i, v] of m.cells) g[i] = v;
       if (m.unit === view() && !quiet) {
-        if (m.boom) { play('boom'); shake(); if (m.by !== deviceId) toast.error(t(`${nameOf(m.by)} đạp mìn!`, `${nameOf(m.by)} hit a mine!`), { icon: 'bomb' }); }
+        if (m.boom) { play('boom'); shake(); if (m.by !== deviceId) notifications.show(TOAST_TONE.ERROR, t(`${nameOf(m.by)} đạp mìn!`, `${nameOf(m.by)} hit a mine!`), { icon: TOAST_ICON.BOMB }); }
         else if (m.by === deviceId && m.cells.some(([, v]) => v >= 0)) play('open');
       }
       break;
@@ -136,7 +136,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else notifications.show(TOAST_TONE.WARNING, t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
@@ -147,7 +147,7 @@ $('#btnSkin').onclick = () => {
   skin = keys[(keys.indexOf(skin) + 1) % keys.length];
   store.set('ms.skin', skin);
   applySkin();
-  toast(t(`Giao diện: ${SKINS[skin]}`, `Theme: ${SKINS[skin]}`));
+  notifications.show(TOAST_TONE.INFO, t(`Giao diện: ${SKINS[skin]}`, `Theme: ${SKINS[skin]}`));
   render();
 };
 $('#btnPeek').onclick = () => { peek = true; render(); };
@@ -157,7 +157,7 @@ $('#face').onclick = () => {
   if (room?.status === 'ended' && room.host === deviceId) send({ t: 'start' });
   else if (room?.status === 'playing' && room.seats.length === 1 && room.seats[0] === deviceId) send({ t: 'restart' });
 };
-$('#btnFlag').onclick = () => { flagMode = !flagMode; $('#btnFlag').classList.toggle('on', flagMode); toast(flagMode ? t('Chạm để cắm cờ', 'Tap to flag') : t('Chạm để mở ô', 'Tap to open'), { icon: 'flag' }); };
+$('#btnFlag').onclick = () => { flagMode = !flagMode; $('#btnFlag').classList.toggle('on', flagMode); notifications.show(TOAST_TONE.INFO, flagMode ? t('Chạm để cắm cờ', 'Tap to flag') : t('Chạm để mở ô', 'Tap to open'), { icon: TOAST_ICON.FLAG }); };
 for (const b of document.querySelectorAll('#modePick button')) b.onclick = () => send({ t: 'config', mode: b.dataset.mode });
 const SIZE_NAMES = { 'Dễ': 'Easy', 'Vừa': 'Medium', 'Khó': 'Hard' };
 $('#sizePick').replaceChildren(...SIZES.map((z, i) => el('button', {

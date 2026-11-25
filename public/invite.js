@@ -1,6 +1,6 @@
 // Hộp mời vào phòng dùng chung các game: mã QR để quét bằng camera điện thoại + sao chép / chia sẻ link.
 import { icon } from './icons.js';
-import { toast } from './toast.js';
+import { notifications, TOAST_TONE } from './ui/notifications.js';
 import { t } from './i18n.js';
 
 const CSS = `
@@ -42,7 +42,7 @@ export async function invite(link, code) {
   const btn = (html, cls, onclick) => Object.assign(document.createElement('button'), { innerHTML: html, className: cls, onclick });
   const row = box.querySelector('.row');
   row.append(btn(`${icon('copy')} ${t('Sao chép link', 'Copy link')}`, 'primary', async () => {
-    try { await navigator.clipboard.writeText(link); toast.success(t('Đã sao chép link mời', 'Invite link copied')); } catch { toast(link); }
+    try { await navigator.clipboard.writeText(link); notifications.show(TOAST_TONE.SUCCESS, t('Đã sao chép link mời', 'Invite link copied')); } catch { notifications.show(TOAST_TONE.INFO, link); }
   }));
   if (navigator.share) row.append(btn(`${icon('share-2')} ${t('Chia sẻ', 'Share')}`, '', () => navigator.share({ title: t(`Vào phòng ${code}`, `Join room ${code}`), url: link }).catch(() => {})));
   row.append(btn(t('Đóng', 'Close'), '', () => dlg.close()));

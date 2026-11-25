@@ -1,7 +1,7 @@
 import { N, FLEET, shipAt, validFleet } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { t, tx } from '../i18n.js';
 import { roomClient, newRoomCode } from '../room-client.js';
@@ -61,7 +61,7 @@ function leave(msg) {
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
-  if (msg) toast.error(msg);
+  if (msg) notifications.show(TOAST_TONE.ERROR, msg);
 }
 const net = roomClient({
   path: () => `/api/bt/room/${code}`, query: () => ({ id: deviceId, name: myName() }), onMsg, onLeave: leave, conn: $('#conn'),
@@ -93,16 +93,16 @@ function onMsg(m) {
     play(shot.hit ? 'hit' : 'miss');
     if (shot.sunk >= 0) {
       const mine = shot.by !== mySeat() && mySeat();
-      toast(mine ? t(`Tàu ${FLEET[shot.sunk]} ô của bạn bị đánh chìm!`, `Your ${FLEET[shot.sunk]}-cell ship was sunk!`)
-        : t(`Đánh chìm tàu ${FLEET[shot.sunk]} ô!`, `Sunk a ${FLEET[shot.sunk]}-cell ship!`), { icon: 'flame' });
+      notifications.show(TOAST_TONE.INFO, mine ? t(`Tàu ${FLEET[shot.sunk]} ô của bạn bị đánh chìm!`, `Your ${FLEET[shot.sunk]}-cell ship was sunk!`)
+        : t(`Đánh chìm tàu ${FLEET[shot.sunk]} ô!`, `Sunk a ${FLEET[shot.sunk]}-cell ship!`), { icon: TOAST_ICON.FLAME });
     }
   }
   if (was?.status === 'playing' && m.status === 'ended' && !quiet) {
     const seat = mySeat();
     const who = showName(m.names[m.winner - 1]);
-    if (seat === m.winner) { play('win'); toast.success(m.why === 'timeout' ? t('Đối thủ bỏ lượt quá lâu — bạn thắng!', 'Opponent took too long — you win!') : t('Bạn đánh chìm hết tàu — thắng rồi!', 'You sank the whole fleet — you win!'), { icon: 'trophy' }); }
-    else if (seat) { play('lose'); toast.error(m.why === 'timeout' ? t('Bỏ lượt 3 lần — bạn thua', 'Skipped 3 turns — you lose') : t(`${who} thắng`, `${who} wins`)); }
-    else { play('win'); toast(t(`${who} thắng`, `${who} wins`), { icon: 'trophy' }); }
+    if (seat === m.winner) { play('win'); notifications.show(TOAST_TONE.SUCCESS, m.why === 'timeout' ? t('Đối thủ bỏ lượt quá lâu — bạn thắng!', 'Opponent took too long — you win!') : t('Bạn đánh chìm hết tàu — thắng rồi!', 'You sank the whole fleet — you win!'), { icon: TOAST_ICON.TROPHY }); }
+    else if (seat) { play('lose'); notifications.show(TOAST_TONE.ERROR, m.why === 'timeout' ? t('Bỏ lượt 3 lần — bạn thua', 'Skipped 3 turns — you lose') : t(`${who} thắng`, `${who} wins`)); }
+    else { play('win'); notifications.show(TOAST_TONE.INFO, t(`${who} thắng`, `${who} wins`), { icon: TOAST_ICON.TROPHY }); }
   }
   render();
 }
@@ -111,7 +111,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else notifications.show(TOAST_TONE.WARNING, t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
@@ -143,7 +143,7 @@ const isDown = (ship) => ship.length > 1 && ship[1] - ship[0] === N;
 function tryPlace(k, cells) {
   const ships = myFleet().map((s, j) => (j === k ? cells : s));
   if (cells && validFleet(ships)) return send({ t: 'place', ships });
-  toast.warning(t('Không đặt được — tàu phải nằm trong biển và không sát tàu khác', "Can't place there — ship must stay in the sea and not touch another ship"));
+  notifications.show(TOAST_TONE.WARNING, t('Không đặt được — tàu phải nằm trong biển và không sát tàu khác', "Can't place there — ship must stay in the sea and not touch another ship"));
 }
 function rotate(k) {
   if (!canEdit() || k < 0) return;

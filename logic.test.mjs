@@ -138,3 +138,4 @@ await import('./guest-history.test.mjs');
 await import('./http.test.mjs');
 await import('./e2e-selection.test.mjs');
 await import('./spy-ai.test.mjs');
+await import('./feedback.test.mjs');

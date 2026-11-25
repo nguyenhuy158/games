@@ -87,6 +87,11 @@
   overflow-wrap: anywhere;
   pointer-events: auto;
 }
+.ui-toast > svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
 .ui-toast > div {
   flex: 1;
   min-width: 0;

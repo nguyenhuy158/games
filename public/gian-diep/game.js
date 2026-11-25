@@ -5,8 +5,9 @@ import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
 import { AI_PACK, MIN_PLAYERS, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from './logic.js';
 import { HELP } from './help.js';
-import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results, notify } from './ui.js';
-import { createActionGate, setButtonPending } from './ui-kit/feedback.mjs';
+import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results } from './ui.js';
+import { createActionGate, setButtonPending } from '../ui/feedback.mjs';
+import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { rosterDraft, rosterHasDraft, rosterEditor, seatingRoster, orderedPlayers } from './roster.js';
 import { aiPicker, dealAiPair } from './ai.js';
 
@@ -221,7 +222,7 @@ function localAiPicker() {
 
 async function dealLocal() {
   if (localDealing || rosterHasDraft(localRosterDraft) || localGame || localStep !== LOCAL_STEP.SETUP) return;
-  if (!validateSetup(localPlayers.length, localConfig)) { notify(setupWarning(localPlayers.length, localConfig), 'error'); return; }
+  if (!validateSetup(localPlayers.length, localConfig)) { notifications.show(TOAST_TONE.ERROR, setupWarning(localPlayers.length, localConfig)); return; }
   localDealing = true;
   content.inert = true;
   backButton.disabled = true;
@@ -232,7 +233,7 @@ async function dealLocal() {
     const ids = localPlayers.map(({ id, name }) => { localNamesById.set(id, name); return id; });
     localGame = createGame(ids, localConfig, random, Date.now(), pair);
   } catch (error) {
-    notify(error.message, 'error');
+    notifications.show(TOAST_TONE.ERROR, error.message);
     return;
   } finally {
     restore();
@@ -299,7 +300,7 @@ function sendAction(message, actor = mode === MODE.LOCAL ? localHost() : app?.id
   if (mode === MODE.LOCAL) {
     const beforePhase = localGame.phase;
     if (!act(localGame, actor, localHost(), message, localNow())) {
-      notify(t('Lượt đã đổi. Chọn lại thao tác trên màn hình hiện tại.', 'The turn changed. Choose an action from the current screen.'), 'warning');
+      notifications.show(TOAST_TONE.WARNING, t('Lượt đã đổi. Chọn lại thao tác trên màn hình hiện tại.', 'The turn changed. Choose an action from the current screen.'));
       paintLocal();
       return;
     }
@@ -316,7 +317,7 @@ function sendAction(message, actor = mode === MODE.LOCAL ? localHost() : app?.id
   const restore = active?.tagName === 'BUTTON' ? setButtonPending(active, t('Đang gửi…', 'Sending…')) : () => {};
   const timer = setTimeout(() => {
     clearPending();
-    notify(t('Chưa nhận xác nhận. Kiểm tra kết nối và trạng thái trước khi thử lại.', 'No confirmation yet. Check the connection and current state before retrying.'), 'warning');
+    notifications.show(TOAST_TONE.WARNING, t('Chưa nhận xác nhận. Kiểm tra kết nối và trạng thái trước khi thử lại.', 'No confirmation yet. Check the connection and current state before retrying.'));
   }, ACTION_TIMEOUT_MS);
   pendingOnline = { release, restore, timer };
   app.send(message);
@@ -472,7 +473,7 @@ function enterOnline() {
         setConfig({ order: next.map((player) => player.id) });
       } : null;
       box.append(seatingRoster(players, room.host, changeOrder, random));
-      box.append(el('div', { className: 'settings-summary' }, configBadges(cfg), host ? iconButton(t('Cài đặt ván', 'Game settings'), () => settings(room.players.length, cfg, setConfig, () => aiPicker(() => notify(t('Bộ từ AI đã sẵn sàng.', 'AI pack is ready.'), 'success'), { room: new URLSearchParams(location.search).get('r'), deviceId: app.id })), 'gauge') : ''));
+      box.append(el('div', { className: 'settings-summary' }, configBadges(cfg), host ? iconButton(t('Cài đặt ván', 'Game settings'), () => settings(room.players.length, cfg, setConfig, () => aiPicker(() => notifications.show(TOAST_TONE.SUCCESS, t('Bộ từ AI đã sẵn sàng.', 'AI pack is ready.')), { room: new URLSearchParams(location.search).get('r'), deviceId: app.id })), 'gauge') : ''));
     },
     mount(stage) {
       onlineBoard = stage;

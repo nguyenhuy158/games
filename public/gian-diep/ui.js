@@ -2,20 +2,12 @@ import { el } from '../dom.js';
 import { t, tx } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { AI_PACK, DEFAULT_CONFIG, DURATIONS, PACKS, MIN_PLAYERS, MAX_PLAYERS, ROLE, limits, validateSetup } from './logic.js';
-import { createToasts } from './ui-kit/feedback.mjs';
 
 export const PAGE_SIZE = 4;
 const MIN_SPIES = 1;
 const LIGHTNING_SECONDS = 5;
 const SETTING_ICONS = Object.freeze({ spies: 'eye', whites: 'layers', seconds: 'timer', pack: 'grid-3x3' });
 const ROLE_ICONS = Object.freeze({ [ROLE.CIVILIAN]: 'users', [ROLE.SPY]: 'eye', [ROLE.WHITE]: 'layers' });
-const notices = createToasts();
-
-export function notify(message, tone = 'info') {
-  notices.show(tone, message);
-  for (const close of document.querySelectorAll('.ui-toast-close')) close.ariaLabel = t('Đóng thông báo', 'Dismiss notification');
-}
-
 export function button(label, onclick, primary = false, icon) {
   const node = el('button', { type: 'button', className: 'ui-button', ariaLabel: label, onclick }, ...(icon ? [iconEl(icon)] : []), el('span', {}, label));
   if (primary) node.dataset.variant = 'primary';

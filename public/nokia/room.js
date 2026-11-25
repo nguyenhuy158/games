@@ -8,7 +8,7 @@
 // (app.id = 'replay', app.replay = true, app.pov = ghế 1), phím / chạm tắt; app.now() / now của draw theo giờ trong bản ghi.
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { createLCD, bindKeys } from './lcd.js';
 import { t, tx, langToggle } from '../i18n.js';
@@ -90,7 +90,7 @@ export function nokiaApp(opt) {
   // ---------- vào / rời phòng ----------
   function joinCode() {
     const c = codeIn.value.trim().toUpperCase();
-    if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room codes have 4 characters'));
+    if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else notifications.show(TOAST_TONE.WARNING, t('Mã phòng gồm 4 ký tự', 'Room codes have 4 characters'));
   }
   function enter(c) {
     code = c.toUpperCase();
@@ -109,7 +109,7 @@ export function nokiaApp(opt) {
     history.replaceState(null, '', location.pathname);
     roomEl.hidden = true;
     home.hidden = false;
-    if (msg) toast.error(tx(msg));
+    if (msg) notifications.show(TOAST_TONE.ERROR, tx(msg));
   }
   const net = roomClient({
     path: () => `/api/nk/${opt.game}/room/${code}`, query: () => ({ id: deviceId, name: name.value.trim() || deviceName() }), onMsg, onLeave: leave, conn,
@@ -136,8 +136,8 @@ export function nokiaApp(opt) {
     if (m.status === 'playing' && prev?.status !== 'playing') beep(1320, 120);
     if (m.status === 'ended' && prev?.status === 'playing' && !quiet) {
       const me = m.result?.ranks?.find((r) => r.id === deviceId);
-      if (me?.won) { toast.success(t('Bạn thắng!', 'You win!'), { icon: 'trophy' }); beep(1760, 250); }
-      else if (m.result?.ranks?.length > 1) toast(t(`${m.result.ranks[0].name} thắng`, `${m.result.ranks[0].name} wins`), { icon: 'trophy' });
+      if (me?.won) { notifications.show(TOAST_TONE.SUCCESS, t('Bạn thắng!', 'You win!'), { icon: TOAST_ICON.TROPHY }); beep(1760, 250); }
+      else if (m.result?.ranks?.length > 1) notifications.show(TOAST_TONE.INFO, t(`${m.result.ranks[0].name} thắng`, `${m.result.ranks[0].name} wins`), { icon: TOAST_ICON.TROPHY });
     }
     opt.onState?.(m, prev, app);
     if (!quiet) render();
@@ -215,7 +215,7 @@ export function nokiaApp(opt) {
   if (opt.draw) requestAnimationFrame(frame);
 
   const app = {
-    get id() { return deviceId; }, get room() { return room; }, replay: !!rp, lcd, canvas, beep, toast, colorOf,
+    get id() { return deviceId; }, get room() { return room; }, replay: !!rp, lcd, canvas, beep, colorOf,
     // Người mà view đang thể hiện: mình; xem lại thì ghế 1 (server ghi view của người đó).
     get pov() { return rp ? room?.seats[0] ?? deviceId : deviceId; },
     // Toạ độ LCD (0..83, 0..47) của một lần chạm/bấm chuột lên màn hình.

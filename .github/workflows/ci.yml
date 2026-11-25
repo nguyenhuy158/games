@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   check:
-    uses: nguyenhuy158/kit/.github/workflows/check.yml@v0.1.0
+    uses: nguyenhuy158/kit/.github/workflows/check.yml@v0.5.0
     with:
       run-test: true
       run-e2e: false

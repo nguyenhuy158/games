@@ -1,7 +1,7 @@
 import { N, BOX, HINTS, DIFFICULTIES, formatTime, newPuzzle, markConflicts, isFull, isSolved } from './logic.js';
 import { t } from '../i18n.js';
 import { hydrateIcons, icon } from '../icons.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
 import { beginHistory } from '../history.js';
@@ -93,12 +93,12 @@ function checkWin() {
   if (done || !isFull(board) || !isSolved(board)) return;
   done = true;
   historyRun.finish({ score: timer, level: DIFFICULTIES.indexOf(difficulty) + 1, won: true });
-  toast.success(t(`Giải xong trong ${formatTime(timer)}!`, `Puzzle completed in ${formatTime(timer)}!`), { icon: 'party-popper' });
+  notifications.show(TOAST_TONE.SUCCESS, t(`Giải xong trong ${formatTime(timer)}!`, `Puzzle completed in ${formatTime(timer)}!`), { icon: TOAST_ICON.PARTY });
   const best = readBest();
   if (!best[difficulty] || timer < best[difficulty]) {
     best[difficulty] = timer;
     store.set(BEST_KEY, JSON.stringify(best));
-    toast(t('Kỷ lục mới!', 'New best time!'), { icon: 'trophy' });
+    notifications.show(TOAST_TONE.INFO, t('Kỷ lục mới!', 'New best time!'), { icon: TOAST_ICON.TROPHY });
   }
 }
 
