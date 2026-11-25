@@ -58,6 +58,8 @@
     footer { color: var(--muted); font-size: 11px; text-align: center; }
     #account { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
     #account img { width: 28px; height: 28px; border-radius: 50%; }
+    #account span { max-width: min(200px, 40vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #account a { flex: none; }
     #account a, .btn {
       color: var(--text); text-decoration: none; padding: 8px 12px; border-radius: var(--ui-radius); min-height: 36px; font-weight: 500;
       background: var(--panel); border: 1px solid var(--line); display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -139,6 +141,7 @@
       .games { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
       .game { padding: 10px; gap: 6px; }
       .game .thumb { height: 72px; }
+      .thumb.cc { font-size: 30px; gap: 4px; }
       .game > span, .game .tags { display: none; }
       .game b { font-size: 15px; gap: 6px; }
       .game .logo { width: 24px; height: 24px; }
@@ -146,9 +149,9 @@
     .thumb.bt i.s { background: #e8716f; } .thumb.bt i.t { background: #7c83d6; } .thumb.bt i.h { background: #5a6b78; box-shadow: inset 0 0 0 5px #5a6b78, inset 0 0 0 9px #e0312f; }
     /* Thumb game một người (2048, Xếp gạch, Sudoku) và Lô tô: vẽ bằng CSS. */
     .thumb.k2 { background: #faf8ef; display: grid; place-items: center; }
-    .thumb.k2 div { display: grid; grid-template-columns: repeat(4, 30px); grid-auto-rows: 30px; gap: 4px; padding: 5px; border-radius: 8px; background: #bbada0; }
-    .thumb.k2 i { border-radius: 5px; background: #cdc1b4; display: grid; place-items: center; font: 800 12px/1 inherit; font-style: normal; color: #776e65; }
-    .thumb.k2 .a { background: #eee4da; } .thumb.k2 .b { background: #ede0c8; } .thumb.k2 .c { background: #f2b179; color: #fff; } .thumb.k2 .d { background: #f65e3b; color: #fff; } .thumb.k2 .e { background: #edc22e; color: #fff; font-size: 9px; }
+    .thumb.k2 div { display: grid; grid-template-columns: repeat(4, 24px); grid-auto-rows: 24px; gap: 4px; padding: 5px; border-radius: 8px; background: #bbada0; }
+    .thumb.k2 i { border-radius: 5px; background: #cdc1b4; display: grid; place-items: center; font: 800 11px/1 inherit; font-style: normal; color: #776e65; }
+    .thumb.k2 .a { background: #eee4da; } .thumb.k2 .b { background: #ede0c8; } .thumb.k2 .c { background: #f2b179; color: #fff; } .thumb.k2 .d { background: #f65e3b; color: #fff; } .thumb.k2 .e { background: #edc22e; color: #fff; font-size: 8px; }
     .thumb.tt { background: #070d14; display: grid; place-items: center; }
     .thumb.tt div { display: grid; grid-template-columns: repeat(10, 11px); grid-auto-rows: 11px; gap: 1px; }
     .thumb.tt i { border-radius: 2px; }
@@ -162,6 +165,19 @@
     .thumb.lt i { display: grid; place-items: center; border: 1px solid #c9a978; font: 800 10px/1 inherit; font-style: normal; color: #3a1a10; background: #fffaf0; }
     .thumb.lt i:empty { background: repeating-linear-gradient(45deg, #e9c98f 0 3px, #f3dcae 3px 6px); }
     .thumb.lt i.x { background: #2e9e5b; color: #fff; }
+    @media (max-width: 560px) {
+      .thumb.lt div { grid-template-columns: repeat(9, 14px); grid-auto-rows: 14px; border-width: 2px; }
+      .thumb.lt i { font-size: 7px; }
+      .thumb.nk img { width: 60px; height: 60px; }
+      .thumb.bc { grid-template-columns: repeat(3, 28px); gap: 4px; }
+      .thumb.bc img { width: 28px; height: 28px; }
+      .thumb.k2 div { grid-template-columns: repeat(4, 13px); grid-auto-rows: 13px; gap: 2px; padding: 3px; border-radius: 5px; }
+      .thumb.k2 i { border-radius: 3px; font-size: 6px; }
+      .thumb.k2 .e { font-size: 4px; }
+      .thumb.sd div { grid-template-columns: repeat(3, 20px); grid-auto-rows: 20px; border-width: 2px; }
+      .thumb.sd i { font-size: 12px; }
+      .thumb.ct svg { max-height: 100%; }
+    }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
     #lang { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; }
     .lang-toggle { background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: var(--ui-radius); min-height: 36px; padding: 8px 12px; }

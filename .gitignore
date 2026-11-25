@@ -27,4 +27,4 @@ coverage/
 reference
 
 # E2E failure screenshot (e2e/*.mjs)
-e2e-failure.png
+e2e-failure*.png

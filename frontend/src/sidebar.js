@@ -60,9 +60,9 @@ const CSS = `
 #sidebar .sb-settings { position: sticky; bottom: calc(-1 * max(16px, env(safe-area-inset-bottom))); margin: auto -10px calc(-1 * max(16px, env(safe-area-inset-bottom))); padding: 8px 10px max(16px, env(safe-area-inset-bottom)); background: var(--ui-surface); border-top: 1px solid var(--ui-border); }
 #sidebar .sb-settings-btn { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 36px; padding: 6px 10px; border: 0; border-radius: var(--ui-radius); background: none; box-shadow: none; color: inherit; font: inherit; font-weight: 500; text-align: left; cursor: pointer; }
 #sidebar .sb-settings-btn:hover, #sidebar .sb-settings-btn[aria-expanded="true"] { background: var(--ui-surface-muted); }
-#sidebar .sb-panel { position: absolute; left: 10px; right: 10px; bottom: calc(100% - 4px); display: grid; gap: 12px; padding: 12px; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); box-shadow: var(--ui-shadow-lg); }
+#sidebar .sb-panel { position: absolute; left: 10px; right: 10px; bottom: calc(100% - 4px); display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); box-shadow: var(--ui-shadow-lg); }
 #sidebar .sb-panel[hidden] { display: none; }
-#sidebar .sb-row { display: grid; gap: 6px; }
+#sidebar .sb-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
 #sidebar .sb-label { font-size: 12px; font-weight: 700; color: var(--ui-fg-muted); }
 #sidebar .sb-seg { display: flex; gap: 2px; padding: 2px; border-radius: var(--ui-radius); background: var(--ui-surface-muted); }
 #sidebar .sb-seg button { flex: 1; min-height: 32px; padding: 4px 8px; border: 0; border-radius: calc(var(--ui-radius) - 2px); background: none; color: var(--ui-fg-muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }

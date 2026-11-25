@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-failure
-          path: e2e-failure.png
+          path: e2e-failure*.png
           if-no-files-found: ignore
 
   # Sau khi Cloudflare deploy xong commit này (bản trên web mới hơn commit), chạy bot chơi thử mọi game vào web thật.
@@ -104,5 +104,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-prod-failure
-          path: e2e-failure.png
+          path: e2e-failure*.png
           if-no-files-found: ignore

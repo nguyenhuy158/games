@@ -53,7 +53,10 @@ try {
   const checks = [run("node", ["e2e/readonly-smoke.mjs", ...(selection?.routes ?? [])], {
     label: "read-only smoke",
     env: SMOKE_ENV,
-  })];
+  }).then(() => run("node", ["e2e/layout-check.mjs", ...(selection?.routes ?? [])], {
+    label: "layout overflow",
+    env: SMOKE_ENV,
+  }))];
   if (!selection || gameArgs.length) {
     checks.push(run("node", ["scripts/smoke.mjs", BASE, ...gameArgs], {
       label: "game smoke",
