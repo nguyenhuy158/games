@@ -1,8 +1,8 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v57';
+const CACHE = 'games-v58';
 const CORE = [
-  '/ui-kit.css', '/ui/feedback.css', '/ui/feedback.mjs', '/ui/notifications.js',
+  '/ui-kit.css', '/ui/feedback.css', '/ui/feedback.mjs', '/ui/notifications.js', '/sidebar.js', '/logos/hub-192.png',
   '/', '/index.html', '/me.js', '/history.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/nozoom.js', '/bfcache.js', '/public-switch.js', '/room-client.js', '/replay.js', '/shared/tape.js', '/help.js', '/phong/', '/phong/index.html', '/phong/phong.js', '/i18n.js', '/names.js', '/dom.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png', '/favicon.svg', '/favicon-32.png', '/apple-touch-icon.png',
   '/logos/hub.svg', '/logos/pikachu.svg', '/logos/dao-vang.svg', '/logos/do-min.svg', '/logos/bau-cua.svg', '/logos/co-caro.svg', '/logos/noi-4.svg', '/logos/ban-tau.svg',
   '/room.css', '/nokia/nokia.css', '/nokia/room.js', '/nokia/lcd.js',

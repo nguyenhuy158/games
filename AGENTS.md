@@ -142,8 +142,9 @@ assumptions.
 Design UI/UX to fit inside a single viewport by default. Avoid page-level
 scrolling; use compact layouts, tabs, panes, or contained internal lists when
 content can overflow.
-Adding a game: create `frontend/src/<game>/` and `shared/games/<game>/`, add its card to `index.html`,
-add its files to `CORE` in `frontend/src/sw.js` (and bump `CACHE`), add
+Adding a game: create `frontend/src/<game>/` and `shared/games/<game>/`, add its card to `index.html`
+and its link to `GROUPS` in `frontend/src/sidebar.js`, load `<script type="module" src="/sidebar.js">`
+in the page `<head>`, add its files to `CORE` in `frontend/src/sw.js` (and bump `CACHE`), add
 `<game>.test.mjs` and import it from `logic.test.mjs`. Every game needs a "Cách chơi"
 dialog: `mountHelp()` from `frontend/src/help.js` (nokiaApp games pass `help: { vi, en }`);
 `pnpm e2e` fails if a game page has no help button / content.
