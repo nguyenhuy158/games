@@ -2,6 +2,7 @@
 // ngũ cung + bass, trống kick / snare / hi-hat tạo từ dao động và nhiễu. Thêm tiếng trống mỗi số hô, kèn mừng khi KINH.
 // Âm lượng 0–3 (0 = tắt) lưu localStorage; nhạc tự hạ còn ~25% khi người hô đang đọc số.
 import { store } from '../dom.js';
+import { isSoundOn, onSoundChange } from '../sound.js';
 
 const KEY = 'loto.music';
 export const LEVELS = [0, 0.35, 0.65, 1];
@@ -76,7 +77,8 @@ export function createMusic() {
       at += STEP;
     }
   };
-  return {
+  const audible = () => level && isSoundOn();
+  const api = {
     get level() { return level; },
     set level(v) {
       level = v;
@@ -85,9 +87,9 @@ export function createMusic() {
       if (!v) this.stop();
     },
     // Gọi từ lần chạm của người dùng để trình duyệt cho phép phát.
-    unlock() { if (level) ensure(); },
+    unlock() { if (audible()) ensure(); },
     start() {
-      if (playing || !level || !ensure() || ctx.state !== 'running') return;
+      if (playing || !audible() || !ensure() || ctx.state !== 'running') return;
       playing = true;
       step = 0;
       at = ctx.currentTime + 0.05;
@@ -103,7 +105,7 @@ export function createMusic() {
     duck(on) { if (bus) bus.gain.setTargetAtTime(on ? PEAK * DUCK : PEAK, ctx.currentTime, 0.08); },
     // Tiếng trống mỗi số hô.
     drum() {
-      if (!level || !ensure()) return;
+      if (!audible() || !ensure()) return;
       const t = ctx.currentTime + 0.01;
       kick(master, t, 0.6);
       tone(master, t, 110, 0.35, 'sine', 0.5, 70);
@@ -111,7 +113,7 @@ export function createMusic() {
     },
     // Kèn mừng KINH: arpeggio Đô trưởng đi lên + hồi trống.
     fanfare() {
-      if (!level || !ensure()) return;
+      if (!audible() || !ensure()) return;
       const t = ctx.currentTime + 0.02;
       [72, 76, 79, 84].forEach((m, i) => { tone(master, t + i * 0.12, hz(m), i === 3 ? 0.7 : 0.16, 'square', 0.12); });
       tone(master, t + 0.36, hz(88), 0.7, 'triangle', 0.1);
@@ -119,4 +121,6 @@ export function createMusic() {
       kick(master, t + 0.36, 0.8);
     },
   };
+  onSoundChange(() => { if (!isSoundOn()) api.stop(); });
+  return api;
 }

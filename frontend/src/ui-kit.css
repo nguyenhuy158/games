@@ -40,6 +40,35 @@
   --ui-shadow-xl: 0 0 8px rgb(0 0 0 / 24%), 0 14px 28px rgb(0 0 0 / 28%);
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ui-bg: oklch(99% 0.005 300);
+  --ui-surface: oklch(100% 0 0);
+  --ui-surface-muted: oklch(97% 0.004 280);
+  --ui-border: oklch(90% 0.006 280);
+  --ui-fg: oklch(22% 0.01 280);
+  --ui-fg-muted: oklch(50% 0.015 280);
+  --ui-primary: oklch(53% 0.23 300);
+  --ui-primary-hover: oklch(47% 0.23 300);
+  --ui-primary-fg: oklch(100% 0 0);
+  --ui-primary-soft: oklch(96% 0.03 300);
+  --ui-success: oklch(58% 0.15 155);
+  --ui-success-soft: oklch(96% 0.04 155);
+  --ui-success-strong: oklch(45% 0.13 155);
+  --ui-warning: oklch(70% 0.16 75);
+  --ui-warning-soft: oklch(96% 0.05 75);
+  --ui-warning-strong: oklch(47% 0.12 65);
+  --ui-danger: oklch(58% 0.2 20);
+  --ui-danger-soft: oklch(96% 0.03 20);
+  --ui-danger-strong: oklch(48% 0.19 20);
+  --ui-danger-fg: oklch(100% 0 0);
+  --ui-ring: oklch(53% 0.23 300 / 35%);
+  --ui-shadow-sm: 0 0 2px rgb(0 0 0 / 12%), 0 2px 4px rgb(0 0 0 / 14%);
+  --ui-shadow-md: 0 0 2px rgb(0 0 0 / 12%), 0 4px 8px rgb(0 0 0 / 14%);
+  --ui-shadow-lg: 0 0 2px rgb(0 0 0 / 12%), 0 8px 16px rgb(0 0 0 / 14%);
+  --ui-shadow-xl: 0 0 8px rgb(0 0 0 / 12%), 0 14px 28px rgb(0 0 0 / 14%);
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;

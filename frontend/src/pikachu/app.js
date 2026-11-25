@@ -10,6 +10,7 @@ import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
+import { isSoundOn, setSoundOn, onSoundChange } from '../sound.js';
 
 hydrateIcons();
 
@@ -60,7 +61,7 @@ const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '—';
 const unitName = (uid) => (uid === 'all' ? t('Cả phòng', 'Whole room') : uid === 'A' || uid === 'B' ? t(`Đội ${uid}`, `Team ${uid}`) : nameOf(uid));
 
 // ---------- âm thanh ----------
-let soundOn = store.get('pk.sound') !== '0';
+let soundOn = isSoundOn();
 const SOUNDS = { select: 'sound2', match: 'sound5', miss: 'sound1', start: 'sound4' };
 const audio = Object.fromEntries(Object.entries(SOUNDS).map(([k, f]) => [k, new Audio(`sound/${f}.mp3`)]));
 function play(k) {
@@ -69,7 +70,8 @@ function play(k) {
   audio[k].play().catch(() => {});
 }
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
-$('#btnSound').onclick = () => { soundOn = !soundOn; store.set('pk.sound', soundOn ? '1' : '0'); renderSound(); };
+$('#btnSound').onclick = () => setSoundOn(!soundOn);
+onSoundChange(() => { soundOn = isSoundOn(); renderSound(); });
 renderSound();
 
 // ---------- vào / rời phòng ----------
