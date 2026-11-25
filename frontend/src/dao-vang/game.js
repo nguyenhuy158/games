@@ -15,6 +15,7 @@ import { replayParam, playReplay, replayLinks, uploadReplay } from '../replay.js
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
 import { beginHistory } from '../history.js';
+import { isSoundOn, setSoundOn, onSoundChange } from '../sound.js';
 
 hydrateIcons();
 const HISTORY_GAME = 'dao-vang';
@@ -75,7 +76,7 @@ const ready = Promise.all([
   loaded(bgImg(1)),
 ]);
 
-let soundOn = store.get('dv.sound') !== '0';
+let soundOn = isSoundOn();
 let muted = false; // tua bản xem lại: nạp nhanh từ đầu thì im
 // preload none: ~100KB âm thanh không giành băng thông với atlas; nạp sau khi ảnh xong (await ready).
 const SND = Object.fromEntries(['boom', 'down', 'goal', 'hvBad', 'hvCool', 'hvGood', 'scoreAdd', 'up', 'upfinish', 'win']
@@ -89,7 +90,8 @@ function play(n) {
 }
 const stop = (n) => SND[n].pause();
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
-$('#btnSound').onclick = () => { soundOn = !soundOn; store.set('dv.sound', soundOn ? '1' : '0'); if (!soundOn) stop('up'); renderSound(); };
+$('#btnSound').onclick = () => setSoundOn(!soundOn);
+onSoundChange(() => { soundOn = isSoundOn(); if (!soundOn) stop('up'); renderSound(); });
 renderSound();
 
 // Khung trong atlas dùng làm ảnh CSS (tiệm, menu). Nền tính theo % + aspect-ratio nên khung co theo

@@ -93,6 +93,12 @@ UI: no emoji in the interface. Icons come from lucide via `frontend/src/icons.js
 bilingual: `t('vi', 'en')` in JS, `data-en*` attributes in HTML, `['vi', 'en']`
 pairs from the server (see `frontend/src/i18n.js`).
 
+Settings live in the sidebar menu (`frontend/src/sidebar.js`) and apply to every game: sound is one
+switch for the whole site (`isSoundOn` / `setSoundOn` / `onSoundChange` in `frontend/src/sound.js`; a
+game's own speaker button calls the same functions), the light theme is `html[data-theme="light"]`
+(tokens in `frontend/src/ui-kit.css`, set before paint by `frontend/src/theme.js`), and SSO links
+come from `frontend/src/account.js`. New pages load `/theme.js` and `/sidebar.js` in `<head>`.
+
 ## Testing Guidelines
 
 Tests are plain Node scripts using `node:assert/strict`, one file per game at
@@ -143,7 +149,7 @@ Design UI/UX to fit inside a single viewport by default. Avoid page-level
 scrolling; use compact layouts, tabs, panes, or contained internal lists when
 content can overflow.
 Adding a game: create `frontend/src/<game>/` and `shared/games/<game>/`, add its card to `index.html`
-and its link to `GROUPS` in `frontend/src/sidebar.js`, load `<script type="module" src="/sidebar.js">`
+and its link to `GROUPS` in `frontend/src/sidebar.js`, load `/theme.js` and `<script type="module" src="/sidebar.js">`
 in the page `<head>`, add its files to `CORE` in `frontend/src/sw.js` (and bump `CACHE`), add
 `<game>.test.mjs` and import it from `logic.test.mjs`. Every game needs a "Cách chơi"
 dialog: `mountHelp()` from `frontend/src/help.js` (nokiaApp games pass `help: { vi, en }`);

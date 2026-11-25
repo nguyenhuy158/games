@@ -13,6 +13,7 @@ import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { createLCD, bindKeys } from './lcd.js';
 import { t, tx, langToggle } from '../i18n.js';
 import { roomClient, newRoomCode } from '../room-client.js';
+import { isSoundOn, setSoundOn, onSoundChange } from '../sound.js';
 import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { el, store } from '../dom.js';
@@ -71,7 +72,7 @@ export function nokiaApp(opt) {
   const lcd = opt.draw && createLCD(canvas);
 
   // ---------- âm thanh: tiếng bíp kiểu Nokia (WebAudio, không cần file) ----------
-  let soundOn = store.get('nk.sound') !== '0';
+  let soundOn = isSoundOn();
   let audio;
   const beep = (freq = 880, ms = 60, type = 'square') => {
     if (!soundOn || quiet) return;
@@ -84,7 +85,8 @@ export function nokiaApp(opt) {
     } catch {}
   };
   const renderSound = () => { btnSound.innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); };
-  btnSound.onclick = () => { soundOn = !soundOn; store.set('nk.sound', soundOn ? '1' : '0'); renderSound(); };
+  btnSound.onclick = () => setSoundOn(!soundOn);
+  onSoundChange(() => { soundOn = isSoundOn(); renderSound(); });
   renderSound();
 
   // ---------- vào / rời phòng ----------

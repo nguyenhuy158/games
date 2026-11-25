@@ -23,8 +23,12 @@ export function applyStatic(root = document) {
 document.documentElement.lang = lang;
 applyStatic();
 
-// Nút chuyển ngôn ngữ: icon ngôn ngữ, bấm vào trượt ngang ra cờ Việt Nam | cờ Anh (SVG vẽ sẵn, không dùng emoji).
-// Chọn cờ khác thì tải lại trang (giữ ?r=CODE nên vẫn về đúng phòng).
+export function setLang(k) {
+  try { localStorage.setItem('lang', k); } catch {}
+  const u = new URL(location.href);
+  u.searchParams.delete('lang');
+  location.replace(u);
+}
 const FLAGS = {
   vi: '<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#da251d"/><polygon fill="#ffcd00" points="15,4.5 16.35,8.65 20.71,8.65 17.18,11.21 18.53,15.35 15,12.79 11.47,15.35 12.82,11.21 9.29,8.65 13.65,8.65"/></svg>',
   en: '<svg viewBox="0 0 60 30"><clipPath id="ukc"><path d="M30,15h30v15zv15h-30zh-30v-15zv-15h30z"/></clipPath><rect width="60" height="30" fill="#012169"/>'
@@ -69,13 +73,7 @@ export function langToggle() {
   flags.style.cssText = 'display:inline-flex;gap:8px;align-items:center;max-width:0;opacity:0;overflow:hidden;padding:3px 0 3px 2px;transition:max-width var(--ui-dur-fast) var(--ui-ease-out),opacity var(--ui-dur-fast),padding var(--ui-dur-fast)';
   for (const k of ['vi', 'en']) {
     const f = flagButton(k);
-    f.onclick = () => {
-      if (k === lang) return setOpen(false);
-      try { localStorage.setItem('lang', k); } catch {}
-      const u = new URL(location.href);
-      u.searchParams.delete('lang');
-      location.replace(u);
-    };
+    f.onclick = () => (k === lang ? setOpen(false) : setLang(k));
     flags.append(f);
   }
   const setOpen = (open) => {

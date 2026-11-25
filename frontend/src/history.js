@@ -1,7 +1,7 @@
 import { el } from './dom.js';
 import { t } from './i18n.js';
+import { PROFILE_API } from './account.js';
 
-const PROFILE_API = '/api/me';
 const HISTORY_API = '/api/me/history';
 const HISTORY_LINK = '/#me';
 const POST_METHOD = 'POST';

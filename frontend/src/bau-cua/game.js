@@ -9,6 +9,7 @@ import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
+import { isSoundOn, setSoundOn, onSoundChange } from '../sound.js';
 
 hydrateIcons();
 
@@ -52,12 +53,13 @@ const xu = (n) => `${n.toLocaleString(LOCALE)} ${t('xu', 'coins')}`;
 const signed = (n) => (n > 0 ? `+${n.toLocaleString(LOCALE)}` : n.toLocaleString(LOCALE));
 
 // ---------- âm thanh (dùng lại bộ âm của Pikachu) ----------
-let soundOn = store.get('bc.sound') !== '0';
+let soundOn = isSoundOn();
 const SND = Object.fromEntries(Object.entries({ chip: 'sound2', shake: 'sound4', win: 'sound5', lose: 'sound1' })
   .map(([k, f]) => [k, new Audio(`../pikachu/sound/${f}.mp3`)]));
 function play(k) { if (!soundOn || quiet) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
-$('#btnSound').onclick = () => { soundOn = !soundOn; store.set('bc.sound', soundOn ? '1' : '0'); renderSound(); };
+$('#btnSound').onclick = () => setSoundOn(!soundOn);
+onSoundChange(() => { soundOn = isSoundOn(); renderSound(); });
 renderSound();
 
 // ---------- vào / rời phòng ----------

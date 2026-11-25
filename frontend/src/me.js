@@ -3,11 +3,10 @@ import { iconEl, hydrateIcons } from './icons.js';
 import { t, en } from './i18n.js';
 import { replayLinks } from './replay.js';
 import { $, el } from './dom.js';
+import { PROFILE_API, signInHref, signOutHref } from './account.js';
 
 hydrateIcons();
 
-const SSO = 'https://auth.huyab.cfd';
-const PROFILE_API = '/api/me';
 const HISTORY_API = '/api/me/history';
 const CLAIM_API = '/api/me/history/claim';
 const HISTORY_PAGE_SIZE = 30;
@@ -28,7 +27,6 @@ Object.assign(GAMES, { '2048': '2048', tetris: t('Xếp gạch', 'Tetris'), sudo
 const MODES = en
   ? { coop: 'Co-op', race: 'Race', team: 'Team 2v2', versus: 'Gold rush', solo: 'Solo', rotate: 'Rotating dealer', house: 'Bot dealer', pvp: 'PvP', bot: 'Vs bot', multi: 'Multiplayer' }
   : { coop: 'Chơi chung', race: 'Đua', team: 'Đội 2v2', versus: 'Tranh vàng', solo: 'Một mình', rotate: 'Xoay cái', house: 'Máy làm cái', pvp: 'Đối kháng', bot: 'Với máy', multi: 'Nhiều người' };
-const back = () => encodeURIComponent(location.origin + '/');
 const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 // Điểm hiển thị theo game: Đào Vàng = tiền, Dò mìn = thời gian (giây), còn lại = điểm.
 const moves = (v) => t(`${v} nước`, `${v} moves`);
@@ -64,7 +62,7 @@ async function readJSON(url, options = {}) {
   return response.json();
 }
 
-const signInLink = () => el('a', { className: 'primary', href: `${SSO}/login?redirect_uri=${back()}`, textContent: t('Đăng nhập Google', 'Sign in with Google') });
+const signInLink = () => el('a', { className: 'primary', href: signInHref(), textContent: t('Đăng nhập Google', 'Sign in with Google') });
 let loading = false;
 let oldest = 0;
 let historyLoading = false;
@@ -85,7 +83,7 @@ function renderAccount(user) {
   acc.replaceChildren(
     user.picture ? el('img', { src: user.picture, alt: '', referrerPolicy: 'no-referrer' }) : '',
     el('span', { textContent: user.name }),
-    el('a', { href: `${SSO}/logout?redirect_uri=${back()}`, textContent: t('Đăng xuất', 'Sign out') }),
+    el('a', { href: signOutHref(), textContent: t('Đăng xuất', 'Sign out') }),
   );
   $('#meNotice').textContent = t('Lịch sử và thành tích của tài khoản đang đăng nhập.', 'History and stats for your signed-in account.');
 }

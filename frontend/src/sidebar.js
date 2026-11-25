@@ -1,12 +1,21 @@
-// Sidebar điều hướng dùng chung: màn rộng thì cố định bên trái, màn hẹp thì thành ngăn kéo.
-// Màn hẹp mở ngăn kéo bằng các link về trang chủ (nút ← của mỗi game), vì ngăn kéo có sẵn link Trang chủ.
-import { t } from './i18n.js';
+import { t, lang, setLang } from './i18n.js';
 import { iconEl } from './icons.js';
+import { el, store } from './dom.js';
+import { isSoundOn, setSoundOn, onSoundChange } from './sound.js';
+import { PROFILE_API, signInHref, signOutHref } from './account.js';
 
 const WIDE_QUERY = '(min-width: 1024px)';
 const SIDEBAR_WIDTH = '232px';
 const HOME = '/';
 const ROOMS = '/phong/';
+const THEME_KEY = 'theme';
+const SPY_THEME_KEY = 'gian-diep.theme';
+const SPY_PATH = '/gian-diep/';
+const DARK = 'dark';
+const LIGHT = 'light';
+const SOUND_ON = 'on';
+const SOUND_OFF = 'off';
+const SETTINGS_ID = 'sbSettings';
 const GROUPS = [
   { icon: 'swords', vi: 'Cờ & đối kháng', en: 'Board & duel', games: [
     ['/co-caro/', 'co-caro', 'Cờ caro', 'Gomoku'], ['/noi-4/', 'noi-4', 'Nối 4', 'Connect 4'], ['/ban-tau/', 'ban-tau', 'Bắn tàu', 'Battleship'],
@@ -48,6 +57,23 @@ const CSS = `
   @media (pointer: coarse) { #sidebar a { min-height: 44px; } }
 }
 @media (prefers-reduced-motion: reduce) { #sidebar { transition: none !important; } }
+#sidebar .sb-settings { position: sticky; bottom: calc(-1 * max(16px, env(safe-area-inset-bottom))); margin: auto -10px calc(-1 * max(16px, env(safe-area-inset-bottom))); padding: 8px 10px max(16px, env(safe-area-inset-bottom)); background: var(--ui-surface); border-top: 1px solid var(--ui-border); }
+#sidebar .sb-settings-btn { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 36px; padding: 6px 10px; border: 0; border-radius: var(--ui-radius); background: none; box-shadow: none; color: inherit; font: inherit; font-weight: 500; text-align: left; cursor: pointer; }
+#sidebar .sb-settings-btn:hover, #sidebar .sb-settings-btn[aria-expanded="true"] { background: var(--ui-surface-muted); }
+#sidebar .sb-panel { position: absolute; left: 10px; right: 10px; bottom: calc(100% - 4px); display: grid; gap: 12px; padding: 12px; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); box-shadow: var(--ui-shadow-lg); }
+#sidebar .sb-panel[hidden] { display: none; }
+#sidebar .sb-row { display: grid; gap: 6px; }
+#sidebar .sb-label { font-size: 12px; font-weight: 700; color: var(--ui-fg-muted); }
+#sidebar .sb-seg { display: flex; gap: 2px; padding: 2px; border-radius: var(--ui-radius); background: var(--ui-surface-muted); }
+#sidebar .sb-seg button { flex: 1; min-height: 32px; padding: 4px 8px; border: 0; border-radius: calc(var(--ui-radius) - 2px); background: none; color: var(--ui-fg-muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+#sidebar .sb-seg button[aria-pressed="true"] { background: var(--ui-surface); color: var(--ui-fg); box-shadow: var(--ui-shadow-sm); }
+#sidebar .sb-account { display: flex; align-items: center; gap: 8px; min-height: 32px; font-size: 13px; }
+#sidebar .sb-account img { width: 28px; height: 28px; border-radius: 50%; }
+#sidebar .sb-account b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sidebar .sb-account a { min-height: 32px; padding: 4px 10px; border: 1px solid var(--ui-border); font-size: 13px; }
+#sidebar .sb-account a.sb-primary { flex: 1; justify-content: center; border-color: var(--ui-primary); background: var(--ui-primary); color: var(--ui-primary-fg); font-weight: 600; }
+#sidebar .sb-muted { color: var(--ui-fg-muted); }
+@media (pointer: coarse) { #sidebar .sb-settings-btn, #sidebar .sb-seg button, #sidebar .sb-account a { min-height: 44px; } }
 `;
 
 const here = location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]*$/, '');
@@ -72,7 +98,69 @@ function build() {
     h.append(iconEl(g.icon), t(g.vi, g.en));
     nav.append(h, ...g.games.map(([href, logo, vi, en]) => link(href, `/logos/${logo}.svg`, t(vi, en))));
   }
+  nav.append(settingsMenu());
   return nav;
+}
+
+function segmented(label, options, current, onPick) {
+  const seg = el('div', { className: 'sb-seg', role: 'group' });
+  seg.setAttribute('aria-label', label);
+  const render = (value) => { for (const b of seg.children) b.setAttribute('aria-pressed', String(b.dataset.value === value)); };
+  for (const [value, text] of options) {
+    const b = el('button', { type: 'button', textContent: text, onclick: () => onPick(value) });
+    b.dataset.value = value;
+    seg.append(b);
+  }
+  render(current);
+  return { row: el('div', { className: 'sb-row' }, el('span', { className: 'sb-label', textContent: label }), seg), render };
+}
+
+async function loadAccount(box) {
+  box.replaceChildren(el('span', { className: 'sb-muted', textContent: t('Đang tải…', 'Loading…') }));
+  try {
+    const res = await fetch(PROFILE_API, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { user } = await res.json();
+    box.replaceChildren(...(user
+      ? [user.picture ? el('img', { src: user.picture, alt: '', referrerPolicy: 'no-referrer' }) : '', el('b', { textContent: user.name }), el('a', { href: signOutHref(), textContent: t('Đăng xuất', 'Sign out') })]
+      : [el('a', { className: 'sb-primary', href: signInHref(), textContent: t('Đăng nhập Google', 'Sign in with Google') })]));
+  } catch {
+    box.replaceChildren(el('span', { className: 'sb-muted', textContent: t('Không tải được tài khoản.', 'Could not load your account.') }));
+  }
+}
+
+function applyTheme(theme) {
+  store.set(THEME_KEY, theme);
+  store.set(SPY_THEME_KEY, theme);
+  if (theme === LIGHT) document.documentElement.dataset.theme = LIGHT;
+  else delete document.documentElement.dataset.theme;
+  if (location.pathname.startsWith(SPY_PATH)) location.reload();
+}
+
+function settingsMenu() {
+  const button = el('button', { type: 'button', className: 'sb-settings-btn' }, iconEl('settings'), t('Cài đặt', 'Settings'));
+  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-controls', SETTINGS_ID);
+  const language = segmented(t('Ngôn ngữ', 'Language'), [['vi', 'Tiếng Việt'], ['en', 'English']], lang, (v) => { if (v !== lang) setLang(v); });
+  const theme = segmented(t('Giao diện', 'Theme'), [[DARK, t('Tối', 'Dark')], [LIGHT, t('Sáng', 'Light')]], store.get(THEME_KEY) === LIGHT ? LIGHT : DARK, (v) => { applyTheme(v); theme.render(v); });
+  const sound = segmented(t('Âm thanh', 'Sound'), [[SOUND_ON, t('Bật', 'On')], [SOUND_OFF, t('Tắt', 'Off')]], isSoundOn() ? SOUND_ON : SOUND_OFF, (v) => setSoundOn(v === SOUND_ON));
+  onSoundChange(() => sound.render(isSoundOn() ? SOUND_ON : SOUND_OFF));
+  const account = el('div', { className: 'sb-account' });
+  const panel = el('div', { id: SETTINGS_ID, className: 'sb-panel', hidden: true }, language.row, theme.row, sound.row,
+    el('div', { className: 'sb-row' }, el('span', { className: 'sb-label', textContent: t('Tài khoản', 'Account') }), account));
+  panel.setAttribute('role', 'group');
+  panel.setAttribute('aria-label', t('Cài đặt', 'Settings'));
+  const box = el('div', { className: 'sb-settings' }, panel, button);
+  let accountLoaded = false;
+  const setPanel = (open) => {
+    panel.hidden = !open;
+    button.setAttribute('aria-expanded', String(open));
+    if (open && !accountLoaded) { accountLoaded = true; loadAccount(account); }
+  };
+  button.onclick = () => setPanel(panel.hidden);
+  document.addEventListener('click', (e) => { if (!box.contains(e.target)) setPanel(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) { setPanel(false); button.focus(); } });
+  return box;
 }
 
 const style = document.createElement('style');

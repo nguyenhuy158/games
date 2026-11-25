@@ -3,6 +3,7 @@
 // Không có giọng cho ngôn ngữ đã chọn thì báo một lần và chỉ hiện chữ. iOS chỉ cho đọc sau một lần chạm: lần chạm đầu tiên
 // đọc một câu rỗng để mở khoá.
 import { store } from '../dom.js';
+import { isSoundOn } from '../sound.js';
 
 const KEY = 'loto.voice';
 export const VOICE_MODES = ['vi', 'en', 'off'];
@@ -50,7 +51,7 @@ export function createVoice({ lang, onMissing, onSpeaking }) {
     unlock,
     // Đọc câu theo giọng đang chọn; text = { vi, en }.
     speak(text) {
-      if (mode === 'off') return;
+      if (mode === 'off' || !isSoundOn()) return;
       const voice = voiceFor(mode);
       if (!voice) {
         const loading = !synth?.getVoices().length && Date.now() - born < LOAD_MS;

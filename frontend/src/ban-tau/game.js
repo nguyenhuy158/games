@@ -9,6 +9,7 @@ import { publicSwitch } from '../public-switch.js';
 import { replayParam, playReplay, replayLinks } from '../replay.js';
 import { $, el, store } from '../dom.js';
 import { mountHelp } from '../help.js';
+import { isSoundOn, setSoundOn, onSoundChange } from '../sound.js';
 
 hydrateIcons();
 
@@ -33,14 +34,15 @@ const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
 const showName = (n) => (n === 'Máy' ? t('Máy', 'Bot') : n);
 
 // ---------- âm thanh (dùng lại âm của Pikachu / Đào Vàng) ----------
-let soundOn = store.get('bt.sound') !== '0';
+let soundOn = isSoundOn();
 const SND = Object.fromEntries(Object.entries({
   miss: '../pikachu/sound/sound2.mp3', hit: '../dao-vang/assets/audio/boom.m4a', start: '../pikachu/sound/sound4.mp3',
   win: '../pikachu/sound/sound5.mp3', lose: '../pikachu/sound/sound1.mp3',
 }).map(([k, f]) => [k, new Audio(f)]));
 function play(k) { if (!soundOn || quiet) return; SND[k].currentTime = 0; SND[k].play().catch(() => {}); }
 function renderSound() { $('#btnSound').innerHTML = icon(soundOn ? 'volume-2' : 'volume-x'); }
-$('#btnSound').onclick = () => { soundOn = !soundOn; store.set('bt.sound', soundOn ? '1' : '0'); renderSound(); };
+$('#btnSound').onclick = () => setSoundOn(!soundOn);
+onSoundChange(() => { soundOn = isSoundOn(); renderSound(); });
 renderSound();
 
 // ---------- vào / rời phòng ----------
