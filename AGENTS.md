@@ -33,7 +33,8 @@ public/                        # Static client (served as-is, no build)
   2048/ tetris/ sudoku/        #   Solo games, run fully in the browser (shared solo.css shell, swipe.js touch helper)
   room-client.js               #   Shared WebSocket room connection (auto-reconnect), newRoomCode()
   dom.js  names.js             #   Shared $/el/store helpers; player name + loadDeviceId() (pk.id)
-  i18n.js  toast.js  icons.js  #   vi/en strings, sonner-like toasts, lucide icons (generated)
+  i18n.js  icons.js            #   vi/en strings, lucide icons (generated)
+  ui/                         #   ui-kit DOM feedback primitives and shared notifications
   invite.js  panel.js  ...     #   QR invite, player panels, replay, public-room switch
   sw.js  manifest.webmanifest  #   PWA (bump CACHE when adding files to CORE)
   vendor/qrcode.mjs            #   Vendored qrcode-generator (MIT)
@@ -57,8 +58,8 @@ reference/                     # Original game assets for study (gitignored)
 - `pnpm dev`: run `wrangler dev` (http://localhost:8787).
 - `pnpm test`: run `node logic.test.mjs`, which imports every other
   `*.test.mjs` file plus `scripts/check-deps.mjs`.
-- `pnpm check`: run `biome lint .` (blocking in CI). `pnpm lint`: run
-  `biome check .` (lint + format check, still reports existing findings).
+- `pnpm check` and `pnpm lint`: run `biome lint .` (blocking in CI).
+  Formatting is explicit via `pnpm format`, not part of the lint gate.
 - `pnpm format`: run `biome format --write .`.
 - `pnpm icons`: regenerate `public/icons.js` from lucide (`scripts/icons.mjs`).
 - `node scripts/smoke.mjs [url] [game ...]`: multiplayer smoke test with bots
@@ -95,7 +96,8 @@ been reformatted. Do not mass-reformat; keep new or touched code lint-clean
 where practical.
 
 UI: no emoji in the interface. Icons come from lucide via `public/icons.js`
-(`iconEl(name)`), toasts from `public/toast.js`. All player-facing text is
+(`iconEl(name)`), toasts from `public/ui/notifications.js` via
+`notifications.show(TOAST_TONE.SUCCESS, message)`. All player-facing text is
 bilingual: `t('vi', 'en')` in JS, `data-en*` attributes in HTML, `['vi', 'en']`
 pairs from the server (see `public/i18n.js`).
 
@@ -128,13 +130,18 @@ deploy to `main` (`smoke-prod`).
 How this repo fits with the other `*.huyab.cfd` repos:
 https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md
 
-- Kit packages (`nguyenhuy158/kit@v0.1.0`): `@huyab/sso` (optional sign-in,
+- Kit packages (`nguyenhuy158/kit@v0.5.0`): `@huyab/sso` (optional sign-in,
   `worker/sso.js`, cookie only), `@huyab/e2e` (`e2e/run.mjs` server
   lifecycle, Chromium lookup), `@huyab/config` (`biome.json`), and CI through
   the reusable `check.yml` workflow.
 - Talks to: `sso` (auth.huyab.cfd login links in `public/me.js` + JWKS).
   No D1, no mailer: data lives in Durable Object SQLite.
 - Called by: nobody; `mytools` pings it for uptime.
+- UI kit uses its official static DOM integration, pinned to
+  `978ff7c2444e094342b5005e5a6879c2bae34c9b`: shared feedback in `public/ui/`,
+  existing dark tokens in `public/ui-kit.css`. Keep the static game shells;
+  React `Screen`, `PagedList` and `ConfirmProvider` are intentionally not
+  adopted. See `docs/gian-diep.md#ui-kit` for the exception and adaptations.
 
 ## Agent-Specific Instructions
 

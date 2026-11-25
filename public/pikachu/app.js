@@ -1,7 +1,7 @@
 import { SIZES, LEVELS, SLIDES, SLIDE_ICON, slide, findPath, findPair } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { createPanel, drawGrid } from '../panel.js';
 import { t, tx } from '../i18n.js';
@@ -96,7 +96,7 @@ function leave(msg) {
   $('#room').hidden = true;
   $('#home').hidden = false;
   loadTop();
-  if (msg) toast(msg);
+  if (msg) notifications.show(TOAST_TONE.INFO, msg);
 }
 
 const net = roomClient({
@@ -110,7 +110,7 @@ $('#btnStart').before(pub.el);
 const rpSlot = el('div');
 $('#btnStart').before(rpSlot);
 let rpShown = null;
-addEventListener('offline', () => toast.error(t('Mất mạng — sẽ tự kết nối lại', 'Offline — will reconnect automatically')));
+addEventListener('offline', () => notifications.show(TOAST_TONE.ERROR, t('Mất mạng — sẽ tự kết nối lại', 'Offline — will reconnect automatically')));
 
 function onMsg(m) {
   switch (m.t) {
@@ -140,8 +140,8 @@ function onMsg(m) {
         banner(t(`Màn ${lv}/${LEVELS}`, `Level ${lv}/${LEVELS}`), SLIDE_ICON[SLIDES[lv - 1]] ? t(`Ô dồn ${SLIDE_ICON[SLIDES[lv - 1]]}`, `Tiles shift ${SLIDE_ICON[SLIDES[lv - 1]]}`) : '');
         play('start');
       }
-      if (m.why === 'stuck' && !muted) toast.warning(t('Hết nước — tự xáo lại, +10 giây', 'No moves — auto-shuffled, +10 seconds'), { icon: 'shuffle' });
-      if (m.why === 'shuffle' && m.by !== deviceId && !muted) toast(t(`${nameOf(m.by)} vừa đổi vị trí`, `${nameOf(m.by)} just shuffled`), { icon: 'shuffle' });
+      if (m.why === 'stuck' && !muted) notifications.show(TOAST_TONE.WARNING, t('Hết nước — tự xáo lại, +10 giây', 'No moves — auto-shuffled, +10 seconds'), { icon: TOAST_ICON.SHUFFLE });
+      if (m.why === 'shuffle' && m.by !== deviceId && !muted) notifications.show(TOAST_TONE.INFO, t(`${nameOf(m.by)} vừa đổi vị trí`, `${nameOf(m.by)} just shuffled`), { icon: TOAST_ICON.SHUFFLE });
       break;
     case 'match': {
       if (m.unit !== view()) return;
@@ -188,7 +188,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else notifications.show(TOAST_TONE.WARNING, t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();

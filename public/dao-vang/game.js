@@ -4,7 +4,7 @@ import {
 } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { deviceName, randomName, addReroll, loadDeviceId } from '../names.js';
 import { createPanel } from '../panel.js';
 import { t, tx, langToggle } from '../i18n.js';
@@ -443,7 +443,7 @@ const net = {
     this.sock?.close();
     stop('up');
     history.replaceState(null, '', location.pathname);
-    if (msg) toast(tx(msg));
+    if (msg) notifications.show(TOAST_TONE.INFO, tx(msg));
     menu();
   },
   send(m) { if (!this.replay) this.sock?.send(m); },
@@ -672,7 +672,7 @@ function menu() {
   const code = el('input', { maxLength: 4, placeholder: t('MÃ PHÒNG', 'ROOM CODE'), className: 'code' });
   const joinCode = () => {
     const c = code.value.trim().toUpperCase();
-    if (!/^[A-Z0-9]{4}$/.test(c)) return toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
+    if (!/^[A-Z0-9]{4}$/.test(c)) return notifications.show(TOAST_TONE.WARNING, t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
     saveName();
     startNet(c);
   };

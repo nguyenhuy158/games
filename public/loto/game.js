@@ -6,6 +6,7 @@ import { penaltyCard, penaltyLobby } from './penalty.js';
 import { t, en } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { el } from '../dom.js';
+import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 
 // Lô tô nhiều người (server: worker/games/loto.js, phòng /api/nk/loto/room/CODE). Màn chơi: số vừa hô + nút hô / tốc độ tự hô
 // của chủ phòng (vạch đếm ngược tới số kế tiếp), bảng 90 số đã hô (đầu ván là chỗ mua tờ: chọn màu, mỗi màu một tờ, đổi tờ
@@ -16,6 +17,7 @@ const PALETTE = [['#c62828', 'đỏ', 'red'], ['#1e8a4a', 'xanh lá', 'green'], 
 const NOT_CALLED_MS = 1500; // nhắc "số này chưa hô" thưa thôi
 const SWIPE_PX = 40; // vuốt ngang tối thiểu để sang tờ khác
 const VE_PACE = 5; // tự hô chậm từ chừng này giây (hoặc hô tay) thì đọc cả câu vè, nhanh hơn thì chỉ đọc số
+const MISSING_VOICE_NOTICE_MS = 5000;
 
 let ball, count, paceEl, callBtn, paceBtn, waitEl, timer, veEl, pop, voiceBtn, musicBtn, musicVol, board, shop, swatches, shopNote, sheet, tabs, ticket, strip, kinhBtn, autoBtn, status, penCard;
 let cells = [], nums = [], sel = 0, seen = -1, nagAt = 0, timerAt = 0, tickTimer = 0;
@@ -24,8 +26,8 @@ const music = createMusic();
 let lastLevel = music.level || 2; // mức âm lượng để bật lại sau khi tắt nhạc
 const voice = createVoice({
   lang: en ? 'en' : 'vi',
-  onMissing: (m) => app.toast.warning(m === 'vi' ? t('Máy không có giọng tiếng Việt — chỉ hiện số trên màn hình', 'No Vietnamese voice on this device — numbers are shown on screen only')
-    : t('Máy không có giọng tiếng Anh — chỉ hiện số trên màn hình', 'No English voice on this device — numbers are shown on screen only'), { icon: 'megaphone-off', duration: 5000 }),
+  onMissing: (m) => notifications.show(TOAST_TONE.WARNING, m === 'vi' ? t('Máy không có giọng tiếng Việt — chỉ hiện số trên màn hình', 'No Vietnamese voice on this device — numbers are shown on screen only')
+    : t('Máy không có giọng tiếng Anh — chỉ hiện số trên màn hình', 'No English voice on this device — numbers are shown on screen only'), { icon: TOAST_ICON.VOICE_OFF, duration: MISSING_VOICE_NOTICE_MS }),
   onSpeaking: (on) => music.duck(on),
 });
 // Trình duyệt chỉ cho phát âm thanh sau lần chạm đầu tiên (giống mở khoá giọng đọc): mở AudioContext rồi bật nhạc nếu đang ván.
@@ -151,7 +153,7 @@ const app = nokiaApp({
     queueMicrotask(syncMusic);
     const wins = m.view?.kinh?.wins ?? [], before = prev?.view?.kinh?.wins.length ?? 0;
     if (m.status !== 'playing' || wins.length <= before) return;
-    for (const w of wins.slice(before)) app.toast.success(t(`${nameOf(m, w.id)} KINH! Đang dò vé…`, `${nameOf(m, w.id)} shouts KINH! Checking…`), { icon: 'party-popper' });
+    for (const w of wins.slice(before)) notifications.show(TOAST_TONE.SUCCESS, t(`${nameOf(m, w.id)} KINH! Đang dò vé…`, `${nameOf(m, w.id)} shouts KINH! Checking…`), { icon: TOAST_ICON.PARTY });
     app.beep(1568, 220, 'triangle');
     music.fanfare();
   },
@@ -166,7 +168,7 @@ function mark(j) {
   const i = sel * CELLS + j, n = numberAt(v.cards, i);
   if (n == null || v.marked.includes(i)) return;
   if (v.called.includes(n)) return app.send({ a: 'mark', i });
-  if (Date.now() - nagAt > NOT_CALLED_MS) { nagAt = Date.now(); app.toast(t(`Số ${n} chưa hô`, `${n} has not been called`), { icon: 'info' }); }
+  if (Date.now() - nagAt > NOT_CALLED_MS) { nagAt = Date.now(); notifications.show(TOAST_TONE.INFO, t(`Số ${n} chưa hô`, `${n} has not been called`), { icon: TOAST_ICON.INFO }); }
 }
 
 // Số mới: bóng số to giữa màn ~1,5 giây + câu vè, tiếng bíp, người hô đọc số (giọng đã chọn).
@@ -191,8 +193,8 @@ function nextVoice() {
   voice.mode = VOICE_MODES[(VOICE_MODES.indexOf(voice.mode) + 1) % VOICE_MODES.length];
   renderVoice();
   voice.speak({ vi: 'Lô tô xin chào bà con!', en: 'Lo to, hello everyone!' });
-  app.toast(voice.mode === 'off' ? t('Tắt giọng đọc số', 'Number voice off') : voice.mode === 'vi' ? t('Đọc số bằng tiếng Việt', 'Numbers read in Vietnamese') : t('Đọc số bằng tiếng Anh', 'Numbers read in English'),
-    { icon: voice.mode === 'off' ? 'megaphone-off' : 'megaphone' });
+  notifications.show(TOAST_TONE.INFO, voice.mode === 'off' ? t('Tắt giọng đọc số', 'Number voice off') : voice.mode === 'vi' ? t('Đọc số bằng tiếng Việt', 'Numbers read in Vietnamese') : t('Đọc số bằng tiếng Anh', 'Numbers read in English'),
+    { icon: voice.mode === 'off' ? TOAST_ICON.VOICE_OFF : TOAST_ICON.VOICE });
 }
 
 function renderVoice() {
@@ -208,7 +210,7 @@ function nextMusic() {
   renderMusic();
   music.unlock();
   syncMusic();
-  app.toast(music.level ? t('Bật nhạc nền', 'Music on') : t('Tắt nhạc nền', 'Music off'), { icon: music.level ? 'music' : 'volume-x' });
+  notifications.show(TOAST_TONE.INFO, music.level ? t('Bật nhạc nền', 'Music on') : t('Tắt nhạc nền', 'Music off'), { icon: music.level ? TOAST_ICON.MUSIC : TOAST_ICON.MUTE });
 }
 
 function renderMusic() {
@@ -237,7 +239,7 @@ function nextPace() {
   if (!v) return;
   const s = PACES[(PACES.indexOf(v.pace ?? 0) + 1) % PACES.length];
   app.send({ a: 'pace', s });
-  app.toast(s ? t(`Tự hô mỗi ${s} giây`, `Auto call every ${s}s`) : t('Tắt tự hô — bấm "Hô số" để hô', 'Auto call off — tap "Call"'), { icon: s ? 'timer' : 'pause' });
+  notifications.show(TOAST_TONE.INFO, s ? t(`Tự hô mỗi ${s} giây`, `Auto call every ${s}s`) : t('Tắt tự hô — bấm "Hô số" để hô', 'Auto call off — tap "Call"'), { icon: s ? TOAST_ICON.TIMER : TOAST_ICON.PAUSE });
 }
 
 // Mua tờ: chạm màu chưa có thì thêm một tờ màu đó (nhảy tới tờ mới), màu đang có thì trả tờ đó; giữ ít nhất một tờ.
@@ -245,8 +247,8 @@ function toggleColor(c) {
   const v = app.room?.view;
   if (!v?.cards || v.called.length) return;
   const cs = v.colors, has = cs.includes(c);
-  if (has && cs.length === 1) return app.toast(t('Phải cầm ít nhất một tờ', 'Keep at least one card'), { icon: 'info' });
-  if (!has && cs.length >= MAX_CARDS) return app.toast(t(`Tối đa ${MAX_CARDS} tờ`, `At most ${MAX_CARDS} cards`), { icon: 'info' });
+  if (has && cs.length === 1) return notifications.show(TOAST_TONE.INFO, t('Phải cầm ít nhất một tờ', 'Keep at least one card'), { icon: TOAST_ICON.INFO });
+  if (!has && cs.length >= MAX_CARDS) return notifications.show(TOAST_TONE.INFO, t(`Tối đa ${MAX_CARDS} tờ`, `At most ${MAX_CARDS} cards`), { icon: TOAST_ICON.INFO });
   const next = has ? cs.filter((x) => x !== c) : [...cs, c];
   sel = has ? Math.max(0, next.indexOf(cs[sel])) : next.length - 1;
   app.send({ a: 'pick', colors: next });

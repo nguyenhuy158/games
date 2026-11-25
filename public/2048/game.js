@@ -1,7 +1,7 @@
 import { CELLS, newGame, slide, addTile, isOver } from './logic.js';
 import { t, en } from '../i18n.js';
 import { hydrateIcons } from '../icons.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { deviceName } from '../names.js';
 import { swipe } from '../swipe.js';
 import { $, el, store } from '../dom.js';
@@ -91,11 +91,11 @@ $('#saveForm').onsubmit = async (e) => {
     saved = true;
     btnUndo.disabled = true;
     store.set('pk.name', name);
-    toast.success(t('Đã lưu điểm thành công!', 'Score saved successfully!'));
+    notifications.show(TOAST_TONE.SUCCESS, t('Đã lưu điểm thành công!', 'Score saved successfully!'));
     renderBoard(await res.json());
   } catch {
     btnSave.disabled = false;
-    toast.error(t('Không lưu được điểm, thử lại nhé', 'Could not save the score, please retry'));
+    notifications.show(TOAST_TONE.ERROR, t('Không lưu được điểm, thử lại nhé', 'Could not save the score, please retry'));
   }
 };
 

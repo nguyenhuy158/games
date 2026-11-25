@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "check": "biome lint .",
-    "lint": "biome check .",
+    "lint": "biome lint .",
     "format": "biome format --write .",
     "test": "node logic.test.mjs",
     "e2e": "node e2e/run.mjs",
@@ -19,13 +19,13 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
-    "@huyab/config": "github:nguyenhuy158/kit#v0.2.0&path:packages/config",
-    "@huyab/e2e": "github:nguyenhuy158/kit#v0.2.0&path:packages/e2e",
+    "@huyab/config": "github:nguyenhuy158/kit#v0.5.0&path:packages/config",
+    "@huyab/e2e": "github:nguyenhuy158/kit#v0.5.0&path:packages/e2e",
     "lucide": "0.468.0",
     "playwright-core": "^1.63.0",
     "wrangler": "^4.106.0"
   },
   "dependencies": {
-    "@huyab/sso": "github:nguyenhuy158/kit#v0.2.0&path:packages/sso"
+    "@huyab/sso": "github:nguyenhuy158/kit#v0.5.0&path:packages/sso"
   }
 }

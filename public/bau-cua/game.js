@@ -1,7 +1,7 @@
 import { SYMBOLS, CHIPS, betTotal } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { t, tx, en } from '../i18n.js';
 import { roomClient, newRoomCode } from '../room-client.js';
@@ -78,7 +78,7 @@ function leave(msg) {
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
-  if (msg) toast(tx(msg));
+  if (msg) notifications.show(TOAST_TONE.INFO, tx(msg));
 }
 const net = roomClient({
   path: () => `/api/bc/room/${code}`, query: () => ({ id: deviceId, name: myName() }), onMsg, onLeave: leave, conn: $('#conn'),
@@ -91,7 +91,7 @@ $('#btnMode').after(pub.el);
 function onMsg(m) {
   if (m.t === 'error') return leave(m.msg);
   if (m.t !== 'state') return;
-  if (room && room.mode !== m.mode && !quiet) toast(m.mode === 'house' ? t('Chủ phòng đổi: máy làm cái, ai cũng được đặt', 'Host switched: the bot is dealer, everyone can bet') : t('Chủ phòng đổi: làm cái xoay vòng', 'Host switched: dealer rotates'), { icon: m.mode === 'house' ? 'bot' : 'crown' });
+  if (room && room.mode !== m.mode && !quiet) notifications.show(TOAST_TONE.INFO, m.mode === 'house' ? t('Chủ phòng đổi: máy làm cái, ai cũng được đặt', 'Host switched: the bot is dealer, everyone can bet') : t('Chủ phòng đổi: làm cái xoay vòng', 'Host switched: dealer rotates'), { icon: m.mode === 'house' ? TOAST_ICON.BOT : TOAST_ICON.CROWN });
   room = m;
   clockOffset = m.now - Date.now();
   // Ván vừa mở bát: lắc bát, hết giờ lắc thì lật bát + báo thắng thua.
@@ -102,7 +102,7 @@ function onMsg(m) {
     setTimeout(() => {
       render();
       const d = m.deltas?.[deviceId];
-      if (d) { play(d > 0 ? 'win' : 'lose'); d > 0 ? toast.success(t(`Bạn ăn ${xu(d)}`, `You won ${xu(d)}`), { icon: 'party-popper' }) : toast.error(t(`Bạn mất ${xu(-d)}`, `You lost ${xu(-d)}`), { icon: 'frown' }); }
+      if (d) { play(d > 0 ? 'win' : 'lose'); d > 0 ? notifications.show(TOAST_TONE.SUCCESS, t(`Bạn ăn ${xu(d)}`, `You won ${xu(d)}`), { icon: TOAST_ICON.PARTY }) : notifications.show(TOAST_TONE.ERROR, t(`Bạn mất ${xu(-d)}`, `You lost ${xu(-d)}`), { icon: TOAST_ICON.FROWN }); }
     }, Math.max(0, wait));
   }
   render();
@@ -112,7 +112,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (!/^[A-Z0-9]{4}$/.test(c)) return toast.warning(t('Mã phòng gồm 4 ký tự', 'Room codes have 4 characters'));
+  if (!/^[A-Z0-9]{4}$/.test(c)) return notifications.show(TOAST_TONE.WARNING, t('Mã phòng gồm 4 ký tự', 'Room codes have 4 characters'));
   enter(c);
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
@@ -139,10 +139,10 @@ $('#board').append(...SYMBOLS.map((s, i) => {
 
 function bet(i) {
   if (!room || rp) return;
-  if (room.phase !== 'bet') return toast(t('Đang mở bát, chờ ván sau nhé', 'Bowl is open — wait for the next round'));
-  if (room.dealer === deviceId) return toast(t('Bạn đang làm cái — ngồi chờ ăn tiền thôi', 'You are the dealer — sit back and collect'), { icon: 'crown' });
+  if (room.phase !== 'bet') return notifications.show(TOAST_TONE.INFO, t('Đang mở bát, chờ ván sau nhé', 'Bowl is open — wait for the next round'));
+  if (room.dealer === deviceId) return notifications.show(TOAST_TONE.INFO, t('Bạn đang làm cái — ngồi chờ ăn tiền thôi', 'You are the dealer — sit back and collect'), { icon: TOAST_ICON.CROWN });
   const left = (me()?.coins ?? 0) - betTotal(room.bets[deviceId]);
-  if (left < chip) return toast.warning(t(`Không đủ xu (còn ${xu(left)})`, `Not enough coins (${xu(left)} left)`));
+  if (left < chip) return notifications.show(TOAST_TONE.WARNING, t(`Không đủ xu (còn ${xu(left)})`, `Not enough coins (${xu(left)} left)`));
   play('chip');
   send({ t: 'bet', s: i, amt: chip });
 }

@@ -1,7 +1,7 @@
 import { SIZES } from './logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
-import { toast } from '../toast.js';
+import { notifications, TOAST_TONE, TOAST_ICON } from '../ui/notifications.js';
 import { deviceName, addReroll, loadDeviceId } from '../names.js';
 import { t, tx } from '../i18n.js';
 import { roomClient, newRoomCode } from '../room-client.js';
@@ -48,7 +48,7 @@ $('#btnSkin').onclick = () => {
   const s = document.body.classList.contains('skin-stone') ? 'paper' : 'stone';
   store.set('cc.skin', s);
   applySkin(s);
-  toast(s === 'stone' ? t('Quân tròn', 'Round pieces') : t('Quân X / O trên giấy', 'Paper X / O pieces'), { icon: 'layers' });
+  notifications.show(TOAST_TONE.INFO, s === 'stone' ? t('Quân tròn', 'Round pieces') : t('Quân X / O trên giấy', 'Paper X / O pieces'), { icon: TOAST_ICON.LAYERS });
 };
 
 // ---------- vào / rời phòng ----------
@@ -69,7 +69,7 @@ function leave(msg) {
   history.replaceState(null, '', location.pathname);
   $('#room').hidden = true;
   $('#home').hidden = false;
-  if (msg) toast.error(tx(msg));
+  if (msg) notifications.show(TOAST_TONE.ERROR, tx(msg));
 }
 const net = roomClient({
   path: () => `/api/cc/room/${code}`, query: () => ({ id: deviceId, name: myName() }), onMsg, onLeave: leave, conn: $('#conn'),
@@ -95,10 +95,10 @@ function onMsg(m) {
   if (!quiet && was?.status === 'playing' && m.status === 'ended') {
     const seat = mySeat();
     const who = m.winner ? botName(m.names[m.winner - 1]) : '';
-    if (!m.winner) toast(t('Hoà — kín bàn rồi!', 'Draw — board is full!'));
-    else if (seat === m.winner) { play('win'); toast.success(m.why === 'timeout' ? t('Đối thủ hết giờ — bạn thắng!', "Opponent ran out of time — you win!") : t('Bạn thắng!', 'You win!'), { icon: 'trophy' }); }
-    else if (seat) { play('lose'); toast.error(m.why === 'timeout' ? t('Hết giờ — bạn thua', 'Out of time — you lose') : t(`${who} thắng`, `${who} wins`)); }
-    else { play('win'); toast(t(`${who} thắng`, `${who} wins`), { icon: 'trophy' }); }
+    if (!m.winner) notifications.show(TOAST_TONE.INFO, t('Hoà — kín bàn rồi!', 'Draw — board is full!'));
+    else if (seat === m.winner) { play('win'); notifications.show(TOAST_TONE.SUCCESS, m.why === 'timeout' ? t('Đối thủ hết giờ — bạn thắng!', "Opponent ran out of time — you win!") : t('Bạn thắng!', 'You win!'), { icon: TOAST_ICON.TROPHY }); }
+    else if (seat) { play('lose'); notifications.show(TOAST_TONE.ERROR, m.why === 'timeout' ? t('Hết giờ — bạn thua', 'Out of time — you lose') : t(`${who} thắng`, `${who} wins`)); }
+    else { play('win'); notifications.show(TOAST_TONE.INFO, t(`${who} thắng`, `${who} wins`), { icon: TOAST_ICON.TROPHY }); }
   }
   render();
 }
@@ -107,7 +107,7 @@ function onMsg(m) {
 $('#btnCreate').onclick = () => enter(newRoomCode());
 $('#btnJoin').onclick = () => {
   const c = $('#code').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else toast.warning(t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
+  if (/^[A-Z0-9]{4}$/.test(c)) enter(c); else notifications.show(TOAST_TONE.WARNING, t('Mã phòng gồm 4 ký tự', 'Room code is 4 characters'));
 };
 $('#code').onkeydown = (e) => { if (e.key === 'Enter') $('#btnJoin').click(); };
 $('#btnLeave').onclick = () => leave();
