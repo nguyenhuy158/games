@@ -18,7 +18,7 @@ pnpm build
 `pnpm dev` phục vụ tại http://localhost:8787. Build ghép HTML/CSS/ES modules và static assets vào `dist/`; Wrangler tự chạy build khi dev/deploy.
 
 ```bash
-node scripts/smoke.mjs http://localhost:8787
+node tests/smoke.mjs http://localhost:8787
 pnpm e2e
 ```
 
@@ -28,6 +28,7 @@ pnpm e2e
 - `backend/src/`: composition root, application, domain và infrastructure adapters.
 - `shared/`: luật game và replay dùng chung client/server/test.
 - `public/`: ảnh, âm thanh, manifest, logo và giấy phép; `index.html` gốc là trang chủ.
+- `tests/`: unit, E2E, smoke và công cụ coverage; các lệnh `pnpm test`, `pnpm e2e`, `pnpm test:coverage` giữ nguyên.
 
 Theo layout của kit v0.5.0. Hexagonal giữ I/O trong adapter; game nhận các port qua `ctx`. Không chuyển sang React hay TypeScript, không đổi URL game/API hoặc dữ liệu Durable Object.
 

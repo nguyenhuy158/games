@@ -179,7 +179,6 @@ async function route(req, env, guest) {
       if (before !== undefined && (!Number.isSafeInteger(before) || before <= 0)) return badRequest();
       return privateJson(await top().historyFor(user?.sub ?? null, guest.id, before));
     }
-    // Bản đang chạy: CI (.github/workflows/ci.yml) chờ timestamp mới hơn commit rồi chạy scripts/smoke.mjs vào web thật.
     if (url.pathname === '/api/version') return Response.json({ id: env.CF_VERSION?.id ?? null, at: env.CF_VERSION?.timestamp ?? null }, { headers: { 'Cache-Control': 'no-store' } });
     if (url.pathname === '/api/fun') {
       const period = url.searchParams.get('period') === 'week' ? 'week' : 'all';

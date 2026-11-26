@@ -12,11 +12,11 @@
     "check": "biome lint .",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "test": "node logic.test.mjs",
-    "test:coverage": "node scripts/coverage.mjs",
-    "e2e": "node e2e/run.mjs",
-    "e2e:prod": "E2E_BASE_URL=https://games.huyab.cfd node e2e/readonly-smoke.mjs && E2E_BASE_URL=https://games.huyab.cfd node e2e/layout-check.mjs",
-    "deploy": "node logic.test.mjs && wrangler deploy",
+    "test": "node tests/unit/logic.test.mjs",
+    "test:coverage": "node tests/coverage.mjs",
+    "e2e": "node tests/e2e/run.mjs",
+    "e2e:prod": "E2E_BASE_URL=https://games.huyab.cfd node tests/e2e/readonly-smoke.mjs && E2E_BASE_URL=https://games.huyab.cfd node tests/e2e/layout-check.mjs",
+    "deploy": "pnpm test && wrangler deploy",
     "icons": "node scripts/icons.mjs"
   },
   "devDependencies": {
