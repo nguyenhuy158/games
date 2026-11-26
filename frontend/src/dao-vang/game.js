@@ -97,7 +97,7 @@ renderSound();
 // Khung trong atlas dùng làm ảnh CSS (tiệm, menu). Nền tính theo % + aspect-ratio nên khung co theo
 // max-width (màn hẹp) mà vẫn đủ hình; fit = cạnh dài nhất tối đa (px).
 const ATLAS_W = 1024, ATLAS_H = 2048;
-function spriteEl(name, scale = 1, fit = Infinity) {
+function spriteEl(name, scale, fit = Infinity) {
   const f = FRAMES[name];
   const s = Math.min(scale, fit / f.w, fit / f.h);
   const d = el('span', { className: 'sprite' });
@@ -136,7 +136,7 @@ function fit() {
 // Theo dõi khung chứa (không chỉ cửa sổ): HUD / bảng điểm hiện ra cũng làm khung đổi cỡ.
 new ResizeObserver(fit).observe($('#stage'));
 
-function draw(name, x, y, { scale = 1, rot = 0, flip = false, anchor = [0.5, 0.5] } = {}) {
+function draw(name, x, y, { scale = 1, rot = 0, flip = false, anchor = [0.5, 0.5] }) {
   const f = FRAMES[name];
   if (!f) return;
   ctx.save();

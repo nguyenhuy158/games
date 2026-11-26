@@ -90,7 +90,7 @@ const app = nokiaApp({
     if (mine && sec > 0 && !sim.dead && !sim.finished) {
       while (sim.t + 1 / 60 <= sec) {
         step(sim, 1 / 60, keys);
-        for (const e of sim.events) app.beep({ jump: 900, ring: 1500, life: 1700, hurt: 200, dead: 120, finish: 1900 }[e] ?? 600, e === 'finish' || e === 'dead' ? 350 : 50);
+        for (const e of sim.events) app.beep({ jump: 900, ring: 1500, life: 1700, hurt: 200, dead: 120, finish: 1900 }[e], e === 'finish' || e === 'dead' ? 350 : 50);
         if (sim.dead || sim.finished) break;
       }
       if (now - lastSent > 200) { lastSent = now; app.send({ at: [sim.x, sim.y], score: timeScore(sim) }); }

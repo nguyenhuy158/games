@@ -9,7 +9,7 @@ const REGISTER = fileURLToPath(new URL("./register-coverage.mjs", import.meta.ur
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const OUTPUT_DIRECTORIES = [".nyc_output", "coverage", ".coverage-sources"];
 const NODE_OPTIONS = [process.env.NODE_OPTIONS, "--import", JSON.stringify(REGISTER)].filter(Boolean).join(" ");
-const BROWSER_SUITES = ["readonly-smoke", "round-evidence", "core-coverage", "board-coverage", "solo-social-coverage"];
+const BROWSER_SUITES = ["readonly-smoke", "round-evidence", "core-coverage", "board-coverage", "solo-social-coverage", "nokia-gap-coverage"];
 const COVERAGE_ENABLED = "1";
 const EXIT_FAILURE = 1;
 

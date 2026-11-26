@@ -1001,8 +1001,13 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
   await page.keyboard.press('Escape');
   await page.waitForSelector('.secret-dialog', { state: 'detached' });
+  const startClues = await page.getByRole('button', { name: 'Start giving clues', exact: true }).elementHandle();
   await clickName(page, 'Start giving clues');
   assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'next' });
+  const sentBeforeDuplicate = await page.evaluate(() => window.coverageTransport.sent.length);
+  assert.equal(await startClues.isDisabled(), true);
+  await startClues.dispatchEvent('click');
+  assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sentBeforeDuplicate);
   await clickName(page, 'Your private card');
   await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
   await page.evaluate(() => {
@@ -1016,6 +1021,10 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   assert.equal(await page.locator('.secret-word').count(), 0);
   await page.clock.fastForward(SECOND_MS * 7);
   await textIncludes(page, 'body', 'No confirmation yet');
+  assert.equal(await startClues.isEnabled(), true);
+  await clickName(page, 'Start giving clues');
+  assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sentBeforeDuplicate + 1);
+  assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'next' });
   for (const phase of ['describe', 'discuss', 'countdown', 'tie']) {
     if (phase === 'describe') {
       await clickName(page, 'Your private card');
@@ -1595,12 +1604,14 @@ await scenario('werewolf replay rewind tolerates a hide click before the first r
 
 await scenario('spy local normalized-empty guess is rejected without consuming the valid guess', '/gian-diep/?lang=en', async (page) => {
   const COMBINING_ACUTE = '\u0301';
-  const PLAYER_COUNT = 4;
+  const PLAYER_COUNT = 6;
   await clickName(page, 'Pass one device');
-  await page.getByRole('textbox', { name: 'Player names, one per line' }).fill('Ada\nBinh\nChi\nDung');
+  await page.getByRole('textbox', { name: 'Player names, one per line' }).fill('Ada\nBinh\nChi\nDung\nEva\nFong');
   await clickName(page, 'Apply names');
   await clickName(page, 'Settings');
+  assert.equal(await page.locator('dialog.spy-dialog select').nth(1).locator('option[value="1"]').isEnabled(), true);
   await page.locator('dialog.spy-dialog select').nth(1).evaluate((node) => { node.value = '1'; node.dispatchEvent(new Event('change')); });
+  assert.equal(await page.getByRole('button', { name: 'Save settings', exact: true }).isEnabled(), true);
   await clickName(page, 'Save settings', page.locator('dialog[open]'));
   await clickName(page, 'Deal secret words');
   const cards = [];
@@ -1616,7 +1627,7 @@ await scenario('spy local normalized-empty guess is rejected without consuming t
   assert(civilian);
   await clickName(page, 'Start giving clues');
   await clickName(page, 'Eliminate directly');
-  await clickName(page, white.player, page.locator('dialog[open]'));
+  await choosePaginated(page, white.player);
   await clickName(page, 'Confirm', page.locator('dialog[open]'));
   await clickName(page, 'Enter your guess');
   const phase = await page.locator('.phase-panel h2').textContent();
@@ -1637,6 +1648,148 @@ await scenario('spy local normalized-empty guess is rejected without consuming t
   assert.equal(await page.locator('.word-pair dd').first().textContent(), civilian.word);
   assert.equal(await page.locator('.guess-form').count(), 0);
 }, { clock: true });
+
+await scenario('loto incomplete server snapshot ignores controls and recovers with the next view', '/loto/?r=TEST&lang=en', async (page) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const card = await page.evaluate(async () => (await import('/shared/games/loto/logic.js')).newCard());
+  const view = { cards: [card], colors: [0], called: [], marked: [], auto: false, best: {}, pen: {} };
+  await state(page, room(view));
+  await textIncludes(page, '.pace', 'Off');
+  await page.locator('.pace').click();
+  assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'pace', s: 3 });
+  const ticket = await page.locator('.ticket').innerText();
+  const cell = page.locator('.cell:not(.blank)').first();
+  const number = Number(await cell.textContent());
+  const index = await cell.evaluate((node) => [...node.parentElement.children].indexOf(node));
+  await state(page, room(null));
+  const sent = await page.evaluate(() => window.coverageTransport.sent.length);
+  await page.locator('.pace').click();
+  await page.locator('.swatches button').nth(1).click();
+  await cell.click();
+  assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sent);
+  assert.equal(await page.locator('.ticket').innerText(), ticket);
+  assert.equal(await page.locator('.cell.hit').count(), 0);
+  await state(page, room(view));
+  await page.locator('.swatches button').nth(1).click();
+  assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'pick', colors: [0, 1] });
+  await state(page, room({ ...view, called: [number], pace: 3 }));
+  await cell.click();
+  assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'mark', i: index });
+  await state(page, room({ ...view, called: [number], marked: [index], pace: 3 }));
+  assert.equal(await cell.evaluate((node) => node.classList.contains('hit')), true);
+  await page.locator('.pace').click();
+  assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'pace', s: 5 });
+  assert.deepEqual(errors, []);
+}, { protocol: true, clock: true, storage: { 'loto.voice': 'off', 'loto.music': '0' } });
+
+await scenario('spy queued setup and ballot controls cannot change a later screen', '/gian-diep/?lang=en', async (page) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const PLAYER_COUNT = 3;
+  await clickName(page, 'Pass one device');
+  const initialDeal = await page.getByRole('button', { name: 'Deal secret words', exact: true }).elementHandle();
+  await clickName(page, 'Remove Player 3');
+  await textIncludes(page, '.setup-options .warning', 'Need 1 more');
+  await initialDeal.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  await textIncludes(page, '.ui-toast[data-tone="error"]', 'Need 1 more');
+  assert.equal(await page.locator('.handoff').count(), 0);
+  assert.equal(await page.locator('.roster-list > li').count(), PLAYER_COUNT - 1);
+  assert.equal(await page.getByRole('button', { name: 'Deal secret words', exact: true }).isDisabled(), true);
+  await page.locator('.roster-add select').selectOption('add');
+  await page.getByRole('textbox', { name: 'Player names, one per line' }).fill('Player 3');
+  await clickName(page, 'Apply names');
+  const staleReorder = await page.getByRole('button', { name: 'Move Player 1 down', exact: true }).elementHandle();
+  const staleDeal = await page.getByRole('button', { name: 'Deal secret words', exact: true }).elementHandle();
+  await clickName(page, 'Deal secret words');
+  await textIncludes(page, '.handoff h2', 'Pass to Player 1');
+  const handoff = await page.locator('.handoff').innerText();
+  await staleReorder.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  await staleDeal.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  assert.equal(await page.locator('.handoff').innerText(), handoff);
+  assert.equal(await page.locator('.setup').count(), 0);
+  for (let index = 0; index < PLAYER_COUNT; index++) {
+    assert.equal(await page.locator('.handoff h2').textContent(), `Pass to Player ${index + 1}`);
+    await clickName(page, 'Reveal card');
+    assert.notEqual(await page.locator('.secret-word').textContent(), '');
+    await clickName(page, index === PLAYER_COUNT - 1 ? 'Hide & finish' : 'Hide & pass');
+  }
+  await clickName(page, 'Start giving clues');
+  for (let index = 0; index < PLAYER_COUNT; index++) await clickName(page, 'Next speaker');
+  await clickName(page, 'Open voting');
+  await page.clock.fastForward(SECOND_MS * 4);
+  const staleReady = await page.getByRole('button', { name: 'Ready to vote', exact: true }).elementHandle();
+  await clickName(page, 'Back');
+  await clickName(page, 'Confirm', page.locator('dialog[open]'));
+  const home = await page.locator('.spy-content').innerText();
+  await staleReady.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  assert.equal(await page.locator('.spy-content').innerText(), home);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('.spy-content').innerText(), home);
+  assert.equal(await page.locator('.phase-work').count(), 0);
+  await clickName(page, 'Pass one device');
+  await clickName(page, 'Deal secret words');
+  await textIncludes(page, '.handoff h2', 'Pass to Player 1');
+  await clickName(page, 'Reveal card');
+  assert.notEqual(await page.locator('.secret-word').textContent(), '');
+  assert.deepEqual(errors, []);
+}, { clock: true });
+
+let finishNavigatedAi;
+const navigatedAiResponse = new Promise((resolve) => { finishNavigatedAi = resolve; });
+await scenario('spy pending AI response preserves home after a queued back action', '/gian-diep/?lang=en', async (page) => {
+  const title = 'Late kitchen pack';
+  await clickName(page, 'Pass one device');
+  const queuedBack = await page.getByRole('button', { name: 'Back', exact: true }).elementHandle();
+  await clickName(page, 'Settings');
+  await clickName(page, 'Create AI pack', page.locator('dialog[open]'));
+  await page.locator('dialog input').fill(title);
+  const pending = page.waitForRequest((request) => new URL(request.url()).pathname === '/api/gian-diep/ai');
+  await clickName(page, 'Create secret pack', page.locator('dialog[open]'));
+  await pending;
+  await textIncludes(page, 'dialog [role="status"]', 'AI is preparing');
+  await queuedBack.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  await textIncludes(page, '.entry', 'One group. A different word.');
+  finishNavigatedAi({ body: JSON.stringify({ packId: '12345678-1234-4234-8234-123456789abc', title }) });
+  await page.waitForSelector('dialog[open]', { state: 'detached' });
+  assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
+  assert.equal(await page.locator('.setup').count(), 0);
+  await clickName(page, 'Pass one device');
+  await textIncludes(page, '.config-badges', title);
+  await clickName(page, 'Deal secret words');
+  await clickName(page, 'Reveal card');
+  assert(['Phở', 'Bún'].includes(await page.locator('.secret-word').textContent()));
+}, { api: (url, request) => {
+  if (url.pathname !== '/api/gian-diep/ai') return null;
+  return request.postDataJSON().action === 'deal' ? { body: JSON.stringify({ pair: ['Phở', 'Bún'] }) } : navigatedAiResponse;
+} });
+
+await scenario('spy queued online reorder respects host loss and game start', '/gian-diep/?r=TEST&lang=en', async (page) => {
+  const players = [{ id: PLAYER_ID, name: 'Coverage Player' }, { id: 'other', name: 'Other Player' }, { id: 'third', name: 'Third Player' }];
+  const seats = players.map(({ id }) => id);
+  const cfg = { spies: 1, whites: 0, seconds: 5, pack: 'food' };
+  const waiting = room(null, { players, seats, cfg, status: 'waiting' });
+  await state(page, waiting);
+  const staleHostReorder = await page.getByRole('button', { name: 'Move Coverage Player down', exact: true }).elementHandle();
+  await state(page, { ...waiting, host: 'other' });
+  await page.waitForFunction(() => ![...document.querySelectorAll('button')].some((node) => node.ariaLabel === 'Move Coverage Player down'));
+  const sentBeforeHostLoss = await page.evaluate(() => window.coverageTransport.sent.length);
+  await staleHostReorder.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sentBeforeHostLoss);
+  await state(page, waiting);
+  const stalePlayingReorder = await page.getByRole('button', { name: 'Move Coverage Player down', exact: true }).elementHandle();
+  const view = { phase: 'deal', deadline: null, round: 1, cfg, speaker: PLAYER_ID, candidates: seats, pendingGuess: null, lastEliminated: null, winner: null, players: seats.map((id) => ({ id, alive: true })), card: { word: 'Phở' }, voteCount: 0, voteTotal: seats.length, voted: false, tally: null, dealId: 'queued-order-deal' };
+  await state(page, room(view, { players, seats, cfg }));
+  await page.waitForSelector('.phase-panel');
+  const board = await page.locator('.phase-panel').innerText();
+  const sentBeforePlaying = await page.evaluate(() => window.coverageTransport.sent.length);
+  await stalePlayingReorder.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sentBeforePlaying);
+  assert.equal(await page.locator('.phase-panel').innerText(), board);
+  await state(page, waiting);
+  await clickName(page, 'Move Coverage Player down');
+  assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'config', cfg: { order: ['other', PLAYER_ID, 'third'] } });
+}, { protocol: true, clock: true });
 
 await browser.close();
 assert.equal(failures.length, 0, failures.map(({ name, error }) => `${name}: ${error.message}`).join('\n'));

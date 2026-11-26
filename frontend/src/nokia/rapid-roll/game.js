@@ -77,7 +77,7 @@ const app = nokiaApp({
     if (mine && !sim.dead && sec > 0) {
       while (!sim.dead && sim.t + FRAME_STEP_SECONDS <= sec) {
         step(sim, FRAME_STEP_SECONDS, keys);
-        for (const e of sim.events) app.beep({ heart: 1600, spike: 200, top: 200, fall: 150, dead: 100 }[e] ?? 600, e === 'dead' ? 400 : 90);
+        for (const e of sim.events) app.beep({ heart: 1600, spike: 200, top: 200, fall: 150, dead: 100 }[e], e === 'dead' ? 400 : 90);
       }
       if (now - lastSent > 200) { lastSent = now; app.send({ at: [sim.x, sim.y], score: score(sim) }); }
     }

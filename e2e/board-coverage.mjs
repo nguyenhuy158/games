@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { findChromium } from '@huyab/e2e';
 import { chromium } from 'playwright-core';
 import { saveCoverage, saveCoverageData } from './coverage.mjs';
+import { runMiningGapScenarios } from './mining-gap-scenarios.mjs';
 import * as chess from '../shared/games/co-tuong/logic.js';
 import * as carry from '../shared/games/co-ganh/logic.js';
 import * as sowing from '../shared/games/o-an-quan/logic.js';
@@ -1142,6 +1143,8 @@ async function mineEdges() {
     await action(page, () => page.locator('#cells .m').nth(31).click(), { t: 'open', i: 31 });
     await feed(page, { t: 'cur', id: OTHER, p: [1, 2] });
     await text(page, '.cursor', /Lin/);
+    await feed(page, { t: 'cur', id: OTHER, p: [2, 3] });
+    assert.equal(await page.locator('.cursor').count(), 1);
     await feed(page, { ...hard, players: [hard.players[0], { ...hard.players[1], online: false }] }, { t: 'cur', id: 'departed', p: [3, 4] });
     assert.equal(await page.locator('.cursor').count(), 0);
     await feed(page, { t: 'open', unit: 'all', by: ME, cells: [[31, -3]], boom: true });
@@ -1266,6 +1269,15 @@ async function strategyEdges() {
     await feed(page, { ...room, view: wrap(before) }, { ...room, view: wrap(drawn, last) });
     await text(page, '.board-stage .hint', /Game over/);
     assert.equal(await page.locator('.board-stage .pc.can').count(), 0);
+    const redChecked = chess.newGame();
+    for (const [from, to] of [[58, 49], [19, 22], [49, 40], [31, 40]]) {
+      assert(chess.legal(redChecked, redChecked.turn, from, to));
+      chess.move(redChecked, from, to);
+    }
+    assert(chess.inCheck(redChecked.b, redChecked.turn));
+    await feed(page, { ...room, view: { ...wrap(redChecked), check: true } });
+    assert.equal(await page.locator('.board-stage .pc.check.s1').count(), 1);
+    await text(page, '.board-stage .hint', /Your turn.*in check/);
   });
   for (const name of ['co-ganh', 'o-an-quan']) {
     const rules = name === 'co-ganh' ? carry : sowing;
@@ -1856,6 +1868,183 @@ async function importedDefaultReplays() {
   }
 }
 
+async function mediaNetworkFailures() {
+  for (const game of ['co-caro', 'noi-4', 'ban-tau', 'bau-cua', 'do-min', 'pikachu']) {
+    const failedMedia = [];
+    await scenario(game, async (page) => {
+      await join(page, false, game === 'co-caro');
+      let playing;
+      if (game === 'co-caro' || game === 'noi-4') {
+        playing = state({ status: 'playing', size: 2, level: 0, block: true, board: Array(game === 'co-caro' ? 9 : 42).fill(0), names: ['Ada', 'Lin'], score: {}, turn: 1, moves: 0, last: null, line: [], deadline: TIME + TURN_MS });
+      } else if (game === 'ban-tau') {
+        const fleet = [[0, 1, 2, 3, 4], [20, 21, 22, 23], [40, 41, 42], [60, 61, 62], [80, 81]];
+        playing = state({ status: 'playing', names: ['Ada', 'Lin'], score: {}, fleets: [fleet, fleet], shots: [Array(100).fill(0), Array(100).fill(0)], sunk: [[], []], ready: [true, true], turn: 1, fired: [0, 0], skipped: [0, 0], deadline: TIME + TURN_MS });
+      } else if (game === 'bau-cua') {
+        playing = state({ status: 'playing', mode: 'house', phase: 'bet', phaseAt: TIME, shakeMs: 20, afkMs: TURN_MS, round: 1, dealer: null, players: PLAYERS.map((player) => ({ ...player, coins: 1000 })), bets: {}, deltas: {}, dice: [] });
+      } else {
+        const unit = game === 'do-min'
+          ? { opened: 0, total: 71, lives: 3, booms: 0, penalty: 0, done: null }
+          : { score: 0, level: 1, left: 4, total: 4, combo: 0, shuffles: 2, done: null, endAt: TIME + TURN_MS };
+        playing = state({ status: 'playing', mode: 'coop', size: 0, tiles: 'animal', duration: TURN_MS, startedAt: TIME, players: PLAYERS.map((player) => ({ ...player, unit: 'all', spec: false, opened: 0, booms: 0, score: 0 })), units: { all: unit } });
+      }
+      await feed(page, playing);
+      await page.locator('#btnSound').click();
+      assert.equal(await page.evaluate(() => localStorage.getItem('sound')), '1');
+      if (game === 'co-caro' || game === 'noi-4') {
+        await action(page, () => page.locator('#board .c').first().click(), { t: 'move', i: 0 });
+        const index = game === 'co-caro' ? 0 : 35;
+        const board = [...playing.board];
+        board[index] = 1;
+        await feed(page, { ...playing, board, moves: 1, last: index, turn: 2 });
+        assert.equal(await page.locator('#board .c').nth(index).getAttribute('data-v'), '1');
+      } else if (game === 'ban-tau') {
+        await action(page, () => page.locator('#seaB .c').nth(7).click(), { t: 'shoot', i: 7 });
+        const shots = structuredClone(playing.shots);
+        shots[0][7] = 1;
+        await feed(page, { ...playing, shots, fired: [1, 0], turn: 2, last: { by: 1, i: 7, hit: false, sunk: -1 } });
+        assert.equal(await page.locator('#seaB .c').nth(7).getAttribute('data-v'), '1');
+      } else if (game === 'bau-cua') {
+        await page.locator('#chips button').first().click();
+        await action(page, () => page.locator('#board > *').first().click(), { t: 'bet', s: 0, amt: 10 });
+        await feed(page, { ...playing, bets: { [ME]: [10, 0, 0, 0, 0, 0] } });
+        await text(page, '#board .stack .me', /Ada 10/);
+      } else if (game === 'do-min') {
+        await feed(page, { t: 'grid', grids: { all: Array(81).fill(mineRules.HIDDEN) } });
+        await action(page, () => page.locator('#cells .m').first().click(), { t: 'open', i: 0 });
+        await feed(page, { t: 'open', unit: 'all', by: ME, cells: [[0, 1]], boom: false });
+        await text(page, '#cells .m:nth-child(1)', /^1$/);
+      } else {
+        await feed(page, { t: 'board', unit: 'all', why: 'start', board: [[0, 0, 0, 0], [0, 1, 1, 0], [0, 2, 2, 0], [0, 0, 0, 0]] });
+        await action(page, () => page.locator('[data-k="1-1"]').click(), { t: 'sel', a: [1, 1] });
+        assert.equal(await page.locator('#cells .sel').count(), 1);
+      }
+      assert(failedMedia.length > 0, `${game}: the media request must actually fail`);
+      await page.locator('#btnSound').click();
+      assert.equal(await page.evaluate(() => localStorage.getItem('sound')), '0');
+    }, '', {
+      prepare: (page) => page.route('**/*.mp3', async (route) => {
+        failedMedia.push(route.request().url());
+        await route.abort('failed');
+      }),
+    });
+  }
+}
+
+async function matchingPointerEdges() {
+  await scenario('pikachu', async (page) => {
+    await join(page);
+    const unit = { score: 0, level: 1, left: 4, total: 4, combo: 0, shuffles: 2, done: null, endAt: TIME + TURN_MS };
+    const players = PLAYERS.map((player) => ({ ...player, unit: 'all', spec: false, score: 0 }));
+    const playing = state({ status: 'playing', mode: 'coop', tiles: 'poke', size: 0, duration: TURN_MS, players, units: { all: unit } });
+    const board = [[0, 0, 0, 0], [0, 1, 1, 0], [0, 2, 2, 0], [0, 0, 0, 0]];
+    await feed(page, playing, { t: 'board', unit: 'all', board });
+    await page.setViewportSize(PORTRAIT);
+    await page.waitForFunction(() => {
+      const wrap = document.querySelector('#boardWrap');
+      return wrap.clientHeight > wrap.clientWidth;
+    });
+    await frames(page);
+    const pointer = await page.locator('[data-k="1-2"]').evaluate((cell) => {
+      const bounds = document.querySelector('#board').getBoundingClientRect();
+      return { clientX: bounds.left + (parseFloat(cell.style.width) + 1) * 1.5, clientY: bounds.top + (parseFloat(cell.style.height) + 1) * 2.5 };
+    });
+    await action(page, () => page.locator('#boardWrap').dispatchEvent('pointermove', pointer), { t: 'cur', p: [1.5, 2.5] });
+    await feed(page, { t: 'cur', id: OTHER, p: [1, 2] });
+    assert.deepEqual(await page.locator('.cursor').evaluate((node) => [node.style.left, node.style.top]), await page.locator('[data-k="1-2"]').evaluate((node) => [node.style.left, node.style.top]));
+    await page.locator('[data-k="1-1"]').dispatchEvent('pointerdown', { pointerType: 'touch' });
+    const removed = structuredClone(board);
+    removed[1][1] = 0;
+    await feed(page, { t: 'board', unit: 'all', board: removed });
+    await noAction(page, () => page.locator('#cells').dispatchEvent('pointerup'));
+    assert.equal(await page.locator('#cells .sel').count(), 0);
+    const racers = players.map((player) => ({ ...player, unit: player.id }));
+    await feed(page, { ...playing, mode: 'race', players: racers, units: { [ME]: unit, [OTHER]: unit } }, { t: 'board', unit: ME, board });
+    await noAction(page, () => page.locator('[data-k="1-1"]').click());
+    assert.equal(await page.locator('#cells .sel').count(), 1);
+    await noAction(page, () => page.locator('[data-k="1-1"]').click());
+    assert.equal(await page.locator('#cells .sel').count(), 0);
+    const teammates = [{ ...players[1], unit: 'B', team: 'B', online: false }, { ...players[0], unit: 'A', team: 'A' }];
+    await feed(page, { ...playing, mode: 'team', players: teammates, units: { A: unit, B: { ...unit, done: 'out' } } }, { t: 'board', unit: 'A', board });
+    assert.equal(await page.locator('#players li').first().getAttribute('data-id'), ME);
+    assert.equal(await page.locator(`#players [data-id="${OTHER}"]`).evaluate((node) => node.classList.contains('off')), true);
+    if (!(await page.locator('#panel .tile-badge').first().isVisible())) await page.locator('#btnPanel').click();
+    assert.equal(await page.locator('#panel .tile-badge svg').count(), 1);
+  });
+}
+
+async function importedBoundaryReplays() {
+  const minesId = 'imported-mines-clock-boundaries';
+  const mineUnit = { opened: 0, total: 71, lives: 3, booms: 0, done: null };
+  const minePlaying = state({ status: 'playing', mode: 'coop', size: 0, players: PLAYERS.map((player) => ({ ...player, unit: 'all', spec: false, opened: 0, booms: 0 })), units: { all: mineUnit } });
+  const mineRunning = { ...minePlaying, startedAt: TIME, now: TIME + 2500 };
+  const mineEnded = { ...mineRunning, status: 'ended', endedAt: TIME + 4000, winner: null };
+  REPLAY_RECORDS.set(minesId, { game: 'do-min', page: routeOf('do-min'), at: TIME, frames: [[0, minePlaying], [100, { t: 'grid', grids: { all: Array(81).fill(mineRules.HIDDEN) } }], [1000, mineRunning], [2000, mineEnded], [3000, { ...mineEnded, units: {} }]] });
+  await scenario('do-min', async (page) => {
+    await page.locator('.rp-bar').waitFor();
+    const play = page.locator('.rp-bar button').first();
+    if (await play.innerText() === '❚❚') await play.click();
+    const slider = page.locator('.rp-bar input');
+    for (const [at, time] of [[100, '0:00'], [1000, '0:02'], [2000, '0:04']]) {
+      await slider.fill(String(at));
+      await slider.dispatchEvent('input');
+      await page.waitForFunction((expected) => document.querySelector('#clock').textContent === expected, time);
+      assert.equal(await page.locator('#cells .m').count(), 81);
+    }
+    await text(page, '#ovScore', /Opened 0\/71 cells/);
+    await slider.fill('3000');
+    await slider.dispatchEvent('input');
+    await frames(page);
+    await text(page, '#ovScore', /Opened 0\/0 cells/);
+    await noAction(page, () => page.locator('#face').dispatchEvent('click'));
+  }, `?replay=${minesId}`);
+
+  const matchingId = 'imported-pikachu-partial-matches';
+  const matchingUnit = { score: 0, left: 4, total: 4, combo: 0, shuffles: 2, done: null, endAt: TIME + TURN_MS };
+  const matchingState = state({ status: 'playing', mode: 'coop', size: 0, duration: TURN_MS, players: PLAYERS.map((player) => ({ ...player, unit: 'all', spec: false, score: 0 })), units: { all: matchingUnit } });
+  const board = [[0, 0, 0, 0], [0, 1, 1, 0], [0, 2, 2, 0], [0, 0, 0, 0]];
+  const cleared = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 2, 2, 0], [0, 0, 0, 0]];
+  const match = { t: 'match', unit: 'all', id: OTHER, a: [1, 1], b: [1, 2], path: [[1, 1], [1, 2]], pts: 10, combo: 1, board: cleared };
+  REPLAY_RECORDS.set(matchingId, { game: 'pikachu', page: routeOf('pikachu'), at: TIME, frames: [[0, matchingState], [100, match], [200, { t: 'board', unit: 'all', why: 'level', board }], [300, match], [400, match], [1000, { ...matchingState, status: 'ended', units: {}, winner: null }]] });
+  await scenario('pikachu', async (page) => {
+    await page.locator('.rp-bar').waitFor();
+    const play = page.locator('.rp-bar button').first();
+    if (await play.innerText() === '❚❚') await play.click();
+    const slider = page.locator('.rp-bar input');
+    for (const [at, cells] of [[200, 4], [400, 2]]) {
+      await slider.fill(String(at));
+      await slider.dispatchEvent('input');
+      await frames(page);
+      assert.equal(await page.locator('#cells .cell').count(), cells);
+      assert.equal(await page.locator('#fx .popping, #fx .float, #fx .banner, #fx svg').count(), 0, 'Seeking imported matches must suppress transient effects');
+    }
+    await page.clock.runFor(2000);
+    const clock = await page.locator('#clock').innerText();
+    await page.clock.runFor(1000);
+    assert.equal(await page.locator('#clock').innerText(), clock, 'Replay clock stops advancing after the interpolation window');
+    await slider.fill('1000');
+    await slider.dispatchEvent('input');
+    await frames(page);
+    await text(page, '#ovTitle', /Time's up at level 1/);
+    assert.equal(await page.evaluate(() => window.boardFixture.sockets.length), 0);
+  }, `?replay=${matchingId}`, { prepare: (page) => page.clock.install({ time: new Date(TIME) }) });
+
+  const carryId = 'imported-carry-null-open';
+  const position = carry.newGame();
+  const replayPlayer = 'replay';
+  const carryState = state({ status: 'playing', seats: [replayPlayer, OTHER], view: { ...position, side: [replayPlayer, OTHER], names: ['Ada', 'Lin'], deadline: TIME + TURN_MS, open: null, last: null } });
+  REPLAY_RECORDS.set(carryId, { game: 'co-ganh', page: routeOf('co-ganh'), at: TIME, frames: [[0, carryState]] });
+  await scenario('co-ganh', async (page) => {
+    await page.locator('.rp-bar').waitFor();
+    const legal = carry.moves(position);
+    const [from] = legal[0];
+    assert.equal(await page.locator('.pc.can').count(), new Set(legal.map(([start]) => start)).size);
+    await page.locator('.pc').nth(from).click();
+    assert.equal(await page.locator('.pt.to').count(), legal.filter(([start]) => start === from).length);
+    await noAction(page, () => page.locator('.pt.to').first().click());
+    assert.equal(await page.evaluate(() => window.boardFixture.sockets.length), 0);
+  }, `?replay=${carryId}`);
+}
+
 try {
   await classicBoards();
   await battleship();
@@ -1876,6 +2065,10 @@ try {
   await importedCompletionReplays();
   await interruptedSowing();
   await importedDefaultReplays();
+  await runMiningGapScenarios({ scenario, feed, state, text, visible, outgoing, REPLAY_RECORDS, ME, OTHER, TIME });
+  await mediaNetworkFailures();
+  await matchingPointerEdges();
+  await importedBoundaryReplays();
 } finally {
   await context.close();
   await browser.close();
