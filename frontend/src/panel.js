@@ -29,7 +29,7 @@ export function createPanel({ root, toggle, storeKey }) {
 
   function tileNode(t) {
     let c = cache.get(t.key);
-    if (!c) {
+    if (!c || !!c.canvas !== !!t.draw) {
       const canvas = t.draw ? el('canvas', { className: 'tile-board' }) : null;
       const avatar = t.draw ? null : el('div', { className: 'tile-avatar' });
       const nameEl = el('b');

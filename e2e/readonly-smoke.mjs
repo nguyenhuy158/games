@@ -6,8 +6,10 @@
 // Biến môi trường:
 // - E2E_BASE_URL: mặc định http://127.0.0.1:8789
 // - PLAYWRIGHT_CHROMIUM_PATH: chỉ định Chromium cụ thể (xem findChromium của @huyab/e2e)
+import { join } from "node:path";
 import { findChromium } from "@huyab/e2e";
 import { chromium } from "playwright-core";
+import { saveCoverage } from "./coverage.mjs";
 
 const BASE = (process.env.E2E_BASE_URL || "http://127.0.0.1:8789").replace(
   /\/$/,
@@ -44,6 +46,18 @@ const HIDDEN_WAIT = { state: "hidden", ...WAIT };
 const ROOMS_PATH = "/api/rooms";
 const LOBBY_PATH = "/phong/";
 const LOBBY_READY_SELECTOR = "#filter button";
+const HUB_PATH = "/";
+const VIDEO_SCOPE_DIRECTORY = "readonly";
+const VIDEO_EXTENSION = ".webm";
+const VIDEO_ROUTE_SEPARATOR = "-";
+const VIDEO_ROUTE_NAMES = { [HUB_PATH]: "hub", [LOBBY_PATH]: "lobby" };
+const VIDEO_ROOT = process.env.E2E_VIDEO_DIR;
+const VIDEO_DIRECTORY = VIDEO_ROOT
+  ? join(VIDEO_ROOT, VIDEO_SCOPE_DIRECTORY)
+  : undefined;
+const VIDEO_SIZE = { width: 1280, height: 720 };
+const videoRecordings = new Map();
+const REJECTED_PROMISE_STATUS = "rejected";
 
 let passed = 0;
 let failed = 0;
@@ -64,15 +78,71 @@ async function get(path, type) {
   return response;
 }
 
-console.log(`Read-only smoke tại ${BASE}\n`);
+console.log(`Read-only page/help smoke (not whole-game gameplay) tại ${BASE}\n`);
+if (VIDEO_DIRECTORY) console.log(`Videos: ${VIDEO_DIRECTORY}\n`);
 
 const browser = await chromium.launch({ executablePath: findChromium() });
 // Chặn service worker để luôn tải file mới từ server, không lấy bản cache cũ.
-const CONTEXT_OPTIONS = { serviceWorkers: "block" };
-const context = await browser.newContext(CONTEXT_OPTIONS);
-const page = await context.newPage();
-const pageErrors = collectPageErrors(page);
+const CONTEXT_OPTIONS = {
+  serviceWorkers: "block",
+  ...(VIDEO_DIRECTORY
+    ? { recordVideo: { dir: VIDEO_DIRECTORY, size: VIDEO_SIZE } }
+    : {}),
+};
+let context;
+let page;
 let lobbyPage;
+
+async function newSmokePage(checkedContext, route) {
+  const checkedPage = await checkedContext.newPage();
+  if (VIDEO_DIRECTORY) {
+    const routeName =
+      VIDEO_ROUTE_NAMES[route] ??
+      new URL(route, BASE).pathname
+        .split(HUB_PATH)
+        .filter(Boolean)
+        .join(VIDEO_ROUTE_SEPARATOR);
+    const recordings = videoRecordings.get(checkedContext) ?? [];
+    recordings.push({
+      video: checkedPage.video(),
+      path: join(VIDEO_DIRECTORY, `${routeName}${VIDEO_EXTENSION}`),
+    });
+    videoRecordings.set(checkedContext, recordings);
+  }
+  return checkedPage;
+}
+
+async function closeSmokeContext(checkedContext) {
+  try {
+    try {
+      for (const checkedPage of checkedContext.pages()) await saveCoverage(checkedPage);
+    } finally {
+      await checkedContext.close();
+    }
+    if (!VIDEO_DIRECTORY) return;
+    const recordings = videoRecordings.get(checkedContext) ?? [];
+    const results = await Promise.allSettled(
+      recordings.map(async ({ video, path }) => {
+        await video.saveAs(path);
+        await video.delete();
+      }),
+    );
+    const errors = results
+      .filter((result) => result.status === REJECTED_PROMISE_STATUS)
+      .map((result) => result.reason);
+    if (errors.length > 0) {
+      throw new AggregateError(
+        errors,
+        `Read-only smoke video export failed: ${errors.map((error) => error.message).join(ERROR_SEPARATOR)}`,
+      );
+    }
+  } catch (error) {
+    failed += 1;
+    console.log("FAIL closing read-only smoke context:", error.message);
+  } finally {
+    videoRecordings.delete(checkedContext);
+  }
+}
 
 function collectPageErrors(checkedPage) {
   const errors = [];
@@ -107,7 +177,7 @@ async function checkGame(link) {
   const gameContext = await browser.newContext(CONTEXT_OPTIONS);
   let gamePage;
   try {
-    gamePage = await gameContext.newPage();
+    gamePage = await newSmokePage(gameContext, link);
     const errors = collectPageErrors(gamePage);
     const response = await gamePage.goto(BASE + link, NAVIGATION_OPTIONS);
     if (!response?.ok()) throw new Error(`${link}: HTTP ${response?.status()}`);
@@ -142,7 +212,7 @@ async function checkGame(link) {
     if (gamePage) await captureFailure(gamePage);
     throw error;
   } finally {
-    await gameContext.close();
+    await closeSmokeContext(gameContext);
   }
 }
 
@@ -170,6 +240,9 @@ async function checkGames(links) {
 }
 
 try {
+  context = await browser.newContext(CONTEXT_OPTIONS);
+  page = await newSmokePage(context, HUB_PATH);
+  const pageErrors = collectPageErrors(page);
   const version = await (await get("/api/version", "application/json")).json();
   if (!("id" in version && "at" in version))
     throw new Error(`/api/version: ${JSON.stringify(version)}`);
@@ -229,7 +302,7 @@ try {
     throw new Error(`/api/board: ${JSON.stringify(board)}`);
   ok(`GET /api/board?game=2048 (${board.length} scores)`);
 
-  lobbyPage = await context.newPage();
+  lobbyPage = await newSmokePage(context, LOBBY_PATH);
   const lobbyErrors = collectPageErrors(lobbyPage);
   const [roomsResponse] = await Promise.all([
     lobbyPage.waitForResponse((response) => response.url() === BASE + ROOMS_PATH, WAIT),
@@ -247,9 +320,13 @@ try {
 } catch (error) {
   failed += 1;
   console.log("FAIL:", error.message);
-  await captureFailure(lobbyPage ?? page);
+  if (lobbyPage ?? page) await captureFailure(lobbyPage ?? page);
 } finally {
-  await browser.close();
+  try {
+    if (context) await closeSmokeContext(context);
+  } finally {
+    await browser.close();
+  }
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

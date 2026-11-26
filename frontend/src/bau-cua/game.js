@@ -42,7 +42,7 @@ const pic = (s, cls = '') => {
 };
 const now = () => Date.now() + clockOffset;
 const me = () => room?.players.find((p) => p.id === deviceId);
-const colorOf = (id) => COLORS[Math.max(0, room?.players.findIndex((p) => p.id === id) ?? 0) % COLORS.length];
+const colorOf = (id) => COLORS[Math.max(0, room.players.findIndex((p) => p.id === id)) % COLORS.length];
 const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? t('Người cũ', 'Former player');
 const revealed = () => room?.phase === 'show' && now() - room.phaseAt >= room.shakeMs;
 const canRoll = () => room?.phase === 'bet' && (room.dealer ? room.dealer === deviceId : room.host === deviceId) || afk();

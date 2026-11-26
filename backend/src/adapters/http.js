@@ -83,7 +83,8 @@ async function forward(req, ns, name, game, code, guest) {
   if (origin && origin !== new URL(req.url).origin) return privateJson({ error: 'origin' }, STATUS.FORBIDDEN);
   const headers = new Headers(req.headers);
   for (const header of [USER_HEADER, GAME_HEADER, ROOM_HEADER, GUEST_HEADER]) headers.delete(header);
-  if (game) { headers.set(GAME_HEADER, game); headers.set(ROOM_HEADER, code); }
+  headers.set(GAME_HEADER, game);
+  headers.set(ROOM_HEADER, code);
   const user = await userFrom(req);
   if (user) headers.set(USER_HEADER, JSON.stringify({ sub: user.sub, name: user.name }));
   headers.set(GUEST_HEADER, guest.id);

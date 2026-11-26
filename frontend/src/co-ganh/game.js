@@ -114,7 +114,7 @@ const app = nokiaApp({
 // Điểm quân ở `from` đi được (bị "mở" thì chỉ còn điểm mở).
 const targetsOf = (v, from) => new Set(moves({ b: v.b, turn: v.turn, open: v.open ?? -1 }).filter(([f]) => f === from).map(([, t]) => t));
 
-function myTurn(r = app.room) {
+function myTurn(r) {
   return r?.status === 'playing' && r.view && !r.view.over && r.view.side[r.view.turn - 1] === app.id;
 }
 function tap(i) {

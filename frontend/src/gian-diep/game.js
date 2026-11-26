@@ -6,7 +6,7 @@ import { mountHelp } from '../help.js';
 import { AI_PACK, MIN_PLAYERS, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 import { HELP } from './help.js';
 import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results } from './ui.js';
-import { createActionGate, setButtonPending } from '../ui/feedback.mjs';
+import { setButtonPending } from '../ui/feedback.mjs';
 import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { rosterDraft, rosterHasDraft, rosterEditor, seatingRoster, orderedPlayers } from './roster.js';
 import { aiPicker, dealAiPair } from './ai.js';
@@ -47,7 +47,6 @@ const PHASE_ICONS = {
   [PHASE.GUESS]: 'lightbulb',
   [PHASE.ENDED]: 'trophy',
 };
-const gate = createActionGate();
 const randomValue = new Uint32Array(1);
 let mode = MODE.HOME;
 let app = null;
@@ -103,7 +102,7 @@ function random() {
 }
 
 function playerName(id) {
-  if (mode === MODE.LOCAL) return localNamesById.get(id) ?? id;
+  if (mode === MODE.LOCAL) return localNamesById.get(id);
   return app?.room?.players.find((player) => player.id === id)?.name ?? t('Người đã rời phòng', 'Disconnected player');
 }
 
@@ -126,7 +125,7 @@ function toggleTheme() {
 }
 
 function focusMain() {
-  const target = content.querySelector('h2') ?? heading;
+  const target = content.querySelector('h2');
   target.tabIndex = -1;
   target.focus({ preventScroll: true });
 }
@@ -311,15 +310,13 @@ function sendAction(message, actor = mode === MODE.LOCAL ? localHost() : app?.id
     return;
   }
   if (!app || pendingOnline) return;
-  const release = gate.claim(GAME);
-  if (!release) return;
   const active = document.activeElement;
   const restore = active?.tagName === 'BUTTON' ? setButtonPending(active, t('Đang gửi…', 'Sending…')) : () => {};
   const timer = setTimeout(() => {
     clearPending();
     notifications.show(TOAST_TONE.WARNING, t('Chưa nhận xác nhận. Kiểm tra kết nối và trạng thái trước khi thử lại.', 'No confirmation yet. Check the connection and current state before retrying.'));
   }, ACTION_TIMEOUT_MS);
-  pendingOnline = { release, restore, timer };
+  pendingOnline = { restore, timer };
   app.send(message);
 }
 
@@ -327,7 +324,6 @@ function clearPending() {
   if (!pendingOnline) return;
   clearTimeout(pendingOnline.timer);
   pendingOnline.restore();
-  pendingOnline.release();
   pendingOnline = null;
 }
 
@@ -336,7 +332,7 @@ function paintLocal() {
   const publicView = view(localGame, null);
   if (publicView.phase === PHASE.VOTE) {
     const voter = localGame.players.find((player) => player.alive && !Object.hasOwn(localGame.votes, player.id));
-    if (ballotOwner !== voter?.id) { ballotOwner = voter?.id ?? null; ballotOpen = false; }
+    if (ballotOwner !== voter.id) { ballotOwner = voter.id; ballotOpen = false; }
   } else { ballotOwner = null; ballotOpen = false; }
   const actor = publicView.phase === PHASE.VOTE && ballotOpen ? ballotOwner : publicView.phase === PHASE.GUESS && guessOpen ? publicView.pendingGuess : null;
   paintBoard(content, actor ? view(localGame, actor) : publicView, actor, true);
@@ -522,13 +518,12 @@ function enhanceRoomShell(room = app?.room) {
     if (control.classList.contains('primary')) control.dataset.variant = 'primary';
   }
   const codeInput = document.querySelector('#home input.code');
-  if (codeInput) codeInput.ariaLabel = t('Mã phòng gồm 4 ký tự', '4-character room code');
+  codeInput.ariaLabel = t('Mã phòng gồm 4 ký tự', '4-character room code');
   const start = document.querySelector('#overlay > .card > button.primary');
   if (start && room) start.disabled = !validateSetup(room.players.length, { ...DEFAULT_CONFIG, ...room.cfg });
 }
 
 function paintOnline(room) {
-  if (!onlineBoard) return;
   const playing = room.status === ROOM_STATUS.PLAYING && !!room.view;
   onlineBoard.hidden = !playing;
   onlineBoard.inert = !playing;

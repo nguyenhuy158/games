@@ -10,6 +10,7 @@ Node >=22 và pnpm theo `packageManager` trong `package.json`.
 pnpm install --frozen-lockfile
 pnpm dev
 pnpm test
+pnpm test:coverage
 pnpm lint
 pnpm build
 ```

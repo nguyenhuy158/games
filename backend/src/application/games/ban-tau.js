@@ -56,7 +56,7 @@ export default {
   start(ctx) {
     const keep = ctx.keep;
     const two = ctx.seats;
-    const pair = [...two].sort().join('|') || BOT;
+    const pair = [...two].sort().join('|');
     if (keep.pair !== pair) Object.assign(keep, { score: {}, pair, swap: false });
     const seats = two.length === 2 ? [...two] : [two[0], BOT];
     // Ghế 1 bắn trước; mỗi ván đổi ghế để đổi người bắn trước.

@@ -48,8 +48,8 @@ export function aiPicker(save, roomContext = {}) {
         suggestions.replaceChildren(...result.topics.map((title) => button(title, () => { topic.value = title; topic.focus(); })));
         status.textContent = t('Chọn chủ đề hoặc nhập ý tưởng riêng.', 'Choose a topic or enter your own.');
       } else {
-        save(result);
         modal.close();
+        save(result);
       }
     } catch (error) {
       if (!controller.signal.aborted) status.textContent = error.name === 'TimeoutError' ? t('AI quá thời gian. Có thể dùng bộ từ có sẵn.', 'AI timed out. You can use a built-in pack.') : error.message;

@@ -76,7 +76,6 @@ export function move(g, from, to) {
   // Mở: điểm vừa bỏ trống, bên kia có quân kề đi vào đó mà gánh được.
   g.open = ADJ[from].some((j) => b[j] === q) && carries(b, q, from) ? from : -1;
   if (!count(g, q)) Object.assign(g, { over: true, winner: p });
-  else if (!moves(g).length) Object.assign(g, { over: true, winner: p }); // không còn nước đi (thường đã bị vây hết)
   else if (g.moves >= MAX_MOVES) { const a = count(g, 1), c = count(g, 2); Object.assign(g, { over: true, winner: a > c ? 1 : c > a ? 2 : 0 }); }
   return { ganh, vay };
 }

@@ -28,3 +28,7 @@ reference
 
 # E2E failure screenshot (e2e/*.mjs)
 e2e-failure*.png
+e2e-videos/
+e2e-artifacts/
+.nyc_output/
+.coverage-sources/

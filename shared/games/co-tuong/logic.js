@@ -169,12 +169,13 @@ export function botMove(g, maxDepth = 3, ms = 400, rand = Math.random) {
   let best = legalMoves[Math.floor(rand() * legalMoves.length)];
   for (let d = 1; d <= maxDepth; d++) {
     let bestV = -Infinity, pick = null;
-    for (const [f, t] of legalMoves) {
+    for (const candidate of legalMoves) {
+      const [f, t] = candidate;
       const b = g.b.slice();
       apply(b, f, t);
       const v = -search(b, 3 - s, d - 1, -Infinity, -bestV, stop) + rand() * 5;
       if (stop.hit) break;
-      if (v > bestV) { bestV = v; pick = [f, t]; }
+      if (v > bestV) { bestV = v; pick = candidate; }
     }
     if (stop.hit) break;
     best = pick;

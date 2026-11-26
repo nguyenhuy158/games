@@ -97,7 +97,7 @@ renderSound();
 // Khung trong atlas dùng làm ảnh CSS (tiệm, menu). Nền tính theo % + aspect-ratio nên khung co theo
 // max-width (màn hẹp) mà vẫn đủ hình; fit = cạnh dài nhất tối đa (px).
 const ATLAS_W = 1024, ATLAS_H = 2048;
-function spriteEl(name, scale = 1, fit = Infinity) {
+function spriteEl(name, scale, fit = Infinity) {
   const f = FRAMES[name];
   const s = Math.min(scale, fit / f.w, fit / f.h);
   const d = el('span', { className: 'sprite' });
@@ -136,7 +136,7 @@ function fit() {
 // Theo dõi khung chứa (không chỉ cửa sổ): HUD / bảng điểm hiện ra cũng làm khung đổi cỡ.
 new ResizeObserver(fit).observe($('#stage'));
 
-function draw(name, x, y, { scale = 1, rot = 0, flip = false, anchor = [0.5, 0.5] } = {}) {
+function draw(name, x, y, { scale = 1, rot = 0, flip = false, anchor = [0.5, 0.5] }) {
   const f = FRAMES[name];
   if (!f) return;
   ctx.save();
@@ -215,7 +215,7 @@ function render(view) {
     draw('hv1', tx, ty, { rot: -m.angle, anchor: [0.5, 0.2] });
 
     let frame = MINER_UP[0];
-    const at = m.anim ? (m.animT ?? 0) : 0;
+    const at = m.anim ? m.animT : 0;
     if (m.anim === 'dyn') frame = MINER_DYN[Math.min(4, Math.floor(at / 0.08))];
     else if (m.anim === 'down') frame = MINER_DOWN[Math.min(3, Math.floor(at / 0.1))];
     else if (m.mode === 'in' && m.held) frame = m.strong ? `minerStr000${1 + (Math.floor(clock * 8) % 2)}` : MINER_UP[Math.floor(clock * 20) % MINER_UP.length];
@@ -782,7 +782,7 @@ mountHelp({
 // ---------- vòng lặp ----------
 let last = 0;
 function loop(t) {
-  const dt = Math.min(0.05, (t - last) / 1000 || 0); // tab bị treo lâu thì không nhảy cóc
+  const dt = Math.min(0.05, (t - last) / 1000);
   last = t;
   clock += dt;
   for (const f of fx) f.t += dt;
