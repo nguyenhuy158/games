@@ -103,7 +103,7 @@ jobs:
             sleep 10
           done
           echo "deploy not seen after 15 min"; exit 1
-      - run: node scripts/smoke.mjs https://games.huyab.cfd
+      - run: node tests/smoke.mjs https://games.huyab.cfd
       # Smoke chỉ đọc bằng Chromium: trang chủ, mọi trang game, /phong/ render không lỗi JS.
       - run: pnpm install --frozen-lockfile
       - name: Resolve Playwright version

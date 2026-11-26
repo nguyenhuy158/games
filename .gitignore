@@ -26,7 +26,7 @@ coverage/
 # Original game assets kept locally for study (not committed)
 reference
 
-# E2E failure screenshot (e2e/*.mjs)
+# E2E failure screenshot (tests/e2e/*.mjs)
 e2e-failure*.png
 e2e-videos/
 e2e-artifacts/

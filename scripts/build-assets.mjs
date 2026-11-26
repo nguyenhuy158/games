@@ -11,7 +11,7 @@ const SHARED_PATH = resolve(REPO_ROOT, 'shared');
 const INDEX_FILE = 'index.html';
 const SHARED_DIRECTORY = 'shared';
 const COVERAGE_ENABLED = '1';
-const COVERAGE_SCRIPT = resolve(REPO_ROOT, 'scripts/instrument-browser.mjs');
+const COVERAGE_SCRIPT = resolve(REPO_ROOT, 'tests/support/instrument-browser.mjs');
 
 export function buildAssets() {
   rmSync(OUTPUT_PATH, { recursive: true, force: true });

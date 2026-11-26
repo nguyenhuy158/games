@@ -32,7 +32,7 @@ dist/                              Đầu ra sinh tự động, không commit
 - Backend domain chỉ dùng domain/shared. Application chỉ dùng application/domain/shared và hợp đồng ports; I/O của game qua `ctx`.
 - Adapter dùng application/domain/shared và hạ tầng, không import composition root hoặc frontend.
 - `backend/src/index.js` nối các lớp. Frontend chỉ dùng frontend/shared, không import backend.
-- `scripts/check-deps.mjs` phân tích AST bằng Acorn: import tĩnh/động, re-export, script HTML, module thiếu và các global runtime bị cấm trong shared. `architecture.test.mjs` kiểm các chiều phụ thuộc sai.
+- `scripts/check-deps.mjs` phân tích AST bằng Acorn: import tĩnh/động, re-export, script HTML, module thiếu và các global runtime bị cấm trong shared. `tests/unit/architecture.test.mjs` kiểm các chiều phụ thuộc sai.
 
 Đây là hexagonal thực dụng, không DI container hay interface cho từng hàm. `shared` độc lập runtime, không đồng nghĩa thuần toán học: replay và deadline tìm kiếm Cờ tướng vẫn dùng `Date.now()`, nhiều hàm giữ RNG mặc định `Math.random()`. Refactor không đổi đồng hồ hoặc thuật toán chơi.
 
@@ -49,7 +49,7 @@ Không đổi `/api/*`, tên class/binding/namespace Durable Object, migration h
 ## Kiểm thử và thêm game
 
 - `pnpm test`: luật game, application/adapter, quyền/lịch sử/AI, ranh giới kiến trúc và service worker trên `dist/` thực sự được build.
-- `node scripts/smoke.mjs <url>`: WebSocket thật, bot chơi và kiểm state server; CI chạy toàn bộ trên main/production.
+- `node tests/smoke.mjs <url>`: WebSocket thật, bot chơi và kiểm state server; CI chạy toàn bộ trên main/production.
 - `pnpm e2e`: browser và WebSocket; PR chọn game từ cả frontend, backend, shared và public assets. Thay đổi code chung chạy toàn bộ.
 - Game mới: thêm luật trong `shared/games/<game>/`, UI trong `frontend/src/<game>/`, module nhiều người trong `backend/src/application/games/` nếu cần; nối ở composition root.
 - Thêm thẻ ở `index.html`, cập nhật `CORE` và tăng `CACHE` trong `frontend/src/sw.js`, thêm test hành vi và khai báo lựa chọn E2E.

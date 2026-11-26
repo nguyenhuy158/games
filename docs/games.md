@@ -21,25 +21,25 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.cfd — m
 | Xếp gạch | `/tetris/` | 1 người, chạy hết ở client: phím / vuốt / chạm / 4 nút; tạm dừng (P); kỷ lục lưu trên máy |
 | Sudoku | `/sudoku/` | 1 người, chạy hết ở client: 3 mức, ghi chú bút chì (N), 3 gợi ý, đồng hồ + tạm dừng, kỷ lục thời gian theo mức lưu trên máy |
 
-Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node scripts/smoke.mjs [url] [game ...]`, mặc định `http://localhost:8789` (`wrangler dev --port 8789`). Chạy trước / sau mỗi bước refactor (kế hoạch: `hexagon-plan.md`). CI (`.github/workflows/ci.yml`, job `smoke-prod`) tự chạy vào web thật sau mỗi lần deploy (chờ `/api/version` mới hơn commit); bot smoke (id `smoke-...`) không lên bảng xếp hạng.
+Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node tests/smoke.mjs [url] [game ...]`, mặc định `http://localhost:8789` (`wrangler dev --port 8789`). Chạy trước / sau mỗi bước refactor (kế hoạch: `hexagon-plan.md`). CI (`.github/workflows/ci.yml`, job `smoke-prod`) tự chạy vào web thật sau mỗi lần deploy (chờ `/api/version` mới hơn commit); bot smoke (id `smoke-...`) không lên bảng xếp hạng.
 
-`pnpm e2e` chạy đồng thời tối đa 3 game WebSocket và 1 trang browser, ưu tiên game chậm trước. PR chọn game theo diff qua `e2e/selection.mjs` và dùng smoke nhanh (nước đi được server xác nhận, không chờ kết thúc game dài); code chung/file lạ/diff lỗi kiểm mọi game ở chế độ nhanh. `main` và production giữ toàn bộ bài kiểm tra hết ván, không giảm timeout. API chung, hub và sảnh luôn được kiểm.
+`pnpm e2e` chạy đồng thời tối đa 3 game WebSocket và 1 trang browser, ưu tiên game chậm trước. PR chọn game theo diff qua `tests/e2e/selection.mjs` và dùng smoke nhanh (nước đi được server xác nhận, không chờ kết thúc game dài); code chung/file lạ/diff lỗi kiểm mọi game ở chế độ nhanh. `main` và production giữ toàn bộ bài kiểm tra hết ván, không giảm timeout. API chung, hub và sảnh luôn được kiểm.
 Sảnh `/phong/` được kiểm trong trang browser riêng, không dùng response `/api/rooms` từ polling của hub trước khi chuyển trang.
-Smoke Dò mìn chỉ bắt đầu mở ô sau khi cả hai client nhận đủ grid riêng và state `playing`; grid có thể đến trước state trên mạng thật. `node smoke-start.test.mjs` kiểm thứ tự đến lệch này mà không tăng timeout hoặc bỏ kiểm tra riêng tư.
+Smoke Dò mìn chỉ bắt đầu mở ô sau khi cả hai client nhận đủ grid riêng và state `playing`; grid có thể đến trước state trên mạng thật. `node tests/unit/smoke-start.test.mjs` kiểm thứ tự đến lệch này mà không tăng timeout hoặc bỏ kiểm tra riêng tư.
 
-Local mặc định full: `pnpm e2e`; thử PR nhanh: `E2E_SMOKE_MODE=fast pnpm e2e`. Kiểm riêng trang: `E2E_BASE_URL=http://localhost:8789 node e2e/readonly-smoke.mjs /soi/ /gian-diep/`. CI cache pnpm và Chromium theo OS/kiến trúc/phiên bản; cache hit vẫn cài thư viện hệ thống cần thiết.
+Local mặc định full: `pnpm e2e`; thử PR nhanh: `E2E_SMOKE_MODE=fast pnpm e2e`. Kiểm riêng trang: `E2E_BASE_URL=http://localhost:8789 node tests/e2e/readonly-smoke.mjs /soi/ /gian-diep/`. CI cache pnpm và Chromium theo OS/kiến trúc/phiên bản; cache hit vẫn cài thư viện hệ thống cần thiết.
 
-`pnpm e2e` còn chơi trọn một ván Cờ caro 3×3 với máy bằng thao tác UI trong context mới. Kết quả hiển thị, bàn cờ, lịch sử khách và từng nước đi trong replay phải khớp cùng ID ván; không chấp nhận hết giờ thay cho kết thúc ván. Bài kiểm tra chỉ cho phép server loopback, không ghi production. Có thể chạy riêng khi dev server đang mở: `E2E_BASE_URL=http://127.0.0.1:8789 node e2e/round-evidence.mjs`.
+`pnpm e2e` còn chơi trọn một ván Cờ caro 3×3 với máy bằng thao tác UI trong context mới. Kết quả hiển thị, bàn cờ, lịch sử khách và từng nước đi trong replay phải khớp cùng ID ván; không chấp nhận hết giờ thay cho kết thúc ván. Bài kiểm tra chỉ cho phép server loopback, không ghi production. Có thể chạy riêng khi dev server đang mở: `E2E_BASE_URL=http://127.0.0.1:8789 node tests/e2e/round-evidence.mjs`.
 
 CI lưu artifact `e2e-videos-<SHA>` trong 14 ngày, kể cả khi test lỗi. Thư mục `readonly/` chứa video mở trang, đóng/mở hướng dẫn, hub và sảnh; đây không phải video chơi hết mọi game. File `co-caro-3x3-bot-round-<ID>.webm` và ảnh cùng tên là bằng chứng ván UI hoàn chỉnh. Quay local: `pnpm exec playwright-core install ffmpeg`, rồi `E2E_VIDEO_DIR=e2e-videos pnpm e2e`. Không đặt biến này thì chỉ lưu ảnh kết quả/lỗi ván UI vào `e2e-artifacts/`, không quay video.
 
 `pnpm test:coverage` gộp coverage Istanbul của unit/integration test và browser thật, rồi yêu cầu **100% statements, branches, functions, lines**. Phạm vi gồm toàn bộ JavaScript trong `backend/src/`, `frontend/src/`, `shared/` và script nội tuyến trong HTML (tách vào `.coverage-sources/` khi đo); file chưa chạy vẫn có trong mẫu số, không loại vendor/QR hay nhánh lỗi. Báo cáo HTML/LCOV/JSON ở `coverage/`, artifact CI `coverage-<SHA>`. Context coverage dùng fixture HTTP/WebSocket tại biên I/O để kiểm render, quyền và tương tác; không thay thế bài Cờ caro dùng server, lịch sử và replay thật. Mã đo chỉ thêm vào `dist/` khi `E2E_COVERAGE=1`, build thường không có instrumentation. Chạy test trước khi mở dev server: test kiến trúc dựng lại `dist/`, nên server đang mở có thể giữ manifest asset cũ.
 
-`node qrcode-coverage.test.mjs` đối chiếu codeword, parity Reed–Solomon và pixel GIF đã giải mã độc lập; giữ kiểm tra đầu vào của API QR, chỉ bỏ nhánh private không có đường gọi. Hộp tạo bộ từ AI đóng trước callback thành công để thông báo không bị gỡ cùng hộp thoại.
+`node tests/unit/qrcode-coverage.test.mjs` đối chiếu codeword, parity Reed–Solomon và pixel GIF đã giải mã độc lập; giữ kiểm tra đầu vào của API QR, chỉ bỏ nhánh private không có đường gọi. Hộp tạo bộ từ AI đóng trước callback thành công để thông báo không bị gỡ cùng hộp thoại.
 
 Panel người chơi dựng lại thẻ khi cùng ID đổi giữa avatar và canvas; Dò mìn, Pikachu và Đào Vàng dùng chung cơ chế này, kể cả khi chuyển góc xem replay.
 
-Thêm game mới: tạo `frontend/src/<ten-game>/`, thêm thẻ vào `index.html`, thêm file vào `CORE` trong `frontend/src/sw.js` (và tăng `CACHE`), test vào `<ten-game>.test.mjs` rồi import ở cuối `logic.test.mjs`.
+Toàn bộ test nằm trong `tests/`: `unit/` chứa test Node, `e2e/` chứa browser suite, `support/` chứa loader và instrumentation; `smoke.mjs` chạy bot WebSocket, `coverage.mjs` gộp coverage. Các lệnh pnpm không đổi. Thêm game mới: tạo `frontend/src/<ten-game>/`, thêm thẻ vào `index.html`, thêm file vào `CORE` trong `frontend/src/sw.js` (và tăng `CACHE`), test vào `tests/unit/<ten-game>.test.mjs` rồi import ở cuối `tests/unit/logic.test.mjs`.
 
 Song ngữ vi / en (mặc định vi): `frontend/src/i18n.js`. JS viết cặp ngay tại chỗ `t('Tạo phòng', 'Create room')`; HTML tĩnh dùng `data-en` / `data-en-html` / `data-en-title` / `data-en-placeholder`; chữ server gửi cho người chơi (lỗi, tiêu đề kết quả) là cặp `['vi', 'en']`, client hiện bằng `tx()`. Chọn ngôn ngữ trong **Cài đặt** ở đáy sidebar (`setLang()`) hoặc `?lang=en`, nhớ trong localStorage `lang` cho mọi game. Dữ liệu dùng chung server + test (tên con vật, cấp độ, đồ trong tiệm...) giữ tiếng Việt, dịch lúc hiện.
 
@@ -130,7 +130,7 @@ Game điện thoại Nokia ngày xưa ở `/nokia/<game>/`: **Rắn săn mồi**
 - Snake: server bước theo tốc độ (5 cấp), có / không tường, 1–4 con; con sống cuối cùng thắng. Bantumi: luật Kalah, máy minimax alpha-beta. Lật hình: 6×4 lá, hình lá úp chỉ ở server. Logic: mọi người đoán cùng một mã (chỉ ở server), 10 lượt / 5 phút.
 - Snake: kỷ lục của máy (`localStorage` `nk.best.snake`) hiện mờ cạnh điểm trên LCD và ở sảnh chờ.
 - Rapid Roll + Bounce: "đua cùng đề" (`backend/src/application/games/race.js`) — server phát hạt giống / màn + giờ xuất phát, máy mỗi người tự chạy mô phỏng (`shared/games/nokia/<game>/logic.js`), gửi vị trí 5 lần/giây để người khác thấy bóng mờ. Bounce có 3 màn dựng bằng hàm `build()`; sửa màn xong chạy `node scripts/bounce-solve.mjs` (beam search trên chính mô phỏng) để chắc còn qua được.
-- Rapid Roll dừng vòng mô phỏng bù frame ngay khi hết mạng; gửi kết quả một lần, không lặp vô hạn khi tab bị trễ. `node rapid-roll-frame.test.mjs` kiểm callback vẽ với vật lý thật và frame bị trễ; `RAPID_ROLL_FRAME_REVISION=origin/main` chỉ dùng khi đối chiếu một bản trước sửa còn lỗi.
+- Rapid Roll dừng vòng mô phỏng bù frame ngay khi hết mạng; gửi kết quả một lần, không lặp vô hạn khi tab bị trễ. `node tests/unit/rapid-roll-frame.test.mjs` kiểm callback vẽ với vật lý thật và frame bị trễ; `RAPID_ROLL_FRAME_REVISION=origin/main` chỉ dùng khi đối chiếu một bản trước sửa còn lỗi.
 - Space Impact: server chạy thế giới 20 lần/giây, client chỉ gửi phím đang giữ; tàu của mình được đoán trước theo phím cho đỡ trễ. 3 màn, mỗi màn một trùm.
 - Logo: `node scripts/nokia-logos.mjs`.
 - Lô tô (`/loto/`) dùng chung khung `frontend/src/nokia/room.js` (chế độ `mount` / `render`, không có LCD) và DO `NokiaRoom` (`/api/nk/loto/room/CODE`); module `backend/src/application/games/loto.js`, luật ở `shared/games/loto/logic.js`.
@@ -144,7 +144,7 @@ Game điện thoại Nokia ngày xưa ở `/nokia/<game>/`: **Rắn săn mồi**
 ```bash
 pnpm install
 pnpm dev     # http://localhost:8787
-pnpm test    # node logic.test.mjs
+pnpm test    # node tests/unit/logic.test.mjs
 ```
 
-**Deploy:** push lên `main` → Cloudflare Workers Builds tự chạy `node logic.test.mjs` rồi `pnpm exec wrangler deploy`.
+**Deploy:** push lên `main` → Cloudflare Workers Builds chạy `pnpm test` rồi deploy bằng Wrangler. Build command dùng lệnh pnpm ổn định, không phụ thuộc vị trí file test.
