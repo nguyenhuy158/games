@@ -36,6 +36,8 @@ CI lưu artifact `e2e-videos-<SHA>` trong 14 ngày, kể cả khi test lỗi. Th
 
 `node qrcode-coverage.test.mjs` đối chiếu codeword, parity Reed–Solomon và pixel GIF đã giải mã độc lập; giữ kiểm tra đầu vào của API QR, chỉ bỏ nhánh private không có đường gọi. Hộp tạo bộ từ AI đóng trước callback thành công để thông báo không bị gỡ cùng hộp thoại.
 
+Panel người chơi dựng lại thẻ khi cùng ID đổi giữa avatar và canvas; Dò mìn, Pikachu và Đào Vàng dùng chung cơ chế này, kể cả khi chuyển góc xem replay.
+
 Thêm game mới: tạo `frontend/src/<ten-game>/`, thêm thẻ vào `index.html`, thêm file vào `CORE` trong `frontend/src/sw.js` (và tăng `CACHE`), test vào `<ten-game>.test.mjs` rồi import ở cuối `logic.test.mjs`.
 
 Song ngữ vi / en (mặc định vi): `frontend/src/i18n.js`. JS viết cặp ngay tại chỗ `t('Tạo phòng', 'Create room')`; HTML tĩnh dùng `data-en` / `data-en-html` / `data-en-title` / `data-en-placeholder`; chữ server gửi cho người chơi (lỗi, tiêu đề kết quả) là cặp `['vi', 'en']`, client hiện bằng `tx()`. Chọn ngôn ngữ trong **Cài đặt** ở đáy sidebar (`setLang()`) hoặc `?lang=en`, nhớ trong localStorage `lang` cho mọi game. Dữ liệu dùng chung server + test (tên con vật, cấp độ, đồ trong tiệm...) giữ tiếng Việt, dịch lúc hiện.

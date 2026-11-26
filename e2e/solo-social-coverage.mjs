@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { findChromium } from '@huyab/e2e';
 import { chromium } from 'playwright-core';
-import { saveCoverage } from './coverage.mjs';
+import { saveCoverage, saveCoverageData } from './coverage.mjs';
 
 const BASE = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:8789';
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
@@ -15,6 +15,7 @@ const CLOCK_START = new Date('2026-11-26T12:00:00.000Z');
 const VIEWPORT = { width: 720, height: 1000 };
 const PLAYER_ID = 'coverage-player';
 const HARNESS_PATH = '/solo-social-coverage-harness';
+const NAVIGATION_COVERAGE_KEY = 'solo-social.navigation-coverage';
 const JSON_TYPE = 'application/json';
 const HTTP_OK = 200;
 const HTTP_DENIED = 403;
@@ -35,6 +36,14 @@ async function scenario(name, route, run, options = {}) {
     for (const game of games) localStorage.setItem(`help.seen.${game}`, '1');
     for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
   }, { games: GAME_IDS, player: PLAYER_ID, storage: options.storage ?? {} });
+  await context.addInitScript((coverageKey) => {
+    addEventListener('pagehide', (event) => {
+      if (!event.isTrusted || !globalThis.__coverage__) return;
+      const snapshots = JSON.parse(sessionStorage.getItem(coverageKey) || '[]');
+      snapshots.push({ coverage: globalThis.__coverage__, url: location.href });
+      sessionStorage.setItem(coverageKey, JSON.stringify(snapshots));
+    });
+  }, NAVIGATION_COVERAGE_KEY);
   await page.route('**/*', async (request) => {
     const url = new URL(request.request().url());
     if (url.origin !== BASE_URL.origin) return request.abort();
@@ -68,6 +77,8 @@ async function scenario(name, route, run, options = {}) {
     console.error(`FAIL solo/social ${name}: ${error.stack}`);
   } finally {
     await saveCoverage(page);
+    const snapshots = await page.evaluate((coverageKey) => JSON.parse(sessionStorage.getItem(coverageKey) || '[]'), NAVIGATION_COVERAGE_KEY);
+    for (const snapshot of snapshots) await saveCoverageData(snapshot.coverage, snapshot.url);
     await context.close();
   }
 }
@@ -1120,9 +1131,18 @@ await scenario('spy local secret ballot tie and runoff reach a real winner', '/g
   await clickName(page, 'Start giving clues');
   for (let index = 0; index < cards.length; index++) await clickName(page, 'Next speaker');
   await clickName(page, 'Open voting');
+  await clickName(page, 'Eliminate directly');
+  assert.equal(await page.locator('dialog[open]').isVisible(), true);
   await page.clock.fastForward(SECOND_MS * 4);
+  await page.waitForSelector('dialog.spy-dialog', { state: 'detached' });
+  await textIncludes(page, '.phase-panel', 'Secret ballot');
   for (let index = 0; index < cards.length; index++) {
     await clickName(page, 'Ready to vote');
+    if (index === 0) {
+      await page.keyboard.press('Escape');
+      assert.equal(await page.getByRole('button', { name: 'Ready to vote', exact: true }).isVisible(), true);
+      await clickName(page, 'Ready to vote');
+    }
     await clickName(page, cards[(index + 1) % cards.length].player, page.locator('.phase-work'));
     await clickName(page, 'Confirm', page.locator('dialog[open]'));
   }
@@ -1388,6 +1408,14 @@ await scenario('spy invalid setup disables dealing and back restores home', '/gi
   await clickName(page, 'Remove Player 3');
   await textIncludes(page, '.setup-options .warning', 'Need 1 more');
   assert.equal(await page.getByRole('button', { name: 'Deal secret words', exact: true }).isDisabled(), true);
+  await clickName(page, 'Settings');
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.waitForSelector('dialog.spy-dialog', { state: 'detached' });
   await clickName(page, 'Back');
   assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
   await page.evaluate(() => Object.defineProperty(document, 'hidden', { configurable: true, value: true }));
@@ -1488,6 +1516,82 @@ await scenario('2048 legal high-value merges keep rendering beyond the winning t
   assert.equal(await page.locator('#tiles .vbig').count(), 0);
   assert.equal(await page.locator('#over').isVisible(), false);
 }, { init: () => { Math.random = () => 0; } });
+
+await scenario('spy imported replay handles unknown phases and empty private cards', '/gian-diep/?r=TEST&replay=spy-legacy&lang=en', async (page) => {
+  await textIncludes(page, '.rp-tag', 'Replay');
+  await page.waitForSelector('.phase-panel');
+  assert.equal(await page.locator('.phase-panel > .sub').textContent(), '');
+  await clickName(page, 'Your private card');
+  await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
+  assert.equal(await page.locator('.secret-word').textContent(), '');
+  await textIncludes(page, '.secret-card', 'Your secret word');
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('.secret-dialog', { state: 'detached' });
+  await page.locator('.rp-bar input').evaluate((node) => { node.value = node.max; node.dispatchEvent(new Event('input')); });
+  await page.clock.runFor(1);
+  await page.waitForFunction(() => document.querySelector('.board-stage').hidden);
+  await page.locator('#room header > button').first().click();
+  await page.waitForURL(new URL('/gian-diep/', BASE).href);
+  assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
+}, { clock: true, api: (url) => {
+  if (url.pathname !== '/api/replay/spy-legacy') return null;
+  const players = [{ id: 'replay', name: 'Archived viewer' }, { id: 'other', name: 'Other player' }, { id: 'third', name: 'Third player' }];
+  const cfg = { spies: 1, whites: 0, seconds: 5, pack: 'food' };
+  const view = { phase: 'archived-phase', deadline: null, round: 1, cfg, speaker: null, candidates: [], pendingGuess: null, lastEliminated: null, winner: null, players: players.map(({ id }) => ({ id, alive: true })), card: {}, voteCount: 0, voteTotal: 3, voted: false, tally: null, dealId: 'legacy-deal' };
+  const initial = room(view, { players, seats: players.map(({ id }) => id), cfg, now: CLOCK_START.getTime() });
+  return { body: JSON.stringify({ game: 'gian-diep', page: '/gian-diep/', frames: [[0, initial], [SECOND_MS, { ...initial, status: 'lobby', view: null, now: CLOCK_START.getTime() + SECOND_MS }]] }) };
+} });
+
+let loadLegacyLotoReplay;
+const legacyLotoReplay = new Promise((resolve) => { loadLegacyLotoReplay = resolve; });
+await scenario('loto imported replay defaults missing optional card metadata and survives rewind', '/loto/?replay=loto-legacy&lang=en', async (page) => {
+  const cards = await page.evaluate(async () => {
+    const { newCard } = await import('/shared/games/loto/logic.js');
+    return [newCard(), newCard()];
+  });
+  const recorded = room({ cards, colors: [], called: [12], marked: [], auto: false, best: {} }, { now: CLOCK_START.getTime() + SECOND_MS });
+  loadLegacyLotoReplay({ body: JSON.stringify({ game: 'loto', page: '/loto/', frames: [[0, { t: 'notice', text: 'Recorded prelude' }], [SECOND_MS, recorded]] }) });
+  await page.waitForSelector('.rp-bar');
+  await page.clock.runFor(SECOND_MS * 2);
+  await page.waitForSelector('.sheet', { state: 'visible' });
+  await textIncludes(page, '.strip', 'red card');
+  assert.equal(await page.locator('.ticket').evaluate((node) => node.style.getPropertyValue('--tc')), '#c62828');
+  assert.equal(await page.locator('.tabs button').count(), 2);
+  assert.deepEqual(await page.locator('.tabs button').evaluateAll((nodes) => nodes.map((node) => node.style.getPropertyValue('--c'))), ['#c62828', '#c62828']);
+  assert.equal(await page.locator('.cell:not(:disabled)').count(), 0);
+  await textIncludes(page, '.pace-note', 'Host calls by hand');
+  await textIncludes(page, '.status', 'Fill a row of 5 to win');
+  await page.locator('.rp-bar input').evaluate((node) => { node.value = node.min; node.dispatchEvent(new Event('input')); });
+  const ticket = await page.locator('.strip').textContent();
+  await pointer(page, '.wrap', -100, 0);
+  assert.equal(await page.locator('.strip').textContent(), ticket);
+  await page.clock.runFor(1);
+  await textIncludes(page, '#overlay', 'Loading replay');
+  await page.locator('.rp-bar input').evaluate((node) => { node.value = node.max; node.dispatchEvent(new Event('input')); });
+  await page.clock.runFor(1);
+  await textIncludes(page, '.strip', 'red card');
+  assert.equal(await page.locator('#overlay').isVisible(), false);
+}, { clock: true, api: (url) => url.pathname === '/api/replay/loto-legacy' ? legacyLotoReplay : null });
+
+await scenario('werewolf replay rewind tolerates a hide click before the first room frame', '/soi/?replay=soi-prelude&lang=en', async (page) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.waitForSelector('.rp-bar');
+  await page.clock.runFor(SECOND_MS * 2);
+  await clickName(page, 'Tap to see your role');
+  await textIncludes(page, '.role', 'You are the WOLF');
+  await page.locator('.rp-bar input').evaluate((node) => { node.value = node.min; node.dispatchEvent(new Event('input')); });
+  await clickName(page, 'Hide');
+  await page.clock.runFor(1);
+  await textIncludes(page, '#overlay', 'Loading replay');
+  await page.locator('.rp-bar input').evaluate((node) => { node.value = node.max; node.dispatchEvent(new Event('input')); });
+  await page.clock.runFor(1);
+  assert.equal(await page.getByRole('button', { name: 'Tap to see your role', exact: true }).isVisible(), true);
+  assert.equal(await page.locator('.role.wolf').count(), 0);
+  assert.deepEqual(errors, []);
+}, { clock: true, api: (url) => url.pathname === '/api/replay/soi-prelude' ? { body: JSON.stringify({
+  game: 'soi', page: '/soi/', frames: [[0, { t: 'notice', text: 'Recorded prelude' }], [SECOND_MS, room({ round: 1, role: 'wolf' }, { now: CLOCK_START.getTime() + SECOND_MS })]],
+}) } : null });
 
 await browser.close();
 assert.equal(failures.length, 0, failures.map(({ name, error }) => `${name}: ${error.message}`).join('\n'));

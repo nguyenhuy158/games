@@ -27,6 +27,7 @@ const LEGACY_SW_CACHE = "core-legacy-cache";
 const SW_PROBE_PATH = "/core-service-worker-probe.txt";
 const SW_METHOD_PATH = "/core-service-worker-method";
 const NOW = 1795680000000;
+const NAVIGATION_COVERAGE_KEY = "core.navigation.coverage";
 const DEFAULT_PROFILE = { user: null, stats: [], resultOwner: "guest:core-test" };
 const DEFAULT_API = {
   "/api/me": DEFAULT_PROFILE,
@@ -44,17 +45,14 @@ async function scenario(name, run, options = {}) {
   const context = await browser.newContext({ viewport: VIEWPORT, serviceWorkers: "block" });
   const requests = [];
   const state = { routes: {}, ...options.state };
-  const navigationCoverage = [];
-  await context.exposeBinding("coreSaveNavigationCoverage", (_source, coverage, url) => {
-    const saving = saveCoverageData(coverage, url);
-    navigationCoverage.push(saving);
-    return saving;
-  });
-  await context.addInitScript(() => {
+  await context.addInitScript((coverageKey) => {
     addEventListener("pagehide", () => {
-      if (globalThis.__coverage__) window.coreSaveNavigationCoverage(globalThis.__coverage__, location.href);
+      if (!globalThis.__coverage__) return;
+      const snapshots = JSON.parse(sessionStorage.getItem(coverageKey) || "[]");
+      snapshots.push({ coverage: globalThis.__coverage__, url: location.href });
+      sessionStorage.setItem(coverageKey, JSON.stringify(snapshots));
     });
-  });
+  }, NAVIGATION_COVERAGE_KEY);
   await context.route("**/*", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -101,7 +99,8 @@ async function scenario(name, run, options = {}) {
     console.log(`PASS core: ${name}`);
   } finally {
     await saveCoverage(page);
-    await Promise.all(navigationCoverage);
+    const navigationCoverage = await page.evaluate((coverageKey) => JSON.parse(sessionStorage.getItem(coverageKey) || "[]"), NAVIGATION_COVERAGE_KEY);
+    for (const snapshot of navigationCoverage) await saveCoverageData(snapshot.coverage, snapshot.url);
     await context.close();
   }
 }
@@ -1019,6 +1018,23 @@ try {
       check(first.querySelector(".tile-avatar").textContent === "?", "Missing display name uses fallback avatar");
       panel.update([{ ...tiles[0], badge: null }]);
       check(first.querySelector(".tile-badge").hidden, "Absent badge hidden");
+      const avatarTile = root.firstChild;
+      const boardTile = { ...tiles[0], draw, version: 1 };
+      panel.update([boardTile]);
+      panel.update([boardTile]);
+      const convertedBoard = root.firstChild;
+      const convertedCanvas = convertedBoard.querySelector("canvas");
+      check(root.children.length === 1 && convertedBoard !== avatarTile && !convertedBoard.querySelector(".tile-avatar"), "Same player switches from avatar to a single board tile");
+      check(JSON.stringify([...convertedCanvas.getContext("2d").getImageData(0, 0, 1, 1).data]) === "[255,0,0,255]", "Converted board displays the actual player drawing");
+      const convertedDraws = draws;
+      panel.update([boardTile]);
+      check(root.firstChild === convertedBoard && draws === convertedDraws, "Unchanged board type retains canvas and cached drawing");
+      panel.update([{ ...tiles[0], name: "Charlie", badge: null }]);
+      const convertedAvatar = root.firstChild;
+      check(root.children.length === 1 && convertedAvatar !== convertedBoard && !convertedAvatar.querySelector("canvas"), "Same player switches back from board to a single avatar without drawing a missing callback");
+      check(convertedAvatar.querySelector(".tile-avatar").textContent === "C", "Converted avatar shows the current player initial");
+      panel.update([{ ...tiles[0], name: "Delta", badge: null }]);
+      check(root.firstChild === convertedAvatar && convertedAvatar.querySelector(".tile-avatar").textContent === "D", "Unchanged avatar type reuses its node while updating the player name");
       toggle.click();
       check(localStorage.getItem("core.panel") === "1", "Hide preference saved");
       toggle.click();
@@ -1321,6 +1337,51 @@ try {
   }, { initScript: () => {
     Object.defineProperty(window, "devicePixelRatio", { configurable: true, value: undefined });
   } });
+
+  await scenario("exported language selection reloads the current page and preserves other URL state", async ({ page }) => {
+    await page.evaluate(() => history.replaceState(null, "", "/?lang=en&room=KEEP#history"));
+    await Promise.all([
+      page.waitForURL((url) => !url.searchParams.has("lang") && url.searchParams.get("room") === "KEEP" && url.hash === "#history"),
+      page.evaluate(async () => {
+        const { setLang } = await import("/i18n.js");
+        setLang("vi");
+      }),
+    ]);
+    await page.waitForFunction(() => document.documentElement.lang === "vi");
+    assert.equal(await page.evaluate(() => localStorage.getItem("lang")), "vi");
+    await textContains(page, "#meNotice", "Lịch sử khách");
+  });
+
+  await scenario("account retry does not duplicate an already pending history page", async ({ page, state, requests }) => {
+    await textContains(page, "#meError", "Could not save guest history");
+    await page.waitForFunction(() => document.querySelectorAll("#history li").length === 30);
+    let releaseHistory;
+    const historyPending = new Promise((resolve) => { releaseHistory = resolve; });
+    state.routes["/api/me/history"] = () => historyPending;
+    try {
+      await Promise.all([
+        page.waitForRequest((request) => new URL(request.url()).pathname === "/api/me/history"),
+        page.locator("#historyMore").click(),
+      ]);
+      state.routes["/api/me/history/claim"] = { ok: true };
+      await page.locator("#meRetry").click();
+      await textContains(page, "#meNotice", "Guest history is now kept");
+      await page.waitForFunction(() => !document.querySelector("#meRetry").disabled);
+      assert.equal(requests.filter((request) => request.path === "/api/me/history").length, 2);
+      assert.equal(await page.locator("#historyMore").isDisabled(), true);
+    } finally {
+      releaseHistory([]);
+    }
+    await page.waitForFunction(() => !document.querySelector("#historyMore").disabled);
+    assert.equal(await page.locator("#historyError").isVisible(), false);
+    assert.equal(await page.locator("#historyMore").isVisible(), false);
+  }, { state: { routes: {
+    "/api/me": { user: { name: "History Player" }, stats: [], resultOwner: "user:history-player", guestPending: true },
+    "/api/me/history/claim": { status: ERROR_STATUS },
+    "/api/me/history": Array.from({ length: 30 }, (_, index) => ({
+      game: "2048", mode: "solo", score: 2, won: false, level: 1, at: NOW - index, detail: "{}",
+    })),
+  } } });
 
   await serviceWorkerScenario();
   await legacyRedirectScenario();

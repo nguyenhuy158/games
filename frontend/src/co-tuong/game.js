@@ -132,7 +132,7 @@ function legalOf(v) {
 }
 const targetsOf = (v, from) => new Set(legalOf(v).filter(([f]) => f === from).map(([, to]) => to));
 
-function myTurn(r = app.room) {
+function myTurn(r) {
   return r?.status === 'playing' && r.view && !r.view.over && r.view.side[r.view.turn - 1] === app.id;
 }
 function tap(i) {

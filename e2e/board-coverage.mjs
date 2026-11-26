@@ -184,6 +184,14 @@ async function assertGamePixels(page, game, view) {
   assert.deepEqual(actual, samples.map(([, , color]) => color), `${game}: expected board geometry must occupy its known LCD pixels`);
 }
 
+async function waitLCDPixel(page, x, y, expected) {
+  await page.waitForFunction(({ x, y, expected }) => {
+    const canvas = document.querySelector('.screen canvas');
+    const actual = canvas.getContext('2d').getImageData(x, y, 1, 1).data;
+    return expected.every((value, index) => actual[index] === value);
+  }, { x, y, expected });
+}
+
 async function tapLCD(page, x, y) {
   const bounds = await page.locator('.screen canvas').boundingBox();
   assert(bounds);
@@ -246,7 +254,7 @@ async function join(page, nokia = false, deferHeader = false) {
 async function checkInvite(page, trigger) {
   await trigger.click();
   await page.locator('#invite[open]').waitFor({ state: 'visible' });
-  await text(page, '#invite .code', new RegExp(`^${ROOM_CODE}$`));
+  assert.equal(await page.locator('#invite .code').innerText(), new URL(page.url()).searchParams.get('r'));
   assert.equal(await page.locator('#invite .link').innerText(), page.url());
   assert.equal(await page.locator('#invite .qr svg').count(), 1);
   await page.locator('#invite').getByRole('button', { name: 'Close', exact: true }).click();
@@ -751,6 +759,13 @@ async function nokiaLCDGames() {
         view.events = [{ t: 'eat', id: ME }, { t: 'eat', id: OTHER }, { t: 'bug' }, { t: 'die' }];
         await feed(page, { ...playing, view });
         assert.equal(await page.evaluate(() => localStorage.getItem('nk.best.snake')), '7');
+        await waitLCDPixel(page, 37, 20, LCD_PALETTE.ink);
+        await waitLCDPixel(page, 37, 20, LCD_PALETTE.background);
+        const [bodyX, bodyY] = view.snakes[1].body[1];
+        view.snakes[1].alive = false;
+        await feed(page, { ...playing, view });
+        await waitLCDPixel(page, 1 + bodyX * 3, 8 + bodyY * 3, LCD_PALETTE.background);
+        await waitLCDPixel(page, 1 + bodyX * 3, 8 + bodyY * 3, LCD_PALETTE.ink);
         view.snakes[0].alive = false;
         view.solo = true;
         await feed(page, { ...playing, view });
@@ -1063,7 +1078,9 @@ async function mineEdges() {
     grid.fill(-2, 1, 13);
     await feed(page, { ...race, status: 'lobby', host: OTHER, startedAt: null }, { t: 'unknown' });
     await text(page, '#ovText', /Same mine layout.*Waiting for the host/);
-    await feed(page, race, { t: 'grid', grids: { [ME]: grid } });
+    await feed(page, race, { t: 'ping', id: OTHER, i: 0 });
+    assert.equal(await page.locator('#fx .ping').count(), 0);
+    await feed(page, { t: 'grid', grids: { [ME]: grid } });
     await page.locator('#btnPanel').click();
     if (!(await page.locator('.tile-board').first().isVisible())) await page.locator('#btnPanel').click();
     await canvasPixels(page, '.tile-board');
@@ -1183,7 +1200,7 @@ async function strategyEdges() {
     await page.locator('#room header button[title="Sound"]').click();
     const game = chess.newGame();
     const room = state({ status: 'playing', cfg: { level: 0 } });
-    const viewOf = (last = null) => ({ ...structuredClone(game), side: [ME, OTHER], names: ['Ada', 'Lin'], deadline: TIME + TURN_MS, last });
+    const viewOf = (last = null) => ({ ...structuredClone(game), check: !game.over && chess.inCheck(game.b, game.turn), side: [ME, OTHER], names: ['Ada', 'Lin'], deadline: TIME + TURN_MS, last });
     await feed(page, { ...room, view: viewOf() });
     for (const [from, to] of [[64, 67], [31, 40], [58, 49], [27, 36], [49, 40]]) {
       assert(chess.legal(game, game.turn, from, to), 'The check fixture must follow legal moves from the starting position');
@@ -1239,7 +1256,7 @@ async function strategyEdges() {
         if (name === 'co-ganh') {
           const last = { from: chosen[0], to: chosen[1], ...effect };
           if (game.over && !samples.has('over')) samples.set('over', { before, after: rules.clone(game), last });
-          for (const [kind, found] of [['carry', effect.ganh.length], ['trap', effect.vay.length], ['open', game.open >= 0]]) {
+          for (const [kind, found] of [['carry', effect.ganh.length && !effect.vay.length && game.open < 0], ['trap', effect.vay.length && game.open < 0], ['open', game.open >= 0]]) {
             if (found && !game.over && !samples.has(kind)) samples.set(kind, { before, after: rules.clone(game), last });
           }
         } else {
@@ -1337,10 +1354,12 @@ async function nokiaEdges() {
           await page.locator('.stage').dispatchEvent('pointercancel');
           await page.locator('.stage').dispatchEvent('pointerup', { clientX: 60, clientY: 10 });
         });
-        const menu = await page.locator('.pad button').first().evaluate((button) => button.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+        const menu = await page.locator('.pad button[data-k="up"]').evaluate((button) => button.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
         assert.equal(menu, false);
       } else if (game === 'pairs') {
         await feed(page, { ...playing, players: [PLAYERS[0]], seats: [ME], view: { ...playing.view, turn: ME, deadline: 0 } });
+        await waitLCDPixel(page, 5, 6, LCD_PALETTE.ink);
+        await waitLCDPixel(page, 5, 6, LCD_PALETTE.background);
         await action(page, () => page.keyboard.press('Enter'), { t: 'g', i: 0 });
       } else if (game === 'logic') {
         await page.keyboard.press('ArrowLeft');
@@ -1365,8 +1384,10 @@ async function nokiaEdges() {
           await frames(page);
           assert((await outgoing(page)).some((message) => message.keys?.[key.slice(5).toLowerCase()]));
           await page.keyboard.up(key);
+          await noAction(page, () => page.keyboard.up(key));
         }
         await feed(page, { ...playing, view: { ...playing.view, t: 2, ships: playing.view.ships.map((ship) => ({ ...ship, invul: 1 })) } });
+        await noAction(page, () => tapLCD(page, 40, 24));
       }
       await canvasPixels(page, '.screen canvas');
       const loss = result({ title: null, mode: 'race', ranks: [{ id: OTHER, name: 'Lin', score: 10, won: true }, { id: ME, name: 'Ada', score: 0 }] });
