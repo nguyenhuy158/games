@@ -145,3 +145,4 @@ await import('./rules-action-coverage.test.mjs');
 await import('./application-coverage.test.mjs');
 await import('./adapters-coverage.test.mjs');
 await import('./rapid-roll-frame.test.mjs');
+await import('./qrcode-coverage.test.mjs');

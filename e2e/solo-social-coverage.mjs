@@ -25,7 +25,7 @@ const failures = [];
 let passed = 0;
 
 async function scenario(name, route, run, options = {}) {
-  const context = await browser.newContext({ serviceWorkers: 'block', viewport: VIEWPORT, hasTouch: true });
+  const context = await browser.newContext({ serviceWorkers: 'block', viewport: VIEWPORT, hasTouch: true, colorScheme: options.colorScheme ?? 'light' });
   const page = await context.newPage();
   page.setDefaultTimeout(WAIT_MS);
   const requests = [];
@@ -42,7 +42,8 @@ async function scenario(name, route, run, options = {}) {
     if (url.pathname.startsWith('/api/')) {
       const body = request.request().postDataJSON();
       requests.push({ path: url.pathname, method: request.request().method(), body });
-      const reply = await options.api?.(url, request.request(), requests);
+      const reply = await options.api?.(url, request.request(), requests, page);
+      if (reply?.abort) return request.abort(reply.abort);
       if (reply) return request.fulfill({ contentType: JSON_TYPE, status: HTTP_OK, ...reply });
       const value = url.pathname === '/api/me' ? { resultOwner: 'coverage-owner', name: 'Coverage Player' }
         : url.pathname === '/api/rooms' ? { rooms: [] } : url.pathname === '/api/me/history' ? [] : [];
@@ -113,6 +114,7 @@ async function installProtocol(page) {
     window.coverageTransport.receive = (message) => {
       const socket = window.coverageTransport.roomSocket();
       if (!socket) throw new Error('No local room socket connected');
+      if (message.t === 'state') window.coverageTransport.state = message;
       socket.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(message) }));
     };
   });
@@ -161,6 +163,7 @@ for (const language of ['en', 'vi']) {
     await page.locator('#btnBoard').click();
     assert.equal(await page.locator('#side').evaluate((node) => node.classList.contains('open')), true);
     await page.locator('#btnBoard').click();
+    await page.evaluate(() => localStorage.removeItem('pk.name'));
     await page.evaluate(() => {
       const keys = ['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'];
       const MAX_MOVES = 24000;
@@ -172,7 +175,10 @@ for (const language of ['en', 'vi']) {
       if (document.querySelector('#over').hidden) throw new Error('2048 did not reach game over through legal moves');
     });
     assert.equal(await page.locator('#final').textContent(), await page.locator('#score').textContent());
+    assert.notEqual(await page.locator('#name').inputValue(), '');
     await page.waitForFunction(() => document.querySelector('#historyStatus')?.textContent.includes(document.documentElement.lang === 'en' ? 'saved in your history' : 'Đã lưu ván'));
+    await page.locator('#pad, .pad').first().getByRole('button').first().dispatchEvent('click');
+    assert.equal(await page.locator('#over').isVisible(), true);
     assert(requests.some(({ path, body }) => path === '/api/me/history' && body.game === '2048' && body.score >= 0));
     await page.locator('#name').fill(' ');
     await page.locator('#saveForm').dispatchEvent('submit');
@@ -205,6 +211,7 @@ for (const language of ['en', 'vi']) {
     await page.keyboard.press('p');
     await page.keyboard.press('ArrowLeft');
     const levels = await page.locator('[data-level]').evaluateAll((nodes) => [...new Set(nodes.map((node) => node.dataset.level))]);
+    await page.keyboard.press('x');
     for (const level of levels) {
       await page.locator(`#ovStart [data-level="${level}"]`).click();
       assert.equal(await page.evaluate(() => localStorage.getItem('tetris.level')), level);
@@ -245,6 +252,7 @@ for (const language of ['en', 'vi']) {
     await page.waitForFunction(() => document.querySelectorAll('#grid > .given').length > 0);
     await page.keyboard.press('1');
     await page.keyboard.press('Delete');
+    await page.keyboard.press('x');
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.locator('#grid .sel').count(), 1);
     await page.keyboard.press('ArrowLeft');
@@ -282,6 +290,10 @@ for (const language of ['en', 'vi']) {
     assert.equal(await page.locator('#ovPause').isVisible(), true);
     const paused = await page.locator('#clock').textContent();
     await page.keyboard.press('2');
+    await page.keyboard.press('Delete');
+    const selected = await page.locator('#grid .sel').count();
+    await page.locator('#grid .user').first().dispatchEvent('click');
+    assert.equal(await page.locator('#grid .sel').count(), selected);
     await page.clock.fastForward(SECOND_MS);
     assert.equal(await page.locator('#clock').textContent(), paused);
     await page.locator('#btnResume').click();
@@ -391,10 +403,23 @@ await scenario('spy local roster, settings, privacy and final results', '/gian-d
   await names.fill('Eva');
   await clickName(page, 'Apply names');
   assert.equal(await page.locator('.roster-list > li').count(), 6);
+  await clickName(page, 'Rename An');
+  await names.press('Enter');
+  await page.getByRole('textbox', { name: 'New name for An' }).press('ArrowLeft');
+  await clickName(page, 'Cancel rename');
+  await page.locator('.roster-add select').evaluate((node) => { node.value = 'replace'; node.dispatchEvent(new Event('change')); });
+  await names.fill('An\nBinh\nChi\nDung\nEva\nFong');
+  await clickName(page, 'Apply names');
+  await clickName(page, 'Cancel', page.locator('dialog[open]'));
+  assert.equal(await page.locator('.roster-list > li').count(), 6);
+  await clickName(page, 'Apply names');
+  await clickName(page, 'Confirm', page.locator('dialog[open]'));
+  assert.equal(await page.locator('.roster-list .roster-edit-name').first().textContent(), 'An');
   await clickName(page, 'Settings');
   const modal = page.locator('dialog.spy-dialog[open]');
   await modal.locator('select').nth(1).evaluate((node) => { node.value = '1'; node.dispatchEvent(new Event('change')); });
   await modal.locator('select').nth(2).evaluate((node) => { node.value = '5'; node.dispatchEvent(new Event('change')); });
+  await modal.locator('select').last().evaluate((node) => { node.value = node.options[1].value; node.dispatchEvent(new Event('change')); });
   await clickName(page, 'Save settings', modal);
   await clickName(page, 'Dark mode');
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), true);
@@ -490,13 +515,18 @@ for (const language of ['en', 'vi']) {
     await textIncludes(page, 'dialog [role="status"]', language === 'en' ? 'AI timed out' : 'AI quá thời gian');
     await clickName(page, labels.close, page.locator('dialog[open]'));
     await page.evaluate(() => {
-      window.fetch = (_url, options) => new Promise((_resolve, reject) => options.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true }));
+      window.fetch = (_url, options) => new Promise((_resolve, reject) => options.signal.addEventListener('abort', () => {
+        window.aiRequestAborted = true;
+        reject(new DOMException('Aborted', 'AbortError'));
+      }, { once: true }));
       window.openAi();
     });
     await clickName(page, labels.suggest);
     assert.equal(await page.getByRole('button', { name: labels.generate, exact: true }).isDisabled(), true);
     await clickName(page, labels.close, page.locator('dialog[open]'));
     await page.waitForSelector('dialog[open]', { state: 'detached' });
+    await page.waitForFunction(() => window.aiRequestAborted);
+    assert.equal(await page.locator('dialog.spy-dialog').count(), 0);
   }, { api: (url, request, requests) => {
     if (url.pathname !== '/api/gian-diep/ai') return null;
     const body = request.postDataJSON();
@@ -527,6 +557,7 @@ await scenario('spy UI accepts invalid setup input safely and renders ordered ro
   assert.match(result.warnings[0], /Need 1/);
   assert.match(result.warnings[1], /At most 20/);
   assert.match(result.warnings[2], /Invalid role counts/);
+  assert.equal(await page.locator('dialog[open] .notice.warning').isVisible(), true);
   assert.equal(result.warnings[3], '');
   assert.equal(await page.getByRole('button', { name: 'Save settings', exact: true }).isDisabled(), true);
   assert.equal(await page.locator('#fixture .roster-list li').count(), 3);
@@ -620,6 +651,8 @@ await scenario('loto buying, marking, calls, penalties, winner and spectator', '
   assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'swap', k: 0 });
   await page.locator('.swatches button').nth(1).click();
   assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'pick', colors: [0] });
+  await page.evaluate(() => window.coverageTransport.receive({ t: 'loto', e: 'unknown' }));
+  assert.equal(await page.locator('.pen').isVisible(), false);
   await state(page, room({ ...fresh, cards: Array.from({ length: 6 }, () => cards[0]), colors: [0, 1, 2, 3, 4, 5] }));
   await page.locator('.swatches button').nth(6).click();
   await textIncludes(page, 'body', 'At most 6 cards');
@@ -639,6 +672,9 @@ await scenario('loto buying, marking, calls, penalties, winner and spectator', '
   assert.equal(await page.locator('.count').textContent(), '1/90');
   assert.equal(await page.locator('.shop').isVisible(), false);
   assert.equal(await page.locator('.board .cur').textContent(), String(number));
+  await state(page, room({ ...called, pace: 3, called: [number, 90] }));
+  assert.equal(await page.locator('.ball').textContent(), '90');
+  assert.match(await page.evaluate(() => window.audioLedger.spoken.at(-1).text), /ninety/i);
   await page.locator('.cell').nth(index).click();
   assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'mark', i: index });
   await state(page, room({ ...called, marked: [index] }));
@@ -695,6 +731,9 @@ await scenario('loto buying, marking, calls, penalties, winner and spectator', '
   await textIncludes(page, '.status', 'KINH! Checking');
   await state(page, room(winner, { status: 'ended', result: { title: ['Kinh', 'KINH'], ranks: [{ id: PLAYER_ID, name: 'Coverage Player', score: 5, won: true }, { id: 'other', name: 'Other Player', score: 4 }] } }));
   await textIncludes(page, '#overlay .ranks', 'one away');
+  await state(page, room({ ...called, kinh: null }, { status: 'ended', result: { title: ['Hết số', 'No winner'], ranks: [{ id: PLAYER_ID, name: 'Coverage Player', score: 2 }] } }));
+  assert.equal(await page.locator('.status').textContent(), '');
+  await textIncludes(page, '#overlay .ranks', '2/5');
   await state(page, room({ ...called, cards: null, colors: [], liars: ['other'] }, { host: 'other' }));
   await textIncludes(page, '.status', 'no seats left');
   assert.equal(await page.locator('.sheet').isVisible(), false);
@@ -922,12 +961,20 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   const cfg = { spies: 1, whites: 1, seconds: 5, pack: 'food' };
   await state(page, room(null, { players, seats, cfg, status: 'waiting' }));
   assert.equal(await page.locator('#overlay > .card > button.primary').isDisabled(), false);
+  await clickName(page, 'Move Coverage Player down');
+  assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'config', cfg: { order: ['other', PLAYER_ID, 'third', 'fourth', 'fifth', 'sixth'] } });
+  await state(page, room(null, { players, seats, cfg: { ...cfg, order: ['other', PLAYER_ID, 'third', 'fourth', 'fifth', 'sixth'] }, status: 'waiting' }));
+  await clickName(page, 'Shuffle order');
+  assert.deepEqual(new Set(await page.evaluate(() => window.coverageTransport.sent.at(-1).cfg.order)), new Set(seats));
+  await page.locator('#room .room-theme').click();
+  assert.equal(await page.locator('#room .room-theme').getAttribute('aria-label'), await page.locator('#home .room-theme').getAttribute('aria-label'));
   await clickName(page, 'Game settings');
   await clickName(page, 'Create AI pack', page.locator('dialog[open]'));
   await page.locator('dialog input').fill('Food');
   await clickName(page, 'Create secret pack', page.locator('dialog[open]'));
   await page.waitForSelector('dialog[open]', { state: 'detached' });
   await textIncludes(page, 'body', 'AI pack is ready');
+  await textIncludes(page, '.settings-summary', 'Food');
   const view = {
     phase: 'deal', deadline: null, round: 1, cfg, speaker: PLAYER_ID, candidates: seats,
     pendingGuess: null, lastEliminated: null, winner: null,
@@ -938,19 +985,43 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await clickName(page, 'Your private card');
   await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
   await textIncludes(page, '.secret-word', 'Phở');
+  await clickName(page, 'Hide card', page.locator('.secret-dialog'));
+  assert.equal(await page.locator('.secret-word').count(), 0);
+  await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
   await page.keyboard.press('Escape');
   await page.waitForSelector('.secret-dialog', { state: 'detached' });
   await clickName(page, 'Start giving clues');
   assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'next' });
+  await clickName(page, 'Your private card');
+  await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  assert.equal(await page.locator('.secret-word').count(), 0);
   await page.clock.fastForward(SECOND_MS * 7);
   await textIncludes(page, 'body', 'No confirmation yet');
   for (const phase of ['describe', 'discuss', 'countdown', 'tie']) {
+    if (phase === 'describe') {
+      await clickName(page, 'Your private card');
+      await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
+    }
     await state(page, room({ ...view, phase, deadline: phase === 'countdown' ? CLOCK_START.getTime() + SECOND_MS * 10 : null, tally: { [PLAYER_ID]: 2, other: 2 }, candidates: [PLAYER_ID, 'other'] }, { players, seats, cfg }));
     assert.equal(await page.locator('.phase-panel h2').textContent(), { describe: 'Give a clue', discuss: 'Discussion', countdown: 'Get ready to vote', tie: 'Tied vote' }[phase]);
+    assert.equal(await page.locator('.secret-dialog[open]').count(), 0);
     await clickName(page, 'View vote totals');
     await textIncludes(page, 'dialog[open]', '2 votes');
     await clickName(page, 'Close', page.locator('dialog[open]'));
     if (phase === 'describe') await clickName(page, 'Next speaker');
+    if (phase === 'describe') {
+      const sent = await page.evaluate(() => window.coverageTransport.sent.length);
+      await clickName(page, 'Eliminate directly');
+      await clickName(page, 'Other Player', page.locator('dialog[open]'));
+      await clickName(page, 'Confirm', page.locator('dialog[open]'));
+      assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sent);
+    }
     if (phase === 'discuss') await clickName(page, 'Open voting');
     if (phase === 'tie') await clickName(page, 'Clues done · Vote again');
   }
@@ -975,6 +1046,9 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await page.locator('.guess-form input').fill('   ');
   await page.locator('.guess-form').dispatchEvent('submit');
   assert.equal(await page.locator('dialog.spy-dialog[open]').count(), 0);
+  await page.locator('.guess-form input').fill('Unsent private guess');
+  await state(page, room({ ...view, phase: 'guess', pendingGuess: PLAYER_ID, card: { white: true }, players: eliminated, voteCount: 2 }, { players, seats, cfg, host: 'other' }));
+  assert.equal(await page.locator('.guess-form input').inputValue(), 'Unsent private guess');
   await page.locator('.guess-form input').fill('pho');
   await page.locator('.guess-form').dispatchEvent('submit');
   await clickName(page, 'Confirm', page.locator('dialog[open]'));
@@ -989,6 +1063,8 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await textIncludes(page, '.game-result', 'guessed correctly and wins alone');
   await state(page, room(ending, { players, seats, cfg, status: 'ended', result: { title: ['Kết quả', 'Results'], ranks: [{ id: PLAYER_ID, name: 'Coverage Player', score: 1, won: true }] } }));
   assert.equal(await page.locator('#overlay .results .word-pair').count(), 1);
+  await state(page, room(ending, { players, seats, cfg, host: 'other', status: 'ended' }));
+  assert.equal(await page.getByRole('button', { name: 'Game settings', exact: true }).count(), 0);
   await state(page, room(view, { players, seats, cfg }));
   await page.locator('#room header > button').first().click();
   await clickName(page, 'Cancel', page.locator('dialog[open]'));
@@ -999,7 +1075,15 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await clickName(page, 'Choose another mode');
   await clickName(page, 'One device each');
   assert.equal(await page.locator('#home').isVisible(), true);
-}, { protocol: true, clock: true, api: (url) => url.pathname === '/api/gian-diep/ai' ? { body: JSON.stringify({ packId: 'aaaaaaaaaaaaaaaa', title: 'Food' }) } : null });
+}, { protocol: true, clock: true, api: async (url, _request, _requests, page) => {
+  if (url.pathname !== '/api/gian-diep/ai') return null;
+  const pack = { packId: 'aaaaaaaaaaaaaaaa', title: 'Food' };
+  await page.evaluate((pack) => {
+    const current = window.coverageTransport.state;
+    window.coverageTransport.receive({ ...current, cfg: { ...current.cfg, pack: 'ai', aiPackId: pack.packId, aiTopic: pack.title }, now: Date.now() });
+  }, pack);
+  return { body: JSON.stringify(pack) };
+} });
 
 await scenario('tetris clears actual rows and stores difficulty-specific records', '/tetris/?lang=en', async (page) => {
   await page.keyboard.press('Space');
@@ -1075,6 +1159,8 @@ await scenario('penalty settings validate restored lists and edit defaults', `${
   await clickName(page, 'Add', editor);
   assert.equal(await editor.locator('.plist li').count(), count);
   await editor.locator('input').fill('Dance');
+  await editor.locator('input').press('ArrowLeft');
+  assert.equal(await editor.locator('.plist li').count(), count);
   await clickName(page, 'Add', editor);
   assert.equal(await editor.locator('.plist li').count(), count + 1);
   while (await editor.locator('.plist li').count() > 1) await editor.locator('.rm').last().click();
@@ -1098,7 +1184,9 @@ await scenario('penalty settings validate restored lists and edit defaults', `${
 }, { storage: { 'loto.party': '{bad-json' } });
 
 await scenario('spy local AI denial restores setup and valid deal keeps words private', '/gian-diep/?lang=en', async (page) => {
+  await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true })));
   await clickName(page, 'Read the rules');
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await textIncludes(page, '.help-body', 'Recorded replays are disabled');
   await clickName(page, 'Got it', page.locator('.help-dlg'));
   await clickName(page, 'Pass one device');
@@ -1108,13 +1196,18 @@ await scenario('spy local AI denial restores setup and valid deal keeps words pr
   await clickName(page, 'Create secret pack', page.locator('dialog.spy-dialog[open]'));
   await page.waitForSelector('dialog.spy-dialog[open]', { state: 'detached' });
   await textIncludes(page, '.config-badges', 'Vietnamese dishes');
+  await clickName(page, 'Settings');
+  assert.equal(await page.locator('dialog.spy-dialog select').last().inputValue(), 'ai');
+  await clickName(page, 'Save settings', page.locator('dialog.spy-dialog[open]'));
   await clickName(page, 'Deal secret words');
+  await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true })));
   await textIncludes(page, 'body', 'Deal denied');
   assert.equal(await page.locator('.spy-content').evaluate((node) => node.inert), false);
   assert.equal(await page.getByRole('button', { name: 'Deal secret words', exact: true }).isEnabled(), true);
   await clickName(page, 'Deal secret words');
   await clickName(page, 'Reveal card');
   assert(['Phở', 'Bún'].includes(await page.locator('.secret-word').textContent()));
+  assert.equal(await page.evaluate(() => !window.dispatchEvent(new Event('beforeunload', { cancelable: true }))), true);
   await page.locator('[data-help="gian-diep-guide"]').click();
   assert.equal(await page.locator('.secret-word').count(), 0);
   await clickName(page, 'Got it', page.locator('.help-dlg'));
@@ -1147,6 +1240,9 @@ await scenario('audio unlock resumes suspended contexts and respects blocked per
     resumed.start();
     const resumedPlaying = resumed.playing;
     resumed.stop();
+    const unopened = createMusic();
+    unopened.level = 1;
+    if (unopened.level !== 1 || localStorage.getItem('loto.music') !== '1') throw new Error('Unopened music did not persist the selected level');
     class BlockedContext extends Context {
       constructor() { super(); this.state = 'suspended'; }
       resume() { window.audioLedger.resumed++; return Promise.resolve(); }
@@ -1162,6 +1258,231 @@ await scenario('audio unlock resumes suspended contexts and respects blocked per
   assert.equal(result.resumed, 2);
   await textIncludes(page, '#fixture', 'Resumed:true;blocked:false');
 }, { clock: true, init: installAudioBoundary });
+
+for (const game of ['2048', 'sudoku', 'tetris']) {
+  let failPreparation;
+  const pendingPreparation = new Promise((resolve) => { failPreparation = resolve; });
+  await scenario(`${game} pending history blocks duplicate starts and failure retries`, `/${game}/?lang=en`, async (page, requests) => {
+    if (game === 'tetris') await page.keyboard.press('Space');
+    await textIncludes(page, '#historyStatus', 'Preparing history');
+    const controls = game === '2048' ? ['#btnNew']
+      : game === 'sudoku' ? ['#btnNew', '#btnPause', '#btnNote', '#btnHint', '#btnReset'] : ['#ovStart [data-act="start"]', '#ovStart [data-level="hard"]'];
+    for (const selector of controls) await page.locator(selector).click();
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('u');
+    if (game === 'sudoku') {
+      await page.locator('#grid > div').first().click();
+      assert.equal(await page.locator('#grid .sel').count(), 0);
+      assert.equal(await page.locator('#ovPause').isVisible(), false);
+      assert.equal(await page.locator('#ovReset').isVisible(), false);
+      assert.equal(await page.locator('#btnNote').evaluate((node) => node.classList.contains('on')), false);
+    }
+    if (game === 'tetris') assert.notEqual(await page.evaluate(() => localStorage.getItem('tetris.level')), 'hard');
+    await page.clock.fastForward(SECOND_MS);
+    assert.equal(requests.filter(({ path }) => path === '/api/me').length, 1);
+    failPreparation({ status: HTTP_UNAVAILABLE, body: '{}' });
+    await textIncludes(page, '#historyStatus', 'has not started');
+    if (game === '2048') {
+      await page.keyboard.press('ArrowRight');
+      assert.equal(await page.locator('#tiles .tile').evaluateAll((nodes) => nodes.every((node) => !node.textContent)), true);
+    }
+    await clickName(page, 'Retry');
+    await page.waitForSelector('#historyStatus .history-message', { state: 'detached' });
+    if (game === '2048') assert.equal(await page.locator('#tiles .tile').evaluateAll((nodes) => nodes.filter((node) => node.textContent).length), 2);
+    if (game === 'sudoku') assert.equal(await page.locator('#grid .given').count(), 41);
+    if (game === 'tetris') assert.equal(await page.locator('#ovStart').isVisible(), false);
+    assert.equal(requests.filter(({ path }) => path === '/api/me').length, 2);
+  }, { clock: true, api: (url, _request, requests) => url.pathname === '/api/me' && requests.filter(({ path }) => path === '/api/me').length === 1 ? pendingPreparation : null });
+}
+
+for (const failure of ['http', 'network']) {
+  await scenario(`2048 unavailable leaderboard remains empty (${failure})`, '/2048/?lang=en', async (page, requests) => {
+    await page.waitForFunction(() => document.querySelectorAll('#tiles .tile').length === 16 && [...document.querySelectorAll('#tiles .tile')].some((node) => node.textContent));
+    assert.equal(await page.locator('#lbEmpty').isVisible(), true);
+    assert.equal(await page.locator('#lb li').count(), 0);
+    assert.equal(requests.filter(({ path }) => path === '/api/board').length, 1);
+    for (const key of ['ArrowDown', 'ArrowLeft', 'ArrowUp', 'ArrowRight']) await page.keyboard.press(key);
+    assert.equal(await page.locator('#btnUndo').isDisabled(), false);
+  }, { api: (url) => url.pathname === '/api/board' ? failure === 'http' ? { status: HTTP_UNAVAILABLE, body: '{}' } : { abort: 'failed' } : null });
+}
+
+let failSudokuReset;
+const pendingSudokuReset = new Promise((resolve) => { failSudokuReset = resolve; });
+await scenario('sudoku failed reset preserves board and retry completes reset', '/sudoku/?lang=en', async (page, requests) => {
+  await page.waitForSelector('#grid .user');
+  await page.locator('#grid .user').first().click();
+  await page.keyboard.press('1');
+  const filled = await page.locator('#grid').innerText();
+  await page.locator('#btnReset').click();
+  await page.locator('#btnResetYes').dblclick();
+  assert.equal(requests.filter(({ path }) => path === '/api/me').length, 2);
+  failSudokuReset({ status: HTTP_UNAVAILABLE, body: '{}' });
+  await textIncludes(page, '#historyStatus', 'has not started');
+  assert.equal(await page.locator('#grid').innerText(), filled);
+  assert.equal(await page.locator('#ovReset').isVisible(), true);
+  await clickName(page, 'Retry');
+  await page.waitForFunction(() => document.querySelector('#ovReset').hidden);
+  assert.equal(await page.locator('#grid .user').evaluateAll((nodes) => nodes.every((node) => !node.textContent)), true);
+  await solveSudoku(page);
+  const solved = await page.locator('#grid').innerText();
+  await page.locator('#btnHint').click();
+  assert.equal(await page.locator('#grid').innerText(), solved);
+  assert.equal(await page.locator('#hints').textContent(), '3');
+}, { api: (url, _request, requests) => url.pathname === '/api/me' && requests.filter(({ path }) => path === '/api/me').length === 2 ? pendingSudokuReset : null });
+
+await scenario('spy AI ignores duplicate submissions and late response after close', `${HARNESS_PATH}?lang=en`, async (page) => {
+  await page.evaluate(async () => {
+    const { aiPicker } = await import('/gian-diep/ai.js');
+    window.aiRequests = [];
+    window.fetch = (_url, options) => {
+      window.aiRequests.push(JSON.parse(options.body));
+      return new Promise((resolve) => {
+        window.completeAi = () => {
+          const response = new Response(JSON.stringify({ packId: 'late-pack', title: 'Late pack' }));
+          const json = response.json.bind(response);
+          response.json = async () => {
+            const result = await json();
+            window.aiResponseRead = true;
+            return result;
+          };
+          resolve(response);
+        };
+      });
+    };
+    aiPicker(() => { document.querySelector('#fixture').textContent = 'Unexpected saved pack'; });
+  });
+  await page.locator('dialog input').fill('Delayed pack');
+  await page.locator('dialog form').dispatchEvent('submit');
+  await textIncludes(page, 'dialog [role="status"]', 'AI is preparing');
+  await page.locator('dialog form').dispatchEvent('submit');
+  assert.equal(await page.evaluate(() => window.aiRequests.length), 1);
+  await clickName(page, 'Close', page.locator('dialog[open]'));
+  await page.waitForSelector('dialog.spy-dialog', { state: 'detached' });
+  await page.evaluate(async () => { window.completeAi(); await Promise.resolve(); });
+  await page.waitForFunction(() => window.aiResponseRead);
+  assert.equal(await page.locator('#fixture').textContent(), '');
+  assert.equal(await page.locator('dialog').count(), 0);
+});
+
+for (const language of ['vi', 'en']) {
+  await scenario(`loto missing ${language} voice keeps call display active`, `/loto/?r=TEST&lang=${language}`, async (page) => {
+    await state(page, room({ cards: null, called: [], marked: [], colors: [], auto: false, best: {} }));
+    await page.clock.fastForward(SECOND_MS * 2);
+    await state(page, room({ cards: null, called: [12], marked: [], colors: [], auto: false, best: {} }));
+    await textIncludes(page, 'body', language === 'vi' ? 'không có giọng tiếng Việt' : 'No English voice');
+    assert.equal(await page.locator('.ball').textContent(), '12');
+    assert.equal(await page.locator('.count').textContent(), '1/90');
+    await page.locator('.music').click();
+    assert.equal(await page.evaluate(() => localStorage.getItem('loto.music')), '2');
+  }, { clock: true, protocol: true, init: () => Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: undefined }), storage: { 'loto.music': '0', 'loto.voice': language } });
+}
+
+await scenario('spy invalid setup disables dealing and back restores home', '/gian-diep/?lang=en', async (page) => {
+  assert.equal(await page.getByRole('button', { name: 'Light mode', exact: true }).isVisible(), true);
+  await clickName(page, 'Pass one device');
+  await clickName(page, 'Remove Player 3');
+  await textIncludes(page, '.setup-options .warning', 'Need 1 more');
+  assert.equal(await page.getByRole('button', { name: 'Deal secret words', exact: true }).isDisabled(), true);
+  await clickName(page, 'Back');
+  assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
+  await page.evaluate(() => Object.defineProperty(document, 'hidden', { configurable: true, value: true }));
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  assert.equal(await page.locator('.secret-word').count(), 0);
+  await clickName(page, 'More games');
+  await page.waitForURL(new URL('/', BASE).href);
+}, { colorScheme: 'dark' });
+
+await scenario('spy seating restores focus across ordered room updates', `${HARNESS_PATH}?lang=en`, async (page) => {
+  await page.evaluate(async () => {
+    const { seatingRoster } = await import('/gian-diep/roster.js');
+    const root = document.querySelector('#fixture');
+    const players = [{ id: 'ada', name: 'Ada' }, { id: 'binh', name: 'Binh' }, { id: 'chi', name: 'Chi' }];
+    window.drawSeating = (next, editable = true) => root.replaceChildren(seatingRoster(next, 'ada', editable ? (ordered) => window.drawSeating(ordered) : null, () => 0));
+    window.seatingPlayers = players;
+    window.drawSeating(players);
+  });
+  await clickName(page, 'Move Ada down');
+  await page.waitForFunction(() => document.activeElement?.closest('[data-player]')?.dataset.player === 'ada');
+  assert.equal(await page.locator('.roster-list > li').nth(1).getAttribute('data-player'), 'ada');
+  await page.evaluate(() => window.drawSeating(window.seatingPlayers, false));
+  await page.waitForFunction(() => document.activeElement?.matches('[data-player="ada"]'));
+  assert.equal(await page.locator('.roster-list button').count(), 0);
+  await page.evaluate(() => window.drawSeating(window.seatingPlayers.filter((player) => player.id !== 'ada'), false));
+  await page.waitForFunction(() => document.activeElement?.classList.contains('roster-list'));
+  assert.equal(await page.locator('.roster-list > li').count(), 2);
+  await page.evaluate(() => {
+    window.drawSeating(window.seatingPlayers);
+    document.querySelector('[data-player="ada"] button:not(:disabled)').focus();
+    window.drawSeating(window.seatingPlayers);
+    window.drawSeating(window.seatingPlayers.filter((player) => player.id !== 'ada'), false);
+  });
+  assert.equal(await page.locator('.roster-list > li').count(), 2);
+  assert.equal(await page.locator('.roster-list button').count(), 0);
+});
+
+await scenario('2048 legal high-value merges keep rendering beyond the winning tile', '/2048/?lang=en', async (page) => {
+  await page.waitForFunction(() => [...document.querySelectorAll('#tiles .tile')].filter((node) => node.textContent).length === 2);
+  const result = await page.evaluate(async () => {
+    const { DIRS, emptyCells, slide } = await import('/shared/games/2048/logic.js');
+    const TARGET = 4096;
+    const MAX_TURNS = 4096;
+    const SPAWN_VALUE = 4;
+    const KEY_BY_DIRECTION = { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown' };
+    const SNAKE_ORDER = [0, 1, 2, 3, 7, 6, 5, 4, 8, 9, 10, 11, 15, 14, 13, 12];
+    const EMPTY_WEIGHT = 128;
+    const DESCENDING_WEIGHT = 8;
+    const readGrid = () => [...document.querySelectorAll('#tiles .tile')].map((node) => Number(node.textContent));
+    const value = (grid) => {
+      let weighted = 0;
+      let descending = 0;
+      for (const [rank, index] of SNAKE_ORDER.entries()) {
+        weighted += grid[index] * (SNAKE_ORDER.length - rank);
+        if (rank) descending += Math.max(0, grid[index] - grid[SNAKE_ORDER[rank - 1]]);
+      }
+      return weighted + emptyCells(grid).length * EMPTY_WEIGHT - descending * DESCENDING_WEIGHT;
+    };
+    const outcomes = (grid) => DIRS.flatMap((direction) => {
+      const moved = slide(grid, direction);
+      if (!moved.moved) return [];
+      const free = emptyCells(moved.grid);
+      return free.map((index, position) => {
+        const next = [...moved.grid];
+        next[index] = SPAWN_VALUE;
+        return { direction, grid: next, random: position / free.length, gain: moved.gain };
+      });
+    });
+    let score = Number(document.querySelector('#score').textContent);
+    for (let turn = 0; turn < MAX_TURNS; turn++) {
+      const grid = readGrid();
+      if (grid.some((tile) => tile >= TARGET)) return { score, turns: turn };
+      const candidates = outcomes(grid);
+      if (!candidates.length) throw new Error('Legal 2048 planner exhausted the board before the high-value tile');
+      let selected = null;
+      let best = -Infinity;
+      for (const candidate of candidates) {
+        const continuation = outcomes(candidate.grid);
+        const rank = continuation.length ? Math.max(...continuation.map((next) => value(next.grid))) : -Infinity;
+        if (rank > best) { best = rank; selected = candidate; }
+      }
+      if (!selected) throw new Error('No safe legal 2048 continuation');
+      const originalRandom = Math.random;
+      const samples = [selected.random, 0];
+      Math.random = () => samples.length ? samples.shift() : originalRandom();
+      try { window.dispatchEvent(new KeyboardEvent('keydown', { key: KEY_BY_DIRECTION[selected.direction], bubbles: true })); }
+      finally { Math.random = originalRandom; }
+      score += selected.gain;
+      if (JSON.stringify(readGrid()) !== JSON.stringify(selected.grid)) throw new Error('Displayed 2048 move differs from the legal move and chosen spawn');
+    }
+    throw new Error('Legal 2048 high-value merge budget exhausted');
+  });
+  assert(result.turns > 0);
+  assert.equal(await page.locator('#score').textContent(), String(result.score));
+  assert.equal(await page.locator('#tiles .vbig').textContent(), '4096');
+  assert.equal(await page.locator('#tiles .vbig').getAttribute('data-len'), '4');
+  await page.locator('#btnUndo').click();
+  assert.equal(await page.locator('#tiles .vbig').count(), 0);
+  assert.equal(await page.locator('#over').isVisible(), false);
+}, { init: () => { Math.random = () => 0; } });
 
 await browser.close();
 assert.equal(failures.length, 0, failures.map(({ name, error }) => `${name}: ${error.message}`).join('\n'));

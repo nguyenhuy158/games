@@ -44,6 +44,17 @@ async function scenario(name, run, options = {}) {
   const context = await browser.newContext({ viewport: VIEWPORT, serviceWorkers: "block" });
   const requests = [];
   const state = { routes: {}, ...options.state };
+  const navigationCoverage = [];
+  await context.exposeBinding("coreSaveNavigationCoverage", (_source, coverage, url) => {
+    const saving = saveCoverageData(coverage, url);
+    navigationCoverage.push(saving);
+    return saving;
+  });
+  await context.addInitScript(() => {
+    addEventListener("pagehide", () => {
+      if (globalThis.__coverage__) window.coreSaveNavigationCoverage(globalThis.__coverage__, location.href);
+    });
+  });
   await context.route("**/*", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -75,6 +86,7 @@ async function scenario(name, run, options = {}) {
       window.coreShared.push(data);
     } : undefined });
   }, { storage: options.storage ?? {}, blockedStorage: options.blockedStorage ?? false, nativeShare: options.nativeShare ?? false });
+  if (options.initScript) await context.addInitScript(options.initScript);
   const page = await context.newPage();
   page.setDefaultTimeout(WAIT_MS);
   if (options.clock) {
@@ -89,6 +101,7 @@ async function scenario(name, run, options = {}) {
     console.log(`PASS core: ${name}`);
   } finally {
     await saveCoverage(page);
+    await Promise.all(navigationCoverage);
     await context.close();
   }
 }
@@ -255,6 +268,11 @@ try {
     await page.locator(".sb-settings-btn").click();
     await page.locator("h1").click();
     assert.equal(await page.locator("#sbSettings").isVisible(), false);
+    await page.clock.runFor(ROOM_POLL_MS);
+    await textContains(page, 'a.game[href="/co-caro/"] .live', "2 rooms · 3 players");
+    state.routes["/api/rooms"] = { rooms: [{ path: "/co-caro/", players: 0 }] };
+    await page.clock.runFor(ROOM_POLL_MS);
+    await textContains(page, 'a.game[href="/co-caro/"] .live', "1 room · 0 players");
     state.routes["/api/rooms"] = { rooms: [] };
     await page.clock.runFor(ROOM_POLL_MS);
     await page.waitForFunction(() => !document.querySelector("a.game .live"));
@@ -340,6 +358,7 @@ try {
     assert.ok(requests.some((request) => request.search.startsWith("?before=")));
     assert.ok(requests.some((request) => request.path.endsWith("/claim") && request.method === "POST"));
     assert.equal(await page.locator("#funList .fun-card").first().locator(".rank").count(), 4);
+    await textContains(page, "#funList", "7 points");
     await Promise.all([
       page.waitForResponse((response) => response.url().includes("/api/fun?period=all")),
       page.locator("#funPeriod button").last().click(),
@@ -360,7 +379,7 @@ try {
       const details = [{ vs: "Rival", rp: "core-replay" }, { with: ["One", "Two"] }, { rank: 2, of: 4 }, { size: "9x9", opened: 12, booms: 1 }, {}];
       return { game: index === 29 ? "sudoku" : games[index % games.length], mode: index % 2 ? "solo" : "custom", score: index === 11 ? 0 : index === 24 ? -10 : index % 3 ? 65 : 0, won: index % 2, level: index === 29 ? 99 : index % 4 + 1, at: NOW - (index === 1 ? 120000 : index * 3700000), detail: index === 29 ? "malformed" : JSON.stringify(details[index % details.length]) };
     }),
-    "/api/fun": [{ key: "plays", title: "Games", unit: "games", rows: Array.from({ length: 4 }, (_, index) => ({ name: `Player ${index}`, value: index + 1 })) }, { key: "gold", title: "Gold", unit: "$", rows: [{ name: "Miner", value: 20 }] }, { key: "mines", title: "Mines", unit: "giây", rows: [{ name: "Solver", value: 65 }] }, { key: "custom", title: "Custom", unit: "points", rows: [] }],
+    "/api/fun": [{ key: "plays", title: "Games", unit: "games", rows: Array.from({ length: 4 }, (_, index) => ({ name: `Player ${index}`, value: index + 1 })) }, { key: "gold", title: "Gold", unit: "$", rows: [{ name: "Miner", value: 20 }] }, { key: "mines", title: "Mines", unit: "giây", rows: [{ name: "Solver", value: 65 }] }, { key: "custom", title: "Custom", unit: "points", rows: [] }, { key: "custom-score", title: "Custom score", unit: "points", rows: [{ name: "Scorer", value: 7 }] }],
   } }, clock: true });
 
   await scenario("storage-denied guest settings and core helpers", async ({ page }) => {
@@ -556,6 +575,12 @@ try {
     await trigger.press("Enter");
     assert.equal(await page.locator("#coreListbox select").inputValue(), "easy");
     await trigger.click();
+    await trigger.press("a");
+    assert.equal(await trigger.getAttribute("aria-expanded"), "true");
+    await trigger.press("Enter");
+    assert.equal(await page.locator("#coreListbox select").inputValue(), "easy");
+    assert.equal(await page.locator("#coreListbox output").textContent(), "easy");
+    await trigger.click();
     await page.locator('[role=option]:has-text("Hard")').hover();
     await page.locator('[role=option]:has-text("Hard")').click();
     assert.equal(await trigger.innerText(), "Hard");
@@ -715,6 +740,9 @@ try {
       check(await shareReplay("native") === false, "Native share does not falsely claim copy");
     });
     assert.equal(await page.locator(".rp-links a").getAttribute("rel"), "noopener");
+    await page.locator(".rp-links button").click();
+    assert.equal(await page.locator(".rp-links button").textContent(), "Share");
+    assert.match((await page.evaluate(() => window.coreShared.at(-1))).url, /core-replay/);
   }, { nativeShare: true });
 
   await scenario("clipboard-only share feedback and QR output formats", async ({ page }) => {
@@ -1128,6 +1156,170 @@ try {
     await navigate(page, "/?lang=invalid");
     await page.waitForFunction(() => document.documentElement.lang === "vi");
   }, { path: "/", storage: { "hub.recent": "malformed" }, state: { routes: { "/api/me": { user: { name: "Người thử" }, stats: [], resultOwner: "user:core" } } } });
+
+  await scenario("Vietnamese legacy history and custom leaderboard labels", async ({ page }) => {
+    await textContains(page, "#stats", "custom-game");
+    await textContains(page, "#history", "custom-game");
+    assert.equal(await page.locator("#history .when").textContent(), new Date(NOW - 172800000).toLocaleDateString("vi-VN"));
+    await textContains(page, "#funList", "7 lượt thử");
+  }, { path: "/", clock: true, state: { routes: {
+    "/api/me": { ...DEFAULT_PROFILE, stats: [{ game: "custom-game", plays: 1, wins: 0, best: 7, maxLevel: 2 }] },
+    "/api/me/history": [{ game: "custom-game", mode: "solo", score: 7, won: false, level: 2, at: NOW - 172800000, detail: "" }],
+    "/api/fun": [{ key: "custom-game", title: "Hạng thử", unit: "lượt thử", rows: [{ name: "Người thử", value: 7 }] }],
+  } } });
+
+  await scenario("hidden hub and room directory pause polling until visible", async ({ page, requests }) => {
+    await textContains(page, "#meNotice", "Guest history");
+    await page.evaluate(() => {
+      Object.defineProperty(document, "hidden", { configurable: true, value: true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    const hubRequests = requests.filter((request) => request.path === "/api/rooms").length;
+    await page.clock.runFor(ROOM_POLL_MS);
+    assert.equal(requests.filter((request) => request.path === "/api/rooms").length, hubRequests);
+    await Promise.all([
+      page.waitForResponse((response) => new URL(response.url()).pathname === "/api/rooms"),
+      page.evaluate(() => {
+        Object.defineProperty(document, "hidden", { configurable: true, value: false });
+        document.dispatchEvent(new Event("visibilitychange"));
+      }),
+    ]);
+    await navigate(page, "/phong/?lang=en");
+    await textContains(page, "#waiting", "No rooms waiting");
+    await page.evaluate(() => {
+      Object.defineProperty(document, "hidden", { configurable: true, value: true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    const directoryRequests = requests.filter((request) => request.path === "/api/rooms").length;
+    await page.clock.runFor(ROOM_POLL_MS);
+    assert.equal(requests.filter((request) => request.path === "/api/rooms").length, directoryRequests);
+    await Promise.all([
+      page.waitForResponse((response) => new URL(response.url()).pathname === "/api/rooms"),
+      page.evaluate(() => {
+        Object.defineProperty(document, "hidden", { configurable: true, value: false });
+        document.dispatchEvent(new Event("visibilitychange"));
+      }),
+    ]);
+    await textContains(page, "#playing", "No games in progress");
+  }, { clock: true });
+
+  await scenario("spy theme changes survive the required page reload", async ({ page }) => {
+    await navigate(page, "/gian-diep/?lang=en");
+    await page.locator(".sb-settings-btn").click();
+    await Promise.all([
+      page.waitForEvent("load"),
+      page.locator('#sbSettings button[data-value="light"]').click(),
+    ]);
+    assert.equal(await page.evaluate(() => localStorage.getItem("gian-diep.theme")), "light");
+    await page.locator(".sb-settings-btn").click();
+    assert.equal(await page.locator('#sbSettings button[data-value="light"]').getAttribute("aria-pressed"), "true");
+  });
+
+  await scenario("replaced room sockets cannot change current connection or deliver stale messages", async ({ page }) => {
+    await page.evaluate(async () => {
+      window.coreRaceSockets = [];
+      class RaceSocket extends EventTarget {
+        constructor() { super(); this.readyState = 0; this.sent = []; window.coreRaceSockets.push(this); }
+        send(message) { this.sent.push(message); }
+        close() { this.readyState = 3; this.onclose?.({ code: 1000 }); }
+        accept() { this.readyState = 1; this.onopen?.(); }
+        receive(message) { this.onmessage?.({ data: JSON.stringify(message) }); }
+      }
+      window.WebSocket = RaceSocket;
+      const { roomClient } = await import("/room-client.js");
+      const connection = document.createElement("span");
+      connection.id = "coreRaceConnection";
+      const output = document.createElement("output");
+      output.id = "coreRaceOutput";
+      document.body.append(connection, output);
+      window.coreRaceRoom = roomClient({
+        path: () => "/api/core/room/RACE",
+        query: () => ({}),
+        conn: connection,
+        onMsg: (message) => { output.textContent = message.text; },
+        onLeave: (reason) => { output.textContent = reason; },
+      });
+      window.coreRaceRoom.open();
+      window.coreRaceRoom.open();
+      const [stale, current] = window.coreRaceSockets;
+      stale.accept();
+      window.coreCheck(!connection.classList.contains("on"), "Late open from replaced socket cannot mark current connection ready");
+      current.accept();
+      current.receive({ text: "Current room" });
+      stale.receive({ text: "Stale room" });
+      stale.close();
+    });
+    assert.equal(await page.locator("#coreRaceOutput").textContent(), "Current room");
+    assert.equal(await page.locator("#coreRaceConnection").getAttribute("class"), "on");
+    await page.clock.runFor(PING_MS);
+    assert.deepEqual(await page.evaluate(() => window.coreRaceSockets.map((socket) => socket.sent)), [[], ["ping"]]);
+    await page.evaluate(() => window.coreRaceRoom.open());
+    await page.clock.runFor(PONG_MS);
+    assert.equal(await page.locator("#netLost").count(), 0);
+    assert.equal(await page.evaluate(() => window.coreRaceSockets.length), 3);
+    await page.evaluate(() => {
+      window.coreRaceSockets[1].readyState = 2;
+      window.coreRaceSockets[2].accept();
+      window.coreRaceSockets[2].receive({ text: "Replacement room" });
+    });
+    await page.clock.runFor(PING_MS);
+    assert.deepEqual(await page.evaluate(() => window.coreRaceSockets[1].sent), ["ping"]);
+    assert.equal(await page.locator("#coreRaceOutput").textContent(), "Replacement room");
+    assert.equal(await page.locator("#coreRaceConnection").getAttribute("class"), "on");
+    await page.evaluate(() => window.coreRaceRoom.close());
+  }, { clock: true });
+
+  await scenario("unsupported service workers keep the hub usable", async ({ page }) => {
+    assert.equal(await page.evaluate(() => "serviceWorker" in navigator), false);
+    await textContains(page, "#meNotice", "Guest history");
+    await page.locator(".sb-settings-btn").click();
+    assert.equal(await page.locator("#sbSettings").isVisible(), true);
+  }, { initScript: () => {
+    delete Navigator.prototype.serviceWorker;
+  } });
+
+  await scenario("service worker registration denial does not break navigation", async ({ page }) => {
+    await page.waitForFunction(() => window.coreWorkerRegistrations.length === 1);
+    assert.deepEqual(await page.evaluate(() => window.coreWorkerRegistrations), ["/sw.js"]);
+    assert.deepEqual(await page.evaluate(() => window.coreUnhandledRejections), []);
+    await textContains(page, "#meNotice", "Guest history");
+    await page.locator(".sb-settings-btn").click();
+    assert.equal(await page.locator("#sbSettings").isVisible(), true);
+  }, { initScript: () => {
+    window.coreWorkerRegistrations = [];
+    window.coreUnhandledRejections = [];
+    addEventListener("unhandledrejection", (event) => window.coreUnhandledRejections.push(String(event.reason)));
+    Object.defineProperty(navigator, "serviceWorker", { configurable: true, value: {
+      register: async (path) => {
+        window.coreWorkerRegistrations.push(path);
+        throw new DOMException("Service workers denied", "SecurityError");
+      },
+    } });
+  } });
+
+  await scenario("panel canvas uses CSS pixel dimensions without device pixel ratio support", async ({ page }) => {
+    await page.evaluate(async () => {
+      const { createPanel } = await import("/panel.js");
+      const root = document.createElement("section");
+      const toggle = document.createElement("button");
+      const style = document.createElement("style");
+      style.textContent = ".tile-board { width: 100px; height: 80px; }";
+      document.head.append(style);
+      document.body.append(toggle, root);
+      const panel = createPanel({ root, toggle, storeKey: "core.panel.no-dpr" });
+      const tiles = [{ key: "board", name: "Player", version: 1, draw: (context, width, height) => {
+        context.fillStyle = "red";
+        context.fillRect(0, 0, width, height);
+      } }];
+      panel.update(tiles);
+      panel.update(tiles);
+      const canvas = root.querySelector("canvas");
+      window.coreCheck(canvas.width === 100 && canvas.height === 80, "Canvas resolution falls back to CSS dimensions");
+      window.coreCheck(canvas.getContext("2d").getImageData(99, 79, 1, 1).data[3] === 255, "Fallback paints the complete visible board");
+    });
+  }, { initScript: () => {
+    Object.defineProperty(window, "devicePixelRatio", { configurable: true, value: undefined });
+  } });
 
   await serviceWorkerScenario();
   await legacyRedirectScenario();

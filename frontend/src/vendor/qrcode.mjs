@@ -317,10 +317,8 @@ export const qrcode = function(typeNumber, errorCorrectionLevel) {
 
     for (let i = 0; i < maxEcCount; i += 1) {
       for (let r = 0; r < rsBlocks.length; r += 1) {
-        if (i < ecdata[r].length) {
-          data[index] = ecdata[r][i];
-          index += 1;
-        }
+        data[index] = ecdata[r][i];
+        index += 1;
       }
     }
 
@@ -951,9 +949,6 @@ const QRUtil = function() {
       return function(i, j) { return ( (i * j) % 2 + (i * j) % 3) % 2 == 0; };
     case QRMaskPattern.PATTERN111 :
       return function(i, j) { return ( (i * j) % 3 + (i + j) % 2) % 2 == 0; };
-
-    default :
-      throw 'bad maskPattern:' + maskPattern;
     }
   };
 
@@ -976,8 +971,6 @@ const QRUtil = function() {
       case QRMode.MODE_ALPHA_NUM : return 9;
       case QRMode.MODE_8BIT_BYTE : return 8;
       case QRMode.MODE_KANJI     : return 8;
-      default :
-        throw 'mode:' + mode;
       }
 
     } else if (type < 27) {
@@ -989,11 +982,9 @@ const QRUtil = function() {
       case QRMode.MODE_ALPHA_NUM : return 11;
       case QRMode.MODE_8BIT_BYTE : return 16;
       case QRMode.MODE_KANJI     : return 10;
-      default :
-        throw 'mode:' + mode;
       }
 
-    } else if (type < 41) {
+    } else {
 
       // 27 - 40
 
@@ -1002,12 +993,7 @@ const QRUtil = function() {
       case QRMode.MODE_ALPHA_NUM : return 13;
       case QRMode.MODE_8BIT_BYTE : return 16;
       case QRMode.MODE_KANJI     : return 12;
-      default :
-        throw 'mode:' + mode;
       }
-
-    } else {
-      throw 'type:' + type;
     }
   };
 
@@ -1145,20 +1131,10 @@ const QRMath = function() {
   const _this = {};
 
   _this.glog = function(n) {
-
-    if (n < 1) {
-      throw 'glog(' + n + ')';
-    }
-
     return LOG_TABLE[n];
   };
 
   _this.gexp = function(n) {
-
-    while (n < 0) {
-      n += 255;
-    }
-
     while (n >= 256) {
       n -= 255;
     }
@@ -1174,11 +1150,6 @@ const QRMath = function() {
 //---------------------------------------------------------------------
 
 const qrPolynomial = function(num, shift) {
-
-  if (typeof num.length == 'undefined') {
-    throw num.length + '/' + shift;
-  }
-
   const _num = function() {
     let offset = 0;
     while (offset < num.length && num[offset] == 0) {
@@ -1562,11 +1533,6 @@ const qrBitBuffer = function() {
     return _buffer;
   };
 
-  _this.getAt = function(index) {
-    const bufIndex = Math.floor(index / 8);
-    return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
-  };
-
   _this.put = function(num, length) {
     for (let i = 0; i < length; i += 1) {
       _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
@@ -1627,7 +1593,7 @@ const qrNumber = function(data) {
     if (i < data.length) {
       if (data.length - i == 1) {
         buffer.put(strToNum(data.substring(i, i + 1) ), 4);
-      } else if (data.length - i == 2) {
+      } else {
         buffer.put(strToNum(data.substring(i, i + 2) ), 7);
       }
     }
@@ -1831,7 +1797,6 @@ const byteArrayOutputStream = function() {
 
   _this.writeBytes = function(b, off, len) {
     off = off || 0;
-    len = len || b.length;
     for (let i = 0; i < len; i += 1) {
       _this.writeByte(b[i + off]);
     }
@@ -1845,19 +1810,6 @@ const byteArrayOutputStream = function() {
 
   _this.toByteArray = function() {
     return _bytes;
-  };
-
-  _this.toString = function() {
-    let s = '';
-    s += '[';
-    for (let i = 0; i < _bytes.length; i += 1) {
-      if (i > 0) {
-        s += ',';
-      }
-      s += _bytes[i];
-    }
-    s += ']';
-    return s;
   };
 
   return _this;
@@ -1881,9 +1833,7 @@ const base64EncodeOutputStream = function() {
   };
 
   const encode = function(n) {
-    if (n < 0) {
-      throw 'n:' + n;
-    } else if (n < 26) {
+    if (n < 26) {
       return 0x41 + n;
     } else if (n < 52) {
       return 0x61 + (n - 26);
@@ -1891,10 +1841,8 @@ const base64EncodeOutputStream = function() {
       return 0x30 + (n - 52);
     } else if (n == 62) {
       return 0x2b;
-    } else if (n == 63) {
-      return 0x2f;
     } else {
-      throw 'n:' + n;
+      return 0x2f;
     }
   };
 
@@ -2090,11 +2038,6 @@ const gifImage = function(width, height) {
     const _this = {};
 
     _this.write = function(data, length) {
-
-      if ( (data >>> length) != 0) {
-        throw 'length over';
-      }
-
       while (_bitLength + length >= 8) {
         _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
         length -= (8 - _bitLength);
@@ -2186,9 +2129,6 @@ const gifImage = function(width, height) {
     const _this = {};
 
     _this.add = function(key) {
-      if (_this.contains(key) ) {
-        throw 'dup key:' + key;
-      }
       _map[key] = _size;
       _size += 1;
     };
