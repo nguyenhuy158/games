@@ -1,0 +1,12 @@
+{
+  "all": true,
+  "extension": [".js", ".mjs"],
+  "include": ["backend/src/**/*.js", "frontend/src/**/*.js", "frontend/src/**/*.mjs", "shared/**/*.js", ".coverage-sources/**/*.js"],
+  "exclude": [],
+  "excludeNodeModules": true,
+  "reporter": ["text-summary", "html", "json", "json-summary", "lcovonly"],
+  "statements": 100,
+  "branches": 100,
+  "functions": 100,
+  "lines": 100
+}

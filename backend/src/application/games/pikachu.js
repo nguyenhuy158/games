@@ -45,7 +45,7 @@ const membersOf = (ctx, uid) => ctx.seats.filter((id) => unitOf(ctx, id) === uid
 
 // Bàn người này đang nhìn: bàn của mình, hoặc bàn khán giả chọn (mặc định bàn đầu).
 function viewOf(ctx, id) {
-  const units = ctx.g?.units ?? {};
+  const units = ctx.g.units;
   const own = unitOf(ctx, id);
   if (own && units[own]) return own;
   const w = ctx.g?.watch?.[id];

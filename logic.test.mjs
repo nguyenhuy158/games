@@ -140,3 +140,8 @@ await import('./http.test.mjs');
 await import('./e2e-selection.test.mjs');
 await import('./spy-ai.test.mjs');
 await import('./feedback.test.mjs');
+await import('./rules-board-coverage.test.mjs');
+await import('./rules-action-coverage.test.mjs');
+await import('./application-coverage.test.mjs');
+await import('./adapters-coverage.test.mjs');
+await import('./rapid-roll-frame.test.mjs');

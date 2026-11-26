@@ -56,6 +56,9 @@ try {
   }).then(() => run("node", ["e2e/layout-check.mjs", ...(selection?.routes ?? [])], {
     label: "layout overflow",
     env: SMOKE_ENV,
+  })).then(() => run("node", ["e2e/round-evidence.mjs"], {
+    label: "complete UI round and persisted result",
+    env: SMOKE_ENV,
   }))];
   if (!selection || gameArgs.length) {
     checks.push(run("node", ["scripts/smoke.mjs", BASE, ...gameArgs], {

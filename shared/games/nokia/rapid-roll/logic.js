@@ -82,7 +82,7 @@ function hurt(sim, why) {
   sim.events.push(why);
   if (sim.lives <= 0) { sim.dead = true; sim.events.push('dead'); return sim; }
   const s = scrollAt(sim.t);
-  const p = sim.plats.find((q) => !q.spike && q.y - s > 20 && q.y - s < 40) ?? sim.plats.find((q) => q.y - s > TOP + 6) ?? sim.plats.at(-1);
+  const p = sim.plats.find((q) => !q.spike && q.y - s > 20 && q.y - s < 40) ?? sim.plats.find((q) => q.y - s > TOP + 6);
   Object.assign(sim, { x: p.x + PW / 2 - BALL / 2, y: p.y - BALL, on: p, invul: 1.5 });
   return sim;
 }

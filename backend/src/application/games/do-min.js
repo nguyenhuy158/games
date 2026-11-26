@@ -75,7 +75,6 @@ function act(ctx, p, kind, i) {
   if (cleared(u.vis, size)) { u.done = 'clear'; u.time = Date.now() - g.startedAt + u.penalty; }
   else if (ctx.cfg.mode === 'coop' && u.lives <= 0) u.done = 'dead';
   if (ctx.cfg.mode === 'coop' ? u.done : u.done === 'clear') finish(ctx, u.done === 'clear' ? uid : null);
-  else if (Object.values(g.units).every((x) => x.done)) finish(ctx, null);
   return true;
 }
 

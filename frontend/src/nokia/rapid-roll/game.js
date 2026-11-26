@@ -4,6 +4,7 @@ import { createSim, step, rollTo, score, scrollAt, TOP, PW, BALL } from '../../.
 
 // Máy mình tự chạy mô phỏng (cùng hạt giống với cả phòng), gửi vị trí 5 lần/giây; người khác hiện bóng mờ.
 const BALL_ROWS = ['.##.', '####', '####', '.##.'];
+const FRAME_STEP_SECONDS = 1 / 60;
 let sim = null, simSeed = null, keys = {}, lastT = 0, lastSent = 0, sentDone = false;
 
 const app = nokiaApp({
@@ -74,8 +75,8 @@ const app = nokiaApp({
     if (!mine) { if (sec < sim.t) sim = createSim(v.seed); rollTo(sim, sec); }
     // Chạy mô phỏng tới thời điểm hiện tại (bước nhỏ 1/60 giây cho ổn định).
     if (mine && !sim.dead && sec > 0) {
-      while (sim.t + 1 / 60 <= sec) {
-        step(sim, 1 / 60, keys);
+      while (!sim.dead && sim.t + FRAME_STEP_SECONDS <= sec) {
+        step(sim, FRAME_STEP_SECONDS, keys);
         for (const e of sim.events) app.beep({ heart: 1600, spike: 200, top: 200, fall: 150, dead: 100 }[e] ?? 600, e === 'dead' ? 400 : 90);
       }
       if (now - lastSent > 200) { lastSent = now; app.send({ at: [sim.x, sim.y], score: score(sim) }); }

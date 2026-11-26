@@ -68,7 +68,7 @@ function nextTurn(ctx) {
 function finish(ctx) {
   const g = ctx.g;
   const solo = ctx.seats.length === 1;
-  const ranks = ctx.seats.map((id) => ({ id, score: solo ? g.moves : g.score[id] })).sort((a, b) => (solo ? a.score - b.score : b.score - a.score));
+  const ranks = ctx.seats.map((id) => ({ id, score: solo ? g.moves : g.score[id] })).sort((a, b) => b.score - a.score);
   const top = ranks[0]?.score;
   ranks.forEach((r) => { r.won = !solo && r.score === top && ranks.filter((x) => x.score === top).length === 1; });
   ctx.end({ mode: solo ? 'solo' : 'multi', title: solo ? [`Xong trong ${g.moves} lượt`, `Done in ${g.moves} turns`] : null, ranks });
