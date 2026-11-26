@@ -25,6 +25,7 @@ Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node 
 
 `pnpm e2e` chạy đồng thời tối đa 3 game WebSocket và 1 trang browser, ưu tiên game chậm trước. PR chọn game theo diff qua `e2e/selection.mjs` và dùng smoke nhanh (nước đi được server xác nhận, không chờ kết thúc game dài); code chung/file lạ/diff lỗi kiểm mọi game ở chế độ nhanh. `main` và production giữ toàn bộ bài kiểm tra hết ván, không giảm timeout. API chung, hub và sảnh luôn được kiểm.
 Sảnh `/phong/` được kiểm trong trang browser riêng, không dùng response `/api/rooms` từ polling của hub trước khi chuyển trang.
+Smoke Dò mìn chỉ bắt đầu mở ô sau khi cả hai client nhận đủ grid riêng và state `playing`; grid có thể đến trước state trên mạng thật. `node smoke-start.test.mjs` kiểm thứ tự đến lệch này mà không tăng timeout hoặc bỏ kiểm tra riêng tư.
 
 Local mặc định full: `pnpm e2e`; thử PR nhanh: `E2E_SMOKE_MODE=fast pnpm e2e`. Kiểm riêng trang: `E2E_BASE_URL=http://localhost:8789 node e2e/readonly-smoke.mjs /soi/ /gian-diep/`. CI cache pnpm và Chromium theo OS/kiến trúc/phiên bản; cache hit vẫn cài thư viện hệ thống cần thiết.
 
