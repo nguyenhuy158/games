@@ -1710,6 +1710,19 @@ async function miningEdges() {
     assert.equal(await page.evaluate(() => window.dv.solo.money), 0);
     await frames(page);
     await text(page, '#hLevel', /^1$/);
+    for (let shotCount = 0; shotCount < 12; shotCount++) {
+      const current = await page.evaluate(() => ({ money: window.dv.solo.money, screen: window.dv.solo.screen }));
+      if (current.money >= miningRules.targetOf(1) || current.screen !== 'play') break;
+      const nextShot = await aimMiningShot(page);
+      await page.clock.runFor(Math.ceil((nextShot.distance / miningRules.SHOOT_SPEED + nextShot.distance * nextShot.weight / miningRules.PULL) * 1000) + 750);
+    }
+    const unspent = await page.evaluate(() => window.dv.solo.money);
+    assert(unspent >= miningRules.targetOf(1), 'The restarted run must earn its shop through actual catches');
+    await page.clock.runFor(SOLO_EXPIRE_MS);
+    await text(page, '#overlay .shopkeeper', /Cleared level 1/);
+    await page.getByRole('button', { name: 'Enter level 2', exact: true }).click();
+    await page.waitForFunction(() => window.dv.solo.screen === 'play');
+    assert.deepEqual(await page.evaluate(() => ({ money: window.dv.solo.money, dynamite: window.dv.solo.world.miners[0].dynamite, buffs: window.dv.solo.buffs })), { money: unspent, dynamite: 0, buffs: { strength: false, clover: false, rockBook: false, polish: false } });
   }, '', {
     prepare: (page) => page.addInitScript(() => {
       let seed = 241;
@@ -2081,10 +2094,14 @@ async function preStateMessages() {
   await scenario('do-min', async (page) => {
     await join(page);
     await feed(page, { t: 'grid', grids: { all: Array(81).fill(mineRules.HIDDEN) } }, { t: 'ping', id: OTHER, i: 0 });
-    assert.equal(await page.locator('#cells .m').count(), 81);
+    assert.equal(await page.locator('#cells .m').count(), 0, 'Grid data arriving before room metadata must not render a board yet');
     assert.equal(await page.locator('#fx .ping').count(), 1);
     assert.equal(await page.locator('#fx .ping span').innerText(), '');
     await feed(page, { t: 'open', unit: 'all', by: OTHER, cells: [[0, 2]], boom: false });
+    assert.equal(await page.locator('#cells .m').count(), 0);
+    assert.equal(await page.evaluate(() => window.ms.grids.all[0]), 2, 'Foreign opens received before room metadata must be retained');
+    await feed(page, state({ status: 'playing', mode: 'coop', size: 0, startedAt: TIME, players: PLAYERS.map((player) => ({ ...player, unit: 'all', spec: false, opened: 1, booms: 0 })), units: { all: { opened: 1, total: 71, lives: 3, booms: 0, penalty: 0, done: null } } }));
+    assert.equal(await page.locator('#cells .m').count(), 81);
     await text(page, '#cells .m:nth-child(1)', /^2$/);
   });
   await scenario('pikachu', async (page) => {
@@ -2093,6 +2110,9 @@ async function preStateMessages() {
     await feed(page, { t: 'board', unit: 'all', board }, { t: 'ping', id: OTHER, a: [1, 1] });
     assert.equal(await page.locator('#cells .cell').count(), 4);
     await text(page, '#fx .ping span', /^—$/);
+    await feed(page, { t: 'match', unit: OTHER });
+    assert.equal(await page.locator('#cells .cell').count(), 4, 'An unrelated match arriving before room metadata must leave the supplied board unchanged');
+    assert.equal(await page.locator('#fx .popping, #fx .float, #fx .path').count(), 0);
   });
   await scenario('bau-cua', async (page) => {
     await join(page);
@@ -2182,6 +2202,65 @@ async function matchingPlatformBoundaries() {
   }, `?replay=${replayId}`);
 }
 
+async function importedReadyFleets() {
+  const replayId = 'imported-battleship-ready-fleets';
+  const recordedSeat = '';
+  const fleet = [[0, 1, 2, 3, 4], [20, 21, 22, 23], [40, 41, 42], [60, 61, 62], [80, 81]];
+  const placing = state({ status: 'placing', host: recordedSeat, seats: [recordedSeat, OTHER], players: [{ ...PLAYERS[0], id: recordedSeat }, PLAYERS[1]], names: ['Ada', 'Lin'], score: {}, fleets: [fleet, fleet], shots: [Array(100).fill(0), Array(100).fill(0)], sunk: [[], []], ready: [true, true], turn: 1, fired: [0, 0], skipped: [0, 0], deadline: TIME + TURN_MS });
+  REPLAY_RECORDS.set(replayId, { game: 'ban-tau', page: routeOf('ban-tau'), at: TIME, frames: [[0, placing]] });
+  await scenario('ban-tau', async (page) => {
+    await page.locator('.rp-bar').waitFor();
+    await visible(page, '#placeBar');
+    await text(page, '#placeText', /^$/);
+    await visible(page, '#btnReady', false);
+    await visible(page, '#btnRotate', false);
+    await visible(page, '#btnReroll', false);
+    await noAction(page, () => page.locator('#seaA .c').first().click());
+    assert.equal(await page.evaluate(() => window.boardFixture.sockets.length), 0);
+  }, `?replay=${replayId}`);
+}
+
+async function importedSowingResetRace() {
+  const SOW_STEP_MS = 170;
+  const SOW_SETTLE_MS = 120;
+  const RENDER_STEP_MS = 32;
+  const replayId = 'imported-sowing-reset-during-animation';
+  const initial = sowing.newGame();
+  const moved = sowing.clone(initial);
+  const steps = sowing.move(moved, 1, 1);
+  const initialView = { ...initial, side: [ME, OTHER], names: ['Ada', 'Lin'], deadline: TIME + TURN_MS, undo: 0, last: null };
+  const finalView = { ...initialView, ...moved, last: { from: { b: initial.b, big: initial.big }, steps } };
+  const room = state({ status: 'playing', cfg: { n: 2, level: 0, quanNon: true } });
+  REPLAY_RECORDS.set(replayId, {
+    game: 'o-an-quan', page: routeOf('o-an-quan'), at: TIME,
+    frames: [[0, { t: 'noop' }], [1000, { ...room, view: initialView }], [2000, { ...room, view: { ...finalView, cap: null } }], [3000, { ...room, view: finalView }]],
+  });
+  await scenario('o-an-quan', async (page) => {
+    await page.locator('.rp-bar').waitFor();
+    const play = page.locator('.rp-bar button').first();
+    if (await play.innerText() === '❚❚') await play.click();
+    const slider = page.locator('.rp-bar input');
+    const seek = async (at) => {
+      await slider.fill(String(at));
+      await slider.dispatchEvent('input');
+      await page.clock.runFor(RENDER_STEP_MS);
+    };
+    await seek(1000);
+    assert.deepEqual(await page.locator('.oaq .cell .n').allTextContents(), initial.b.map((value) => value ? String(value) : ''));
+    await seek(2000);
+    await text(page, '.oaq .hint', /Sowing/);
+    await seek(0);
+    await page.clock.runFor(steps.length * SOW_STEP_MS + SOW_SETTLE_MS);
+    await visible(page, '.oaq .hand', false);
+    await seek(3000);
+    assert.deepEqual(await page.locator('.oaq .cell .n').allTextContents(), moved.b.map((value) => value ? String(value) : ''));
+    assert.deepEqual(await page.locator('.oaq .bar .got > b').allTextContents(), [2, 1].map((seat) => String(moved.cap[seat].small + moved.cap[seat].big * sowing.QUAN)));
+    assert.equal(await page.evaluate(() => window.boardFixture.sockets.length), 0);
+    await seek(1000);
+    assert.deepEqual(await page.locator('.oaq .cell .n').allTextContents(), initial.b.map((value) => value ? String(value) : ''));
+  }, `?replay=${replayId}`, { prepare: (page) => page.clock.install({ time: new Date(TIME) }) });
+}
+
 try {
   await classicBoards();
   await battleship();
@@ -2209,6 +2288,8 @@ try {
   await preStateMessages();
   await sowingLobbyAndAnimationEdges();
   await matchingPlatformBoundaries();
+  await importedReadyFleets();
+  await importedSowingResetRace();
 } finally {
   await context.close();
   await browser.close();

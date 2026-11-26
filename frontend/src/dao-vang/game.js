@@ -782,7 +782,7 @@ mountHelp({
 // ---------- vòng lặp ----------
 let last = 0;
 function loop(t) {
-  const dt = Math.min(0.05, (t - last) / 1000 || 0); // tab bị treo lâu thì không nhảy cóc
+  const dt = Math.min(0.05, (t - last) / 1000);
   last = t;
   clock += dt;
   for (const f of fx) f.t += dt;
