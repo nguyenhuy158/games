@@ -28,10 +28,15 @@ try {
     env: { E2E_COVERAGE: COVERAGE_ENABLED },
   });
   for (const suite of BROWSER_SUITES) {
-    await run(process.execPath, [`e2e/${suite}.mjs`], {
-      label: suite,
-      env: { E2E_COVERAGE: COVERAGE_ENABLED, E2E_BASE_URL: base, E2E_PAGE_CONCURRENCY: "1", E2E_VIDEO_DIR: "" },
-    });
+    try {
+      await run(process.execPath, [`e2e/${suite}.mjs`], {
+        label: suite,
+        env: { E2E_COVERAGE: COVERAGE_ENABLED, E2E_BASE_URL: base, E2E_PAGE_CONCURRENCY: "1", E2E_VIDEO_DIR: "" },
+      });
+    } catch (error) {
+      console.error(error);
+      failure ??= error;
+    }
   }
 } catch (error) {
   failure = error;

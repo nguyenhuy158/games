@@ -1205,6 +1205,7 @@ try {
 
   await scenario("spy theme changes survive the required page reload", async ({ page }) => {
     await navigate(page, "/gian-diep/?lang=en");
+    await page.locator("dialog[open] .help-ok").click();
     await page.locator(".sb-settings-btn").click();
     await Promise.all([
       page.waitForEvent("load"),
