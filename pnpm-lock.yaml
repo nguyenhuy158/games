@@ -12,6 +12,12 @@ importers:
         specifier: github:nguyenhuy158/kit#v0.5.0&path:packages/sso
         version: https://codeload.github.com/nguyenhuy158/kit/tar.gz/051d46ecf7f34767b3f6246ca1017774d09c537c#path:packages/sso
     devDependencies:
+      '@babel/plugin-syntax-decorators':
+        specifier: ^7.29.7
+        version: 7.29.7(@babel/core@7.29.13)
+      '@babel/preset-typescript':
+        specifier: ^7.29.7
+        version: 7.29.7(@babel/core@7.29.13)
       '@biomejs/biome':
         specifier: ^2.5.15
         version: 2.5.15
@@ -27,6 +33,9 @@ importers:
       acorn:
         specifier: ^8.19.0
         version: 8.19.0
+      babel-plugin-istanbul:
+        specifier: 7.0.1
+        version: 7.0.1
       istanbul-lib-instrument:
         specifier: ^6.0.3
         version: 6.0.3
@@ -703,6 +712,10 @@ packages:
   babel-plugin-istanbul@6.1.1:
     resolution: {integrity: sha512-Y1IQok9821cC9onCx5otgFfRm7Lm+I+wwxOx738M/WLPZ9Q42m4IG5W0FNX8WLL2gYMZo3JkuXIH2DOpWM+qwA==}
     engines: {node: '>=8'}
+
+  babel-plugin-istanbul@7.0.1:
+    resolution: {integrity: sha512-D8Z6Qm8jCvVXtIRkBnqNHX0zJ37rQcFJ9u8WOS6tkYOsRdHBzypCstaxWiu5ZIlqQtviRYbgnRLSoCEvjqcqbA==}
+    engines: {node: '>=12'}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -1829,6 +1842,16 @@ snapshots:
       '@istanbuljs/load-nyc-config': 1.1.0
       '@istanbuljs/schema': 0.1.6
       istanbul-lib-instrument: 5.2.1
+      test-exclude: 6.0.0
+    transitivePeerDependencies:
+      - supports-color
+
+  babel-plugin-istanbul@7.0.1:
+    dependencies:
+      '@babel/helper-plugin-utils': 7.29.7
+      '@istanbuljs/load-nyc-config': 1.1.0
+      '@istanbuljs/schema': 0.1.6
+      istanbul-lib-instrument: 6.0.3
       test-exclude: 6.0.0
     transitivePeerDependencies:
       - supports-color

@@ -20,11 +20,14 @@
     "icons": "node scripts/icons.mjs"
   },
   "devDependencies": {
+    "@babel/plugin-syntax-decorators": "^7.29.7",
+    "@babel/preset-typescript": "^7.29.7",
     "@biomejs/biome": "^2.5.15",
     "@huyab/config": "github:nguyenhuy158/kit#v0.5.0&path:packages/config",
     "@huyab/e2e": "github:nguyenhuy158/kit#v0.5.0&path:packages/e2e",
     "@istanbuljs/esm-loader-hook": "^0.3.0",
     "acorn": "^8.19.0",
+    "babel-plugin-istanbul": "7.0.1",
     "istanbul-lib-instrument": "^6.0.3",
     "lucide": "0.468.0",
     "nyc": "^18.0.0",
