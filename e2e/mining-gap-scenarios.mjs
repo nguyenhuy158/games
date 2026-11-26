@@ -9,6 +9,9 @@ export async function runMiningGapScenarios({ scenario, feed, state, text, visib
       window.dv.solo.hud();
       return window.dv.solo.view();
     }), null);
+    await page.evaluate(() => window.dv.net.send({ t: 'shoot' }));
+    assert.deepEqual(await outgoing(page), []);
+    await page.getByPlaceholder('ROOM CODE', { exact: true }).press('ArrowLeft');
     await page.getByRole('button', { name: 'Play solo', exact: true }).click();
     await page.waitForFunction(() => window.dv.solo.screen === 'play');
     await page.clock.runFor(FRAME_MS);
@@ -22,18 +25,34 @@ export async function runMiningGapScenarios({ scenario, feed, state, text, visib
     await resume.evaluate((node) => node.dispatchEvent(new MouseEvent('click')));
     assert.equal(await page.evaluate(() => window.dv.solo.screen), 'play');
     await page.evaluate(() => {
-      window.dv.solo.pause();
-      window.dv.solo.pause();
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+      document.dispatchEvent(new Event('visibilitychange'));
     });
     await text(page, '#overlay', /Paused/);
     await page.evaluate(() => window.dv.solo.end());
     assert.equal(await page.evaluate(() => window.dv.solo.screen), 'pause');
     await page.getByRole('button', { name: 'Back to menu', exact: true }).click();
     await visible(page, '#hud', false);
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     assert.equal(await page.getByRole('button', { name: 'Play solo', exact: true }).isVisible(), true);
   }, '', { prepare: async (page) => {
     await page.addInitScript(() => {
+      Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 0 });
       HTMLMediaElement.prototype.play = () => Promise.reject(new DOMException('Audio unavailable', 'NotAllowedError'));
+      const nativeFetch = window.fetch.bind(window);
+      window.fetch = async (...args) => {
+        const response = await nativeFetch(...args);
+        if (!String(args[0]).endsWith('assets/atlas.webp')) return response;
+        const headers = new Headers(response.headers);
+        headers.delete('content-length');
+        return new Response(response.body, { status: response.status, headers });
+      };
     });
   } });
 
@@ -91,6 +110,11 @@ export async function runMiningGapScenarios({ scenario, feed, state, text, visib
     await text(page, '#overlay', /Earned \$17 \/ needed \$100/);
     await feed(page, state({ status: 'ended', mode: 'coop', players: [], result: { level: 2, team: 17, target: 100, ranking: [], rp: null } }));
     await text(page, '#overlay', /Team fund \$17 \/ needed \$100/);
+    await feed(page, state({ status: 'ended', mode: 'versus', players: [], result: { level: 2, team: 17, target: 0, ranking: [], rp: null } }));
+    assert.doesNotMatch(await page.locator('#overlay').innerText(), /needed|Team fund/);
+    const previousOverlay = await page.locator('#overlay').innerText();
+    await feed(page, state({ status: 'paused', mode: 'versus', players: [] }));
+    assert.equal(await page.locator('#overlay').innerText(), previousOverlay);
   }, '?r=TEST');
 
   for (const players of [[], [{ id: ME, name: 'Ada', money: 25, online: true }]]) {
@@ -103,7 +127,55 @@ export async function runMiningGapScenarios({ scenario, feed, state, text, visib
       await text(page, '#overlay', players.length ? /Ada's wallet: \$25/ : /'s wallet: \$0/);
       assert.equal(await page.getByRole('button', { name: 'Ready up', exact: true }).count(), 0);
       assert.equal(await page.locator('.shop-items').getAttribute('inert'), '');
+      await page.evaluate(() => window.dv.net.send({ t: 'buy', key: 'dynamite' }));
+      assert.deepEqual(await outgoing(page), []);
       assert.equal(await page.evaluate(() => window.boardFixture.sockets.length), 0);
     }, `?replay=${replayId}`);
   }
+
+  await scenario('dao-vang', async (page) => {
+    await page.waitForFunction(() => window.boardFixture.sockets.at(-1)?.readyState === WebSocket.OPEN);
+    await page.evaluate(() => window.boardFixture.sockets.at(-1).close(4000));
+    await text(page, '.ui-toast', /another tab\/device/);
+    assert.equal(await page.getByRole('button', { name: 'Play solo', exact: true }).isVisible(), true);
+  }, '?r=TEST');
+
+  let replayWrites = 0;
+  let historyWrites = 0;
+  await scenario('dao-vang', async (page) => {
+    await page.getByRole('button', { name: 'Play solo', exact: true }).click();
+    await page.waitForFunction(() => window.dv.solo.screen === 'play');
+    await page.evaluate(() => window.dv.solo.end());
+    await page.waitForFunction(() => document.querySelector('#historyStatus')?.textContent.includes('This game is saved'));
+    assert.equal(replayWrites, 1);
+    assert.equal(historyWrites, 1);
+    await page.evaluate(() => { window.dv.solo.begin(); window.dv.solo.end(); window.dv.solo.end(); });
+    await text(page, '#overlay', /Time's up!/);
+    await page.clock.runFor(FRAME_MS);
+    assert.equal(replayWrites, 1);
+    assert.equal(historyWrites, 1);
+  }, '', { prepare: async (page) => {
+    await page.route('**/api/replay', (route) => { replayWrites++; return route.fulfill({ json: { id: 'mining-public-round' } }); });
+    await page.route('**/api/me/history', (route) => { historyWrites++; return route.fulfill({ json: { ok: true } }); });
+  } });
+
+  await scenario('dao-vang', async (page) => {
+    await page.waitForFunction(() => window.boardFixture.sockets.at(-1)?.readyState === WebSocket.OPEN);
+    const world = createWorld(1, [{ id: OTHER }]);
+    world.items.push({ id: 'unknown-asset', type: 'toString', x: 100, y: 150 });
+    await feed(page, { t: 'world', world }, state({ status: 'playing', mode: 'versus', level: 1, players: [{ id: OTHER, name: 'Lin', online: true, money: 4 }], versusLevels: 5 }), snapOf(world));
+    const next = snapOf(world);
+    next.wt = 1;
+    next.miners.push({ id: 'new-player', a: 0, l: 30, m: 'out', h: null, d: 0 });
+    await feed(page, next);
+    await page.clock.runFor(FRAME_MS);
+    await text(page, '#scores', /Lin.*4/);
+    assert.equal(await page.evaluate(() => window.dv.net.view().miners.find((m) => m.id === 'new-player').name), '');
+    next.wt = 2;
+    next.miners[0].m = 'in';
+    next.miners[0].h = 'goldTiny';
+    await feed(page, next);
+    await page.clock.runFor(FRAME_MS);
+    assert.equal(await page.locator('#panel .tile-badge').first().isVisible(), true);
+  }, '?r=TEST');
 }

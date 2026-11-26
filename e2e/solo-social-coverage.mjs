@@ -1021,7 +1021,8 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   assert.equal(await page.locator('.secret-word').count(), 0);
   await page.clock.fastForward(SECOND_MS * 7);
   await textIncludes(page, 'body', 'No confirmation yet');
-  assert.equal(await startClues.isEnabled(), true);
+  assert.equal(await startClues.evaluate((node) => node.disabled), false);
+  assert.equal(await page.getByRole('button', { name: 'Start giving clues', exact: true }).isEnabled(), true);
   await clickName(page, 'Start giving clues');
   assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sentBeforeDuplicate + 1);
   assert.deepEqual(await page.evaluate(() => window.coverageTransport.sent.at(-1)), { t: 'g', a: 'next' });

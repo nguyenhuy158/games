@@ -29,7 +29,7 @@ const EMOS = [['thumbs-up', '#1f6fd6'], ['laugh', '#e0a100'], ['frown', '#8a5cd6
 
 let code = null, room = null, clockOffset = 0, peek = false;
 let quiet = false; // đang tua bản xem lại: không kêu, không toast, không bay cảm xúc
-const mySeat = () => (room?.seats.indexOf(deviceId) ?? -1) + 1;
+const mySeat = () => room.seats.indexOf(deviceId) + 1;
 const myTurn = () => room?.status === 'playing' && mySeat() === room.turn;
 const nameOf = (id) => room?.players.find((p) => p.id === id)?.name ?? '';
 

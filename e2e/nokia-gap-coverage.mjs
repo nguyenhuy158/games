@@ -253,15 +253,18 @@ try {
   });
 
   for (const game of ['bounce', 'rapid-roll']) {
-    await scenario(game, `${game} lobby input is safe before simulation starts`, async (page) => {
+    await scenario(game, `${game} programmatic canvas input is safe before simulation starts`, async (page) => {
       await join(page);
       await feed(page, state({ status: 'lobby', cfg: { level: 0 }, view: null }));
       const before = await image(page);
       await page.keyboard.press('ArrowDown');
-      await page.locator('.screen canvas').click();
+      await page.locator('.screen canvas').dispatchEvent('pointerdown', { pointerType: 'touch', clientX: 0, clientY: 0 });
       await page.clock.runFor(FRAME_MS);
       assert.equal(await image(page), before);
       assert.deepEqual(await page.evaluate(() => window.nokiaFixture.sent), []);
+      assert.equal(await page.evaluate(() => window.nk.room.status), 'lobby');
+      assert.equal(await page.evaluate(() => window.nk.room.view), null);
+      assert.equal(await page.locator('#overlay').isVisible(), true);
       if (game === 'bounce') {
         await feed(page, state({ status: 'ended', cfg: { level: 0 }, view: { runners: { [PLAYER]: { done: true, finished: false, score: 0 } } } }));
         assert.match(await page.locator('#players').textContent(), /out/);

@@ -215,7 +215,7 @@ function render(view) {
     draw('hv1', tx, ty, { rot: -m.angle, anchor: [0.5, 0.2] });
 
     let frame = MINER_UP[0];
-    const at = m.anim ? (m.animT ?? 0) : 0;
+    const at = m.anim ? m.animT : 0;
     if (m.anim === 'dyn') frame = MINER_DYN[Math.min(4, Math.floor(at / 0.08))];
     else if (m.anim === 'down') frame = MINER_DOWN[Math.min(3, Math.floor(at / 0.1))];
     else if (m.mode === 'in' && m.held) frame = m.strong ? `minerStr000${1 + (Math.floor(clock * 8) % 2)}` : MINER_UP[Math.floor(clock * 20) % MINER_UP.length];

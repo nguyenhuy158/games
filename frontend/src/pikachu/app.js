@@ -519,8 +519,7 @@ function render() {
   } else if (room.status === 'playing') {
     ov.hidden = !!replaying || (!!mine?.unit && !u?.done);
     if (!ov.hidden) {
-      // Bàn mình đã xong (phá đảo / hết giờ) nhưng bàn khác còn chơi, hoặc là khán giả.
-      setTitle(u?.done === 'clear' ? 'trophy' : null, mine?.spec ? t('Bạn đang xem', 'You are watching') : u?.done === 'clear' ? t('Phá đảo!', 'Cleared!') : t('Hết giờ rồi…', 'Time is up…'));
+      setTitle(null, mine?.spec ? t('Bạn đang xem', 'You are watching') : t('Hết giờ rồi…', 'Time is up…'));
       $('#ovText').textContent = mine?.spec ? t('Ván sau bạn sẽ được chơi.', 'You will play next round.') : t('Chờ các bàn khác chơi xong nhé.', 'Wait for the other boards to finish.');
       $('#btnStart').hidden = true;
       if (mine?.spec) ov.hidden = true;

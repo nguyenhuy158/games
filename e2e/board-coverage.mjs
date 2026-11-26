@@ -1335,6 +1335,8 @@ async function strategyEdges() {
           } else {
             assert.equal(await page.locator('.board-stage .pc.flip').count(), sample.last.ganh.length + sample.last.vay.length);
             await text(page, '.board-stage .hint', kind === 'trap' ? /trapped/ : /carried/);
+            await page.locator('.board-stage .pc.flip').first().evaluate((piece) => Promise.all(piece.getAnimations().map((animation) => animation.finished)));
+            assert.equal(await page.locator('.board-stage .pc.flip').first().evaluate((piece) => piece.getAnimations().every((animation) => animation.playState === 'finished')), true);
           }
           await feed(page, { ...room, view: { ...wrap(sample.after, sample.last), side: side.map((id) => id === ME ? 'bot' : id) } });
           await text(page, '.board-stage .hint', /Bot is thinking/);
@@ -1668,9 +1670,14 @@ async function miningEdges() {
     assert(earned >= totalPrice);
     const purchaseCount = await page.locator('.shop-item').count();
     for (let index = 0; index < purchaseCount; index++) {
+      const unboughtItem = await page.locator('.shop-item').nth(index).elementHandle();
       await page.locator('.shop-item').nth(index).click();
       await text(page, `.shop-item:nth-child(${index + 1}) em`, /Bought/);
       assert.equal(await page.locator('.shop-item').nth(index).isDisabled(), true);
+      const wallet = await page.evaluate(() => window.dv.solo.money);
+      await unboughtItem.evaluate((item) => item.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+      assert.equal(await page.evaluate(() => window.dv.solo.money), wallet, 'A queued second click cannot buy the same item twice');
+      await unboughtItem.dispose();
     }
     await page.evaluate(() => { Math.random = window.miningFixtureRandom; });
     await page.getByRole('button', { name: 'Enter level 2', exact: true }).click();
@@ -1957,6 +1964,19 @@ async function matchingPointerEdges() {
     await feed(page, { t: 'board', unit: 'all', board: removed });
     await noAction(page, () => page.locator('#cells').dispatchEvent('pointerup'));
     assert.equal(await page.locator('#cells .sel').count(), 0);
+    await page.setViewportSize({ width: 1600, height: 600 });
+    await page.waitForFunction(() => {
+      const wrap = document.querySelector('#boardWrap');
+      return wrap.clientWidth > wrap.clientHeight;
+    });
+    await frames(page);
+    const landscapePointer = await page.locator('[data-k="1-2"]').evaluate((cell) => {
+      const bounds = document.querySelector('#board').getBoundingClientRect();
+      return { clientX: bounds.left + (parseFloat(cell.style.width) + 1) * 2.5, clientY: bounds.top + (parseFloat(cell.style.height) + 1) * 1.5 };
+    });
+    await action(page, () => page.locator('#boardWrap').dispatchEvent('pointermove', landscapePointer), { t: 'cur', p: [1.5, 2.5] });
+    await feed(page, { t: 'cur', id: OTHER, p: [1, 2] });
+    assert.deepEqual(await page.locator('.cursor').evaluate((node) => [node.style.left, node.style.top]), await page.locator('[data-k="1-2"]').evaluate((node) => [node.style.left, node.style.top]));
     const racers = players.map((player) => ({ ...player, unit: player.id }));
     await feed(page, { ...playing, mode: 'race', players: racers, units: { [ME]: unit, [OTHER]: unit } }, { t: 'board', unit: ME, board });
     await noAction(page, () => page.locator('[data-k="1-1"]').click());
@@ -1969,6 +1989,9 @@ async function matchingPointerEdges() {
     assert.equal(await page.locator(`#players [data-id="${OTHER}"]`).evaluate((node) => node.classList.contains('off')), true);
     if (!(await page.locator('#panel .tile-badge').first().isVisible())) await page.locator('#btnPanel').click();
     assert.equal(await page.locator('#panel .tile-badge svg').count(), 1);
+    await feed(page, { ...playing, status: 'ended', winner: null, result: null });
+    await text(page, '#ovTitle', /Time's up at level 1/);
+    assert.equal(await page.locator('.rp-links:visible a').count(), 0);
   });
 }
 
@@ -1987,6 +2010,7 @@ async function importedBoundaryReplays() {
     for (const [at, time] of [[100, '0:00'], [1000, '0:02'], [2000, '0:04']]) {
       await slider.fill(String(at));
       await slider.dispatchEvent('input');
+      await page.clock.runFor(300);
       await page.waitForFunction((expected) => document.querySelector('#clock').textContent === expected, time);
       assert.equal(await page.locator('#cells .m').count(), 81);
     }
@@ -1996,7 +2020,7 @@ async function importedBoundaryReplays() {
     await frames(page);
     await text(page, '#ovScore', /Opened 0\/0 cells/);
     await noAction(page, () => page.locator('#face').dispatchEvent('click'));
-  }, `?replay=${minesId}`);
+  }, `?replay=${minesId}`, { prepare: (page) => page.clock.install({ time: new Date(TIME) }) });
 
   const matchingId = 'imported-pikachu-partial-matches';
   const matchingUnit = { score: 0, left: 4, total: 4, combo: 0, shuffles: 2, done: null, endAt: TIME + TURN_MS };
@@ -2045,6 +2069,119 @@ async function importedBoundaryReplays() {
   }, `?replay=${carryId}`);
 }
 
+async function preStateMessages() {
+  for (const game of ['co-caro', 'noi-4', 'ban-tau']) {
+    await scenario(game, async (page) => {
+      await join(page, false, game === 'co-caro');
+      await feed(page, { t: 'emo', id: OTHER, e: 0 });
+      assert.equal(await page.locator('.emo-fly').count(), 1);
+      await page.waitForFunction(() => !document.querySelector('.emo-fly'));
+    });
+  }
+  await scenario('do-min', async (page) => {
+    await join(page);
+    await feed(page, { t: 'grid', grids: { all: Array(81).fill(mineRules.HIDDEN) } }, { t: 'ping', id: OTHER, i: 0 });
+    assert.equal(await page.locator('#cells .m').count(), 81);
+    assert.equal(await page.locator('#fx .ping').count(), 1);
+    assert.equal(await page.locator('#fx .ping span').innerText(), '');
+    await feed(page, { t: 'open', unit: 'all', by: OTHER, cells: [[0, 2]], boom: false });
+    await text(page, '#cells .m:nth-child(1)', /^2$/);
+  });
+  await scenario('pikachu', async (page) => {
+    await join(page);
+    const board = [[0, 0, 0, 0], [0, 1, 1, 0], [0, 2, 2, 0], [0, 0, 0, 0]];
+    await feed(page, { t: 'board', unit: 'all', board }, { t: 'ping', id: OTHER, a: [1, 1] });
+    assert.equal(await page.locator('#cells .cell').count(), 4);
+    await text(page, '#fx .ping span', /^—$/);
+  });
+  await scenario('bau-cua', async (page) => {
+    await join(page);
+    await noAction(page, () => page.locator('#board > *').first().click());
+    const room = state({ status: 'playing', mode: 'rotate', phase: 'bet', phaseAt: TIME, shakeMs: 20, afkMs: TURN_MS, round: 1, dealer: SPECTATOR, players: [{ ...PLAYERS[1], coins: 1000 }], bets: { [SPECTATOR]: [10, 0, 0, 0, 0, 0] }, dice: [] });
+    await feed(page, room);
+    await text(page, '#board > :first-child .stack', /Former player 10/);
+    await text(page, '#status', /Former player/);
+    await noAction(page, () => page.locator('#board > *').first().click());
+    await text(page, 'body', /Not enough coins/);
+    await feed(page, { ...room, phase: 'show', phaseAt: TIME - 1000, dice: [0, 1, 2] });
+    await text(page, '#status', /nobody won/);
+  });
+}
+
+async function sowingLobbyAndAnimationEdges() {
+  const SOW_STEP_MS = 170;
+  const SOW_SETTLE_MS = 120;
+  await scenario('o-an-quan', async (page) => {
+    await join(page, true);
+    const lobby = state({ status: 'lobby', view: null, cfg: { level: 0, quanNon: true }, players: [PLAYERS[0]] });
+    await feed(page, lobby);
+    await text(page, '#overlay .sub', /Just you.*bot/);
+    for (const [players, n, expected] of [[PLAYERS, 3, /2 players \+ 1 bot\./], [[PLAYERS[0]], 3, /1 player \+ 2 bots\./]]) {
+      await feed(page, { ...lobby, players, cfg: { ...lobby.cfg, n } });
+      await text(page, '#overlay .sub', expected);
+    }
+    const initial = sowing.newGame();
+    const view = { ...initial, side: [ME, 'bot'], names: ['Ada', 'Bot'], deadline: TIME + TURN_MS, undo: 1, last: null };
+    const playing = { ...lobby, status: 'playing', view };
+    await feed(page, playing);
+    const initialPosition = await page.locator('.oaq .cell').nth(1).getAttribute('style');
+    await feed(page, { ...playing, view: { ...view, side: ['bot', ME], names: ['Bot', 'Ada'] } });
+    assert.notEqual(await page.locator('.oaq .cell').nth(1).getAttribute('style'), initialPosition);
+    assert.equal(await page.locator('.oaq .cell').count(), 12);
+    await text(page, '.oaq .hint', /Bot is thinking/);
+    await feed(page, playing);
+    const moved = sowing.clone(initial);
+    const steps = sowing.move(moved, 1, 1);
+    const after = { ...view, ...moved, last: { from: { b: initial.b, big: initial.big }, steps } };
+    await feed(page, { ...playing, view: after });
+    await text(page, '.oaq .foot', /Sowing/);
+    await feed(page, lobby);
+    await page.clock.runFor(steps.length * SOW_STEP_MS + SOW_SETTLE_MS);
+    await text(page, '#overlay .sub', /Just you/);
+    await feed(page, { ...playing, view: after });
+    assert.deepEqual(await page.locator('.oaq .cell .n').allTextContents(), moved.b.map((value) => value ? String(value) : ''));
+    await visible(page, '.oaq .hand', false);
+  }, '', { prepare: (page) => page.clock.install({ time: new Date(TIME) }) });
+}
+
+async function matchingPlatformBoundaries() {
+  for (const capability of ['unsupported-service-worker', 'registration-rejected']) {
+    await scenario('pikachu', async (page) => {
+      assert.equal(await page.evaluate(() => 'serviceWorker' in navigator), capability !== 'unsupported-service-worker');
+      await join(page);
+      const unit = { score: 0, level: 1, left: 4, total: 4, combo: 0, shuffles: 2, done: null, endAt: TIME + TURN_MS };
+      const players = PLAYERS.map((player) => ({ ...player, unit: 'all', spec: false, score: 0 }));
+      await feed(page, state({ status: 'playing', mode: 'coop', size: 0, tiles: 'animal', duration: TURN_MS, players, units: { all: unit } }), { t: 'board', unit: 'all', board: [[0, 0, 0, 0], [0, 1, 1, 0], [0, 2, 2, 0], [0, 0, 0, 0]] });
+      await action(page, () => page.locator('[data-k="1-1"]').click(), { t: 'sel', a: [1, 1] });
+      assert.equal(await page.locator('#cells .sel').count(), 1);
+      if (capability === 'registration-rejected') assert.equal(await page.evaluate(() => window.registrationAttempts), 1);
+    }, '', {
+      prepare: (page) => page.addInitScript((capability) => {
+        if (capability === 'unsupported-service-worker') {
+          if (!Reflect.deleteProperty(Navigator.prototype, 'serviceWorker')) throw new Error('Cannot emulate a browser without service workers');
+        } else {
+          window.registrationAttempts = 0;
+          navigator.serviceWorker.register = async () => {
+            window.registrationAttempts++;
+            throw new DOMException('Platform policy rejects service-worker registration', 'SecurityError');
+          };
+        }
+      }, capability),
+    });
+  }
+  const replayId = 'imported-pikachu-future-level';
+  const unit = { score: 0, level: 5, left: 2, total: 2, combo: 0, shuffles: 2, done: null, endAt: TIME + TURN_MS };
+  const playing = state({ status: 'playing', mode: 'coop', size: 0, duration: TURN_MS, tiles: 'animal', players: PLAYERS.map((player) => ({ ...player, unit: 'all', spec: false, score: 0 })), units: { all: unit } });
+  REPLAY_RECORDS.set(replayId, { game: 'pikachu', page: routeOf('pikachu'), at: TIME, frames: [[0, playing], [0, { t: 'board', unit: 'all', why: 'level', board: [[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0]] }]] });
+  await scenario('pikachu', async (page) => {
+    await page.locator('#fx .banner').waitFor();
+    await text(page, '#fx .banner', /^Level 6\/5$/);
+    assert.equal(await page.locator('#fx .banner span').count(), 0);
+    assert.equal(await page.locator('#cells .cell').count(), 2);
+    await noAction(page, () => page.locator('[data-k="1-1"]').click());
+  }, `?replay=${replayId}`);
+}
+
 try {
   await classicBoards();
   await battleship();
@@ -2069,6 +2206,9 @@ try {
   await mediaNetworkFailures();
   await matchingPointerEdges();
   await importedBoundaryReplays();
+  await preStateMessages();
+  await sowingLobbyAndAnimationEdges();
+  await matchingPlatformBoundaries();
 } finally {
   await context.close();
   await browser.close();

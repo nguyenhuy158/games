@@ -102,7 +102,7 @@ function random() {
 }
 
 function playerName(id) {
-  if (mode === MODE.LOCAL) return localNamesById.get(id) ?? id;
+  if (mode === MODE.LOCAL) return localNamesById.get(id);
   return app?.room?.players.find((player) => player.id === id)?.name ?? t('Người đã rời phòng', 'Disconnected player');
 }
 
@@ -125,7 +125,7 @@ function toggleTheme() {
 }
 
 function focusMain() {
-  const target = content.querySelector('h2') ?? heading;
+  const target = content.querySelector('h2');
   target.tabIndex = -1;
   target.focus({ preventScroll: true });
 }
@@ -332,7 +332,7 @@ function paintLocal() {
   const publicView = view(localGame, null);
   if (publicView.phase === PHASE.VOTE) {
     const voter = localGame.players.find((player) => player.alive && !Object.hasOwn(localGame.votes, player.id));
-    if (ballotOwner !== voter?.id) { ballotOwner = voter?.id ?? null; ballotOpen = false; }
+    if (ballotOwner !== voter.id) { ballotOwner = voter.id; ballotOpen = false; }
   } else { ballotOwner = null; ballotOpen = false; }
   const actor = publicView.phase === PHASE.VOTE && ballotOpen ? ballotOwner : publicView.phase === PHASE.GUESS && guessOpen ? publicView.pendingGuess : null;
   paintBoard(content, actor ? view(localGame, actor) : publicView, actor, true);
@@ -518,7 +518,7 @@ function enhanceRoomShell(room = app?.room) {
     if (control.classList.contains('primary')) control.dataset.variant = 'primary';
   }
   const codeInput = document.querySelector('#home input.code');
-  if (codeInput) codeInput.ariaLabel = t('Mã phòng gồm 4 ký tự', '4-character room code');
+  codeInput.ariaLabel = t('Mã phòng gồm 4 ký tự', '4-character room code');
   const start = document.querySelector('#overlay > .card > button.primary');
   if (start && room) start.disabled = !validateSetup(room.players.length, { ...DEFAULT_CONFIG, ...room.cfg });
 }
