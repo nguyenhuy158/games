@@ -31,6 +31,7 @@ const gameConcurrency = Number(concurrencyInput);
 const MIN_CONCURRENT_GAMES = 1;
 const INTEGER_INPUT = /^[1-9]\d*$/;
 const ACK_TIMEOUT_MS = 5000;
+const PLAYING_STATUS = 'playing';
 const CONFIG_TIMEOUT_MS = 3000;
 const FAST_MOVES = 2;
 const FULL_BATTLESHIP_SHOTS = 5;
@@ -252,7 +253,7 @@ const GAMES = {
     r.send(r.host(), { t: 'config', mode: 'race', size: 0 });
     await until(() => r.socks.every((s) => s.last.mode === 'race'), 3000, 'race mode');
     r.send(r.host(), { t: 'start' });
-    await until(() => r.socks.every((s) => grid[s.me]), 5000, 'grids received');
+    await until(() => r.socks.every((s) => s.last.status === PLAYING_STATUS && grid[s.me]), ACK_TIMEOUT_MS, 'playing mine grids received');
     // Mỗi bot mở ô ẩn chưa gửi (mạng chậm thì bàn về trễ: khỏi gửi lại ô đang chờ kết quả).
     const sent = Object.fromEntries(r.socks.map((ws) => [ws.me, new Set()]));
     for (const end = Date.now() + 45000; r.socks[0].last.status === 'playing' && Date.now() < end;) {
