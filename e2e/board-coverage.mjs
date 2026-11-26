@@ -9,6 +9,7 @@ import { createGame as snakeGame } from '../shared/games/nokia/snake/logic.js';
 import { newBoard as bantumiBoard, move as bantumiMove } from '../shared/games/nokia/bantumi/logic.js';
 import { createSim as createRollSim, step as stepRoll, score as scoreRoll, scrollAt as rollScroll } from '../shared/games/nokia/rapid-roll/logic.js';
 import * as miningRules from '../shared/games/dao-vang/logic.js';
+import * as mineRules from '../shared/games/do-min/logic.js';
 
 const BASE = new URL(process.env.E2E_BASE_URL || 'http://127.0.0.1:8789');
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
@@ -225,7 +226,7 @@ async function scenario(game, run, query = '', options = {}) {
   }
 }
 
-async function join(page, nokia = false, deferSound = false) {
+async function join(page, nokia = false, deferHeader = false) {
   const input = page.locator(nokia ? '#home .code' : '#code');
   await input.fill('!');
   await input.press('ArrowLeft');
@@ -236,14 +237,20 @@ async function join(page, nokia = false, deferSound = false) {
   await page.waitForFunction(() => window.boardFixture.sockets.at(-1)?.readyState === WebSocket.OPEN);
   await visible(page, '#room');
   assert.equal(new URL(page.url()).searchParams.get('r'), ROOM_CODE);
-  if (!deferSound) await toggleSound(page, nokia);
-  const invite = page.locator(nokia ? '#room header button[title="Invite: QR code / link"]' : '#btnCopy');
-  await invite.click();
-  await visible(page, '#invite');
+  if (!deferHeader) {
+    await toggleSound(page, nokia);
+    await checkInvite(page, page.locator(nokia ? '#room header button[title="Invite: QR code / link"]' : '#btnCopy'));
+  }
+}
+
+async function checkInvite(page, trigger) {
+  await trigger.click();
+  await page.locator('#invite[open]').waitFor({ state: 'visible' });
   await text(page, '#invite .code', new RegExp(`^${ROOM_CODE}$`));
   assert.equal(await page.locator('#invite .link').innerText(), page.url());
   assert.equal(await page.locator('#invite .qr svg').count(), 1);
   await page.locator('#invite').getByRole('button', { name: 'Close', exact: true }).click();
+  await page.locator('#invite').waitFor({ state: 'hidden' });
   await visible(page, '#invite', false);
 }
 
@@ -298,6 +305,10 @@ async function replay(game, messages, check) {
     await check(page);
     const leave = page.locator('#btnLeave, #room header > button:first-child').first();
     if (game !== 'dao-vang' && game !== 'ban-tau' && game !== 'bau-cua' && game !== 'pikachu') {
+      if (game === 'co-caro') {
+        await page.locator('#btnPeek').click();
+        await page.locator('#overlay').waitFor({ state: 'hidden' });
+      }
       await saveCoverage(page);
       await leave.click();
       await page.waitForURL((url) => !url.searchParams.has('replay'));
@@ -344,6 +355,7 @@ async function classicBoards() {
       await feed(page, playing);
       await visible(page, '#overlay', false);
       await toggleSound(page);
+      await checkInvite(page, page.locator('#btnCopy'));
       if (caro) {
         await page.locator('#btnSkin').click();
         assert.equal(await page.locator('body').evaluate((node) => node.classList.contains('skin-stone')), true);
@@ -958,7 +970,7 @@ async function classicEdges() {
   for (const game of ['co-caro', 'noi-4', 'ban-tau']) {
     await scenario(game, async (page) => {
       await page.locator('#name').fill('');
-      await join(page);
+      await join(page, false, game === 'co-caro');
       const fleet = [[0, 1, 2, 3, 4], [20, 21, 22, 23], [40, 41, 42], [60, 61, 62], [80, 81]];
       const lobby = state({
         players: [PLAYERS[0]], seats: [ME, 'bot'], names: ['Ada', 'Máy'], score: {}, size: 2, level: 0,
@@ -969,6 +981,11 @@ async function classicEdges() {
       await feed(page, lobby);
       await text(page, '#ovText', /bot/i);
       await feed(page, { ...lobby, status: 'playing' });
+      if (game === 'co-caro') {
+        await page.locator('#overlay').waitFor({ state: 'hidden' });
+        await toggleSound(page);
+        await checkInvite(page, page.locator('#btnCopy'));
+      }
       await page.waitForFunction(() => document.querySelector('#clock').textContent === '…');
       await noAction(page, () => page.locator(game === 'ban-tau' ? '#seaB .c' : '#board .c').first().click());
       const playing = { ...lobby, status: 'playing', players: PLAYERS, seats: [ME, OTHER], names: ['Ada', 'Lin'], turn: 1 };
@@ -1511,10 +1528,7 @@ async function miningEdges() {
     const players = PLAYERS.map((player) => ({ ...player, spec: false, money: 50, dynamite: 1, ready: false, offer: [{ key: 'dynamite', price: 100 }], bought: {} }));
     const lobby = state({ players, mode: 'versus', team: 100, target: 650, level: 2, versusLevels: 5 });
     await feed(page, lobby);
-    await page.getByRole('button', { name: /Invite: room/ }).click();
-    await visible(page, '#invite');
-    assert.equal(await page.locator('#invite .link').innerText(), page.url());
-    await page.locator('#invite').getByRole('button', { name: 'Close', exact: true }).click();
+    await checkInvite(page, page.getByRole('button', { name: /Invite: room/ }));
     await feed(page, { ...lobby, host: OTHER, players: [players[0], { ...players[1], online: false }] });
     await text(page, '#overlay', /Waiting for the host/);
     await page.locator('#btnSound').click();
@@ -1649,6 +1663,73 @@ async function miningEdges() {
   });
 }
 
+async function importedCompletionReplays() {
+  for (const game of ['do-min', 'pikachu']) {
+    const mines = game === 'do-min';
+    const replayId = `imported-${game}-completed-units`;
+    const players = PLAYERS.map((player) => ({ ...player, unit: player.id, spec: false, opened: 0, booms: 0, score: 0 }));
+    const unit = mines
+      ? { opened: 0, total: 71, lives: 3, booms: 0, penalty: 0, done: null, time: 22000 }
+      : { score: 20, level: 5, left: 2, total: 2, combo: 0, shuffles: 2, done: null, endAt: TIME + TURN_MS };
+    const completedUnit = mines ? { ...unit, opened: 71, done: 'clear' } : { ...unit, left: 0, done: 'clear' };
+    const playing = state({ status: 'playing', mode: 'race', size: 0, tiles: 'animal', duration: TURN_MS, startedAt: TIME, players, units: { [ME]: unit, [OTHER]: unit } });
+    const completed = { ...playing, now: TIME + 22000, units: { [ME]: completedUnit, [OTHER]: completedUnit } };
+    const board = [[0, 0, 0, 0], [0, 1, 1, 0], [0, 2, 2, 0], [0, 0, 0, 0]];
+    const clearedBoard = board.map((row) => row.map(() => 0));
+    const field = mineRules.newField(mineRules.SIZES[0], 0, miningRules.seeded(9));
+    const clearedGrid = field.mines.map((mine, index) => mine ? mineRules.FLAG : field.counts[index]);
+    const tapeFrames = mines
+      ? [[0, playing], [100, { t: 'grid', grids: { [ME]: Array(81).fill(mineRules.HIDDEN) } }], [1000, completed], [1100, { t: 'grid', grids: { [ME]: clearedGrid } }]]
+      : [[0, playing], [100, { t: 'board', unit: ME, board }], [200, { t: 'minis', boards: { [OTHER]: board } }], [1000, completed], [1100, { t: 'board', unit: ME, board: clearedBoard }], [1200, { t: 'minis', boards: { [OTHER]: clearedBoard } }]];
+    REPLAY_RECORDS.set(replayId, { game, page: routeOf(game), at: TIME, frames: tapeFrames });
+    await scenario(game, async (page) => {
+      await page.locator('.rp-bar').waitFor();
+      const slider = page.locator('.rp-bar input');
+      const opponent = page.locator('#panel .tile').filter({ hasText: 'Lin' });
+      const badge = opponent.locator('.tile-badge');
+      const completedAt = String(tapeFrames.at(-1)[0]);
+      await slider.fill(completedAt);
+      await slider.dispatchEvent('input');
+      await frames(page);
+      assert.equal(await badge.isVisible(), true);
+      assert.equal(await badge.locator('svg path').last().getAttribute('d'), 'M18 2H6v7a6 6 0 0 0 12 0V2Z');
+      if (mines) {
+        await visible(page, '#overlay');
+        await text(page, '#ovTitle', /^Board done!$/);
+        await text(page, '#ovText', /Waiting for others/);
+        await visible(page, '#btnStart', false);
+        await visible(page, '#face');
+        assert.match(await page.locator('#face img').getAttribute('src'), /\/winface\.svg$/);
+        assert.equal(await page.locator('#cells .o').count(), 71);
+        await text(page, '#panel', /100%/);
+      } else {
+        await visible(page, '#overlay', false);
+        assert.equal(await page.locator('#cells .cell').count(), 0);
+        await text(page, '#panel', /0 left/);
+      }
+      await noAction(page, () => page.keyboard.press('Enter'));
+      assert.equal(await page.evaluate(() => window.boardFixture.sockets.length), 0);
+      await slider.fill('200');
+      await slider.dispatchEvent('input');
+      await frames(page);
+      assert.equal(await badge.isVisible(), false);
+      await visible(page, '#overlay', false);
+      if (mines) assert.match(await page.locator('#face img').getAttribute('src'), /\/smileface\.svg$/);
+      else assert.equal(await page.locator('#cells .cell').count(), 4);
+      await slider.fill(completedAt);
+      await slider.dispatchEvent('input');
+      await frames(page);
+      assert.equal(await badge.isVisible(), true);
+    }, `?replay=${replayId}`, {
+      prepare: (page) => page.addInitScript(() => {
+        localStorage.setItem('ms.skin', 'xp');
+        localStorage.setItem('ms.panel', '0');
+        localStorage.setItem('pk.panel', '0');
+      }),
+    });
+  }
+}
+
 try {
   await classicBoards();
   await battleship();
@@ -1666,6 +1747,7 @@ try {
   await nokiaEdges();
   await miningEdges();
   await rapidRollEdges();
+  await importedCompletionReplays();
 } finally {
   await context.close();
   await browser.close();

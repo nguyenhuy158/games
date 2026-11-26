@@ -1000,6 +1000,8 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
     Object.defineProperty(document, 'hidden', { configurable: true, value: false });
     document.dispatchEvent(new Event('visibilitychange'));
   });
+  assert.equal(await page.locator('.secret-word').isVisible(), false);
+  await page.waitForSelector('.secret-dialog', { state: 'detached' });
   assert.equal(await page.locator('.secret-word').count(), 0);
   await page.clock.fastForward(SECOND_MS * 7);
   await textIncludes(page, 'body', 'No confirmation yet');
@@ -1298,8 +1300,11 @@ for (const game of ['2048', 'sudoku', 'tetris']) {
 for (const failure of ['http', 'network']) {
   await scenario(`2048 unavailable leaderboard remains empty (${failure})`, '/2048/?lang=en', async (page, requests) => {
     await page.waitForFunction(() => document.querySelectorAll('#tiles .tile').length === 16 && [...document.querySelectorAll('#tiles .tile')].some((node) => node.textContent));
+    await page.locator('#btnBoard').click();
+    await page.waitForSelector('#side.open #lbEmpty', { state: 'visible' });
     assert.equal(await page.locator('#lbEmpty').isVisible(), true);
     assert.equal(await page.locator('#lb li').count(), 0);
+    await textIncludes(page, '#lbEmpty', 'No scores yet. Be the first!');
     assert.equal(requests.filter(({ path }) => path === '/api/board').length, 1);
     for (const key of ['ArrowDown', 'ArrowLeft', 'ArrowUp', 'ArrowRight']) await page.keyboard.press(key);
     assert.equal(await page.locator('#btnUndo').isDisabled(), false);
