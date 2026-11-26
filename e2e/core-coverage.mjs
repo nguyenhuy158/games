@@ -1383,6 +1383,102 @@ try {
     })),
   } } });
 
+  await scenario("late account retry events cannot duplicate an in-flight profile request", async ({ page, state, requests }) => {
+    await textContains(page, "#meError", "Could not load your account");
+    let releaseProfile;
+    const pendingProfile = new Promise((resolve) => { releaseProfile = resolve; });
+    state.routes["/api/me"] = () => pendingProfile;
+    try {
+      await Promise.all([
+        page.waitForRequest((request) => new URL(request.url()).pathname === "/api/me"),
+        page.locator("#meRetry").click(),
+      ]);
+      assert.equal(await page.locator("#meRetry").isDisabled(), true);
+      await page.locator("#meRetry").dispatchEvent("click");
+    } finally {
+      releaseProfile(DEFAULT_PROFILE);
+    }
+    await textContains(page, "#meNotice", "Guest history");
+    await page.waitForFunction(() => !document.querySelector("#meRetry").disabled);
+    assert.equal(requests.filter((request) => request.path === "/api/me").length, 2);
+    assert.equal(await page.locator("#meError").isVisible(), false);
+  }, { state: { routes: { "/api/me": { status: ERROR_STATUS } } } });
+
+  await scenario("late result retry events cannot duplicate pending or completed writes", async ({ page, state, requests }) => {
+    await textContains(page, "#meNotice", "Guest history");
+    state.routes["/api/me/history"] = { status: ERROR_STATUS };
+    await page.evaluate(async () => {
+      const { beginHistory } = await import("/history.js");
+      const round = await beginHistory("2048", () => {});
+      round.finish({ score: 64, won: false, mode: "solo", level: 1 });
+    });
+    await textContains(page, "#historyStatus", "Saving this game is not confirmed");
+    let releaseResult;
+    const pendingResult = new Promise((resolve) => { releaseResult = resolve; });
+    state.routes["/api/me/history"] = () => pendingResult;
+    try {
+      await Promise.all([
+        page.waitForRequest((request) => new URL(request.url()).pathname === "/api/me/history" && request.method() === "POST"),
+        page.locator("#historyStatus button").click(),
+      ]);
+      assert.equal(await page.locator("#historyStatus button").isDisabled(), true);
+      await page.locator("#historyStatus button").dispatchEvent("click");
+    } finally {
+      releaseResult({ ok: true });
+    }
+    await textContains(page, "#historyStatus", "This game is saved");
+    assert.equal(await page.locator("#historyStatus button").isVisible(), false);
+    await page.locator("#historyStatus button").dispatchEvent("click");
+    const writes = requests.filter((request) => request.path === "/api/me/history" && request.method === "POST");
+    assert.equal(writes.length, 2);
+    assert.deepEqual(writes[0].body, writes[1].body);
+    assert.equal(await page.locator("#historyStatus [role=status]").textContent(), "This game is saved in your history.");
+  });
+
+  await scenario("late listbox DOM events preserve disabled and dismissed controls", async ({ page }) => {
+    await page.evaluate(async () => {
+      const { listbox } = await import("/ui/listbox.mjs");
+      const select = document.createElement("select");
+      select.innerHTML = '<option value="first">First</option><option value="locked" disabled>Locked</option>';
+      const wrapper = listbox(select);
+      wrapper.id = "coreLateListbox";
+      document.body.prepend(wrapper);
+      window.coreLateSelect = select;
+      window.coreLateChanges = 0;
+      select.addEventListener("change", () => { window.coreLateChanges += 1; });
+    });
+    const trigger = page.locator("#coreLateListbox [role=combobox]");
+    await trigger.click();
+    const active = await trigger.getAttribute("aria-activedescendant");
+    await page.getByRole("option", { name: "Locked", exact: true }).dispatchEvent("pointerenter");
+    assert.equal(await trigger.getAttribute("aria-activedescendant"), active);
+    await page.evaluate(() => { window.coreDismissedOption = document.querySelector('[role=option]'); });
+    await trigger.press("Escape");
+    await page.evaluate(() => window.coreDismissedOption.dispatchEvent(new PointerEvent("pointerenter")));
+    assert.equal(await trigger.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator("[role=listbox]").count(), 0);
+    await page.evaluate(() => { window.coreLateSelect.disabled = true; });
+    await page.waitForFunction(() => document.querySelector("#coreLateListbox button").disabled);
+    await trigger.dispatchEvent("click");
+    assert.equal(await trigger.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator("[role=listbox]").count(), 0);
+    assert.equal(await page.locator("#coreLateListbox select").inputValue(), "first");
+    assert.equal(await page.evaluate(() => window.coreLateChanges), 0);
+  });
+
+  await scenario("file-index hosting selects the home sidebar entry", async ({ page }) => {
+    assert.equal(new URL(page.url()).pathname, "/index.html");
+    assert.equal(await page.locator("#sidebar a[aria-current=page]").count(), 1);
+    assert.equal(await page.locator("#sidebar a[aria-current=page]").getAttribute("href"), "/");
+    await textContains(page, "#meNotice", "Guest history");
+  }, { initScript: () => {
+    if (location.protocol === "http:" || location.protocol === "https:") {
+      const url = new URL(location.href);
+      url.pathname = "/index.html";
+      history.replaceState(null, "", url);
+    }
+  } });
+
   await serviceWorkerScenario();
   await legacyRedirectScenario();
   console.log(`Core source coverage: ${completed} scenarios completed`);

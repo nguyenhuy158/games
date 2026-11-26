@@ -59,7 +59,7 @@ export function createMusic() {
     s.start(t);
     s.stop(t + dur + 0.02);
   };
-  const kick = (out, t, vol = 1) => tone(out, t, 150, 0.25, 'sine', vol, 45);
+  const kick = (out, t, vol) => tone(out, t, 150, 0.25, 'sine', vol, 45);
   const snare = (out, t, vol = 0.5) => { hiss(out, t, 0.16, vol, 1500); tone(out, t, 220, 0.08, 'triangle', vol * 0.6); };
   const play = (s, t) => {
     const b = s % 16;

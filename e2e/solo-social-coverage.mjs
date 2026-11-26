@@ -1593,6 +1593,51 @@ await scenario('werewolf replay rewind tolerates a hide click before the first r
   game: 'soi', page: '/soi/', frames: [[0, { t: 'notice', text: 'Recorded prelude' }], [SECOND_MS, room({ round: 1, role: 'wolf' }, { now: CLOCK_START.getTime() + SECOND_MS })]],
 }) } : null });
 
+await scenario('spy local normalized-empty guess is rejected without consuming the valid guess', '/gian-diep/?lang=en', async (page) => {
+  const COMBINING_ACUTE = '\u0301';
+  const PLAYER_COUNT = 4;
+  await clickName(page, 'Pass one device');
+  await page.getByRole('textbox', { name: 'Player names, one per line' }).fill('Ada\nBinh\nChi\nDung');
+  await clickName(page, 'Apply names');
+  await clickName(page, 'Settings');
+  await page.locator('dialog.spy-dialog select').nth(1).evaluate((node) => { node.value = '1'; node.dispatchEvent(new Event('change')); });
+  await clickName(page, 'Save settings', page.locator('dialog[open]'));
+  await clickName(page, 'Deal secret words');
+  const cards = [];
+  for (let index = 0; index < PLAYER_COUNT; index++) {
+    const player = (await page.locator('.handoff h2').textContent()).replace('Pass to ', '');
+    await clickName(page, 'Reveal card');
+    cards.push({ player, word: await page.locator('.secret-word').textContent() });
+    await clickName(page, index === PLAYER_COUNT - 1 ? 'Hide & finish' : 'Hide & pass');
+  }
+  const white = cards.find(({ word }) => word === 'No word');
+  const civilian = cards.find(({ word }) => cards.filter((card) => card.word === word).length > 1);
+  assert(white);
+  assert(civilian);
+  await clickName(page, 'Start giving clues');
+  await clickName(page, 'Eliminate directly');
+  await clickName(page, white.player, page.locator('dialog[open]'));
+  await clickName(page, 'Confirm', page.locator('dialog[open]'));
+  await clickName(page, 'Enter your guess');
+  const phase = await page.locator('.phase-panel h2').textContent();
+  const description = await page.locator('.phase-panel > .sub').textContent();
+  await page.locator('.guess-form input').fill(COMBINING_ACUTE);
+  await clickName(page, 'Submit your one guess');
+  await textIncludes(page, 'dialog[open]', 'You get exactly one guess');
+  await clickName(page, 'Confirm', page.locator('dialog[open]'));
+  await textIncludes(page, '.ui-toast[data-tone="warning"]', 'The turn changed. Choose an action from the current screen.');
+  assert.equal(await page.locator('.phase-panel h2').textContent(), phase);
+  assert.equal(await page.locator('.phase-panel > .sub').textContent(), description);
+  assert.equal(await page.locator('.guess-form input').inputValue(), COMBINING_ACUTE);
+  assert.equal(await page.locator('.game-result').count(), 0);
+  await page.locator('.guess-form input').fill(civilian.word);
+  await clickName(page, 'Submit your one guess');
+  await clickName(page, 'Confirm', page.locator('dialog[open]'));
+  await textIncludes(page, '.game-result', `${white.player} guessed correctly and wins alone.`);
+  assert.equal(await page.locator('.word-pair dd').first().textContent(), civilian.word);
+  assert.equal(await page.locator('.guess-form').count(), 0);
+}, { clock: true });
+
 await browser.close();
 assert.equal(failures.length, 0, failures.map(({ name, error }) => `${name}: ${error.message}`).join('\n'));
 console.log(`Solo/social coverage: ${passed} scenarios passed`);

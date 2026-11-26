@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { findChromium } from '@huyab/e2e';
 import { chromium } from 'playwright-core';
-import { saveCoverage } from './coverage.mjs';
+import { saveCoverage, saveCoverageData } from './coverage.mjs';
 import * as chess from '../shared/games/co-tuong/logic.js';
 import * as carry from '../shared/games/co-ganh/logic.js';
 import * as sowing from '../shared/games/o-an-quan/logic.js';
@@ -33,10 +33,20 @@ const PLAYERS = [{ id: ME, name: 'Ada', online: true }, { id: OTHER, name: 'Lin'
 const ROUTES = ['pikachu', 'dao-vang', 'do-min', 'bau-cua', 'co-caro', 'noi-4', 'ban-tau', 'co-tuong', 'co-ganh', 'o-an-quan', 'snake', 'pairs', 'logic', 'bantumi', 'bounce', 'rapid-roll', 'space-impact'];
 const NOKIA_GAMES = ['snake', 'pairs', 'logic', 'bantumi', 'bounce', 'rapid-roll', 'space-impact'];
 const REPLAY_RECORDS = new Map();
+const NAVIGATION_COVERAGE_KEY = 'board.navigation.coverage';
 const HISTORY_POSTS = [];
 const browser = await chromium.launch({ executablePath: findChromium() });
 const context = await browser.newContext({ viewport: VIEWPORT, serviceWorkers: 'block', hasTouch: true });
 const failures = [];
+
+await context.addInitScript((coverageKey) => {
+  addEventListener('pagehide', () => {
+    if (!globalThis.__coverage__) return;
+    const snapshots = JSON.parse(sessionStorage.getItem(coverageKey) || '[]');
+    snapshots.push({ coverage: globalThis.__coverage__, url: location.href });
+    sessionStorage.setItem(coverageKey, JSON.stringify(snapshots));
+  });
+}, NAVIGATION_COVERAGE_KEY);
 
 await context.addInitScript(({ me, routes }) => {
   localStorage.setItem('pk.id', me);
@@ -230,7 +240,11 @@ async function scenario(game, run, query = '', options = {}) {
   } catch (error) {
     failures.push(new Error(`${game}${query}: ${error.message}`, { cause: error }));
   } finally {
-    try { await saveCoverage(page); } finally { await page.close(); }
+    try {
+      await saveCoverage(page);
+      const navigationCoverage = await page.evaluate((coverageKey) => JSON.parse(sessionStorage.getItem(coverageKey) || '[]'), NAVIGATION_COVERAGE_KEY);
+      for (const snapshot of navigationCoverage) await saveCoverageData(snapshot.coverage, snapshot.url);
+    } finally { await page.close(); }
   }
 }
 
@@ -362,6 +376,7 @@ async function classicBoards() {
       await action(page, () => page.locator('#btnStart').click(), { t: 'start' });
       await feed(page, playing);
       await visible(page, '#overlay', false);
+      if (!caro) assert.equal(await page.evaluate(() => window.c4.room.status), 'playing');
       await toggleSound(page);
       await checkInvite(page, page.locator('#btnCopy'));
       if (caro) {
@@ -422,6 +437,7 @@ async function battleship() {
     await feed(page, lobby);
     await action(page, () => page.locator('#btnStart').click(), { t: 'start' });
     await feed(page, { ...lobby, status: 'placing' });
+    assert.equal(await page.evaluate(() => window.bt.room.status), 'placing');
     assert.equal(await page.locator('#seaA .ship').count(), 17);
     await page.locator('#seaA .c').first().click();
     assert.equal(await page.locator('#seaA .sel').count(), 5);
@@ -475,6 +491,8 @@ async function mines() {
     await action(page, () => page.locator('#modePick button').last().click(), { t: 'config', mode: 'race' });
     await action(page, () => page.locator('#btnStart').click(), { t: 'start' });
     await feed(page, playing, { t: 'grid', grids: { all: grid } });
+    assert.equal(await page.evaluate(() => window.ms.room.status), 'playing');
+    assert.deepEqual(await page.evaluate(() => window.ms.grids.all), grid);
     assert.equal(await page.locator('#cells .m').count(), 81);
     await action(page, () => page.locator('#cells .m').first().click(), { t: 'open', i: 0 });
     await action(page, () => page.locator('#cells .m').nth(1).click({ button: 'right' }), { t: 'flag', i: 1 });
@@ -608,6 +626,7 @@ async function betting() {
   await scenario('bau-cua', async (page) => {
     await join(page);
     await feed(page, betting);
+    assert.equal(await page.evaluate(() => window.bc.room.phase), 'bet');
     assert.equal(await page.locator('#board > *').count(), 6);
     await page.locator('#chips button').nth(1).click();
     await action(page, () => page.locator('#board > *').first().click(), { t: 'bet', s: 0, amt: 50 });
@@ -650,6 +669,7 @@ async function nokiaBoardGames() {
       await join(page, true);
       await feed(page, lobby);
       await action(page, () => page.locator('.cfg button').first().click(), game === 'o-an-quan' ? { t: 'config', cfg: { n: 2 } } : { t: 'config', cfg: { level: 0 } });
+      if (game === 'o-an-quan') await action(page, () => page.locator('.cfg .seg').last().getByRole('button').first().click(), { t: 'config', cfg: { level: 0 } });
       await action(page, () => page.locator('#overlay .primary').click(), { t: 'start' });
       await feed(page, playing);
       if (game === 'o-an-quan') {
@@ -682,6 +702,7 @@ async function nokiaBoardGames() {
         assert.equal(await page.locator('.board-stage .pc.sel').count(), 0);
         await pieces.nth(from).click();
         await action(page, () => points.nth(to).click(), { t: 'g', from, to });
+        await noAction(page, () => points.nth(to).dispatchEvent('click'));
         const moved = rules.clone(initial);
         const captured = rules.move(moved, from, to);
         const last = game === 'co-tuong' ? { from, to, cap: captured } : { from, to, ...captured };
@@ -691,6 +712,8 @@ async function nokiaBoardGames() {
         assert.equal(await pieces.nth(to).evaluate((node) => node.classList.contains('slide')), true);
         await feed(page, { ...playing, view: { ...view, side: [OTHER, SPECTATOR], moves: 100 } });
         assert.equal(await page.locator('.board-stage .pc.can').count(), 0);
+        await noAction(page, () => pieces.nth(to).dispatchEvent('click'));
+        assert.equal(await page.locator('.board-stage .pc.sel').count(), 0);
       }
       await feed(page, ended);
       await text(page, '#overlay', /Fixture results/);
@@ -1017,9 +1040,11 @@ async function classicEdges() {
         await text(page, '#placeText', /Both sides/);
         await noAction(page, () => page.locator('#seaA .c').first().click());
         await feed(page, playing);
+        await noAction(page, () => page.locator('#btnRotate').dispatchEvent('click'));
         await action(page, () => page.locator('#emoBar button').first().click(), { t: 'emo', e: 0 });
         await feed(page, { t: 'emo', id: ME, e: 0 }, { t: 'emo', id: OTHER, e: 1 }, { t: 'emo', id: SPECTATOR, e: 2 }, { t: 'emo', id: OTHER, e: -1 }, { t: 'unknown' });
         assert.equal(await page.locator('.emo-fly').count(), 3);
+        await page.waitForFunction(() => !document.querySelector('.emo-fly'));
         const shots = structuredClone(playing.shots);
         shots[0][10] = 1;
         await feed(page, { ...playing, fired: [1, 0], shots, last: { by: 1, i: 10, hit: false, sunk: -1 } });
@@ -1164,6 +1189,8 @@ async function matchingEdges() {
     for (let index = 0; index < 3; index++) await page.locator('#btnHint').click();
     await text(page, '#hintLeft', /^0$/);
     assert.equal(await page.locator('#btnHint').isDisabled(), true);
+    await noAction(page, () => page.locator('#btnHint').dispatchEvent('click'));
+    await text(page, '#hintLeft', /^0$/);
     for (const mode of ['race', 'team']) {
       const ids = mode === 'race' ? [ME, OTHER] : ['A', 'B'];
       const competitors = players.map((player, index) => ({ ...player, unit: ids[index], team: index ? 'B' : 'A' }));
@@ -1547,16 +1574,21 @@ async function miningEdges() {
     await page.getByRole('button', { name: 'Create a multiplayer room', exact: true }).click();
     await page.waitForFunction(() => window.boardFixture.sockets.at(-1)?.readyState === WebSocket.OPEN);
     const players = PLAYERS.map((player) => ({ ...player, spec: false, money: 50, dynamite: 1, ready: false, offer: [{ key: 'dynamite', price: 100 }], bought: {} }));
-    const lobby = state({ players, mode: 'versus', team: 100, target: 650, level: 2, versusLevels: 5 });
+    const lobby = state({ players, mode: 'versus', team: 100, target: 650, level: 2, versusLevels: 5, pub: false });
     await feed(page, lobby);
+    await action(page, () => page.locator('.pub-switch input').check(), { t: 'public', on: true });
     await checkInvite(page, page.getByRole('button', { name: /Invite: room/ }));
     await feed(page, { ...lobby, host: OTHER, players: [players[0], { ...players[1], online: false }] });
     await text(page, '#overlay', /Waiting for the host/);
-    await page.locator('#btnSound').click();
     const playing = { ...lobby, status: 'playing' };
     const world = { t: 'world', world: { level: 2, miners: [{ id: ME, x: 220 }, { id: OTHER, x: 420 }], items: [{ id: 1, type: 'mouse', x: 200, x0: 200, amp: 50, ph: 0, speed: 25, y: 300 }, { id: 2, type: 'goldMed', x: 350, y: 250 }] } };
     await feed(page, playing, world);
+    await page.locator('#btnSound').click();
     await canvasPixels(page, '#game');
+    await page.locator('#btnHelp').click();
+    await visible(page, '.help-dlg');
+    assert.equal(await page.evaluate(() => window.dv.net.room.status), 'playing');
+    await page.locator('.help-dlg .help-ok').click();
     const snap = { t: 'snap', wt: 1, time: 59, miners: [{ id: ME, a: 0, l: 100, m: 'in', h: 'goldMed', d: 1, s: false }, { id: OTHER, a: 0.5, l: 80, m: 'out', h: null, d: 0, s: false }] };
     await feed(page, snap);
     await visible(page, '#btnDyn');
@@ -1751,6 +1783,79 @@ async function importedCompletionReplays() {
   }
 }
 
+async function interruptedSowing() {
+  const SOW_STEP_MS = 170;
+  const SOW_SETTLE_MS = 120;
+  await scenario('o-an-quan', async (page) => {
+    await join(page, true);
+    const initial = sowing.newGame();
+    const room = state({ status: 'playing', cfg: { n: 2, level: 0, quanNon: true } });
+    const view = { ...initial, side: [ME, 'bot'], names: ['Ada', 'Bot'], deadline: TIME + TURN_MS, undo: 1, last: null };
+    await feed(page, { ...room, view });
+    const before = await page.locator('.oaq .cell').allTextContents();
+    await page.locator('.oaq .cell').nth(1).click();
+    await action(page, () => page.locator('.dirs button').last().click(), { t: 'g', k: 1, d: 1 });
+    await noAction(page, () => page.locator('.dirs button').last().dispatchEvent('click'));
+    const moved = sowing.clone(initial);
+    const steps = sowing.move(moved, 1, 1);
+    await feed(page, { ...room, view: { ...view, ...moved, last: { from: { b: initial.b, big: initial.big }, steps } } });
+    await text(page, '.oaq .foot', /Sowing/);
+    await action(page, () => page.locator('.undo').click(), { t: 'g', undo: true });
+    await feed(page, { ...room, view });
+    await visible(page, '.oaq .hand', false);
+    await text(page, '.oaq .hint', /Your turn/);
+    await page.clock.runFor(steps.length * SOW_STEP_MS + SOW_SETTLE_MS);
+    assert.deepEqual(await page.locator('.oaq .cell').allTextContents(), before, 'Cancelled animation must not mutate the restored board');
+    await visible(page, '.oaq .hand', false);
+    await page.locator('.oaq .cell').nth(1).click();
+    await visible(page, '.dirs');
+    await feed(page, { ...room, view: { ...view, side: [OTHER, 'bot'] } });
+    await noAction(page, () => page.locator('.dirs button').first().dispatchEvent('click'));
+  }, '', { prepare: (page) => page.clock.install({ time: new Date(TIME) }) });
+}
+
+async function importedDefaultReplays() {
+  for (const game of ['snake', 'pairs', 'logic', 'bantumi', 'space-impact', 'rapid-roll']) {
+    const replayId = `imported-${game}-optional-fields`;
+    const view = nokiaView(game);
+    const explicit = state({ status: 'playing', view });
+    if (game === 'snake') Object.assign(view, { maze: [], events: [], food: null });
+    if (game === 'pairs') view.turn = OTHER;
+    if (game === 'logic') explicit.players = [PLAYERS[0], { ...PLAYERS[1], name: '?' }];
+    if (game === 'bantumi') view.names = ['', ''];
+    if (game === 'rapid-roll') {
+      const simulation = createRollSim(view.seed);
+      view.startAt = TIME - 1000;
+      view.runners = { [ME]: { score: 0, done: false, at: [simulation.x, simulation.y] } };
+    }
+    const sparse = structuredClone(explicit);
+    if (game === 'snake') { delete sparse.view.maze; delete sparse.view.events; }
+    if (game === 'pairs') sparse.view.score = {};
+    if (game === 'logic') sparse.players = [PLAYERS[0]];
+    if (game === 'bantumi') sparse.view.names = [];
+    if (game === 'space-impact') delete sparse.view.events;
+    if (game === 'rapid-roll') delete sparse.view.runners[ME].at;
+    REPLAY_RECORDS.set(replayId, { game, page: routeOf(game), at: TIME, frames: [[0, explicit], [1000, sparse]] });
+    await scenario(game, async (page) => {
+      await page.locator('.rp-bar').waitFor();
+      const play = page.locator('.rp-bar button').first();
+      if (await play.innerText() === '❚❚') await play.click();
+      const slider = page.locator('.rp-bar input');
+      await slider.fill('0');
+      await slider.dispatchEvent('input');
+      await frames(page);
+      await canvasPixels(page, '.screen canvas');
+      const explicitPixels = await page.locator('.screen canvas').evaluate((canvas) => canvas.toDataURL());
+      await slider.fill('1000');
+      await slider.dispatchEvent('input');
+      await frames(page);
+      assert.equal(await page.locator('.screen canvas').evaluate((canvas) => canvas.toDataURL()), explicitPixels, `${game}: omitted optional fields must render their documented defaults`);
+      await noAction(page, () => page.keyboard.press('Enter'));
+      assert.equal(await page.evaluate(() => window.boardFixture.sockets.length), 0);
+    }, `?replay=${replayId}`);
+  }
+}
+
 try {
   await classicBoards();
   await battleship();
@@ -1769,6 +1874,8 @@ try {
   await miningEdges();
   await rapidRollEdges();
   await importedCompletionReplays();
+  await interruptedSowing();
+  await importedDefaultReplays();
 } finally {
   await context.close();
   await browser.close();

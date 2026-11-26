@@ -54,7 +54,6 @@ function loop() {
 }
 
 function step() {
-  if (!playing || paused) return;
   tick(s);
   if (s.score > best) { best = s.score; store.set(bestKey(level), String(best)); }
   if (s.over) {
@@ -78,7 +77,7 @@ function act(a) {
   else if (a === 'right') shift(s, 1);
   else if (a === 'rotate') rotate(s);
   else if (a === 'drop') hardDrop(s);
-  else if (a === 'down') return step();
+  else return step();
   draw();
 }
 

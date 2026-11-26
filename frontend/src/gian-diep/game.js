@@ -528,7 +528,6 @@ function enhanceRoomShell(room = app?.room) {
 }
 
 function paintOnline(room) {
-  if (!onlineBoard) return;
   const playing = room.status === ROOM_STATUS.PLAYING && !!room.view;
   onlineBoard.hidden = !playing;
   onlineBoard.inert = !playing;
