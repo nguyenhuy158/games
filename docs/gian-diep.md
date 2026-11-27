@@ -15,7 +15,7 @@ Mở `/gian-diep/`, chọn **Chuyền một máy** hoặc **Mỗi người một
 
 - 3–20 người, mặc định 1 gián điệp và 0 Mũ Trắng. Gián điệp tối đa lần lượt là 1/2/3/4/5/6/7 cho nhóm 3–4/5–6/7–9/10–12/13–15/16–18/19–20.
 - Mũ Trắng tối đa 0 với 3–5 người, 1 với 6 người, 2 với 7–20 người. Tổng gián điệp + Mũ Trắng không quá `ceil(n / 3)` và phải còn ít nhất 2 dân thường. Cài đặt không hợp lệ chặn bắt đầu ở cả client và server.
-- Dân nhận cùng một từ; gián điệp nhận từ liên quan khác và **không biết vai**; Mũ Trắng không nhận từ. Mỗi cặp từ được đảo ngẫu nhiên bên dân/gián điệp. Có ba gói từ tiếng Việt: Ẩm thực, Địa điểm, Đời sống.
+- Dân nhận cùng một từ; gián điệp nhận từ liên quan khác và **không biết vai**; Mũ Trắng không nhận từ. Mỗi cặp từ được đảo ngẫu nhiên bên dân/gián điệp. Có 18 gói từ tiếng Việt để chọn trong Cài đặt ván, từ Ẩm thực và Đời sống đến Thể thao, Âm nhạc Việt và AI & công nghệ.
 - Phát thẻ trước, host mới bắt đầu đồng hồ mô tả 10/15 giây hoặc 5 giây chớp nhoáng. Mỗi người đưa một gợi ý, không đọc nguyên từ. Đổi người nói đầu tiên sau mỗi lượt loại.
 - Sau thảo luận, host mở đếm ngược 3 giây. Mỗi người còn sống bỏ đúng một phiếu cho người khác, không sửa được. Chỉ chốt khi mọi người đã bỏ; không công bố người nào bầu ai.
 - Hòa: những người hòa nói thêm gợi ý, host mở lượt bầu lại. Tất cả người còn sống bầu, nhưng chỉ được chọn trong nhóm hòa; có thể bầu lại nhiều lần.
