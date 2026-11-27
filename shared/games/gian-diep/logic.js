@@ -34,6 +34,126 @@ export const PACKS = [
       ['Truyện tranh', 'Phim hoạt hình'], ['Chụp ảnh', 'Quay phim'], ['Dã ngoại', 'Cắm trại'], ['Karaoke', 'Hòa nhạc'],
     ],
   },
+  {
+    id: 'office', label: ['Công sở', 'Office'], pairs: [
+      ['Họp giao ban', 'Họp tổng kết'], ['Máy in', 'Máy photocopy'], ['Bảng trắng', 'Bảng ghim'],
+      ['Thẻ nhân viên', 'Thẻ khách'], ['Xin nghỉ phép', 'Xin làm từ xa'], ['Thử việc', 'Thực tập'],
+      ['Hóa đơn', 'Biên lai'], ['Ký duyệt', 'Đóng dấu'], ['Hồ sơ giấy', 'Hồ sơ điện tử'],
+      ['Bàn làm việc', 'Bàn họp'], ['Bản nháp', 'Bản mẫu'], ['Lịch hẹn', 'Lịch trực'],
+    ],
+  },
+  {
+    id: 'arts', label: ['Nghệ thuật & giải trí', 'Arts & entertainment'], pairs: [
+      ['Màu nước', 'Màu sáp'], ['Tượng đá', 'Tượng gỗ'], ['Kịch nói', 'Nhạc kịch'],
+      ['Nhào lộn', 'Múa đương đại'], ['Trò ảo thuật', 'Múa rối'], ['Tranh lụa', 'Tranh sơn dầu'],
+      ['Bút lông', 'Bút dạ'], ['Khung ảnh', 'Khung tranh'], ['Hài độc thoại', 'Tiểu phẩm hài'],
+      ['Vé vào cửa', 'Vé mời'], ['Sân khấu ngoài trời', 'Sân khấu trong nhà'], ['Đèn sân khấu', 'Đèn trường quay'],
+    ],
+  },
+  {
+    id: 'sports', label: ['Thể thao', 'Sports'], pairs: [
+      ['Bóng ném', 'Bóng rổ'], ['Bóng chuyền', 'Bóng lưới'], ['Chạy tiếp sức', 'Chạy vượt rào'],
+      ['Nhảy cao', 'Nhảy sào'], ['Đạp xe đường trường', 'Đạp xe địa hình'], ['Bơi sải', 'Bơi bướm'],
+      ['Đấm bốc', 'Kickboxing'], ['Quần vợt', 'Pickleball'], ['Ném lao', 'Ném đĩa'],
+      ['Bóng chày', 'Bóng mềm'], ['Trượt patin', 'Trượt ván'], ['Kéo co', 'Vật tay'],
+    ],
+  },
+  {
+    id: 'emotions', label: ['Cảm xúc', 'Emotions'], pairs: [
+      ['Hồi hộp', 'Háo hức'], ['Tiếc nuối', 'Ân hận'], ['Bối rối', 'Ngượng ngùng'],
+      ['Hụt hẫng', 'Thất vọng'], ['Cảm động', 'Biết ơn'], ['An tâm', 'Nhẹ nhõm'],
+      ['Kinh ngạc', 'Sửng sốt'], ['Tò mò', 'Hoài nghi'], ['Bực mình', 'Sốt ruột'],
+      ['Tự hào', 'Mãn nguyện'], ['Ngập ngừng', 'Do dự'], ['Buồn ngủ', 'Mệt mỏi'],
+    ],
+  },
+  {
+    id: 'teams', label: ['Văn hóa đội nhóm', 'Team culture'], pairs: [
+      ['Đón thành viên mới', 'Chia tay đồng nghiệp'], ['Tiệc cuối năm', 'Tiệc sinh nhật công ty'], ['Chia sẻ kiến thức', 'Hướng dẫn hội nhập'],
+      ['Ngày hội gia đình', 'Chuyến đi công ty'], ['Góp ý ẩn danh', 'Góp ý trực tiếp'], ['Bốc thăm quà', 'Đổi quà'],
+      ['Tuyên dương cá nhân', 'Tuyên dương tập thể'], ['Cà phê đầu tuần', 'Ăn trưa cuối tuần'], ['Ghép cặp cố vấn', 'Ghép cặp làm dự án'],
+      ['Thi ảnh nội bộ', 'Thi video nội bộ'], ['Kỷ niệm thành lập', 'Kỷ niệm ngày vào làm'], ['Câu lạc bộ chạy', 'Câu lạc bộ đọc sách'],
+    ],
+  },
+  {
+    id: 'nature', label: ['Động vật & thiên nhiên', 'Animals & nature'], pairs: [
+      ['Rái cá', 'Hải ly'], ['Cá mực', 'Bạch tuộc'], ['Cú mèo', 'Chim ưng'],
+      ['Cá sấu', 'Thằn lằn'], ['Bướm đêm', 'Bướm ngày'], ['Rêu', 'Dương xỉ'],
+      ['Rừng tre', 'Rừng thông'], ['Sương mù', 'Mây thấp'], ['Đá cuội', 'Sỏi'],
+      ['Hồ nước', 'Đầm lầy'], ['Thác nước', 'Ghềnh đá'], ['San hô', 'Hải quỳ'],
+    ],
+  },
+  {
+    id: 'screen', label: ['Phim & truyền hình', 'Film & television'], pairs: [
+      ['Phim trinh thám', 'Phim giật gân'], ['Trailer', 'Teaser'], ['Phụ đề', 'Thuyết minh'],
+      ['Phục trang', 'Đạo cụ'], ['Phim ngắn', 'Phim tài liệu'], ['Diễn viên chính', 'Diễn viên phụ'],
+      ['Cảnh quay hỏng', 'Cảnh bị cắt'], ['Tập mở màn', 'Tập đặc biệt'], ['Nhạc nền', 'Hiệu ứng âm thanh'],
+      ['Phim chuyển thể', 'Phim làm lại'], ['Quay chậm', 'Tua nhanh'], ['Phim trường', 'Trường quay'],
+    ],
+  },
+  {
+    id: 'social', label: ['Mạng xã hội', 'Social media'], pairs: [
+      ['Tin nhắn riêng', 'Bình luận riêng tư'], ['Bài đăng ghim', 'Bình luận ghim'], ['Video ngắn', 'Ảnh động'],
+      ['Ảnh bìa', 'Ảnh đại diện'], ['Thả tim', 'Thả like'], ['Bỏ theo dõi', 'Chặn tài khoản'],
+      ['Chia sẻ bài', 'Đăng lại bài'], ['Lọc ảnh', 'Chỉnh màu'], ['Tài khoản ảo', 'Tài khoản phụ'],
+      ['Nhóm kín', 'Nhóm công khai'], ['Livestream', 'Gọi video'], ['Từ khóa', 'Hashtag'],
+    ],
+  },
+  {
+    id: 'travel', label: ['Du lịch', 'Travel'], pairs: [
+      ['Vé khứ hồi', 'Vé một chiều'], ['Hành lý xách tay', 'Hành lý ký gửi'], ['Xe giường nằm', 'Tàu khoang nằm'],
+      ['Du lịch tự túc', 'Du lịch theo đoàn'], ['Đi thuyền kayak', 'Đi bè'], ['Homestay', 'Bungalow'],
+      ['Hộ chiếu', 'Thị thực'], ['Lịch trình', 'Bản đồ du lịch'], ['Leo núi', 'Đi bộ đường dài'],
+      ['Du lịch bụi', 'Phượt xe máy'], ['Cáp treo', 'Tàu leo núi'], ['Đổi tiền', 'Rút tiền'],
+    ],
+  },
+  {
+    id: 'school', label: ['Trường học & tuổi thơ', 'School & childhood'], pairs: [
+      ['Giờ chào cờ', 'Giờ sinh hoạt lớp'], ['Kiểm tra miệng', 'Kiểm tra viết'], ['Phấn màu', 'Bút viết bảng'],
+      ['Bìa kẹp', 'Bìa hồ sơ'], ['Cặp sách', 'Ba lô'], ['Giấy kẻ ô', 'Giấy kẻ dòng'],
+      ['Sổ đầu bài', 'Sổ liên lạc'], ['Trốn tìm', 'Bịt mắt bắt dê'], ['Nhảy dây', 'Nhảy lò cò'],
+      ['Hộp bút', 'Túi bút'], ['Học nhóm', 'Học phụ đạo'], ['Đồng phục thể dục', 'Đồng phục lễ'],
+    ],
+  },
+  {
+    id: 'music', label: ['Âm nhạc Việt', 'Vietnamese music'], pairs: [
+      ['Đàn bầu', 'Đàn tranh'], ['Đàn nguyệt', 'Đàn tỳ bà'], ['Sáo trúc', 'Tiêu'],
+      ['Cải lương', 'Chèo'], ['Quan họ', 'Hát xoan'], ['Ví giặm', 'Hò'],
+      ['Trống cơm', 'Trống hội'], ['Ca trù', 'Hát xẩm'], ['Bolero', 'Nhạc trữ tình'],
+      ['Nhạc acoustic', 'Nhạc mộc'], ['Ca sĩ chính', 'Ca sĩ hát bè'], ['Điệp khúc', 'Đoạn chuyển'],
+    ],
+  },
+  {
+    id: 'shopping', label: ['Mua sắm', 'Shopping'], pairs: [
+      ['Mã giảm giá', 'Phiếu quà tặng'], ['Giao nhanh', 'Giao hỏa tốc'], ['Giỏ hàng', 'Danh sách yêu thích'],
+      ['Hoàn tiền', 'Đổi hàng'], ['Hàng thanh lý', 'Hàng tồn kho'], ['Vé giữ xe', 'Tem gửi đồ'],
+      ['Hóa đơn điện tử', 'Hóa đơn giấy'], ['Tích điểm', 'Đổi điểm'], ['Bán sỉ', 'Bán lẻ'],
+      ['Giảm theo combo', 'Mua một tặng một'], ['Hàng đặt trước', 'Hàng có sẵn'], ['Trả góp', 'Trả sau'],
+    ],
+  },
+  {
+    id: 'festivals', label: ['Lễ hội & sự kiện', 'Festivals & events'], pairs: [
+      ['Rước đèn', 'Múa lân'], ['Hội làng', 'Chợ phiên'], ['Lễ khai mạc', 'Lễ bế mạc'],
+      ['Pháo hoa', 'Pháo giấy'], ['Thiệp mời', 'Thẻ tham dự'], ['Gian hàng trò chơi', 'Gian hàng ẩm thực'],
+      ['Sân khấu chính', 'Sân khấu phụ'], ['Duyệt chương trình', 'Tổng duyệt'], ['Đếm ngược', 'Gõ chuông'],
+      ['Lễ hội đường phố', 'Diễu hành'], ['Hội sách', 'Triển lãm sách'], ['Lễ trao giải', 'Lễ vinh danh'],
+    ],
+  },
+  {
+    id: 'wellness', label: ['Chăm sóc bản thân', 'Wellness'], pairs: [
+      ['Yoga', 'Giãn cơ'], ['Chườm ấm', 'Chườm lạnh'], ['Kem chống nắng', 'Kem dưỡng ẩm'],
+      ['Nước súc miệng', 'Xịt thơm miệng'], ['Bịt mắt ngủ', 'Nút tai chống ồn'], ['Xà phòng', 'Sữa tắm'],
+      ['Dầu gội', 'Dầu xả'], ['Gối cổ', 'Gối lưng'], ['Ngâm chân', 'Mát-xa chân'],
+      ['Hít thở sâu', 'Thiền'], ['Gel rửa tay', 'Khăn ướt'], ['Bình giữ nhiệt', 'Bình nước thể thao'],
+    ],
+  },
+  {
+    id: 'tech', label: ['AI & công nghệ', 'AI & technology'], pairs: [
+      ['Nhận diện khuôn mặt', 'Nhận diện giọng nói'], ['Tạo ảnh bằng AI', 'Chỉnh ảnh bằng AI'], ['Phụ đề tự động', 'Chép lời tự động'],
+      ['Chatbot', 'Trợ lý ảo'], ['Thực tế ảo', 'Thực tế tăng cường'], ['Khóa vân tay', 'Khóa nhận diện mặt'],
+      ['Cảm biến chuyển động', 'Cảm biến khoảng cách'], ['Điện toán đám mây', 'Lưu trữ đám mây'], ['Robot hút bụi', 'Robot lau kính'],
+      ['Sạc không dây', 'Sạc dự phòng'], ['Đồng hồ thông minh', 'Vòng đeo thông minh'], ['Xe tự lái', 'Hỗ trợ lái xe'],
+    ],
+  },
 ];
 
 const HIDDEN_TEAM = 'hidden';
