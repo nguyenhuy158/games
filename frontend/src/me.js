@@ -3,10 +3,15 @@ import { iconEl, hydrateIcons } from './icons.js';
 import { t, en } from './i18n.js';
 import { replayLinks } from './replay.js';
 import { $, el } from './dom.js';
+import { openSettings } from './sidebar.js';
 import { PROFILE_API, signInHref, signOutHref } from './account.js';
 
 hydrateIcons();
 
+const HOME_STATS_SELECTOR = '#homeStats';
+const ACCOUNT_MENU_SELECTOR = '.account-menu';
+const ESCAPE_KEY = 'Escape';
+const HOME_STATS_TRIGGER = '#openHomeStats';
 const HISTORY_API = '/api/me/history';
 const CLAIM_API = '/api/me/history/claim';
 const HISTORY_PAGE_SIZE = 30;
@@ -80,11 +85,23 @@ function renderAccount(user) {
     return;
   }
   try { if (!localStorage.getItem(NAME_STORAGE_KEY)) localStorage.setItem(NAME_STORAGE_KEY, user.name.slice(0, DEFAULT_NAME_LIMIT)); } catch {}
-  acc.replaceChildren(
-    user.picture ? el('img', { src: user.picture, alt: '', referrerPolicy: 'no-referrer' }) : '',
-    el('span', { textContent: user.name }),
-    el('a', { href: signOutHref(), textContent: t('Đăng xuất', 'Sign out') }),
+  const menu = el('details', { className: 'account-menu' });
+  const settings = el('button', { type: 'button', className: 'btn', onclick: (event) => {
+    event.stopPropagation();
+    menu.open = false;
+    openSettings();
+  } }, iconEl('settings'), t('Cài đặt', 'Settings'));
+  menu.append(
+    el('summary', {},
+      user.picture ? el('img', { src: user.picture, alt: '', referrerPolicy: 'no-referrer' }) : '',
+      el('span', { textContent: user.name }),
+      iconEl('chevron-down'),
+    ),
+    el('div', { className: 'account-actions' }, settings,
+      el('a', { href: signOutHref(), textContent: t('Đăng xuất', 'Sign out') }),
+    ),
   );
+  acc.replaceChildren(menu);
   $('#meNotice').textContent = t('Lịch sử và thành tích của tài khoản đang đăng nhập.', 'History and stats for your signed-in account.');
 }
 
@@ -181,6 +198,17 @@ async function moreHistory() {
     historyLoading = false;
   }
 }
+document.addEventListener('click', (event) => {
+  const menu = $(ACCOUNT_MENU_SELECTOR);
+  if (menu?.open && !menu.contains(event.target)) menu.open = false;
+});
+document.addEventListener('keydown', (event) => {
+  const menu = $(ACCOUNT_MENU_SELECTOR);
+  if (event.key !== ESCAPE_KEY || !menu?.open) return;
+  menu.open = false;
+  menu.firstElementChild.focus();
+});
+$(HOME_STATS_TRIGGER).onclick = () => $(HOME_STATS_SELECTOR).showModal();
 $('#account').replaceChildren(signInLink());
 $('#meRetry').onclick = load;
 $('#historyRetry').onclick = moreHistory;

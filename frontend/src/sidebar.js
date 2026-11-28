@@ -15,6 +15,8 @@ const DARK = 'dark';
 const LIGHT = 'light';
 const SOUND_ON = 'on';
 const SOUND_OFF = 'off';
+const SETTINGS_TRIGGER = '.sb-settings-btn';
+const EXPANDED_ATTRIBUTE = 'aria-expanded';
 const SETTINGS_ID = 'sbSettings';
 const GROUPS = [
   { icon: 'swords', vi: 'Cờ & đối kháng', en: 'Board & duel', games: [
@@ -186,3 +188,10 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   setOpen(true);
 });
+
+export function openSettings() {
+  setOpen(true);
+  const button = nav.querySelector(SETTINGS_TRIGGER);
+  if (button.getAttribute(EXPANDED_ATTRIBUTE) === String(false)) button.click();
+  button.focus();
+}
