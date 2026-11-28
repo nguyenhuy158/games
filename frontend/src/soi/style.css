@@ -34,3 +34,8 @@
 .soi { align-self: safe center; max-height: 100%; overflow: auto; }
 #overlay .room-result:has(.soi-outcome.correct) > h2 { background: var(--ui-success-soft); color: var(--ui-success-strong); }
 #overlay .room-result:has(.soi-outcome.wrong) > h2 { background: var(--ui-danger-soft); color: var(--ui-danger-strong); }
+
+.soi-avatar { flex: none; border-radius: 50%; background: var(--ui-surface-muted); }
+#players .soi-avatar { margin-inline-end: 4px; vertical-align: middle; }
+.soi-voting button:has(.soi-avatar) { display: flex; align-items: center; justify-content: start; gap: 8px; }
+.soi-voting button[aria-pressed="true"] { border-color: var(--ui-primary); background: var(--ui-primary-soft); }

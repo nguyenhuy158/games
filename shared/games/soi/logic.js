@@ -24,8 +24,6 @@ export const roleOf = (wolf, seats, id) => (!wolf || !seats.includes(id) ? null 
 
 export const ACTION = Object.freeze({
   REVEAL: 'reveal',
-  OPEN_VOTE: 'openVote',
-  VOTE: 'vote',
-  FINISH_VOTE: 'finishVote',
+  GROUP_VOTE: 'groupVote',
 });
 export const OUTCOME = Object.freeze({ CORRECT: 'correct', WRONG: 'wrong' });

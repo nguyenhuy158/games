@@ -1,17 +1,5 @@
 import { ACTION, OUTCOME, MAX_PLAYERS, MIN_PLAYERS, ROUND_TTL_MS, pickWolf, roleOf } from '../../../../shared/games/soi/logic.js';
 
-function ballotResult(ctx) {
-  const votes = ctx.g.votes;
-  const online = ctx.online();
-  const ready = ctx.seats.every((id) => !online.has(id) || votes.some((vote) => vote.voter === id));
-  const counts = new Map();
-  for (const { target } of votes) counts.set(target, (counts.get(target) ?? 0) + 1);
-  const leaders = [...counts].sort((first, second) => second[1] - first[1]);
-  const [first, second] = leaders;
-  const tied = Boolean(first && second && first[1] === second[1]);
-  return { ready, tied, suspect: first && !tied ? first[0] : null };
-}
-
 function displayName(ctx, id) {
   return ctx.g.roster?.find((player) => player.id === id)?.name ?? ctx.name(id);
 }
@@ -50,32 +38,16 @@ export default {
   },
   msg(ctx, p, m) {
     const g = ctx.g;
-    if (g.done) return false;
-    if (m.a === ACTION.VOTE) {
-      if (!g.votes || !ctx.seats.includes(p.id) || !ctx.seats.includes(m.target)
-        || p.id === m.target || g.votes.some((vote) => vote.voter === p.id)) return false;
-      g.votes.push({ voter: p.id, target: m.target });
-      return true;
-    }
-    if (ctx.host() !== p.id) return false;
-    if (m.a === ACTION.OPEN_VOTE) {
-      if (g.votes) {
-        const ballot = ballotResult(ctx);
-        if (!ballot.ready || !ballot.tied) return false;
-      }
-      g.votes = [];
-      return true;
-    }
+    if (g.done || ctx.host() !== p.id) return false;
     const wolf = displayName(ctx, g.wolf);
-    if (m.a === ACTION.FINISH_VOTE && g.votes) {
-      const ballot = ballotResult(ctx);
-      if (!ballot.ready || !ballot.suspect) return false;
-      const correct = ballot.suspect === g.wolf;
+    if (m.a === ACTION.GROUP_VOTE) {
+      if (!ctx.seats.includes(m.target)) return false;
+      const correct = m.target === g.wolf;
       g.done = true;
       ctx.end({
         title: correct ? ['Dân làng thắng!', 'Villagers win!'] : ['Sói thắng!', 'The wolf wins!'],
         outcome: correct ? OUTCOME.CORRECT : OUTCOME.WRONG,
-        suspect: displayName(ctx, ballot.suspect), wolf, ranks: [],
+        suspect: displayName(ctx, m.target), wolf, ranks: [],
       });
       return true;
     }
@@ -86,17 +58,9 @@ export default {
   },
   view(ctx, id) {
     const g = ctx.g;
-    const view = {
+    return {
       round: g.round, role: roleOf(g.wolf, ctx.seats, id), wolf: g.done ? g.wolf : null,
       roster: g.roster ?? ctx.seats.map((player) => ({ id: player, name: ctx.name(player) })),
     };
-    if (!g.votes || g.done) return view;
-    const ballot = ballotResult(ctx);
-    return { ...view, ballot: {
-      voted: g.votes.some((vote) => vote.voter === id),
-      count: g.votes.length,
-      canFinish: ballot.ready && Boolean(ballot.suspect),
-      tied: ballot.ready && ballot.tied,
-    } };
   },
 };
