@@ -16,3 +16,13 @@
 .role.villager { background: var(--ui-success-soft); border-color: var(--good); }
 .role.villager .ic, .role.villager h2 { color: var(--ui-success-strong); }
 .role.watching { border-style: dashed; }
+
+#overlay :is(.room-waiting, .room-result) { gap: 14px; }
+#overlay :is(.room-waiting, .room-result) > h2 { font-size: clamp(1.25rem, 5vw, 1.5rem); }
+#overlay:has(> :is(.room-waiting, .room-result)) { background: var(--bg); }
+#overlay .room-result > h2 {
+  background: var(--ui-primary-soft); color: var(--ui-fg);
+  border-radius: var(--ui-radius); padding: 14px;
+}
+#overlay :is(.room-waiting, .room-result) > ol:empty,
+#overlay :is(.room-waiting, .room-result) > .cfg:empty { display: none; }

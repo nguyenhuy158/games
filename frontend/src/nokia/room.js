@@ -193,20 +193,21 @@ export function nokiaApp(opt) {
     }
     ov.hidden = false;
     const res = r.status === 'ended' && r.result;
+    const lobbyHeading = opt.lobbyHeading?.(r) ?? t(`Phòng ${code}`, `Room ${code}`);
     const head = [
-      el('h2', {}, ...(res ? [iconEl('trophy'), ` ${tx(res.title) ?? (res.ranks.length > 1 ? t(`${res.ranks[0].name} thắng`, `${res.ranks[0].name} wins`) : t('Hết ván', 'Game over'))}`] : [t(`Phòng ${code}`, `Room ${code}`)])),
+      el('h2', {}, ...(res ? [iconEl('trophy'), ` ${tx(res.title) ?? (res.ranks.length > 1 ? t(`${res.ranks[0].name} thắng`, `${res.ranks[0].name} wins`) : t('Hết ván', 'Game over'))}`] : [lobbyHeading])),
       res ? el('ol', { className: 'ranks' }, ...res.ranks.map((x) => el('li', {}, el('span', { textContent: x.name }), el('b', { textContent: opt.scoreText?.(x.score, res) ?? x.score })))) : '',
     ];
     // Xem lại: chỉ bảng kết quả (thanh phát lại đã có Chia sẻ / Chơi).
     if (rp) return ov.replaceChildren(el('div', { className: 'card' }, ...head));
     const box = el('div', { className: 'cfg' });
     opt.lobby?.(box, r, isHost, (cfg) => raw({ t: 'config', cfg }));
-    ov.replaceChildren(el('div', { className: 'card' }, ...head,
+    ov.replaceChildren(el('div', { className: res ? 'card room-result' : 'card room-waiting' }, ...head,
       res?.rp ? replayLinks(res.rp) : '',
       box,
       pub.el,
-      el('p', { className: 'sub', textContent: `${t(`${r.players.length} người trong phòng.`, `${r.players.length} in the room.`)} ${opt.lobbyText?.(r) ?? ''}${isHost ? '' : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.')}` }),
-      isHost ? el('button', { className: 'primary', textContent: res ? t('Chơi lại', 'Play again') : t('Bắt đầu', 'Start'), onclick: () => raw({ t: 'start' }) }) : '',
+      el('p', { className: 'sub', textContent: `${t(`${r.players.length} người trong phòng.`, `${r.players.length} in the room.`)} ${opt.lobbyText?.(r) ?? ''}${isHost ? '' : res ? t(' Chờ chủ phòng chơi lại.', ' Waiting for the host to play again.') : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.')}` }),
+      isHost ? el('button', { className: 'primary', disabled: opt.minPlayers !== undefined && r.players.length < opt.minPlayers, textContent: res ? t('Chơi lại', 'Play again') : t('Bắt đầu', 'Start'), onclick: () => raw({ t: 'start' }) }) : '',
     ));
   }
 
