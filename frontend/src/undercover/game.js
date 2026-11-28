@@ -3,19 +3,19 @@ import { el, store } from '../dom.js';
 import { t, tx } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
-import { AI_PACK, MIN_PLAYERS, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
+import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 import { HELP } from './help.js';
 import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results } from './ui.js';
 import { setButtonPending } from '../ui/feedback.mjs';
 import { notifications, TOAST_TONE } from '../ui/notifications.js';
-import { rosterDraft, rosterHasDraft, rosterEditor, seatingRoster, orderedPlayers } from './roster.js';
+import { seatingRoster, orderedPlayers } from './roster.js';
 import { aiPicker, dealAiPair } from './ai.js';
 
 const GAME = 'undercover';
 const GAME_PATH = '/undercover/';
 const TITLE = t('Ai là gián điệp?', 'Who is the spy?');
 const MODE = Object.freeze({ HOME: 'home', LOCAL: 'local', ONLINE: 'online' });
-const LOCAL_STEP = Object.freeze({ SETUP: 'setup', REVEAL: 'reveal', READY: 'ready', PLAY: 'play' });
+const LOCAL_STEP = Object.freeze({ SETUP: 'setup', REVEAL: 'reveal', PLAY: 'play' });
 const ROOM_STATUS = Object.freeze({ PLAYING: 'playing', ENDED: 'ended' });
 const MS_PER_SECOND = 1000;
 const CLOCK_INTERVAL_MS = 200;
@@ -58,15 +58,13 @@ let pendingOnline = null;
 let guessDraft = '';
 let guessOwner = null;
 let localConfig = { ...DEFAULT_CONFIG };
-let localPlayerSequence = 0;
-let localPlayers = Array.from({ length: MIN_PLAYERS }, (_, index) => newLocalPlayer(defaultName(index)));
-let localHostId = localPlayers[0].id;
-const localRosterDraft = rosterDraft();
+let localPlayerCount = MIN_PLAYERS;
+const localHostId = `${LOCAL_ID_PREFIX}1`;
 let localGame = null;
 let localDealing = false;
 let localStep = LOCAL_STEP.SETUP;
 let revealIndex = 0;
-let revealSeen = false;
+let revealName = '';
 let ballotOwner = null;
 let ballotOpen = false;
 let guessOpen = false;
@@ -172,44 +170,40 @@ function startLocalSetup() {
   focusMain();
 }
 
-function newLocalPlayer(name) {
-  return { id: `${LOCAL_ID_PREFIX}${++localPlayerSequence}`, name };
+function countSelect(label, min, max, value, change) {
+  const select = el('select', { ariaLabel: label });
+  for (let count = min; count <= max; count++) select.append(el('option', { value: count, textContent: count }));
+  select.value = value;
+  select.addEventListener('change', () => {
+    if (!select.isConnected || localStep !== LOCAL_STEP.SETUP) return;
+    change(Number(select.value));
+    paintSetup();
+    content.querySelectorAll('select').forEach((control) => {
+      if (control.ariaLabel === label) control.focus();
+    });
+  });
+  return el('label', {}, label, select);
 }
 
-function paintSetup(focus, editing = false) {
-  const issue = setupWarning(localPlayers.length, localConfig);
-  const start = button(t('Chia từ bí mật', 'Deal secret words'), dealLocal, true, 'layers');
-  const draftNote = note(t('Lưu hoặc hủy tên đang sửa; thêm danh sách đang nhập trước khi chia từ.', 'Save or cancel the name edit; apply the draft list before dealing.'));
-  const updateDraft = () => {
-    const pending = rosterHasDraft(localRosterDraft);
-    start.disabled = !!issue || pending || localDealing;
-    draftNote.hidden = !pending;
-  };
-  const roster = rosterEditor(localPlayers, localHostId, localRosterDraft, (change) => {
-    if (localGame || localStep !== LOCAL_STEP.SETUP) return;
-    if (change.names) {
-      const added = change.names.map(newLocalPlayer);
-      if (change.replacing) { localPlayers = added; localHostId = added[0].id; }
-      else localPlayers = [...localPlayers, ...added];
-    } else localPlayers = change.players;
-    localRosterDraft.customized = true;
-    paintSetup(change.focus, change.editing);
-    if (change.names) content.querySelector('textarea')?.focus();
-  }, random, updateDraft);
-  updateDraft();
+function paintSetup() {
+  const roleLimits = limits(localPlayerCount, localConfig.spies);
   content.replaceChildren(el('div', { className: 'setup stack' },
-    el('div', { className: 'section-heading' }, el('h2', {}, iconEl('users'), t(`${localPlayers.length} người chơi`, `${localPlayers.length} players`))),
-    roster,
-    el('div', { className: 'setup-options stack' },
-      el('div', { className: 'settings-summary' }, configBadges(localConfig), iconButton(t('Cài đặt', 'Settings'), () => settings(localPlayers.length, localConfig, (cfg) => { localConfig = cfg; paintSetup(); }, localAiPicker), 'gauge')),
-      issue ? note(issue, true) : note(t('Xem thẻ lần lượt. Đủ người xem mới chạy đồng hồ.', 'Pass the cards privately. The timer waits for everyone.')),
-      draftNote, start)));
-  if (focus) {
-    const row = [...content.querySelectorAll('[data-player]')].find((item) => item.dataset.player === focus);
-    const control = row?.querySelector(editing ? 'input' : 'button');
-    control?.focus();
-    if (editing) control?.select();
-  }
+    el('h2', {}, t('Thiết lập ván', 'Game setup')),
+    el('div', { className: 'local-counts' },
+      countSelect(t('Người chơi', 'Players'), MIN_PLAYERS, MAX_PLAYERS, localPlayerCount, (count) => {
+        localPlayerCount = count;
+        localConfig.spies = Math.min(localConfig.spies, limits(count).spies);
+        localConfig.whites = Math.min(localConfig.whites, limits(count, localConfig.spies).whites);
+      }),
+      countSelect(t('Gián điệp', 'Spies'), DEFAULT_CONFIG.spies, roleLimits.spies, localConfig.spies, (count) => {
+        localConfig.spies = count;
+        localConfig.whites = Math.min(localConfig.whites, limits(localPlayerCount, count).whites);
+      }),
+      countSelect(t('Mũ Trắng', 'Mr. White'), DEFAULT_CONFIG.whites, roleLimits.whites, localConfig.whites, (count) => { localConfig.whites = count; })),
+    button(t('Bắt đầu', 'Start game'), dealLocal, true, 'play'),
+    el('div', { className: 'local-advanced' },
+      localConfig.pack === AI_PACK ? configBadges(localConfig) : '',
+      button(t('Cài đặt nâng cao', 'Advanced settings'), () => settings(localPlayerCount, localConfig, (cfg) => { localConfig = cfg; paintSetup(); }, localAiPicker), false, 'gauge'))));
 }
 
 function localAiPicker() {
@@ -219,9 +213,9 @@ function localAiPicker() {
   });
 }
 
-async function dealLocal() {
-  if (localDealing || rosterHasDraft(localRosterDraft) || localGame || localStep !== LOCAL_STEP.SETUP) return;
-  if (!validateSetup(localPlayers.length, localConfig)) { notifications.show(TOAST_TONE.ERROR, setupWarning(localPlayers.length, localConfig)); return; }
+async function dealLocal(event) {
+  if (!event.currentTarget.isConnected || localDealing || localGame || localStep !== LOCAL_STEP.SETUP) return;
+  if (!validateSetup(localPlayerCount, localConfig)) { notifications.show(TOAST_TONE.ERROR, setupWarning(localPlayerCount, localConfig)); return; }
   localDealing = true;
   content.inert = true;
   backButton.disabled = true;
@@ -229,7 +223,7 @@ async function dealLocal() {
   try {
     const pair = localConfig.pack === AI_PACK ? await dealAiPair(localConfig.aiPackId) : undefined;
     localNamesById.clear();
-    const ids = localPlayers.map(({ id, name }) => { localNamesById.set(id, name); return id; });
+    const ids = Array.from({ length: localPlayerCount }, (_, index) => `${LOCAL_ID_PREFIX}${index + 1}`);
     localGame = createGame(ids, localConfig, random, Date.now(), pair);
   } catch (error) {
     notifications.show(TOAST_TONE.ERROR, error.message);
@@ -242,7 +236,7 @@ async function dealLocal() {
   }
   localStep = LOCAL_STEP.REVEAL;
   revealIndex = 0;
-  revealSeen = false;
+  revealName = '';
   shown = false;
   ballotOwner = null;
   ballotOpen = false;
@@ -253,25 +247,53 @@ async function dealLocal() {
 }
 
 function paintReveal() {
-  if (localStep === LOCAL_STEP.READY) {
-    content.replaceChildren(el('div', { className: 'handoff stack' }, iconEl('circle-check'), el('h2', {}, t('Mọi người đã nhận từ', 'Everyone has their word')), note(t(`Trả máy cho ${playerName(localHostId)}. Bấm bắt đầu khi cả nhóm sẵn sàng.`, `Return the device to ${playerName(localHostId)}. Start when everyone is ready.`)), button(t('Bắt đầu lượt mô tả', 'Start giving clues'), () => { localStep = LOCAL_STEP.PLAY; sendAction({ a: ACTION.NEXT }); }, true, 'play')));
-    return;
-  }
   const player = localGame.players[revealIndex];
-  const card = shown ? view(localGame, player.id).card : null;
-  const next = button(revealIndex === localGame.players.length - 1 ? t('Ẩn & hoàn tất', 'Hide & finish') : t('Ẩn & chuyển máy', 'Hide & pass'), () => {
-    shown = false;
-    revealSeen = false;
-    revealIndex++;
-    if (revealIndex === localGame.players.length) localStep = LOCAL_STEP.READY;
-    paintReveal();
-    focusMain();
-  }, true, 'arrow-right');
-  next.disabled = !revealSeen;
-  content.replaceChildren(el('div', { className: 'handoff stack' },
-    el('p', { className: 'progress-label' }, t(`Nhận thẻ ${revealIndex + 1}/${localGame.players.length} · Đồng hồ chưa chạy`, `Card ${revealIndex + 1}/${localGame.players.length} · Timer paused`)),
-    el('h2', {}, t(`Chuyển máy cho ${playerName(player.id)}`, `Pass to ${playerName(player.id)}`)),
-    secretCard(card, shown, () => { shown = !shown; revealSeen ||= shown; paintReveal(); }), next));
+  const index = revealIndex;
+  const heading = el('h2', {}, defaultName(index));
+  const step = el('div', { className: 'handoff stack' },
+    el('p', { className: 'progress-label' }, t(`Nhận thẻ ${index + 1}/${localPlayerCount}`, `Card ${index + 1}/${localPlayerCount}`)),
+    heading);
+  if (shown) {
+    const done = button(t('Đã xem', 'Done viewing'), () => {
+      if (!done.isConnected) return;
+      localNamesById.set(player.id, revealName);
+      shown = false;
+      revealName = '';
+      revealIndex++;
+      if (revealIndex === localGame.players.length) {
+        localStep = LOCAL_STEP.PLAY;
+        sendAction({ a: ACTION.NEXT });
+      } else paintReveal();
+      focusMain();
+    }, true, 'arrow-right');
+    step.append(secretCard(view(localGame, player.id).card, true, null), done);
+  } else {
+    const input = el('input', { type: 'text', ariaLabel: t('Tên của bạn', 'Your name'), placeholder: t('Tên của bạn', 'Your name'), value: revealName, maxLength: NAME_LIMIT, autocomplete: 'off' });
+    const error = el('p', { className: 'warning', role: 'alert', hidden: true });
+    const form = el('form', { className: 'stack' }, note(t(`Chuyền máy cho người chơi ${index + 1} để nhập tên và xem từ.`, `Pass the device to player ${index + 1} to enter their name and see their word.`)), input, error);
+    const reveal = button(t('Xem từ khóa', 'View keyword'), null, true, 'eye');
+    reveal.type = 'submit';
+    form.append(reveal);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!form.isConnected) return;
+      const result = parseNames(input.value, [...localNamesById.values()]);
+      if (result.error) {
+        error.textContent = result.error === NAME_ERROR.DUPLICATE
+          ? t('Tên này đã được dùng.', 'This name is already taken.')
+          : t('Nhập tên của bạn.', 'Enter your name.');
+        error.hidden = false;
+        input.focus();
+        return;
+      }
+      [revealName] = result.names;
+      shown = true;
+      paintReveal();
+      focusMain();
+    });
+    step.append(form);
+  }
+  content.replaceChildren(step);
 }
 
 function secretCard(card, visible, toggle) {
@@ -282,7 +304,7 @@ function secretCard(card, visible, toggle) {
     node.append(el('p', { className: 'sub' }, card?.white ? t('Bạn là Mũ Trắng', 'You are Mr. White') : t('Từ bí mật của bạn', 'Your secret word')),
       el('strong', { className: 'secret-word', textContent: card?.white ? t('Không có từ', 'No word') : card?.word ?? '' }),
       note(card?.white ? t('Nghe gợi ý và hòa nhập. Khi bị loại, bạn có một lần đoán từ của dân.', 'Listen to clues and blend in. If eliminated, you get one guess at the civilian word.') : t('Ghi nhớ từ. Không nói nguyên từ hoặc cho người khác xem.', 'Remember it. Do not say the word or show it to anyone.')),
-      button(t('Ẩn thẻ', 'Hide card'), toggle, false, 'eye'));
+      toggle ? button(t('Ẩn thẻ', 'Hide card'), toggle, false, 'eye') : '');
   }
   return node;
 }
@@ -368,9 +390,11 @@ function paintBoard(target, v, actor, isLocal) {
   const work = el('div', { className: 'phase-work' });
   const controls = el('div', { className: 'host-controls' });
   const rosterPlayers = v.phase === PHASE.TIE ? v.players.filter((player) => v.candidates.includes(player.id)) : v.players;
-  const roster = paginated(rosterPlayers, (player) => {
+  const showLocalOrder = isLocal && v.phase === PHASE.DESCRIBE;
+  const orderedRoster = showLocalOrder ? orderedPlayers(rosterPlayers, localGame.turnOrder) : rosterPlayers;
+  const roster = paginated(orderedRoster, (player) => {
     const suffix = player.id === v.speaker ? t('Đang nói', 'Speaking') : player.alive ? t('Còn chơi', 'Alive') : t('Đã loại', 'Out');
-    return el('div', { className: `player-row${player.id === v.speaker ? ' speaking' : ''}` }, el('span', { className: 'player-name' }, playerName(player.id)), indicator(player.id === v.speaker ? 'megaphone' : player.alive ? 'circle-check' : 'circle-x', '', suffix));
+    return el('div', { className: `player-row${player.id === v.speaker ? ' speaking' : ''}` }, el('span', { className: 'player-name' }, showLocalOrder && player.alive ? `${localGame.turnOrder.indexOf(player.id) + 1}. ${playerName(player.id)}` : playerName(player.id)), indicator(player.id === v.speaker ? 'megaphone' : player.alive ? 'circle-check' : 'circle-x', '', suffix));
   });
   if (v.phase === PHASE.VOTE) renderVoting(work, v, actor, isLocal);
   if (v.phase === PHASE.GUESS) renderGuess(work, v, actor, isLocal);

@@ -389,69 +389,36 @@ await scenario('history preparation failure preserves solo start controls', '/te
   await page.waitForFunction(() => document.querySelector('#ovStart').hidden);
 }, { api: (url, _request, requests) => url.pathname === '/api/me' && requests.filter((entry) => entry.path === '/api/me').length === 1 ? { status: HTTP_UNAVAILABLE, body: '{}' } : null });
 
-await scenario('spy local roster, settings, privacy and final results', '/undercover/?lang=en', async (page) => {
+async function revealLocalCard(page, player) {
+  await page.getByRole('textbox', { name: 'Your name' }).fill(player);
+  await clickName(page, 'View keyword');
+  const word = await page.locator('.secret-word').textContent();
+  await clickName(page, 'Done viewing');
+  assert.equal(await page.locator('.secret-word').count(), 0);
+  return { player, word };
+}
+
+await scenario('spy local handoff names, privacy and final results', '/undercover/?lang=en', async (page) => {
+  const players = ['An', 'Binh', 'Chi', 'Dung', 'Eva', 'Fong'];
   await clickName(page, 'Pass one device');
-  const names = page.getByRole('textbox', { name: 'Player names, one per line' });
-  for (const [value, error] of [['', 'cannot be empty'], ['Ada\nAda', 'Duplicate'], ['x'.repeat(100), 'characters'], [Array.from({ length: 21 }, (_, i) => `Person ${i}`).join('\n'), 'Up to 20']]) {
-    await names.fill(value);
-    await clickName(page, 'Apply names');
-    await textIncludes(page, '.roster-editor [role="alert"]', error);
-  }
-  await names.fill('Ada\nBinh\nChi\nDung\nEva\nFong');
-  await names.press('Enter');
-  assert.equal(await page.locator('.roster-list > li').count(), 6);
-  await clickName(page, 'Rename Ada');
-  await page.getByRole('textbox', { name: 'New name for Ada' }).fill('Binh');
-  await clickName(page, 'Save name');
-  await textIncludes(page, '.roster-editor [role="alert"]', 'Duplicate');
-  await page.getByRole('textbox', { name: 'New name for Ada' }).press('Escape');
-  await clickName(page, 'Rename Ada');
-  await page.getByRole('textbox', { name: 'New name for Ada' }).fill('An');
-  await clickName(page, 'Save name');
-  await clickName(page, 'Move An down');
-  await clickName(page, 'Move An up');
-  await clickName(page, 'Shuffle order');
-  await clickName(page, 'Remove Eva');
-  await names.fill('Eva');
-  await clickName(page, 'Apply names');
-  assert.equal(await page.locator('.roster-list > li').count(), 6);
-  await clickName(page, 'Rename An');
-  await names.press('Enter');
-  await page.getByRole('textbox', { name: 'New name for An' }).press('ArrowLeft');
-  await clickName(page, 'Cancel rename');
-  await page.locator('.roster-add select').evaluate((node) => { node.value = 'replace'; node.dispatchEvent(new Event('change')); });
-  await names.fill('An\nBinh\nChi\nDung\nEva\nFong');
-  await clickName(page, 'Apply names');
-  await clickName(page, 'Cancel', page.locator('dialog[open]'));
-  assert.equal(await page.locator('.roster-list > li').count(), 6);
-  await clickName(page, 'Apply names');
-  await clickName(page, 'Confirm', page.locator('dialog[open]'));
-  assert.equal(await page.locator('.roster-list .roster-edit-name').first().textContent(), 'An');
-  await clickName(page, 'Settings');
-  const modal = page.locator('dialog.spy-dialog[open]');
-  await modal.locator('select').nth(1).evaluate((node) => { node.value = '1'; node.dispatchEvent(new Event('change')); });
-  await modal.locator('select').nth(2).evaluate((node) => { node.value = '5'; node.dispatchEvent(new Event('change')); });
-  await modal.locator('select').last().evaluate((node) => { node.value = node.options[1].value; node.dispatchEvent(new Event('change')); });
-  await clickName(page, 'Save settings', modal);
+  await page.getByRole('combobox', { name: 'Players', exact: true }).selectOption(String(players.length));
+  await page.getByRole('combobox', { name: 'Mr. White', exact: true }).selectOption('1');
   await clickName(page, 'Dark mode');
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), true);
   await clickName(page, 'Light mode');
-  await clickName(page, 'Deal secret words');
-  await page.waitForSelector('.handoff');
-  const cards = [];
-  for (let index = 0; index < 6; index++) {
-    const player = (await page.locator('.handoff h2').textContent()).replace('Pass to ', '');
-    const pass = page.getByRole('button', { name: index === 5 ? 'Hide & finish' : 'Hide & pass', exact: true });
-    assert.equal(await pass.isDisabled(), true);
-    await clickName(page, 'Reveal card');
-    cards.push({ player, word: await page.locator('.secret-word').textContent() });
-    await page.keyboard.press('Escape');
-    assert.equal(await page.locator('.secret-word').count(), 0);
-    await clickName(page, 'Reveal card');
-    await clickName(page, 'Hide card');
-    await pass.click();
-  }
-  await clickName(page, 'Start giving clues');
+  await clickName(page, 'Start game');
+  await clickName(page, 'View keyword');
+  await textIncludes(page, '.handoff [role="alert"]', 'Enter your name.');
+  await page.getByRole('textbox', { name: 'Your name' }).fill(players[0]);
+  await clickName(page, 'View keyword');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('.secret-word').count(), 0);
+  const cards = [await revealLocalCard(page, players[0])];
+  await page.getByRole('textbox', { name: 'Your name' }).fill(players[0]);
+  await clickName(page, 'View keyword');
+  await textIncludes(page, '.handoff [role="alert"]', 'This name is already taken.');
+  for (const player of players.slice(1)) cards.push(await revealLocalCard(page, player));
+  assert.equal(await page.locator('.player-name').first().textContent(), `1. ${players[0]}`);
   assert.equal(await page.locator('.phase-panel h2').textContent(), 'Give a clue');
   await clickName(page, 'Back');
   await clickName(page, 'Cancel', page.locator('dialog.spy-dialog[open]'));
@@ -1131,15 +1098,9 @@ await scenario('tetris clears actual rows and stores difficulty-specific records
 
 await scenario('spy local secret ballot tie and runoff reach a real winner', '/undercover/?lang=en', async (page) => {
   await clickName(page, 'Pass one device');
-  await clickName(page, 'Deal secret words');
+  await clickName(page, 'Start game');
   const cards = [];
-  for (let index = 0; index < 3; index++) {
-    const player = (await page.locator('.handoff h2').textContent()).replace('Pass to ', '');
-    await clickName(page, 'Reveal card');
-    cards.push({ player, word: await page.locator('.secret-word').textContent() });
-    await clickName(page, index === 2 ? 'Hide & finish' : 'Hide & pass');
-  }
-  await clickName(page, 'Start giving clues');
+  for (const player of ['Player 1', 'Player 2', 'Player 3']) cards.push(await revealLocalCard(page, player));
   for (let index = 0; index < cards.length; index++) await clickName(page, 'Next speaker');
   await clickName(page, 'Open voting');
   await clickName(page, 'Eliminate directly');
@@ -1223,28 +1184,30 @@ await scenario('spy local AI denial restores setup and valid deal keeps words pr
   await textIncludes(page, QUICK_RULE_SELECTOR, 'Civilians share a word');
   await clickName(page, 'Got it', page.locator('.help-dlg'));
   await clickName(page, 'Pass one device');
-  await clickName(page, 'Settings');
+  await clickName(page, 'Advanced settings');
   await clickName(page, 'Create AI pack', page.locator('dialog.spy-dialog[open]'));
   await page.locator('dialog.spy-dialog input').fill('Vietnamese dishes');
   await clickName(page, 'Create secret pack', page.locator('dialog.spy-dialog[open]'));
   await page.waitForSelector('dialog.spy-dialog[open]', { state: 'detached' });
   await textIncludes(page, '.config-badges', 'Vietnamese dishes');
-  await clickName(page, 'Settings');
+  await clickName(page, 'Advanced settings');
   assert.equal(await page.locator('dialog.spy-dialog select').last().inputValue(), 'ai');
   await clickName(page, 'Save settings', page.locator('dialog.spy-dialog[open]'));
-  await clickName(page, 'Deal secret words');
+  await clickName(page, 'Start game');
   await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true })));
   await textIncludes(page, 'body', 'Deal denied');
   assert.equal(await page.locator('.spy-content').evaluate((node) => node.inert), false);
-  assert.equal(await page.getByRole('button', { name: 'Deal secret words', exact: true }).isEnabled(), true);
-  await clickName(page, 'Deal secret words');
-  await clickName(page, 'Reveal card');
+  assert.equal(await page.getByRole('button', { name: 'Start game', exact: true }).isEnabled(), true);
+  await clickName(page, 'Start game');
+  await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
+  await clickName(page, 'View keyword');
   assert(['Phở', 'Bún'].includes(await page.locator('.secret-word').textContent()));
   assert.equal(await page.evaluate(() => !window.dispatchEvent(new Event('beforeunload', { cancelable: true }))), true);
   await page.locator('[data-help="undercover-guide"]').click();
   assert.equal(await page.locator('.secret-word').count(), 0);
   await clickName(page, 'Got it', page.locator('.help-dlg'));
-  await clickName(page, 'Reveal card');
+  await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
+  await clickName(page, 'View keyword');
   await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
   assert.equal(await page.locator('.secret-word').count(), 0);
   await clickName(page, 'Back');
@@ -1413,13 +1376,16 @@ for (const language of ['vi', 'en']) {
   }, { clock: true, protocol: true, init: () => Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: undefined }), storage: { 'loto.music': '0', 'loto.voice': language } });
 }
 
-await scenario('spy invalid setup disables dealing and back restores home', '/undercover/?lang=en', async (page) => {
+await scenario('spy local setup clamps role counts and back restores home', '/undercover/?lang=en', async (page) => {
   assert.equal(await page.getByRole('button', { name: 'Light mode', exact: true }).isVisible(), true);
   await clickName(page, 'Pass one device');
-  await clickName(page, 'Remove Player 3');
-  await textIncludes(page, '.setup-options .warning', 'Need 1 more');
-  assert.equal(await page.getByRole('button', { name: 'Deal secret words', exact: true }).isDisabled(), true);
-  await clickName(page, 'Settings');
+  const players = page.getByRole('combobox', { name: 'Players', exact: true });
+  const white = page.getByRole('combobox', { name: 'Mr. White', exact: true });
+  await players.selectOption('6');
+  await white.selectOption('1');
+  await players.selectOption('3');
+  assert.equal(await white.inputValue(), '0');
+  await clickName(page, 'Advanced settings');
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true });
     document.dispatchEvent(new Event('visibilitychange'));
@@ -1608,26 +1574,15 @@ await scenario('spy local normalized-empty guess is rejected without consuming t
   const COMBINING_ACUTE = '\u0301';
   const PLAYER_COUNT = 6;
   await clickName(page, 'Pass one device');
-  await page.getByRole('textbox', { name: 'Player names, one per line' }).fill('Ada\nBinh\nChi\nDung\nEva\nFong');
-  await clickName(page, 'Apply names');
-  await clickName(page, 'Settings');
-  assert.equal(await page.locator('dialog.spy-dialog select').nth(1).locator('option[value="1"]').isEnabled(), true);
-  await page.locator('dialog.spy-dialog select').nth(1).evaluate((node) => { node.value = '1'; node.dispatchEvent(new Event('change')); });
-  assert.equal(await page.getByRole('button', { name: 'Save settings', exact: true }).isEnabled(), true);
-  await clickName(page, 'Save settings', page.locator('dialog[open]'));
-  await clickName(page, 'Deal secret words');
+  await page.getByRole('combobox', { name: 'Players', exact: true }).selectOption(String(PLAYER_COUNT));
+  await page.getByRole('combobox', { name: 'Mr. White', exact: true }).selectOption('1');
+  await clickName(page, 'Start game');
   const cards = [];
-  for (let index = 0; index < PLAYER_COUNT; index++) {
-    const player = (await page.locator('.handoff h2').textContent()).replace('Pass to ', '');
-    await clickName(page, 'Reveal card');
-    cards.push({ player, word: await page.locator('.secret-word').textContent() });
-    await clickName(page, index === PLAYER_COUNT - 1 ? 'Hide & finish' : 'Hide & pass');
-  }
+  for (const player of ['Ada', 'Binh', 'Chi', 'Dung', 'Eva', 'Fong']) cards.push(await revealLocalCard(page, player));
   const white = cards.find(({ word }) => word === 'No word');
   const civilian = cards.find(({ word }) => cards.filter((card) => card.word === word).length > 1);
   assert(white);
   assert(civilian);
-  await clickName(page, 'Start giving clues');
   await clickName(page, 'Eliminate directly');
   await choosePaginated(page, white.player);
   await clickName(page, 'Confirm', page.locator('dialog[open]'));
@@ -1690,33 +1645,17 @@ await scenario('spy queued setup and ballot controls cannot change a later scree
   page.on('pageerror', (error) => errors.push(error.message));
   const PLAYER_COUNT = 3;
   await clickName(page, 'Pass one device');
-  const initialDeal = await page.getByRole('button', { name: 'Deal secret words', exact: true }).elementHandle();
-  await clickName(page, 'Remove Player 3');
-  await textIncludes(page, '.setup-options .warning', 'Need 1 more');
-  await initialDeal.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-  await textIncludes(page, '.ui-toast[data-tone="error"]', 'Need 1 more');
-  assert.equal(await page.locator('.handoff').count(), 0);
-  assert.equal(await page.locator('.roster-list > li').count(), PLAYER_COUNT - 1);
-  assert.equal(await page.getByRole('button', { name: 'Deal secret words', exact: true }).isDisabled(), true);
-  await page.locator('.roster-add select').selectOption('add');
-  await page.getByRole('textbox', { name: 'Player names, one per line' }).fill('Player 3');
-  await clickName(page, 'Apply names');
-  const staleReorder = await page.getByRole('button', { name: 'Move Player 1 down', exact: true }).elementHandle();
-  const staleDeal = await page.getByRole('button', { name: 'Deal secret words', exact: true }).elementHandle();
-  await clickName(page, 'Deal secret words');
-  await textIncludes(page, '.handoff h2', 'Pass to Player 1');
+  const staleDeal = await page.getByRole('button', { name: 'Start game', exact: true }).elementHandle();
+  await clickName(page, 'Start game');
   const handoff = await page.locator('.handoff').innerText();
-  await staleReorder.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
   await staleDeal.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
   assert.equal(await page.locator('.handoff').innerText(), handoff);
   assert.equal(await page.locator('.setup').count(), 0);
   for (let index = 0; index < PLAYER_COUNT; index++) {
-    assert.equal(await page.locator('.handoff h2').textContent(), `Pass to Player ${index + 1}`);
-    await clickName(page, 'Reveal card');
-    assert.notEqual(await page.locator('.secret-word').textContent(), '');
-    await clickName(page, index === PLAYER_COUNT - 1 ? 'Hide & finish' : 'Hide & pass');
+    assert.equal(await page.locator('.handoff h2').textContent(), `Player ${index + 1}`);
+    const card = await revealLocalCard(page, `Player ${index + 1}`);
+    assert.notEqual(card.word, '');
   }
-  await clickName(page, 'Start giving clues');
   for (let index = 0; index < PLAYER_COUNT; index++) await clickName(page, 'Next speaker');
   await clickName(page, 'Open voting');
   await page.clock.fastForward(SECOND_MS * 4);
@@ -1730,9 +1669,10 @@ await scenario('spy queued setup and ballot controls cannot change a later scree
   assert.equal(await page.locator('.spy-content').innerText(), home);
   assert.equal(await page.locator('.phase-work').count(), 0);
   await clickName(page, 'Pass one device');
-  await clickName(page, 'Deal secret words');
-  await textIncludes(page, '.handoff h2', 'Pass to Player 1');
-  await clickName(page, 'Reveal card');
+  await clickName(page, 'Start game');
+  await textIncludes(page, '.handoff h2', 'Player 1');
+  await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
+  await clickName(page, 'View keyword');
   assert.notEqual(await page.locator('.secret-word').textContent(), '');
   assert.deepEqual(errors, []);
 }, { clock: true });
@@ -1743,7 +1683,7 @@ await scenario('spy pending AI response preserves home after a queued back actio
   const title = 'Late kitchen pack';
   await clickName(page, 'Pass one device');
   const queuedBack = await page.getByRole('button', { name: 'Back', exact: true }).elementHandle();
-  await clickName(page, 'Settings');
+  await clickName(page, 'Advanced settings');
   await clickName(page, 'Create AI pack', page.locator('dialog[open]'));
   await page.locator('dialog input').fill(title);
   const pending = page.waitForRequest((request) => new URL(request.url()).pathname === '/api/undercover/ai');
@@ -1758,8 +1698,9 @@ await scenario('spy pending AI response preserves home after a queued back actio
   assert.equal(await page.locator('.setup').count(), 0);
   await clickName(page, 'Pass one device');
   await textIncludes(page, '.config-badges', title);
-  await clickName(page, 'Deal secret words');
-  await clickName(page, 'Reveal card');
+  await clickName(page, 'Start game');
+  await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
+  await clickName(page, 'View keyword');
   assert(['Phở', 'Bún'].includes(await page.locator('.secret-word').textContent()));
 }, { api: (url, request) => {
   if (url.pathname !== '/api/undercover/ai') return null;
