@@ -43,13 +43,13 @@ h3 { font-size: 1rem; }
 .actions, .header-actions, .host-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
 .spy-shell, #room { display: flex; flex-direction: column; height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
 .spy-header, #room > header { min-height: 64px; display: flex; align-items: center; gap: .75rem; padding: max(.5rem, env(safe-area-inset-top)) var(--ui-grid-margin) .5rem; background: var(--ui-surface); border-bottom: 1px solid var(--ui-border); }
+.spy-header > img { width: 24px; height: 24px; flex: none; }
 .spy-header h1 { flex: 1; min-width: 0; }
 .spy-header .header-actions { flex-wrap: nowrap; }
 .spy-header > button { min-width: 44px; }
 .spy-content, .stage { flex: 1; min-height: 0; width: 100%; display: grid; align-items: center; padding: 1.5rem var(--ui-grid-margin); }
 .spy-content > *, .board-stage > * { width: min(100%, 960px); margin-inline: auto; }
 .entry { display: grid; justify-items: center; gap: 1.5rem; max-width: 640px; text-align: center; }
-.entry-logo { width: 64px; height: 64px; }
 .entry .sub { max-width: 54ch; }
 .mode-choices { width: min(100%, 440px); display: grid; gap: .75rem; }
 .mode-choices .ui-button { min-height: 56px; font-size: 1rem; }
@@ -210,7 +210,6 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
 @media (max-height: 700px) {
   .spy-content, .stage { padding-block: .5rem; }
   .entry { gap: 1rem; }
-  .entry-logo { width: 48px; height: 48px; }
   .handoff, .stack { gap: .75rem; }
   .secret-card { padding: 1rem; gap: .75rem; }
   .phase-panel, .phase-work, .game-main, .game-sidebar, .game-layout { gap: .5rem; }
@@ -219,7 +218,6 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
 @media (orientation: landscape) and (max-height: 540px) {
   .spy-header, #room > header { min-height: 52px; }
   .game-layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
-  .entry-logo { display: none; }
   .entry { gap: .75rem; }
   .mode-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
 

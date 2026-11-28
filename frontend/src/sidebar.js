@@ -50,6 +50,7 @@ const CSS = `
 #sidebar a { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 10px; border-radius: var(--ui-radius); color: inherit; text-decoration: none; font-weight: 500; }
 #sidebar a:hover { background: var(--ui-surface-muted); }
 #sidebar a[aria-current="page"] { background: var(--ui-surface-muted); color: var(--ui-primary); font-weight: 700; }
+img[src^="/card-icons-v2/"] { border-radius: 25%; }
 #sidebar a img { width: 22px; height: 22px; flex: none; }
 #sidebar a.sb-home { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
 #sidebar a.sb-home img { width: 30px; height: 30px; border-radius: 8px; }
@@ -166,7 +167,7 @@ function link(href, img, text, className = '') {
   a.href = href;
   a.className = className;
   if (href === here) a.setAttribute('aria-current', 'page');
-  if (typeof img === 'string') a.append(Object.assign(document.createElement('img'), { src: img, alt: '' }));
+  if (typeof img === 'string') a.append(Object.assign(document.createElement('img'), { src: img, loading: 'lazy', decoding: 'async', alt: '' }));
   else a.append(img);
   a.append(text);
   return a;
@@ -180,7 +181,7 @@ function build() {
   for (const g of GROUPS) {
     const h = document.createElement('h2');
     h.append(iconEl(g.icon), t(g.vi, g.en));
-    nav.append(h, ...g.games.map(([href, logo, vi, en]) => link(href, `/logos/${logo}.svg`, t(vi, en))));
+    nav.append(h, ...g.games.map(([href, logo, vi, en]) => link(href, `/card-icons-v2/${logo}.webp`, t(vi, en))));
   }
   nav.append(el('div', { className: 'sb-settings' }, settingsButton));
   return nav;
@@ -277,6 +278,6 @@ export function mountMobileGameHeader(gameId, helpLabel, openHelp) {
   settings.setAttribute('aria-haspopup', 'dialog');
   settings.setAttribute('aria-controls', SETTINGS_ID);
   const [, logo, vi, en] = currentGame;
-  const title = el('h1', {}, el('img', { src: `/logos/${logo}.svg`, alt: '' }), el('span', {}, t(vi, en)));
+  const title = el('h1', {}, el('img', { src: `/card-icons-v2/${logo}.webp`, alt: '' }), el('span', {}, t(vi, en)));
   document.body.prepend(el('header', { className: MOBILE_GAME_HEADER }, back, title, help, settings));
 }

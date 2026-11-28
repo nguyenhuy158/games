@@ -30,3 +30,4 @@ forest with warm lantern and full moon.
 Dùng ảnh bìa V2 làm ảnh tham chiếu. Giữ chủ thể, chất liệu đất sét 3D và bảng màu của ảnh bìa. Dùng khung vuông, chủ thể lớn ở giữa, nền gọn và không thêm chữ. Kiểm tra hình ở cỡ 24 px và 32 px.
 
 Xuất WebP vuông 96 px tại `public/card-icons-v2/<game>.webp`. Gắn vào `img.logo` trên thẻ tương ứng với `loading="lazy"`, `decoding="async"` và `alt=""`.
+Dùng cùng WebP cho favicon của trang game, header và sidebar. Favicon khai báo `type="image/webp"` và `sizes="96x96"`.
