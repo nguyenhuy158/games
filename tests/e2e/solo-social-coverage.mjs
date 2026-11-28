@@ -207,7 +207,7 @@ for (const language of ['en', 'vi']) {
     assert.equal(requests.filter(({ method, path }) => method === 'POST' && path === '/api/board').length, 2);
     await page.locator('#btnRetry').click();
     await page.waitForFunction(() => document.querySelector('#over').hidden && document.querySelector('#score').textContent === '0');
-    await page.locator('#btnHelp').click();
+    await page.locator('[data-help]:visible').click();
     assert.equal(await page.locator('dialog.help-dlg').isVisible(), true);
     await page.keyboard.press('Escape');
     await page.locator('#btnNew').click();
@@ -239,7 +239,7 @@ for (const language of ['en', 'vi']) {
     await page.clock.fastForward(SECOND_MS);
     assert.equal(await page.locator('#cells').innerHTML(), pausedBoard);
     await page.keyboard.press('P');
-    await page.locator('#btnHelp').click();
+    await page.locator('[data-help]:visible').click();
     assert.equal(await page.locator('#ovPause').isVisible(), true);
     await page.keyboard.press('Escape');
     await page.locator('#btnPause').click();
@@ -309,7 +309,7 @@ for (const language of ['en', 'vi']) {
     await page.clock.fastForward(SECOND_MS);
     assert.equal(await page.locator('#clock').textContent(), paused);
     await page.locator('#btnResume').click();
-    await page.locator('#btnHelp').click();
+    await page.locator('[data-help]:visible').click();
     assert.equal(await page.locator('#ovPause').isVisible(), true);
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => document.querySelector('#ovPause').hidden);
@@ -595,7 +595,7 @@ for (const language of ['en', 'vi']) {
       result: { title: ['Đã tìm thấy sói', 'Wolf revealed'], ranks: [{ id: PLAYER_ID, name: 'Player 0', score: 300, won: true }] },
     }));
     await textIncludes(page, '#players', language === 'en' ? 'Wolf' : 'Sói');
-    await page.locator('#room [data-help="soi"]').click();
+    await page.locator('[data-help="soi"]:visible').click();
     assert.match(await page.locator('.soi-intro-video').getAttribute('src'), /start=4353&end=4404/);
     assert.equal(await page.locator('.soi-intro a').getAttribute('rel'), 'noopener noreferrer');
     await page.keyboard.press('Escape');
