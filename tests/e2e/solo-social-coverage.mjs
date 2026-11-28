@@ -447,7 +447,7 @@ await scenario('spy local handoff names, privacy and final results', '/undercove
   assert.equal(await page.locator('.game-result .player-row').count(), 2);
   await clickName(page, 'Previous page', page.locator('.game-result'));
   await clickName(page, 'Play a new game');
-  assert.equal(await page.locator('.roster-list > li').count(), 6);
+  assert.equal(await page.getByRole('combobox', { name: 'Players', exact: true }).inputValue(), String(players.length));
 }, { storage: { 'gian-diep.theme': 'light' } });
 
 async function choosePaginated(page, name) {
