@@ -41,6 +41,7 @@ const GROUPS = [
 const MOBILE_GAME_HEADER = 'mobile-game-header';
 const GAME_BACK = 'a.back[href="/"], #hud .btn[href="/"]';
 const ROOM_LEAVE = '#btnLeave, .room-leave';
+const ENTRY_CARD = '[data-game-entry] :is(#home > .card:first-of-type, #overlay > .card.menu, .spy-content > .entry)';
 
 const CSS = `
 #sidebar { position: fixed; inset: 0 auto 0 0; z-index: 900; width: ${SIDEBAR_WIDTH}; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain;
@@ -81,6 +82,35 @@ const CSS = `
   .${MOBILE_GAME_HEADER} > button:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 2px; }
   html:has(.${MOBILE_GAME_HEADER}) :is(#home h1:has(a.back), header.bar:has(a.back) > :is(h1, img.logo)),
   html:has(.${MOBILE_GAME_HEADER}) :is(${GAME_BACK}, ${ROOM_LEAVE}, [data-help]:not(.${MOBILE_GAME_HEADER} > *)) { display: none !important; }
+}
+@media not ${WIDE_QUERY} {
+  @media (orientation: portrait) {
+    [data-game-entry] #home:not(:has(> .spy-header)) {
+      align-content: start; align-items: start; grid-template-columns: minmax(0, 1fr);
+      padding: 16px 16px max(16px, env(safe-area-inset-bottom)); overflow-y: auto;
+    }
+    [data-game-entry] #overlay:has(> .card.menu) { align-items: start; }
+    [data-game-entry] .spy-content:has(> .entry) { align-items: start; overflow-y: auto; }
+    ${ENTRY_CARD} {
+      --entry-padding: 16px;
+      box-sizing: border-box; width: min(100%, 460px); max-width: none; min-width: 0;
+      display: grid; align-content: start; gap: 14px; margin-inline: auto;
+      padding: var(--entry-padding); text-align: start; background: var(--ui-surface);
+      border: 1px solid var(--ui-border); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow-sm);
+    }
+    ${ENTRY_CARD}::before {
+      content: ""; display: block; grid-column: 1 / -1; align-self: start; justify-self: stretch;
+      margin: calc(-1 * var(--entry-padding)) calc(-1 * var(--entry-padding)) 0;
+      aspect-ratio: 5 / 2; border-radius: var(--ui-radius) var(--ui-radius) 0 0;
+      background: var(--ui-surface-muted) var(--entry-cover) center / cover no-repeat;
+    }
+    [data-game-entry] #home:has(> .spy-header) > .card { margin-block: 16px; width: min(calc(100% - 32px), 460px); }
+    ${ENTRY_CARD} > :is(.entry-logo, .sprite, .link, .lang, .row:has(> #btnHelpHome)) { display: none; }
+    ${ENTRY_CARD} > :is(.sub, .muted) { margin: 0; }
+    ${ENTRY_CARD} > .join,
+    ${ENTRY_CARD} > .row:has(> .code) { border-top: 1px solid var(--ui-border); padding-top: 14px; }
+    ${ENTRY_CARD} > .mode-choices { width: 100%; }
+  }
 }
 #mobileSettings, .room-leave > .leave-arrow { display: none; }
 @media ${WIDE_QUERY} { html { padding-left: ${SIDEBAR_WIDTH}; } }
@@ -125,6 +155,12 @@ const CSS = `
 `;
 
 const here = location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]*$/, '');
+const currentGame = GROUPS.flatMap(({ games }) => games).find(([path]) => path === here);
+if (currentGame) {
+  const [, logo] = currentGame;
+  document.body.dataset.gameEntry = logo;
+  document.body.style.setProperty('--entry-cover', `url("/covers-v2/${logo}.webp")`);
+}
 function link(href, img, text, className = '') {
   const a = document.createElement('a');
   a.href = href;
@@ -225,8 +261,7 @@ export function openSettings() {
 
 
 export function mountMobileGameHeader(gameId, helpLabel, openHelp) {
-  const game = GROUPS.flatMap(({ games }) => games).find(([path]) => path === here);
-  if (!game || here === SPY_PATH) return;
+  if (!currentGame || here === SPY_PATH) return;
 
   const backLabel = t('Quay lại', 'Back');
   const back = el('button', { type: 'button', ariaLabel: backLabel, title: backLabel, onclick: () => {
@@ -241,7 +276,7 @@ export function mountMobileGameHeader(gameId, helpLabel, openHelp) {
   const settings = el('button', { type: 'button', ariaLabel: settingsLabel, title: settingsLabel, onclick: openSettings }, iconEl('settings'));
   settings.setAttribute('aria-haspopup', 'dialog');
   settings.setAttribute('aria-controls', SETTINGS_ID);
-  const [, logo, vi, en] = game;
+  const [, logo, vi, en] = currentGame;
   const title = el('h1', {}, el('img', { src: `/logos/${logo}.svg`, alt: '' }), el('span', {}, t(vi, en)));
   document.body.prepend(el('header', { className: MOBILE_GAME_HEADER }, back, title, help, settings));
 }
