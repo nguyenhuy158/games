@@ -5,9 +5,8 @@ import { listbox } from '../ui/listbox.mjs';
 import { AI_PACK, DEFAULT_CONFIG, DURATIONS, PACKS, MIN_PLAYERS, MAX_PLAYERS, ROLE, HIDDEN_TEAM, limits, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 
 export const PAGE_SIZE = 4;
-const MIN_SPIES = 1;
 const LIGHTNING_SECONDS = 5;
-const SETTING_ICONS = Object.freeze({ spies: 'eye', whites: 'layers', seconds: 'timer', pack: 'grid-3x3' });
+const SETTING_ICONS = Object.freeze({ seconds: 'timer', pack: 'grid-3x3' });
 const ROLE_ICONS = Object.freeze({ [ROLE.CIVILIAN]: 'users', [ROLE.SPY]: 'swords', [ROLE.WHITE]: 'layers' });
 export function button(label, onclick, primary = false, icon) {
   const node = el('button', { type: 'button', className: 'ui-button', ariaLabel: label, onclick }, ...(icon ? [iconEl(icon)] : []), el('span', {}, label));
@@ -66,41 +65,64 @@ export function configBadges(config) {
 export function setupWarning(count, cfg) {
   if (count < MIN_PLAYERS) return t(`Cần thêm ${MIN_PLAYERS - count} người.`, `Need ${MIN_PLAYERS - count} more players.`);
   if (count > MAX_PLAYERS) return t(`Tối đa ${MAX_PLAYERS} người.`, `At most ${MAX_PLAYERS} players.`);
-  if (!validateSetup(count, cfg)) return t('Số vai chưa hợp lệ. Mở Cài đặt và giảm gián điệp hoặc Mũ Trắng.', 'Invalid role counts. Open Settings and reduce spies or Mr. White roles.');
+  if (!validateSetup(count, cfg)) return t('Số vai chưa hợp lệ. Giảm số gián điệp hoặc Mũ Trắng trong Thiết lập ván.', 'Invalid role counts. Reduce spies or Mr. White roles in Game setup.');
   return '';
+}
+
+export function countRow(label, icon, min, max, value, change, repaint) {
+  const name = el('span', { className: 'count-label' }, iconEl(icon), label);
+  const number = el('output', { textContent: value, ariaLabel: label, tabIndex: -1 });
+  const step = (delta, glyph, action) => {
+    const control = button(glyph, () => {
+      if (!control.isConnected || control.disabled) return;
+      change(value + delta);
+      const scope = repaint();
+      const next = [...scope.querySelectorAll('.count-controls button')].find((item) => item.ariaLabel === action);
+      if (next.disabled) next.closest('.count-controls').querySelector('output').focus();
+      else next.focus();
+    });
+    control.ariaLabel = action;
+    control.disabled = delta < 0 ? value <= min : value >= max;
+    return control;
+  };
+  return el('div', { className: 'count-row' }, name, el('div', { className: 'count-controls' },
+    step(-1, '−', t(`Giảm ${label}`, `Decrease ${label}`)),
+    number,
+    step(1, '+', t(`Tăng ${label}`, `Increase ${label}`))));
 }
 
 export function settings(count, config, save, generateAi) {
   const cfg = { ...DEFAULT_CONFIG, ...config };
+  const counts = el('div', { className: 'local-counts' });
   const fields = el('div', { className: 'settings-grid' });
   const warning = note('', true);
-  const summary = note('');
   const apply = button(t('Lưu cài đặt', 'Save settings'), () => { save({ ...cfg }); modal.close(); }, true);
-  const selects = {};
-  const options = (select, items, selected) => select.replaceChildren(...items.map(([value, label, disabled = false]) => el('option', { value, textContent: label, selected: String(value) === String(selected), disabled })));
   const update = () => {
     const cap = limits(count, cfg.spies);
-    options(selects.spies, Array.from({ length: limits(MAX_PLAYERS).spies }, (_, index) => [index + MIN_SPIES, String(index + MIN_SPIES), index + MIN_SPIES > cap.spies]), cfg.spies);
-    const whiteCap = limits(MAX_PLAYERS).whites;
-    options(selects.whites, Array.from({ length: whiteCap + 1 }, (_, index) => [index, String(index), index > cap.whites]), cfg.whites);
+    counts.replaceChildren(
+      el('div', { className: 'count-row' },
+        el('span', { className: 'count-label' }, iconEl('users'), t('Người chơi', 'Players')),
+        el('strong', { textContent: count })),
+      countRow(t('Gián điệp', 'Spies'), 'eye', DEFAULT_CONFIG.spies, cap.spies, cfg.spies, (value) => {
+        cfg.spies = value;
+        cfg.whites = Math.min(cfg.whites, limits(count, value).whites);
+      }, update),
+      countRow(t('Mũ Trắng', 'Mr. White'), 'layers', DEFAULT_CONFIG.whites, cap.whites, cfg.whites, (value) => { cfg.whites = value; }, update));
     const issue = setupWarning(count, cfg);
     warning.textContent = issue;
     warning.hidden = !issue;
     apply.disabled = !!issue;
-    summary.textContent = t(`${count} người · tối đa ${cap.spies} gián điệp, ${cap.whites} Mũ Trắng với lựa chọn hiện tại. Cần ít nhất 2 dân.`, `${count} players · up to ${cap.spies} spies, ${cap.whites} Mr. White roles with this selection. At least 2 civilians required.`);
+    return counts;
   };
   const field = (key, label, items) => {
-    const select = el('select', { onchange: () => { cfg[key] = key === 'pack' ? select.value : Number(select.value); update(); } });
-    selects[key] = select;
-    if (items) options(select, items, cfg[key]);
+    const select = el('select', { onchange: () => { cfg[key] = key === 'pack' ? select.value : Number(select.value); } },
+      ...items.map(([value, textContent]) => el('option', { value, textContent, selected: value === cfg[key] })));
     fields.append(el('label', {}, indicator(SETTING_ICONS[key], label), listbox(select)));
   };
-  field('spies', t('Gián điệp', 'Spies'));
-  field('whites', t('Mũ Trắng', 'Mr. White'));
   field('seconds', t('Thời gian mô tả', 'Clue timer'), DURATIONS.map((seconds) => [seconds, seconds === LIGHTNING_SECONDS ? t('5 giây · Chớp nhoáng', '5 sec · Lightning') : t(`${seconds} giây`, `${seconds} sec`)]));
   field('pack', t('Bộ từ', 'Word pack'), [...PACKS.map((pack) => [pack.id, tx(pack.label)]), ...(cfg.pack === AI_PACK ? [[AI_PACK, cfg.aiTopic]] : [])]);
   update();
-  const modal = dialog(t('Cài đặt ván', 'Game settings'), el('div', { className: 'stack' }, summary, fields, ...(generateAi ? [button(t('Tạo bộ từ AI', 'Create AI pack'), () => { modal.close(); generateAi(); }, false, 'sparkles')] : []), note(t('Bộ từ dùng tiếng Việt. Dân và gián điệp chỉ thấy từ, không thấy tên vai.', 'Word packs are in Vietnamese. Civilians and spies see only a word, not their role.')), warning, apply));
+  const modal = dialog(t('Thiết lập ván', 'Game setup'), el('div', { className: 'stack' }, counts, fields, ...(generateAi ? [button(t('Tạo bộ từ AI', 'Create AI pack'), () => { modal.close(); generateAi(); }, false, 'sparkles')] : []), warning, apply));
 }
 
 export function paginated(items, renderItem, label = t('Người chơi', 'Players')) {

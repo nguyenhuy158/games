@@ -77,11 +77,10 @@ h3 { font-size: 1rem; }
 .roster-name { min-width: 0; overflow-wrap: anywhere; font-size: .875rem; }
 .roster-actions { display: flex; gap: .25rem; margin-left: auto; }
 .section-heading, .phase-heading, .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
-.settings-summary { display: flex; align-items: center; gap: .75rem; justify-content: space-between; padding: 1rem 0; border-block: 1px solid var(--ui-border); }
-.settings-summary .ui-button { flex: none; }
+.settings-summary { gap: .75rem; padding-block: .75rem; border-block: 1px solid var(--ui-border); }
 .player-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
 .spy-content:has(.game-layout) { align-items: safe center; overflow: auto; }
-.local-play-roster { max-height: min(58dvh, 32rem); overflow: auto; overscroll-behavior: contain; }
+.play-roster { max-height: min(58dvh, 32rem); overflow: auto; overscroll-behavior: contain; }
 .player-grid > .ui-button { justify-content: flex-start; min-width: 0; overflow-wrap: anywhere; text-align: left; }
 .player-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-width: 0; min-height: 44px; padding: .5rem .75rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); font-size: .875rem; }
 .player-row > strong { font-size: .75rem; white-space: nowrap; }
@@ -97,7 +96,7 @@ h3 { font-size: 1rem; }
 .secret-card { width: 100%; display: grid; justify-items: center; text-align: center; gap: 1rem; padding: 1.5rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); box-shadow: var(--ui-shadow-md); }
 .secret-card > .ic { width: 40px; height: 40px; color: var(--ui-primary); }
 .secret-card .secret-word { font-size: clamp(1.5rem, 6vw, 2.5rem); line-height: 1.25; color: var(--ui-fg); overflow-wrap: anywhere; animation: ui-fade-in var(--ui-dur) var(--ui-ease-out); }
-.handoff .secret-covered, .secret-flip-back { background: var(--ui-primary-soft); place-content: center; }
+.secret-covered, .secret-flip-back { background: var(--ui-primary-soft); place-content: center; }
 .handoff .secret-covered, .handoff .secret-flip .secret-card { min-height: 12rem; }
 .secret-flip { width: 100%; display: grid; transform-style: preserve-3d; }
 .secret-flip > .secret-card { grid-area: 1 / 1; backface-visibility: hidden; }
@@ -169,6 +168,7 @@ input.code { text-transform: uppercase; letter-spacing: .15em; }
 .dot { height: 8px; width: 8px; flex: none; border-radius: 50%; background: var(--ui-danger); }
 .dot.on { background: var(--ui-success); }
 .stage { position: relative; }
+.stage:has(.board-stage:not([hidden])) { overflow: auto; align-items: safe center; }
 .board-stage { width: 100%; min-height: 0; }
 #overlay { position: absolute; inset: 0; display: grid; place-items: safe center; padding: 1rem; background: var(--ui-bg); overflow: auto; overscroll-behavior: contain; }
 #overlay .card { max-width: 560px; }
@@ -186,7 +186,8 @@ body .help-dlg .help-x { color: var(--ui-fg); background: var(--ui-surface); bor
 body .help-dlg .help-ok { background: var(--ui-primary); color: var(--ui-primary-fg); border-radius: var(--ui-radius); box-shadow: none; font-weight: 600; }
 body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { outline-color: var(--ui-ring); }
 @media (max-width: 700px) {
-  .local-play-roster { grid-template-columns: minmax(0, 1fr); }
+  .stage:has(.board-stage:not([hidden])) { align-items: start; }
+  .play-roster { grid-template-columns: minmax(0, 1fr); }
   .setup { min-height: 100%; grid-template-rows: 1fr auto; }
   .setup-fields { align-self: center; }
   .count-label .ic { display: none; }

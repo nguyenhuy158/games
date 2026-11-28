@@ -276,7 +276,7 @@ assert.throws(() => createGame(idsFor(3), DEFAULT_CONFIG, null, NOW), RangeError
     assert.equal(projected.reveal, null);
     assert.equal(projected.tally, null);
     assert.ok(projected.players.every((entry) => Object.keys(entry).length === 2 && !Object.hasOwn(entry, 'role')));
-    for (const key of ['votes', 'civilianWord', 'spyWord', 'turnOrder', 'startIndex', 'role']) assert.equal(Object.hasOwn(projected, key), false);
+    for (const key of ['votes', 'civilianWord', 'spyWord', 'startIndex', 'role']) assert.equal(Object.hasOwn(projected, key), false);
     assert.equal(JSON.stringify(projected).includes(player.role === ROLE.SPY ? g.civilianWord : g.spyWord), false);
   }
   const watcher = view(g, 'watcher');
@@ -284,8 +284,11 @@ assert.throws(() => createGame(idsFor(3), DEFAULT_CONFIG, null, NOW), RangeError
   assert.equal(watcher.voted, false);
   assert.equal(JSON.stringify(watcher).includes(g.civilianWord), false);
   assert.equal(JSON.stringify(watcher).includes(g.spyWord), false);
+  begin(g);
   const before = structuredClone(g);
   const projected = view(g, hostOf(g));
+  assert.deepEqual(projected.turnOrder, g.turnOrder);
+  projected.turnOrder.push('spoof');
   projected.cfg.seconds = 5;
   projected.players[0].alive = false;
   projected.candidates.push('spoof');
