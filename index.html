@@ -55,6 +55,7 @@
     .game b { font-size: 18px; }
     .game > span { color: var(--muted); font-size: 13px; }
     .game-meta { display: flex; align-items: center; gap: 4px 8px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
+    .game-meta > span:first-child { font-size: 10px; }
     .game-badge { padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--accent); font-weight: 600; }
     .tags { display: flex; gap: 6px; flex-wrap: wrap; }
     .tags i { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--accent); }
@@ -72,6 +73,11 @@
     #account a.primary:hover { background: var(--ui-primary-hover); border-color: var(--ui-primary-hover); }
     #account small { color: var(--muted); }
     body { position: relative; }
+    #homeStats { width: min(760px, 100%); padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--ui-radius); background: var(--panel); }
+    #homeStats > summary { cursor: pointer; font-weight: 600; }
+    #homeStats > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    #homeStats:not([open]) > section { display: none; }
+    #homeStats > section { margin-top: 16px; }
     #fun { width: min(760px, 100%); display: grid; gap: 10px; }
     #fun h2 { margin: 0; }
     .fun-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -350,29 +356,32 @@
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
   </div>
-  <section id="fun">
-    <div class="fun-head">
-      <h2><i data-icon="medal"></i> <span data-en="Fun leaderboards">Bảng xếp hạng vui</span></h2>
-      <div class="seg" id="funPeriod">
-        <button data-period="week" class="on"><span data-en="This week">Tuần này</span></button>
-        <button data-period="all"><span data-en="All time">Mọi lúc</span></button>
+  <details id="homeStats">
+    <summary><span data-en="Leaderboards and achievements">BXH và thành tích</span></summary>
+    <section id="fun">
+      <div class="fun-head">
+        <h2><i data-icon="medal"></i> <span data-en="Fun leaderboards">Bảng xếp hạng vui</span></h2>
+        <div class="seg" id="funPeriod">
+          <button data-period="week" class="on"><span data-en="This week">Tuần này</span></button>
+          <button data-period="all"><span data-en="All time">Mọi lúc</span></button>
+        </div>
       </div>
-    </div>
-    <div id="funList" class="fun-grid"></div>
-    <p class="sub hint" id="funHint"><span data-en="Sign in with Google to get on the boards — guests can still play, just not ranked.">Đăng nhập Google để có tên trên bảng — khách vẫn chơi được, chỉ không được xếp hạng.</span></p>
-  </section>
-  <section id="me" aria-labelledby="meTitle">
-    <h2 id="meTitle"><span data-en="Your stats">Thành tích của bạn</span></h2>
-    <p id="meNotice" class="sub hint" role="status"></p>
-    <p id="meError" role="alert" hidden></p>
-    <button id="meRetry" class="btn" hidden><span data-en="Retry saving guest history">Thử lưu lại lịch sử khách</span></button>
-    <div id="stats" class="stats"></div>
-    <h3><span data-en="Recent games">Các ván gần đây</span></h3>
-    <ol id="history"></ol>
-    <p id="historyError" role="alert" hidden></p>
-    <button id="historyRetry" class="btn" hidden><span data-en="Retry loading history">Thử tải lại lịch sử</span></button>
-    <button id="historyMore" class="btn" hidden><span data-en="Show more">Xem thêm</span></button>
-  </section>
+      <div id="funList" class="fun-grid"></div>
+      <p class="sub hint" id="funHint"><span data-en="Sign in with Google to get on the boards — guests can still play, just not ranked.">Đăng nhập Google để có tên trên bảng — khách vẫn chơi được, chỉ không được xếp hạng.</span></p>
+    </section>
+    <section id="me" aria-labelledby="meTitle">
+      <h2 id="meTitle"><span data-en="Your stats">Thành tích của bạn</span></h2>
+      <p id="meNotice" class="sub hint" role="status"></p>
+      <p id="meError" role="alert" hidden></p>
+      <button id="meRetry" class="btn" hidden><span data-en="Retry saving guest history">Thử lưu lại lịch sử khách</span></button>
+      <div id="stats" class="stats"></div>
+      <h3><span data-en="Recent games">Các ván gần đây</span></h3>
+      <ol id="history"></ol>
+      <p id="historyError" role="alert" hidden></p>
+      <button id="historyRetry" class="btn" hidden><span data-en="Retry loading history">Thử tải lại lịch sử</span></button>
+      <button id="historyMore" class="btn" hidden><span data-en="Show more">Xem thêm</span></button>
+    </section>
+  </details>
   <footer data-en-html="Animal art: &lt;a href=&quot;https://github.com/jdecked/twemoji&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Twemoji&lt;/a&gt; (CC-BY 4.0) · Minesweeper skin: &lt;a href=&quot;https://github.com/Minesweeper-World/MS-Texture&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;MS-Texture&lt;/a&gt; (MIT) · Bau Cua art: folk print (photo by Bách Hóa Xanh) · Icons: Lucide · A learning project">Hình động vật: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Skin dò mìn: <a href="https://github.com/Minesweeper-World/MS-Texture" target="_blank" rel="noopener">MS-Texture</a> (MIT) · Hình bầu cua: tờ in dân gian (ảnh Bách Hóa Xanh) · Icon: Lucide · Dự án học tập</footer>
   <script>
     // Chơi gần đây: nhớ game vừa bấm (tối đa 4), vẽ lại từ thẻ game có sẵn trên trang (khỏi lặp tên / logo).

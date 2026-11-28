@@ -94,6 +94,11 @@ async function scenario(name, run, options = {}) {
   try {
     await page.goto(new URL(options.path ?? "/?lang=en", BASE).href);
     await page.waitForSelector("#account");
+    const statsSummary = page.locator("#homeStats > summary");
+    if (await statsSummary.count()) {
+      assert.equal(await page.locator("#fun").isVisible(), false);
+      await statsSummary.click();
+    }
     await run({ page, state, requests, context });
     completed += 1;
     console.log(`PASS core: ${name}`);
