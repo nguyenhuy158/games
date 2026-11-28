@@ -151,15 +151,12 @@ h3 { font-size: 1rem; }
 .dialog-head .ui-button { flex: none; }
 .dialog-body { padding: 1rem; overflow: auto; overscroll-behavior: contain; }
 .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-#home { height: 100dvh; display: grid; align-items: center; justify-items: center; padding: var(--ui-grid-margin); }
-.card { width: min(100%, 480px); display: grid; gap: 1rem; padding: 1.5rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); box-shadow: var(--ui-shadow-md); }
-.card h1, .card h2 { display: flex; align-items: center; gap: .75rem; justify-content: center; }
-.card h1 .logo { height: 32px; width: 32px; }
-.card .back { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
-.join, .lang { display: flex; align-items: center; gap: .5rem; }
+#home { display: flex; flex-direction: column; height: 100dvh; }
+#home > .card, #overlay > .card { display: grid; align-content: start; min-width: 0; gap: 1rem; }
+#home > .card { width: min(100%, 480px); margin-inline: auto; padding: 1.5rem var(--ui-grid-margin); overflow: auto; }
+.join { display: flex; align-items: center; gap: .5rem; }
 .join input { flex: 1; }
 .join button { flex: none; }
-.lang { justify-content: center; }
 input.code { text-transform: uppercase; letter-spacing: .15em; }
 #room > header { flex-wrap: nowrap; }
 #room header .grow { flex: 1; }
@@ -171,9 +168,11 @@ input.code { text-transform: uppercase; letter-spacing: .15em; }
 .stage { position: relative; }
 .stage:has(.board-stage:not([hidden])) { overflow: auto; align-items: safe center; }
 .board-stage { width: 100%; min-height: 0; }
-#overlay { position: absolute; inset: 0; display: grid; place-items: safe center; padding: 1rem; background: var(--ui-bg); overflow: auto; overscroll-behavior: contain; }
-#overlay .card { max-width: 560px; }
+#overlay { position: absolute; inset: 0; display: grid; place-items: start center; padding: 1.5rem var(--ui-grid-margin); background: var(--ui-bg); overflow: auto; overscroll-behavior: contain; }
+#overlay > .card { width: min(100%, 560px); }
 #overlay .ranks { display: none; }
+#overlay .pub-switch { justify-content: flex-start; min-height: 44px; }
+#overlay .pub-switch input { min-height: 0; --accent: var(--ui-primary); }
 .cfg { display: grid; gap: .75rem; }
 .cfg:empty { display: none; }
 body dialog.help-dlg { color: var(--ui-fg); width: min(600px, calc(100vw - 2rem)); }
@@ -204,9 +203,7 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
   #room header .lbl, #room header > .grow { display: none; }
   #room header { justify-content: space-between; gap: .25rem; padding-inline: .5rem; }
   #room header button { padding-inline: .625rem; }
-  .card { padding: 1rem; gap: .75rem; }
-  #overlay .card { gap: .5rem; }
-  #overlay .card > .sub { font-size: .75rem; }
+  #home > .card, #overlay { padding-block: 1rem; }
 }
 @media (max-height: 700px) {
   .spy-content, .stage { padding-block: .5rem; }
@@ -225,7 +222,7 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
   .mode-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
 
   #home .card { grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 800px); }
-  #home .card h1, #home .card > .sub { grid-column: 1 / -1; }
+  #home .card > .sub { grid-column: 1 / -1; }
   #overlay .card { width: min(100%, 800px); grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #overlay .card > h2 { grid-column: 1; }
   #overlay .card > .cfg { grid-column: 2; grid-row: 1 / span 4; }

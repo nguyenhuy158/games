@@ -564,7 +564,7 @@ function enterOnline() {
     game: GAME,
     path: GAME_PATH,
     title: TITLE,
-    sub: t('Mỗi người một máy. Nhận từ riêng, cùng tìm gián điệp.', 'One device each. Get a private word and find the spy.'),
+    sub: t('Tạo phòng để mời bạn, hoặc nhập mã để tham gia.', 'Create a room to invite friends, or join with a code.'),
     help: HELP,
     winSound: false,
     lobbyText: (room) => setupWarning(room.players.length, { ...DEFAULT_CONFIG, ...room.cfg }) || t('Sẵn sàng chia từ.', 'Ready to deal.'),
@@ -573,7 +573,7 @@ function enterOnline() {
       const cfg = { ...DEFAULT_CONFIG, ...room.cfg };
       if (room.status === ROOM_STATUS.ENDED && room.view?.reveal) box.append(results(room.view, playerName));
       const players = orderedPlayers(room.players, cfg.order);
-      const changeOrder = host && room.status !== ROOM_STATUS.PLAYING ? (next) => {
+      const changeOrder = host && players.length > 1 && room.status !== ROOM_STATUS.PLAYING ? (next) => {
         if (app?.room?.host !== app?.id || app.room.status === ROOM_STATUS.PLAYING) return;
         setConfig({ order: next.map((player) => player.id) });
       } : null;
@@ -607,11 +607,16 @@ function enterOnline() {
   });
   enhanceRoomShell();
   const home = document.getElementById('home');
-  const back = button(t('Chọn cách chơi khác', 'Choose another mode'), () => { home.hidden = true; showHome(); }, false, 'arrow-left');
-  home.querySelector('.card').append(back);
+  const back = iconButton(t('Chọn cách chơi khác', 'Choose another mode'), () => { home.hidden = true; showHome(); }, 'arrow-left');
+  const form = home.querySelector('.card');
+  const controls = home.querySelector('.lang');
+  controls.className = 'header-actions';
+  controls.append(settingsControl());
+  const heading = el('h1', {}, t('Mỗi người một máy', 'One device each'));
+  form.querySelector('h1').remove();
+  home.prepend(el('header', { className: 'spy-header' }, back, heading, controls));
   const room = document.getElementById('room');
   room.querySelector('header').append(settingsControl());
-  home.querySelector('.lang').append(settingsControl());
   const leave = room.querySelector('header button');
   leave.addEventListener('click', (event) => {
     if (app.room?.status !== ROOM_STATUS.PLAYING) return;

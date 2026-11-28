@@ -38,5 +38,5 @@ export function seatingRoster(players, host, change, rand) {
   if (shuffle) shuffle.disabled = players.length < 2;
   return el('section', { className: 'roster-editor' },
     el('div', { className: 'roster-heading' }, el('h3', {}, t('Thứ tự mô tả', 'Speaking order')), shuffle ?? ''), list,
-    note(t('Đổi thứ tự không đổi chủ phòng. Người mới vào được xếp cuối.', 'Changing order keeps the host. New arrivals go last.')));
+    change ? note(t('Người mới vào được xếp cuối.', 'New arrivals go last.')) : '');
 }
