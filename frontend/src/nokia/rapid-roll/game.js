@@ -10,7 +10,7 @@ let sim = null, simSeed = null, keys = {}, lastT = 0, lastSent = 0, sentDone = f
 const app = nokiaApp({
   game: 'rapid-roll',
   title: 'Rapid Roll',
-  sub: t('Rapid Roll của Nokia 1110i — lăn bóng xuống giữa các thanh đang trôi lên, đua cùng đề với bạn bè.', 'Rapid Roll from the Nokia 1110i — roll down between rising platforms, racing friends on the same course.'),
+  sub: t('Lăn bóng xuống các bệ, tránh gai và cố trụ xa nhất.', 'Roll the ball down the platforms, dodge spikes, and survive as far as you can.'),
   help: {
     vi: {
       goal: 'Lăn bóng xuống giữa các thanh đang trôi lên và trụ được xa nhất.',

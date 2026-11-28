@@ -15,7 +15,7 @@ const bestText = () => (best ? t(` Kỷ lục máy này: ${best} điểm.`, ` Be
 nokiaApp({
   game: 'snake',
   title: t('Rắn săn mồi', 'Snake'),
-  sub: t('Snake huyền thoại của Nokia — một mình, đua điểm mỗi người một sân, hoặc chung sân tranh mồi.', 'The legendary Nokia Snake — solo, a score race on separate fields, or one shared arena fighting for food.'),
+  sub: t('Lái rắn ăn mồi để ghi điểm. Chơi một mình, đua điểm riêng sân hoặc tranh mồi chung sân.', 'Steer your snake to eat and score. Play solo, race on separate fields, or compete for food in one arena.'),
   help: {
     vi: {
       goal: 'Điều khiển rắn ăn mồi để dài ra và ghi điểm, đừng đâm vào tường hay thân rắn.',

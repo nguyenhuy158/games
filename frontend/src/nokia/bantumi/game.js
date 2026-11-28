@@ -16,7 +16,7 @@ const layout = (r, id) => {
 nokiaApp({
   game: 'bantumi',
   title: 'Bantumi',
-  sub: t('Trò rải sỏi của Nokia 3310 (Kalah) — đấu 1v1 hoặc với máy.', 'The Nokia 3310 seed-sowing game (Kalah) — 1v1 or vs the bot.'),
+  sub: t('Lần lượt rải sỏi quanh bàn để gom nhiều sỏi vào kho hơn đối thủ.', 'Take turns sowing seeds around the board to collect more in your store than your opponent.'),
   help: {
     vi: {
       goal: 'Gom được nhiều sỏi vào kho của mình hơn đối thủ.',

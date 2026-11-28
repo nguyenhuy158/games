@@ -1,5 +1,6 @@
 /* Sudoku: bàn 9×9 vuông vừa một màn hình, khối 3×3 kẻ đậm, dãy số + công cụ bên dưới cùng bề rộng bàn. */
 .sdk { --w: min(94vw, 480px, calc(100dvh - 250px)); width: var(--w); gap: 10px; }
+.intro { width: 100%; margin: 0; font-size: .875rem; }
 .tools { width: 100%; display: flex; gap: 6px; }
 .tools > * { flex: 1; min-width: 0; padding: 7px 6px; }
 .tools > .ui-listbox { flex: 1.2; padding: 0; }

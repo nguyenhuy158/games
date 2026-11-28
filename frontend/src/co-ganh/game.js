@@ -25,7 +25,7 @@ const app = nokiaApp({
   game: 'co-ganh',
   path: '/co-ganh/',
   title: t('Cờ gánh', 'Co Ganh'),
-  sub: t('Cờ dân gian Việt Nam trên bàn 5×5 — đi vào giữa hai quân địch là gánh cả hai, vây kín là bắt. 1v1 hoặc với máy.', 'A Vietnamese folk board game on a 5×5 grid — step between two enemy pieces to carry both, trap a group to take it. 1v1 or vs the bot.'),
+  sub: t('Xen giữa hoặc vây kín quân đối phương để đổi chúng thành quân mình. Thắng khi đối phương hết quân hoặc hết nước đi.', 'Move between or surround opposing pieces to turn them into your own. Win when your opponent has no pieces or legal moves left.'),
   help: {
     vi: {
       goal: 'Biến hết quân đối phương thành quân mình (hoặc dồn họ hết nước đi) bằng cách gánh và vây.',

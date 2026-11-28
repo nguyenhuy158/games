@@ -9,7 +9,7 @@ let cursor = 0, lastSig = '';
 nokiaApp({
   game: 'pairs',
   title: t('Lật hình', 'Pairs'),
-  sub: t('Pairs II của Nokia 3310 — lật 2 lá tìm cặp, chơi một mình hoặc cả nhóm.', 'Pairs II from the Nokia 3310 — flip 2 cards to find a match, solo or with a group.'),
+  sub: t('Lật hai lá mỗi lượt để tìm cặp. Ai tìm được nhiều cặp nhất sẽ thắng.', 'Flip two cards per turn to find a match. The player with the most pairs wins.'),
   help: {
     vi: {
       goal: 'Lật tìm các cặp hình giống nhau; nhiều người thì ai ăn nhiều cặp nhất thắng.',

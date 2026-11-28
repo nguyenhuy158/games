@@ -70,7 +70,7 @@ const app = nokiaApp({
   game: 'o-an-quan',
   path: '/o-an-quan/',
   title: t('Ô ăn quan', 'O An Quan'),
-  sub: t('Trò chơi dân gian vẽ phấn trên sân gạch — rải sỏi, ăn dân, bắt quan. 2–5 người, thiếu người thì máy vào chơi.', 'The Vietnamese folk game chalked on a brick yard — sow pebbles, capture citizens, take the mandarins. 2–5 players; bots fill empty seats.'),
+  sub: t('Rải sỏi và thu quân để có nhiều điểm nhất khi hết ván.', 'Sow pebbles and capture pieces to finish with the most points.'),
   help: {
     vi: {
       goal: 'Ăn được nhiều điểm nhất khi hết ván: mỗi dân 1 điểm, mỗi quan 10 điểm.',
