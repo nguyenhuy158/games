@@ -1,3 +1,4 @@
+import { playerAvatar } from '../player-avatar.js';
 import { SIZES, LEVELS, SLIDES, SLIDE_ICON, slide, findPath, findPair } from '../../../shared/games/pikachu/logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
@@ -479,6 +480,7 @@ function render() {
     if (shared() && !p.spec) li.classList.add('mate');
     if (p.spec) li.innerHTML = icon('eye');
     else if (p.id === room.host) li.innerHTML = icon('crown');
+    li.prepend(playerAvatar(p));
     if (room.mode === 'team' && !p.spec) li.append(el('i', { className: 'team', textContent: p.team }));
     li.append(`${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`);
     if (!p.spec) li.append(' · ', el('b', { textContent: p.score }));

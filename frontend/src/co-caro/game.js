@@ -1,3 +1,4 @@
+import { playerAvatar } from '../player-avatar.js';
 import { SIZES } from '../../../shared/games/co-caro/logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
@@ -200,7 +201,9 @@ function render() {
     const lobby = r?.status === 'lobby';
     const id = lobby ? r.players[k - 1]?.id : r?.seats[k - 1];
     if (!side.querySelector('.pc').firstChild) side.querySelector('.pc').append(iconEl(PIECE[k]));
-    side.querySelector('b').textContent = lobby ? r.players[k - 1]?.name ?? t('Máy', 'Bot') : botName(r?.names?.[k - 1]) ?? '';
+    const name = lobby ? r.players[k - 1]?.name ?? t('Máy', 'Bot') : botName(r?.names?.[k - 1]) ?? '';
+    const player = r?.players.find((entry) => entry.id === id);
+    side.querySelector('b').replaceChildren(...(player ? [playerAvatar(player), name] : [name]));
     side.querySelector('.sc').textContent = id ? r.score[id] ?? 0 : '';
     side.classList.toggle('turn', r?.status === 'playing' && r.turn === k);
     side.classList.toggle('me', !!id && id === deviceId);
