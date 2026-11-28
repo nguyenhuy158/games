@@ -4,22 +4,22 @@ Bộ game cổ điển trên trình duyệt tại https://games.huyab.cfd. Chơi
 
 ## Chạy
 
-Node >=22 và pnpm theo `packageManager` trong `package.json`.
+Cần Make, Node >=22 và phiên bản pnpm ghi trong `package.json`.
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm dev
-pnpm test
-pnpm test:coverage
-pnpm lint
-pnpm build
+make install
+make dev
+make test
+make coverage
+make lint
+make build
 ```
 
-`pnpm dev` phục vụ tại http://localhost:8787. Build ghép HTML/CSS/ES modules và static assets vào `dist/`; Wrangler tự chạy build khi dev/deploy.
+`make dev` phục vụ tại http://localhost:8787. Build ghép HTML/CSS/ES modules và static assets vào `dist/`; Wrangler tự chạy build khi dev/deploy.
 
 ```bash
 node tests/smoke.mjs http://localhost:8787
-pnpm e2e
+make e2e
 ```
 
 ## Cấu trúc
