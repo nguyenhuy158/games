@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { findChromium } from '@huyab/e2e';
 import { chromium } from 'playwright-core';
 import { saveCoverage, saveCoverageData } from './coverage.mjs';
@@ -17,6 +18,8 @@ const VIEWPORT = { width: 720, height: 1000 };
 const VIDEO_DIRECTORY = process.env.E2E_VIDEO_DIR;
 const VIDEO_ONLY_FLAG = '--undercover-round-video';
 const videoOnly = process.argv.includes(VIDEO_ONLY_FLAG);
+const VIDEO_STEP_MS = 600;
+const VIDEO_RESULT_MS = 2000;
 const UNDERCOVER_ROUND_VIDEO = 'undercover-pass-one-device-round.webm';
 const PLAYER_ID = 'coverage-player';
 const HARNESS_PATH = '/solo-social-coverage-harness';
@@ -91,6 +94,7 @@ async function scenario(name, route, run, options = {}) {
     await saveCoverage(page);
     const snapshots = await page.evaluate((coverageKey) => JSON.parse(sessionStorage.getItem(coverageKey) || '[]'), NAVIGATION_COVERAGE_KEY);
     for (const snapshot of snapshots) await saveCoverageData(snapshot.coverage, snapshot.url);
+    if (video) await delay(VIDEO_RESULT_MS);
     await context.close();
     if (video) {
       await video.saveAs(resolve(VIDEO_DIRECTORY, options.video));
@@ -158,6 +162,7 @@ function room(view = null, overrides = {}) {
 
 async function clickName(page, name, scope = page) {
   await scope.getByRole('button', { name, exact: true }).click();
+  if (page.video()) await delay(VIDEO_STEP_MS);
 }
 
 async function textIncludes(page, selector, text) {
