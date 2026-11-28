@@ -74,6 +74,15 @@ export function nokiaApp(opt) {
   // ---------- âm thanh: tiếng bíp kiểu Nokia (WebAudio, không cần file) ----------
   let soundOn = isSoundOn();
   let audio;
+  const unlockSound = () => {
+    if (!soundOn) return;
+    const Audio = globalThis.AudioContext ?? globalThis.webkitAudioContext;
+    if (!Audio) return;
+    try {
+      audio ??= new Audio();
+      if (audio.state === 'suspended') void audio.resume().catch(() => {});
+    } catch {}
+  };
   const beep = (freq = 880, ms = 60, type = 'square') => {
     if (!soundOn || quiet) return;
     try {
@@ -175,7 +184,8 @@ export function nokiaApp(opt) {
   function render() {
     const r = room;
     if (r) opt.render?.(r, app);
-    players.replaceChildren(...(r?.players ?? []).map((p) => {
+    const roomPlayers = r ? opt.roster?.(r) ?? r.players : [];
+    players.replaceChildren(...roomPlayers.map((p) => {
       const li = el('li', { className: p.id === deviceId ? 'me' : '' });
       li.style.setProperty('--c', r.seats.includes(p.id) ? colorOf(p.id) : 'transparent');
       li.append(p.id === r.host ? iconEl('crown') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`);
@@ -221,7 +231,7 @@ export function nokiaApp(opt) {
   if (opt.draw) requestAnimationFrame(frame);
 
   const app = {
-    get id() { return deviceId; }, get room() { return room; }, replay: !!rp, lcd, canvas, beep, colorOf,
+    get id() { return deviceId; }, get room() { return room; }, replay: !!rp, lcd, canvas, beep, unlockSound, colorOf,
     // Người mà view đang thể hiện: mình; xem lại thì ghế 1 (server ghi view của người đó).
     get pov() { return rp ? room?.seats[0] ?? deviceId : deviceId; },
     // Toạ độ LCD (0..83, 0..47) của một lần chạm/bấm chuột lên màn hình.
