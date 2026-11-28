@@ -1,4 +1,4 @@
-name = "pikachu-online"
+name = "games"
 main = "backend/src/index.js"
 compatibility_date = "2026-07-03"
 # Chi vao qua custom domain, giong chia-keo.
