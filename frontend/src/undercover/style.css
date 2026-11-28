@@ -50,7 +50,6 @@ h3 { font-size: 1rem; }
 .spy-content > *, .board-stage > * { width: min(100%, 960px); margin-inline: auto; }
 .entry { display: grid; justify-items: center; gap: 1.5rem; max-width: 640px; text-align: center; }
 .entry-logo { width: 64px; height: 64px; }
-.entry h2 { font-size: clamp(1.75rem, 5vw, 2.75rem); }
 .entry .sub { max-width: 54ch; }
 .mode-choices { width: min(100%, 440px); display: grid; gap: .75rem; }
 .mode-choices .ui-button { min-height: 56px; font-size: 1rem; }
@@ -177,7 +176,6 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
   .spy-content, .stage { padding-block: .5rem; }
   .entry { gap: 1rem; }
   .entry-logo { width: 48px; height: 48px; }
-  .entry h2 { font-size: 1.75rem; }
   .handoff, .stack { gap: .75rem; }
   .secret-card { padding: 1rem; gap: .75rem; }
   .phase-panel, .phase-work, .game-main, .game-sidebar, .game-layout { gap: .5rem; }

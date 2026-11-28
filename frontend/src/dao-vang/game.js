@@ -683,7 +683,7 @@ function menu() {
     el('div', { className: 'row', style: 'justify-content:flex-end' }, helpHome),
     spriteEl('goldMiner', 0.8),
     spriteEl('goldBig_0001', 0.5),
-    el('p', { className: 'muted', textContent: t('Bấm / chạm (hoặc ↓, Space) để thả móc. Có thuốc nổ thì bấm ↑ để phá vật đang kéo.', 'Click / tap (or ↓, Space) to drop the hook. With dynamite, press ↑ to blow up what you\'re pulling.') }),
+    el('p', { className: 'muted', textContent: t('Bấm hoặc chạm để thả móc gắp vàng. Đủ tiền trước khi hết giờ để qua màn.', 'Click or tap to drop the claw and grab gold. Reach the cash target before time runs out to clear the level.') }),
     el('button', { className: 'primary', textContent: t('Chơi một mình', 'Play solo'), onclick: () => { saveName(); driver = solo; solo.start(); } }),
     el('label', { className: 'field' }, t('Tên của bạn', 'Your name'), addReroll(name)),
     el('button', { onclick: () => { saveName(); startNet(newRoomCode()); } }, iconEl('users'), t(' Tạo phòng chơi nhiều người', ' Create a multiplayer room')),

@@ -18,7 +18,7 @@ const app = nokiaApp({
   game: 'soi',
   path: '/soi/',
   title: t('Sói', 'Werewolf'),
-  sub: t('Bắt Sói: quan sát, giữ bình tĩnh và tìm ra ai đang nháy mắt loại dân làng. Đọc Cách chơi trước khi bắt đầu.', 'Catch the Wolf: stay calm, watch closely and find who is winking villagers out. Read How to play before starting.'),
+  sub: t('Tạo phòng để chia vai bí mật. Khi chơi trực tiếp, Sói nháy mắt để loại dân làng, còn dân tìm ra Sói.', 'Create a room to deal secret roles. Play face to face, with the Wolf winking players out while the villagers try to identify the Wolf.'),
   help: {
     vi: {
       goal: 'Bắt Sói — thử thách quan sát và suy luận trong video, đoạn 1:12:33–1:13:24. Một người là Sói, những người còn lại là Dân. Web hỗ trợ chia vai bí mật; cả nhóm chơi trực tiếp với nhau.',

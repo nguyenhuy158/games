@@ -10,7 +10,7 @@ let pick = [0, 0, 0, 0], slot = 0, sentAt = -1;
 nokiaApp({
   game: 'logic',
   title: 'Logic',
-  sub: t('Logic của Nokia 3210 (Mastermind) — đoán mã 4 hình, đua cùng một mã với bạn bè.', 'Logic from the Nokia 3210 (Mastermind) — crack a 4-shape code, racing friends on the same code.'),
+  sub: t('Dựa vào phản hồi sau mỗi lượt để đoán đúng mã bí mật gồm bốn hình.', 'Use the feedback after each guess to crack the secret four-shape code.'),
   help: {
     vi: {
       goal: 'Đoán đúng mã bí mật gồm 4 hình trong ít lượt nhất.',

@@ -29,7 +29,7 @@ const app = nokiaApp({
   game: 'co-tuong',
   path: '/co-tuong/',
   title: t('Cờ tướng', 'Xiangqi'),
-  sub: t('Cờ tướng đủ luật — pháo cách ngòi, mã cản chân, tượng không qua sông, lộ mặt tướng. 1v1 hoặc với máy.', 'Full-rules Chinese chess — cannon screens, blocked horses, elephants stay home, flying general. 1v1 or vs the bot.'),
+  sub: t('Di chuyển quân để chiếu bí tướng đối phương. Đấu với bạn hoặc với máy.', 'Move your pieces to checkmate the opposing general. Play against a friend or the bot.'),
   help: {
     vi: {
       goal: 'Chiếu bí tướng đối phương: tới lượt họ mà không còn nước đi hợp lệ nào là bạn thắng.',

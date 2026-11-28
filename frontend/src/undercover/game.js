@@ -141,12 +141,12 @@ function showHome() {
   backButton.title = backButton.ariaLabel;
   content.replaceChildren(el('div', { className: 'entry' },
     el('img', { className: 'entry-logo', src: '/logos/undercover.svg', alt: '' }),
-    el('h2', {}, t('Cùng một nhóm. Khác một từ.', 'One group. A different word.')),
     el('div', { className: 'entry-facts' }, indicator('users', t('3–20 người', '3–20 players')), indicator('crown', t('Chủ phòng cùng chơi', 'Host plays too'))),
+    note(t('Đa số nhận cùng một từ, còn gián điệp nhận từ tương tự. Lần lượt đưa gợi ý rồi bỏ phiếu tìm gián điệp.', 'Most players get the same word, while the spies get a similar one. Take turns giving clues, then vote to find the spies.')),
     el('div', { className: 'mode-choices' },
       button(t('Chuyền một máy', 'Pass one device'), startLocalSetup, true, 'smartphone'),
       button(t('Mỗi người một máy', 'One device each'), enterOnline, false, 'users')),
-    note(t('Nhận từ bí mật, nói gợi ý, tìm người khác biệt. Chơi trực tiếp hoặc qua cuộc gọi riêng.', 'Get a secret word, give clues and find the odd one out. Talk in person or on your own call.')),
+    note(t('Nói gợi ý trực tiếp hoặc qua cuộc gọi riêng.', 'Give clues out loud in person or on your own call.')),
     el('div', { className: 'entry-footer' }, button(t('Luật chơi', 'Read the rules'), () => help.open(), false, 'info'))));
 }
 
