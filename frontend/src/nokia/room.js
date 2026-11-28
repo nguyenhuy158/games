@@ -138,7 +138,10 @@ export function nokiaApp(opt) {
     if (m.status === 'playing' && prev?.status !== 'playing') beep(1320, 120);
     if (m.status === 'ended' && prev?.status === 'playing' && !quiet) {
       const me = m.result?.ranks?.find((r) => r.id === deviceId);
-      if (me?.won) { notifications.show(TOAST_TONE.SUCCESS, t('Bạn thắng!', 'You win!'), { icon: TOAST_ICON.TROPHY }); beep(1760, 250); }
+      if (me?.won) {
+        notifications.show(TOAST_TONE.SUCCESS, t('Bạn thắng!', 'You win!'), { icon: TOAST_ICON.TROPHY });
+        if (opt.winSound !== false) beep(1760, 250);
+      }
       else if (m.result?.ranks?.length > 1) notifications.show(TOAST_TONE.INFO, t(`${m.result.ranks[0].name} thắng`, `${m.result.ranks[0].name} wins`), { icon: TOAST_ICON.TROPHY });
     }
     opt.onState?.(m, prev, app);

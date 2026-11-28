@@ -3,7 +3,8 @@ import { el, store } from '../dom.js';
 import { t } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
-import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, validateSetup } from '../../../shared/games/gian-diep/logic.js';
+import { isSoundOn } from '../sound.js';
+import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, ROLE, HIDDEN_TEAM, createGame, act, advance, view, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 import { HELP } from './help.js';
 import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results } from './ui.js';
 import { setButtonPending } from '../ui/feedback.mjs';
@@ -26,6 +27,16 @@ const THEME_DARK = 'dark';
 const THEME_LIGHT = 'light';
 const LOCAL_ID_PREFIX = 'local-';
 const RANDOM_RANGE = 0x100000000;
+const ENDING_MELODIES = new Map([
+  [ROLE.CIVILIAN, [523.25, 659.25, 783.99, 1046.5]],
+  [HIDDEN_TEAM, [392, 329.63, 261.63, 196]],
+]);
+const ENDING_NOTE_STEP = 0.12;
+const ENDING_NOTE_LENGTH = 0.2;
+const ENDING_NOTE_ATTACK = 0.02;
+const ENDING_VOLUME = 0.1;
+const ENDING_WAVEFORM = 'triangle';
+const AUDIO_RUNNING = 'running';
 const MANUAL_PHASES = new Set([PHASE.DESCRIBE, PHASE.DISCUSS, PHASE.COUNTDOWN, PHASE.VOTE]);
 const PHASE_LABELS = {
   [PHASE.DEAL]: t('Nhận từ bí mật', 'Receive your secret word'),
@@ -48,6 +59,7 @@ const PHASE_ICONS = {
   [PHASE.ENDED]: 'trophy',
 };
 const randomValue = new Uint32Array(1);
+let endingAudio;
 let mode = MODE.HOME;
 let app = null;
 let onlineBoard = null;
@@ -340,6 +352,38 @@ function secretCard(card, visible, toggle) {
   return node;
 }
 
+function unlockEndingAudio() {
+  if (!isSoundOn()) return;
+  const Audio = globalThis.AudioContext ?? globalThis.webkitAudioContext;
+  if (!Audio) return;
+  try {
+    endingAudio ??= new Audio();
+    if (endingAudio.state !== AUDIO_RUNNING) void endingAudio.resume().catch(() => {});
+  } catch {}
+}
+
+function playEnding(winner) {
+  const melody = ENDING_MELODIES.get(winner);
+  if (!melody || !isSoundOn()) return;
+  unlockEndingAudio();
+  if (!endingAudio) return;
+  const start = endingAudio.currentTime;
+  for (const [index, frequency] of melody.entries()) {
+    const at = start + index * ENDING_NOTE_STEP;
+    const stop = at + ENDING_NOTE_LENGTH;
+    const tone = endingAudio.createOscillator();
+    const volume = endingAudio.createGain();
+    tone.type = ENDING_WAVEFORM;
+    tone.frequency.value = frequency;
+    volume.gain.setValueAtTime(0, at);
+    volume.gain.linearRampToValueAtTime(ENDING_VOLUME, at + ENDING_NOTE_ATTACK);
+    volume.gain.linearRampToValueAtTime(0, stop);
+    tone.connect(volume).connect(endingAudio.destination);
+    tone.start(at);
+    tone.stop(stop);
+  }
+}
+
 function localNow() {
   return Date.now();
 }
@@ -358,7 +402,11 @@ function sendAction(message, actor = mode === MODE.LOCAL ? localHost() : app?.id
     }
     shown = false;
     ballotOpen = false;
-    if (beforePhase !== localGame.phase) { guessOpen = false; guessDraft = ''; }
+    if (beforePhase !== localGame.phase) {
+      guessOpen = false;
+      guessDraft = '';
+      if (localGame.phase === PHASE.ENDED) playEnding(localGame.winner);
+    }
     paintLocal();
     return;
   }
@@ -513,6 +561,7 @@ function enterOnline() {
     title: TITLE,
     sub: t('Mỗi người một máy. Nhận từ riêng, cùng tìm gián điệp.', 'One device each. Get a private word and find the spy.'),
     help: HELP,
+    winSound: false,
     lobbyText: (room) => setupWarning(room.players.length, { ...DEFAULT_CONFIG, ...room.cfg }) || t('Sẵn sàng chia từ.', 'Ready to deal.'),
     badge: (player, room) => room.view?.players.find((item) => item.id === player.id)?.alive === false ? t('Đã loại', 'Out') : '',
     lobby(box, room, host, setConfig) {
@@ -531,6 +580,7 @@ function enterOnline() {
     },
     onState(room, previous) {
       clearPending();
+      if (room.status === ROOM_STATUS.ENDED && previous?.status === ROOM_STATUS.PLAYING) playEnding(room.view?.winner);
       if (room.view?.dealId !== onlineDeal || (room.status === ROOM_STATUS.PLAYING && previous?.status !== ROOM_STATUS.PLAYING)) {
         onlineDeal = room.view?.dealId;
         shown = false;
@@ -627,6 +677,8 @@ document.addEventListener('visibilitychange', () => {
 });
 addEventListener('keydown', (event) => { if (event.key === 'Escape') hideSecrets(); }, true);
 addEventListener('pagehide', hideSecrets);
+addEventListener('pointerup', unlockEndingAudio);
+addEventListener('keydown', unlockEndingAudio);
 addEventListener('beforeunload', (event) => {
   if (mode === MODE.LOCAL && localGame && localGame.phase !== PHASE.ENDED) { event.preventDefault(); event.returnValue = ''; }
 });
