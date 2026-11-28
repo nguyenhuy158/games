@@ -401,14 +401,14 @@ async function revealLocalCard(page, player) {
 await scenario('spy local handoff names, privacy and final results', '/undercover/?lang=en', async (page) => {
   const players = ['An', 'Binh', 'Chi', 'Dung', 'Eva', 'Fong'];
   await clickName(page, 'Pass one device');
-  await page.getByRole('combobox', { name: 'Players', exact: true }).selectOption(String(players.length));
-  await page.getByRole('combobox', { name: 'Mr. White', exact: true }).selectOption('1');
+  for (let count = 3; count < players.length; count++) await clickName(page, 'Increase Players');
+  await clickName(page, 'Increase Mr. White');
   await clickName(page, 'Dark mode');
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), true);
   await clickName(page, 'Light mode');
-  const staleCount = await page.getByRole('combobox', { name: 'Players', exact: true }).elementHandle();
+  const staleCount = await page.getByRole('button', { name: 'Increase Players' }).elementHandle();
   await clickName(page, 'Start game');
-  await staleCount.evaluate((node) => node.dispatchEvent(new Event('change')));
+  await staleCount.evaluate((node) => node.click());
   await clickName(page, 'View keyword');
   await textIncludes(page, '.handoff [role="alert"]', 'Enter your name.');
   const staleForm = await page.locator('.handoff form').elementHandle();
@@ -456,7 +456,7 @@ await scenario('spy local handoff names, privacy and final results', '/undercove
   assert.equal(await page.locator('.game-result .player-row').count(), 2);
   await clickName(page, 'Previous page', page.locator('.game-result'));
   await clickName(page, 'Play a new game');
-  assert.equal(await page.getByRole('combobox', { name: 'Players', exact: true }).inputValue(), String(players.length));
+  assert.equal(await page.locator('output[aria-label="Players"]').textContent(), String(players.length));
 }, { storage: { 'gian-diep.theme': 'light' } });
 
 async function choosePaginated(page, name) {
@@ -1185,50 +1185,25 @@ await scenario('penalty settings validate restored lists and edit defaults', `${
   assert.deepEqual(await page.evaluate(() => window.penaltyUpdates.slice(-4).map((change) => change.penalty)), ['off', 'game', 'party', 'both']);
 }, { storage: { 'loto.party': '{bad-json' } });
 
-await scenario('spy local AI denial restores setup and valid deal keeps words private', '/undercover/?lang=en', async (page) => {
-  await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true })));
+await scenario('spy local help and page hide keep words private', '/undercover/?lang=en', async (page) => {
   await clickName(page, 'Read the rules');
-  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await textIncludes(page, QUICK_RULE_SELECTOR, 'Civilians share a word');
   await clickName(page, 'Got it', page.locator('.help-dlg'));
   await clickName(page, 'Pass one device');
-  await clickName(page, 'Advanced settings');
-  await clickName(page, 'Create AI pack', page.locator('dialog.spy-dialog[open]'));
-  await page.locator('dialog.spy-dialog input').fill('Vietnamese dishes');
-  await clickName(page, 'Create secret pack', page.locator('dialog.spy-dialog[open]'));
-  await page.waitForSelector('dialog.spy-dialog[open]', { state: 'detached' });
-  await textIncludes(page, '.config-badges', 'Vietnamese dishes');
-  await clickName(page, 'Advanced settings');
-  assert.equal(await page.locator('dialog.spy-dialog select').last().inputValue(), 'ai');
-  await clickName(page, 'Save settings', page.locator('dialog.spy-dialog[open]'));
-  await clickName(page, 'Start game');
-  await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true })));
-  await textIncludes(page, 'body', 'Deal denied');
-  assert.equal(await page.locator('.spy-content').evaluate((node) => node.inert), false);
-  assert.equal(await page.getByRole('button', { name: 'Start game', exact: true }).isEnabled(), true);
   await clickName(page, 'Start game');
   await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
   await clickName(page, 'View keyword');
-  assert(['Phở', 'Bún'].includes(await page.locator('.secret-word').textContent()));
   assert.equal(await page.evaluate(() => !window.dispatchEvent(new Event('beforeunload', { cancelable: true }))), true);
   await page.locator('[data-help="undercover-guide"]').click();
   assert.equal(await page.locator('.secret-word').count(), 0);
   await clickName(page, 'Got it', page.locator('.help-dlg'));
-  await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
   await clickName(page, 'View keyword');
   await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
   assert.equal(await page.locator('.secret-word').count(), 0);
   await clickName(page, 'Back');
   await clickName(page, 'Confirm', page.locator('dialog.spy-dialog[open]'));
   assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
-}, { api: (url, request, requests) => {
-  if (url.pathname !== '/api/undercover/ai') return null;
-  if (request.postDataJSON().action === 'deal') {
-    const attempts = requests.filter(({ body }) => body?.action === 'deal').length;
-    return attempts === 1 ? { status: HTTP_DENIED, body: JSON.stringify({ msg: ['Không được chia', 'Deal denied'] }) } : { body: JSON.stringify({ pair: ['Phở', 'Bún'] }) };
-  }
-  return { body: JSON.stringify({ packId: '12345678-1234-4234-8234-123456789abc', title: 'Vietnamese dishes' }) };
-} });
+});
 
 await scenario('audio unlock resumes suspended contexts and respects blocked permission', `${HARNESS_PATH}?lang=en`, async (page) => {
   const result = await page.evaluate(async () => {
@@ -1387,25 +1362,18 @@ for (const language of ['vi', 'en']) {
 await scenario('spy local setup clamps role counts and back restores home', '/undercover/?lang=en', async (page) => {
   assert.equal(await page.getByRole('button', { name: 'Light mode', exact: true }).isVisible(), true);
   await clickName(page, 'Pass one device');
-  const players = page.getByRole('combobox', { name: 'Players', exact: true });
-  const white = page.getByRole('combobox', { name: 'Mr. White', exact: true });
-  await players.selectOption('6');
-  await white.selectOption('1');
-  const spies = page.getByRole('combobox', { name: 'Spies', exact: true });
-  await spies.selectOption('2');
-  assert.equal(await white.inputValue(), '0');
-  await spies.selectOption('1');
-  await white.selectOption('1');
-  await players.selectOption('3');
-  assert.equal(await white.inputValue(), '0');
-  await clickName(page, 'Advanced settings');
-  await page.evaluate(() => {
-    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
-    document.dispatchEvent(new Event('visibilitychange'));
-  });
-  await page.waitForSelector('dialog.spy-dialog', { state: 'detached' });
+  const white = page.locator('output[aria-label="Mr. White"]');
+  assert.equal(await page.getByRole('button', { name: 'Decrease Players' }).isDisabled(), true);
+  assert.equal(await page.getByRole('button', { name: 'Increase Mr. White' }).isDisabled(), true);
+  for (const _ of [1, 2, 3]) await clickName(page, 'Increase Players');
+  await clickName(page, 'Increase Mr. White');
+  await clickName(page, 'Increase Spies');
+  assert.equal(await white.textContent(), '0');
+  await clickName(page, 'Decrease Spies');
+  await clickName(page, 'Increase Mr. White');
+  await clickName(page, 'Decrease Players');
+  assert.equal(await white.textContent(), '0');
+  assert.equal(await page.getByRole('button', { name: 'Advanced settings' }).count(), 0);
   await clickName(page, 'Back');
   assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
   await page.evaluate(() => Object.defineProperty(document, 'hidden', { configurable: true, value: true }));
@@ -1587,8 +1555,8 @@ await scenario('spy local normalized-empty guess is rejected without consuming t
   const COMBINING_ACUTE = '\u0301';
   const PLAYER_COUNT = 6;
   await clickName(page, 'Pass one device');
-  await page.getByRole('combobox', { name: 'Players', exact: true }).selectOption(String(PLAYER_COUNT));
-  await page.getByRole('combobox', { name: 'Mr. White', exact: true }).selectOption('1');
+  for (let count = 3; count < PLAYER_COUNT; count++) await clickName(page, 'Increase Players');
+  await clickName(page, 'Increase Mr. White');
   await clickName(page, 'Start game');
   const cards = [];
   for (const player of ['Ada', 'Binh', 'Chi', 'Dung', 'Eva', 'Fong']) cards.push(await revealLocalCard(page, player));
@@ -1689,36 +1657,6 @@ await scenario('spy queued setup and ballot controls cannot change a later scree
   assert.notEqual(await page.locator('.secret-word').textContent(), '');
   assert.deepEqual(errors, []);
 }, { clock: true });
-
-let finishNavigatedAi;
-const navigatedAiResponse = new Promise((resolve) => { finishNavigatedAi = resolve; });
-await scenario('spy pending AI response preserves home after a queued back action', '/undercover/?lang=en', async (page) => {
-  const title = 'Late kitchen pack';
-  await clickName(page, 'Pass one device');
-  const queuedBack = await page.getByRole('button', { name: 'Back', exact: true }).elementHandle();
-  await clickName(page, 'Advanced settings');
-  await clickName(page, 'Create AI pack', page.locator('dialog[open]'));
-  await page.locator('dialog input').fill(title);
-  const pending = page.waitForRequest((request) => new URL(request.url()).pathname === '/api/undercover/ai');
-  await clickName(page, 'Create secret pack', page.locator('dialog[open]'));
-  await pending;
-  await textIncludes(page, 'dialog [role="status"]', 'AI is preparing');
-  await queuedBack.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-  await page.getByRole('button', { name: 'Pass one device', exact: true }).waitFor({ state: 'visible' });
-  finishNavigatedAi({ body: JSON.stringify({ packId: '12345678-1234-4234-8234-123456789abc', title }) });
-  await page.waitForSelector('dialog[open]', { state: 'detached' });
-  assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
-  assert.equal(await page.locator('.setup').count(), 0);
-  await clickName(page, 'Pass one device');
-  await textIncludes(page, '.config-badges', title);
-  await clickName(page, 'Start game');
-  await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
-  await clickName(page, 'View keyword');
-  assert(['Phở', 'Bún'].includes(await page.locator('.secret-word').textContent()));
-}, { api: (url, request) => {
-  if (url.pathname !== '/api/undercover/ai') return null;
-  return request.postDataJSON().action === 'deal' ? { body: JSON.stringify({ pair: ['Phở', 'Bún'] }) } : navigatedAiResponse;
-} });
 
 await scenario('spy queued online reorder respects host loss and game start', '/undercover/?r=TEST&lang=en', async (page) => {
   const players = [{ id: PLAYER_ID, name: 'Coverage Player' }, { id: 'other', name: 'Other Player' }, { id: 'third', name: 'Third Player' }];

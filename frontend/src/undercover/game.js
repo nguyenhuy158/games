@@ -3,13 +3,13 @@ import { el, store } from '../dom.js';
 import { t, tx } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
-import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
+import { MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 import { HELP } from './help.js';
 import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results } from './ui.js';
 import { setButtonPending } from '../ui/feedback.mjs';
 import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { seatingRoster, orderedPlayers } from './roster.js';
-import { aiPicker, dealAiPair } from './ai.js';
+import { aiPicker } from './ai.js';
 
 const GAME = 'undercover';
 const GAME_PATH = '/undercover/';
@@ -57,11 +57,10 @@ let currentView = null;
 let pendingOnline = null;
 let guessDraft = '';
 let guessOwner = null;
-let localConfig = { ...DEFAULT_CONFIG };
+const localConfig = { ...DEFAULT_CONFIG };
 let localPlayerCount = MIN_PLAYERS;
 const localHostId = `${LOCAL_ID_PREFIX}1`;
 let localGame = null;
-let localDealing = false;
 let localStep = LOCAL_STEP.SETUP;
 let revealIndex = 0;
 let revealName = '';
@@ -170,69 +169,52 @@ function startLocalSetup() {
   focusMain();
 }
 
-function countSelect(label, min, max, value, change) {
-  const select = el('select', { ariaLabel: label });
-  for (let count = min; count <= max; count++) select.append(el('option', { value: count, textContent: count }));
-  select.value = value;
-  select.addEventListener('change', () => {
-    if (!select.isConnected) return;
-    change(Number(select.value));
-    paintSetup();
-    content.querySelectorAll('select').forEach((control) => {
-      if (control.ariaLabel === label) control.focus();
+function countRow(label, icon, min, max, value, change) {
+  const name = el('span', { className: 'count-label' }, iconEl(icon), label);
+  const number = el('output', { textContent: value, ariaLabel: label, tabIndex: -1 });
+  const step = (delta, glyph, action) => {
+    const control = button(glyph, () => {
+      if (!control.isConnected || control.disabled) return;
+      change(value + delta);
+      paintSetup();
+      const next = [...content.querySelectorAll('.count-controls button')].find((item) => item.ariaLabel === action);
+      if (next.disabled) next.closest('.count-controls').querySelector('output').focus();
+      else next.focus();
     });
-  });
-  return el('label', {}, label, select);
+    control.ariaLabel = action;
+    control.disabled = delta < 0 ? value <= min : value >= max;
+    return control;
+  };
+  return el('div', { className: 'count-row' }, name, el('div', { className: 'count-controls' },
+    step(-1, '−', t(`Giảm ${label}`, `Decrease ${label}`)),
+    number,
+    step(1, '+', t(`Tăng ${label}`, `Increase ${label}`))));
 }
 
 function paintSetup() {
   const roleLimits = limits(localPlayerCount, localConfig.spies);
   content.replaceChildren(el('div', { className: 'setup stack' },
-    el('h2', {}, t('Thiết lập ván', 'Game setup')),
-    el('div', { className: 'local-counts' },
-      countSelect(t('Người chơi', 'Players'), MIN_PLAYERS, MAX_PLAYERS, localPlayerCount, (count) => {
-        localPlayerCount = count;
-        localConfig.spies = Math.min(localConfig.spies, limits(count).spies);
-        localConfig.whites = Math.min(localConfig.whites, limits(count, localConfig.spies).whites);
-      }),
-      countSelect(t('Gián điệp', 'Spies'), DEFAULT_CONFIG.spies, roleLimits.spies, localConfig.spies, (count) => {
-        localConfig.spies = count;
-        localConfig.whites = Math.min(localConfig.whites, limits(localPlayerCount, count).whites);
-      }),
-      countSelect(t('Mũ Trắng', 'Mr. White'), DEFAULT_CONFIG.whites, roleLimits.whites, localConfig.whites, (count) => { localConfig.whites = count; })),
-    button(t('Bắt đầu', 'Start game'), dealLocal, true, 'play'),
-    el('div', { className: 'local-advanced' },
-      localConfig.pack === AI_PACK ? configBadges(localConfig) : '',
-      button(t('Cài đặt nâng cao', 'Advanced settings'), () => settings(localPlayerCount, localConfig, (cfg) => { localConfig = cfg; paintSetup(); }, localAiPicker), false, 'gauge'))));
+    el('div', { className: 'setup-fields stack' },
+      el('h2', {}, t('Thiết lập ván', 'Game setup')),
+      el('div', { className: 'local-counts' },
+        countRow(t('Người chơi', 'Players'), 'users', MIN_PLAYERS, MAX_PLAYERS, localPlayerCount, (count) => {
+          localPlayerCount = count;
+          localConfig.spies = Math.min(localConfig.spies, limits(count).spies);
+          localConfig.whites = Math.min(localConfig.whites, limits(count, localConfig.spies).whites);
+        }),
+        countRow(t('Gián điệp', 'Spies'), 'eye', DEFAULT_CONFIG.spies, roleLimits.spies, localConfig.spies, (count) => {
+          localConfig.spies = count;
+          localConfig.whites = Math.min(localConfig.whites, limits(localPlayerCount, count).whites);
+        }),
+        countRow(t('Mũ Trắng', 'Mr. White'), 'layers', DEFAULT_CONFIG.whites, roleLimits.whites, localConfig.whites, (count) => { localConfig.whites = count; }))),
+    button(t('Bắt đầu', 'Start game'), dealLocal, true, 'play')));
 }
 
-function localAiPicker() {
-  aiPicker(({ packId, title }) => {
-    localConfig = { ...localConfig, pack: AI_PACK, aiPackId: packId, aiTopic: title };
-    if (mode === MODE.LOCAL && localStep === LOCAL_STEP.SETUP) paintSetup();
-  });
-}
-
-async function dealLocal(event) {
-  if (!event.currentTarget.isConnected || localDealing) return;
-  localDealing = true;
-  content.inert = true;
-  backButton.disabled = true;
-  const restore = setButtonPending(content.querySelector('[data-variant="primary"]'), t('Đang chia từ…', 'Dealing…'));
-  try {
-    const pair = localConfig.pack === AI_PACK ? await dealAiPair(localConfig.aiPackId) : undefined;
-    localNamesById.clear();
-    const ids = Array.from({ length: localPlayerCount }, (_, index) => `${LOCAL_ID_PREFIX}${index + 1}`);
-    localGame = createGame(ids, localConfig, random, Date.now(), pair);
-  } catch (error) {
-    notifications.show(TOAST_TONE.ERROR, error.message);
-    return;
-  } finally {
-    restore();
-    localDealing = false;
-    content.inert = false;
-    backButton.disabled = false;
-  }
+function dealLocal(event) {
+  if (!event.currentTarget.isConnected) return;
+  localNamesById.clear();
+  const ids = Array.from({ length: localPlayerCount }, (_, index) => `${LOCAL_ID_PREFIX}${index + 1}`);
+  localGame = createGame(ids, localConfig, random, Date.now());
   localStep = LOCAL_STEP.REVEAL;
   revealIndex = 0;
   revealName = '';
