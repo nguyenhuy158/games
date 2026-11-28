@@ -42,7 +42,6 @@
       color: inherit; text-decoration: none; box-shadow: var(--ui-shadow-sm); transition: transform var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out);
     }
     .game:hover { transform: translateY(-3px); border-color: var(--accent); }
-    .thumb-strip { position: absolute; top: 20%; left: 0; max-width: 100%; height: 60%; object-fit: cover; object-position: left center; }
     .thumb-cover { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
     .thumb { position: relative; height: 120px; border-radius: 10px; background: #0a1724 center / contain no-repeat; }
     /* Nhãn "đang chơi" trên thẻ game: số phòng công khai / người trong đó (cập nhật từ /api/rooms). */
@@ -109,28 +108,9 @@
     #history .score { color: var(--accent); font-weight: 700; }
     footer a { color: inherit; }
     .ic { width: 1.1em; height: 1.1em; vertical-align: -0.18em; }
-    .thumb.cc { background: #fffaf0 linear-gradient(#c9d7e8 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #c9d7e8 1px, transparent 1px) 0 0 / 24px 24px; display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 44px; }
-    .thumb.cc .x { color: #e0312f; } .thumb.cc .o { color: #1f6fd6; } .thumb.cc .ic { stroke-width: 3; }
-    .thumb.nk { background: #c7f0d8; display: grid; place-items: center; }
-    .thumb.nk img { width: 104px; height: 104px; }
     h2.group { width: min(760px, 100%); margin: 8px 0 -8px; display: flex; align-items: center; gap: 8px; }
     .group-sub { width: min(760px, 100%); margin: 0; }
-    .thumb.bc { background: radial-gradient(circle, #c62a2f, #6d0f13); display: grid; grid-template-columns: repeat(3, 44px); justify-content: center; align-content: center; gap: 6px; }
-    .thumb.bc img { width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 0 0 2px #f3d27a; }
     .fun-card li .rank .ic { width: 1.2em; height: 1.2em; }
-    .thumb.c4 { background: #e6eefa; display: grid; place-items: center; }
-    .thumb.c4 div { display: grid; grid-template-columns: repeat(7, 16px); gap: 4px; padding: 8px; border-radius: 10px; background: #2456c9; }
-    .thumb.c4 i { width: 16px; height: 16px; border-radius: 50%; background: #eef3fb; }
-    .thumb.c4 i.r { background: #e0312f; } .thumb.c4 i.y { background: #ffc62e; }
-    .thumb.oq { background: radial-gradient(ellipse, #0000 40%, #2a0d0766), repeating-linear-gradient(#672a1d 0 2px, #0000 2px 20px), repeating-linear-gradient(90deg, #a3472f 0 38px, #672a1d 38px 40px), #a3472f; display: grid; place-items: center; }
-    .thumb.oq svg { width: 88%; height: auto; }
-    .thumb.ct { background: radial-gradient(ellipse, #e8c07d 55%, #c9974e); display: grid; place-items: center; }
-    .thumb.ct svg { width: 90%; height: auto; }
-    .thumb.cg { background: repeating-linear-gradient(90deg, #6b4a27 0 5px, #7a5630 5px 10px); display: grid; place-items: center; }
-    .thumb.cg svg { height: 86%; width: auto; aspect-ratio: 1; border-radius: 10px; background: #d9a766; }
-    .thumb.bt { background: #bfe6e8 radial-gradient(circle, #7cc4c6 2px, transparent 2.5px) 0 0 / 20px 20px; display: grid; place-items: center; }
-    .thumb.bt div { display: grid; grid-template-columns: repeat(6, 18px); gap: 4px; }
-    .thumb.bt i { width: 18px; height: 18px; border-radius: 6px; }
     /* Chơi gần đây: vài game bấm gần nhất (localStorage 'hub.recent'), dạng chip ngang. */
     #recent { width: min(760px, 100%); display: grid; gap: 10px; }
     #recent h2.group { width: auto; margin: 0; }
@@ -143,42 +123,9 @@
       .games { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
       .game { padding: 10px; gap: 6px; }
       .game .thumb { height: 72px; }
-      .thumb.cc { font-size: 30px; gap: 4px; }
       .game > span, .game .tags { display: none; }
       .game b { font-size: 15px; gap: 6px; }
       .game .logo { width: 24px; height: 24px; }
-    }
-    .thumb.bt i.s { background: #e8716f; } .thumb.bt i.t { background: #7c83d6; } .thumb.bt i.h { background: #5a6b78; box-shadow: inset 0 0 0 5px #5a6b78, inset 0 0 0 9px #e0312f; }
-    /* Thumb game một người (2048, Xếp gạch, Sudoku) và Lô tô: vẽ bằng CSS. */
-    .thumb.k2 { background: #faf8ef; display: grid; place-items: center; }
-    .thumb.k2 div { display: grid; grid-template-columns: repeat(4, 24px); grid-auto-rows: 24px; gap: 4px; padding: 5px; border-radius: 8px; background: #bbada0; }
-    .thumb.k2 i { border-radius: 5px; background: #cdc1b4; display: grid; place-items: center; font: 800 11px/1 inherit; font-style: normal; color: #776e65; }
-    .thumb.k2 .a { background: #eee4da; } .thumb.k2 .b { background: #ede0c8; } .thumb.k2 .c { background: #f2b179; color: #fff; } .thumb.k2 .d { background: #f65e3b; color: #fff; } .thumb.k2 .e { background: #edc22e; color: #fff; font-size: 8px; }
-    .thumb.tt { background: #070d14; display: grid; place-items: center; }
-    .thumb.tt div { display: grid; grid-template-columns: repeat(10, 11px); grid-auto-rows: 11px; gap: 1px; }
-    .thumb.tt i { border-radius: 2px; }
-    .thumb.tt .I { background: #22d3ee; } .thumb.tt .J { background: #3b82f6; } .thumb.tt .L { background: #f97316; } .thumb.tt .O { background: #facc15; } .thumb.tt .S { background: #22c55e; } .thumb.tt .T { background: #a855f7; } .thumb.tt .Z { background: #ef4444; }
-    .thumb.sd { background: #e9f7ef; display: grid; place-items: center; }
-    .thumb.sd div { display: grid; grid-template-columns: repeat(3, 30px); grid-auto-rows: 30px; border: 3px solid #1d2733; background: #fff; }
-    .thumb.sd i { display: grid; place-items: center; border: 1px solid #c7d3df; font: 800 17px/1 inherit; font-style: normal; color: #1d2733; }
-    .thumb.sd i.u { color: #2f7fe0; } .thumb.sd i.s { background: #cfe4ff; }
-    .thumb.lt { background: radial-gradient(circle at 50% 0%, #b3261e, #5a0f12); display: grid; place-items: center; }
-    .thumb.lt div { display: grid; grid-template-columns: repeat(9, 22px); grid-auto-rows: 22px; border: 3px solid #3a1a10; border-radius: 6px; background: #fff1cf; overflow: hidden; }
-    .thumb.lt i { display: grid; place-items: center; border: 1px solid #c9a978; font: 800 10px/1 inherit; font-style: normal; color: #3a1a10; background: #fffaf0; }
-    .thumb.lt i:empty { background: repeating-linear-gradient(45deg, #e9c98f 0 3px, #f3dcae 3px 6px); }
-    .thumb.lt i.x { background: #2e9e5b; color: #fff; }
-    @media (max-width: 560px) {
-      .thumb.lt div { grid-template-columns: repeat(9, 14px); grid-auto-rows: 14px; border-width: 2px; }
-      .thumb.lt i { font-size: 7px; }
-      .thumb.nk img { width: 60px; height: 60px; }
-      .thumb.bc { grid-template-columns: repeat(3, 28px); gap: 4px; }
-      .thumb.bc img { width: 28px; height: 28px; }
-      .thumb.k2 div { grid-template-columns: repeat(4, 13px); grid-auto-rows: 13px; gap: 2px; padding: 3px; border-radius: 5px; }
-      .thumb.k2 i { border-radius: 3px; font-size: 6px; }
-      .thumb.k2 .e { font-size: 4px; }
-      .thumb.sd div { grid-template-columns: repeat(3, 20px); grid-auto-rows: 20px; border-width: 2px; }
-      .thumb.sd i { font-size: 12px; }
-      .thumb.ct svg { max-height: 100%; }
     }
     /* Màn hẹp: nút đăng nhập nằm trong luồng (hàng riêng) thay vì đè lên tiêu đề. */
     #account a, .btn, .seg button, .recent a { transition: background-color var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out), transform var(--ui-dur-fast) var(--ui-ease-out); }
@@ -227,37 +174,37 @@
   <h2 class="group"><i data-icon="swords"></i> <span data-en="Board &amp; duel">Cờ &amp; đối kháng</span></h2>
   <div class="games">
     <a class="game" href="/co-caro/">
-      <div class="thumb cc"><span class="x"><i data-icon="x"></i></span><span class="o"><i data-icon="circle"></i></span><span class="x"><i data-icon="x"></i></span></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/co-caro.webp" decoding="async" alt=""></div>
       <b><img class="logo" src="/logos/co-caro.svg" alt=""> <span data-en="Gomoku">Cờ caro</span></b>
       <span><span data-en="Five in a row wins, or tic-tac-toe 3×3. Play 1v1 with friends or vs the bot.">Nối 5 quân là thắng, hoặc XO 3×3 nối 3. Đấu 1v1 với bạn bè hoặc với máy.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Tic-tac-toe">XO 3×3</span></i><i><span data-en="Blocked ends">Chặn 2 đầu</span></i></div>
     </a>
     <a class="game" href="/noi-4/">
-      <div class="thumb c4"><div><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="r"></i><i></i><i></i><i></i><i></i><i></i><i class="y"></i><i class="r"></i><i class="y"></i><i></i><i></i></div></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/noi-4.webp" decoding="async" alt=""></div>
       <b><img class="logo" src="/logos/noi-4.svg" alt=""> <span data-en="Connect 4">Nối 4</span></b>
       <span><span data-en="Drop discs into columns; 4 in a row horizontally, vertically or diagonally wins.">Thả quân vào cột, nối 4 quân liền ngang, dọc hoặc chéo là thắng.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Connect 4</i></div>
     </a>
     <a class="game" href="/ban-tau/">
-      <div class="thumb bt"><div><i class="s"></i><i class="s"></i><i class="h"></i><i class="s"></i><i></i><i class="t"></i><i></i><i></i><i></i><i></i><i></i><i class="t"></i></div></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/ban-tau.webp" decoding="async" alt=""></div>
       <b><img class="logo" src="/logos/ban-tau.svg" alt=""> <span data-en="Battleship">Bắn tàu</span></b>
       <span><span data-en="Hide 5 ships and take turns firing at the enemy sea. Sink their whole fleet to win.">Giấu 5 chiếc tàu, thay phiên bắn vào biển đối thủ. Chìm hết tàu bên kia là thắng.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Battleship</i></div>
     </a>
     <a class="game" href="/o-an-quan/">
-      <div class="thumb oq"><svg viewBox="-8 -8 716 216" aria-hidden="true"><path d="M100 0H600V200H100Z M100 100H600 M200 0V200 M300 0V200 M400 0V200 M500 0V200 M100 0A100 100 0 0 0 100 200 M600 0A100 100 0 0 1 600 200" fill="none" stroke="#f6f1e4" stroke-width="7" stroke-linecap="round"/><g stroke="#2a0d07" stroke-width="2"><circle cx="140" cy="40" r="15" fill="#d9d3c4"/><circle cx="155" cy="55" r="15" fill="#8f8b83"/><circle cx="245" cy="48" r="15" fill="#ebe5d6"/><circle cx="330" cy="145" r="15" fill="#a8957c"/><circle cx="345" cy="160" r="15" fill="#d9d3c4"/><circle cx="445" cy="150" r="15" fill="#b8b0a0"/><circle cx="150" cy="150" r="15" fill="#ebe5d6"/><circle cx="250" cy="140" r="15" fill="#75706a"/><circle cx="440" cy="45" r="15" fill="#c9b99c"/><circle cx="430" cy="60" r="15" fill="#d9d3c4"/></g><circle cx="60" cy="100" r="42" fill="#3d434c"/><circle cx="640" cy="100" r="42" fill="#3d434c"/></svg></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/o-an-quan.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/o-an-quan.svg" alt=""> <span data-en="O An Quan">Ô ăn quan</span></b>
       <span><span data-en="Sow pebbles and capture pieces to finish with the most points.">Rải sỏi và thu quân để có nhiều điểm nhất khi hết ván.</span></span>
       <div class="tags"><i><span data-en="2–5 players">2–5 người</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
     </a>
     <a class="game" href="/co-tuong/">
-      <div class="thumb ct"><svg viewBox="-40 -40 880 480" aria-hidden="true"><path d="M0 0H800M0 100H800M0 200H800M0 300H800M0 400H800M0 0V400M800 0V400M100 0V200M200 0V200M300 0V200M400 0V200M500 0V200M600 0V200M700 0V200M100 300V400M200 300V400M300 300V400M400 300V400M500 300V400M600 300V400M700 300V400" fill="none" stroke="#4a2a14" stroke-width="7"/><g font-family="Songti SC, Noto Serif SC, serif" font-weight="700" font-size="46" text-anchor="middle"><g fill="#f2dfb8" stroke="#7a5530" stroke-width="3"><circle cx="100" cy="100" r="40"/><circle cx="400" cy="0" r="40"/><circle cx="600" cy="100" r="40"/><circle cx="400" cy="300" r="40"/><circle cx="200" cy="400" r="40"/><circle cx="700" cy="300" r="40"/></g><text x="100" y="116" fill="#1d1f24">砲</text><text x="400" y="16" fill="#1d1f24">將</text><text x="600" y="116" fill="#1d1f24">馬</text><text x="400" y="316" fill="#c0281a">炮</text><text x="200" y="416" fill="#c0281a">俥</text><text x="700" y="316" fill="#c0281a">兵</text></g></svg></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/co-tuong.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/co-tuong.svg" alt=""> <span data-en="Xiangqi">Cờ tướng</span></b>
       <span><span data-en="Move your pieces to checkmate the opposing general.">Di chuyển quân để chiếu bí tướng đối phương.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Xiangqi</i></div>
     </a>
     <a class="game" href="/co-ganh/">
-      <div class="thumb cg"><svg viewBox="-60 -60 520 520" aria-hidden="true"><path d="M0 0H400M0 100H400M0 200H400M0 300H400M0 400H400M0 0V400M100 0V400M200 0V400M300 0V400M400 0V400M0 0L400 400M400 0L0 400M200 0L400 200L200 400L0 200Z" fill="none" stroke="#3a2412" stroke-width="9" stroke-linecap="round"/><g stroke="#fff8" stroke-width="5"><circle cx="0" cy="0" r="30" fill="#2b3038"/><circle cx="100" cy="0" r="30" fill="#2b3038"/><circle cx="300" cy="0" r="30" fill="#2b3038"/><circle cx="400" cy="0" r="30" fill="#2b3038"/><circle cx="0" cy="100" r="30" fill="#2b3038"/><circle cx="200" cy="100" r="30" fill="#2b3038"/><circle cx="0" cy="200" r="30" fill="#2b3038"/><circle cx="100" cy="200" r="30" fill="#c8321c"/><circle cx="300" cy="200" r="30" fill="#c8321c"/><circle cx="400" cy="300" r="30" fill="#c8321c"/><circle cx="0" cy="400" r="30" fill="#c8321c"/><circle cx="200" cy="400" r="30" fill="#c8321c"/><circle cx="400" cy="400" r="30" fill="#c8321c"/></g></svg></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/co-ganh.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/co-ganh.svg" alt=""> <span data-en="Co Ganh">Cờ gánh</span></b>
       <span><span data-en="Move between two opposing pieces or surround a group to turn them into your own.">Xen giữa hai quân đối phương hoặc vây kín một nhóm để đổi chúng thành quân mình.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
@@ -266,43 +213,43 @@
   <h2 class="group"><i data-icon="users"></i> <span data-en="Party games">Chơi đông người</span></h2>
   <div class="games">
     <a class="game" href="/pikachu/">
-      <div class="thumb"><img class="thumb-strip" data-preview-src="pikachu/images/thumb.webp" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/pikachu.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/pikachu.svg" alt=""> <span data-en="Pikachu Onet">Pikachu nối thú</span></b>
       <span><span data-en="Clear the board by linking matching tiles with up to three straight segments.">Dọn bàn bằng cách nối từng cặp hình giống nhau bằng tối đa ba đoạn thẳng.</span></span>
       <div class="tags"><i><span data-en="Multiplayer">Nhiều người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i><span data-en="Race">Đua</span></i><i><span data-en="Team 2v2">Đội 2v2</span></i></div>
     </a>
     <a class="game" href="/do-min/">
-      <div class="thumb" style="background:linear-gradient(135deg,#b9c8e6,#8fa3c7);display:flex;justify-content:center;align-items:center;gap:12px;font-size:48px"><span style="color:#1b2233"><i data-icon="bomb"></i></span><span style="color:#e0312f"><i data-icon="flag"></i></span></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/do-min.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/do-min.svg" alt=""> <span data-en="Minesweeper">Dò mìn</span></b>
       <span><span data-en="Use the numbers as clues to uncover every safe square while avoiding mines.">Dựa vào các con số để mở hết ô an toàn mà tránh mìn.</span></span>
       <div class="tags"><i><span data-en="Multiplayer">Nhiều người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i></div>
     </a>
     <a class="game" href="/bau-cua/">
-      <div class="thumb bc"><img data-preview-src="bau-cua/assets/nai.webp" alt=""><img data-preview-src="bau-cua/assets/bau.webp" alt=""><img data-preview-src="bau-cua/assets/ga.webp" alt=""><img data-preview-src="bau-cua/assets/ca.webp" alt=""><img data-preview-src="bau-cua/assets/cua.webp" alt=""><img data-preview-src="bau-cua/assets/tom.webp" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/bau-cua.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/bau-cua.svg" alt=""> <span data-en="Bau Cua">Bầu cua</span></b>
       <span><span data-en="Bet virtual coins on the animals you think will appear on the three dice.">Đặt xu ảo vào con vật bạn đoán sẽ xuất hiện trên ba viên xúc xắc.</span></span>
       <div class="tags"><i><span data-en="2–10 players">2–10 người</span></i><i><span data-en="Dealer">Làm cái</span></i><i><span data-en="Virtual coins">Xu ảo</span></i></div>
     </a>
     <a class="game" href="/dao-vang/">
-      <div class="thumb"><img class="thumb-cover" data-preview-src="dao-vang/assets/bg2.jpg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/dao-vang.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/dao-vang.svg" alt=""> <span data-en="Gold Miner">Đào Vàng</span></b>
       <span><span data-en="Swing the claw to grab gold and diamonds. Hit the target before time runs out.">Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span></span>
       <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Shared mine">Chung mỏ</span></i><i><span data-en="Gold rush">Tranh vàng</span></i><i><span data-en="Shop">Tiệm đồ</span></i></div>
     </a>
     <a class="game" href="/loto/">
-      <div class="thumb lt"><div><i>3</i><i></i><i class="x">24</i><i></i><i>41</i><i class="x">55</i><i></i><i>72</i><i></i><i></i><i class="x">17</i><i></i><i>36</i><i></i><i>58</i><i></i><i class="x">79</i><i>86</i><i>8</i><i></i><i>29</i><i class="x">38</i><i></i><i></i><i>63</i><i></i><i class="x">90</i></div></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/loto.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/loto.svg" alt=""> <span data-en="Lo To">Lô tô</span></b>
       <span><span data-en="Mark the numbers the host calls and shout KINH when all five numbers in a row are marked.">Dò số chủ phòng gọi và hô KINH khi đủ năm số trên một hàng.</span></span>
       <div class="tags"><i><span data-en="1–12 players">1–12 người</span></i><i><span data-en="Host calls">Chủ phòng gọi số</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
     </a>
     <a class="game" href="/soi/">
-      <div class="thumb nk" style="background:#1d2a4d"><img loading="lazy" src="/logos/soi.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/soi.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/soi.svg" alt=""> <span data-en="Werewolf">Sói</span></b>
       <span><span data-en="Play face to face: the Wolf quietly winks players out while the villagers try to identify the Wolf.">Chơi trực tiếp cùng nhóm: Sói bí mật nháy mắt loại dân, còn dân tìm ra Sói.</span></span>
       <div class="tags"><i><span data-en="3–12 players">3–12 người</span></i><i><span data-en="Secret roles">Vai bí mật</span></i><i><span data-en="Party game">Chơi nhóm</span></i></div>
     </a>
     <a class="game" href="/undercover/">
-      <div class="thumb nk"><img loading="lazy" src="/logos/undercover.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/undercover.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/undercover.svg" alt=""> <span data-en="Undercover">Ai là gián điệp</span></b>
       <span data-en="Most players get the same word, while the spies get a similar one. Take turns giving clues, then vote to find the spies.">Đa số nhận cùng một từ, còn gián điệp nhận từ tương tự. Lần lượt đưa gợi ý rồi bỏ phiếu tìm gián điệp.</span>
       <div class="tags"><i data-en="3–20 players">3–20 người</i><i data-en="Two modes">Hai chế độ</i><i data-en="Mr. White">Mũ Trắng</i></div>
@@ -311,19 +258,19 @@
   <h2 class="group"><i data-icon="puzzle"></i> <span data-en="Puzzles &amp; solo">Giải đố &amp; một mình</span></h2>
   <div class="games">
     <a class="game" href="/2048/">
-      <div class="thumb k2"><div><i class="a">2</i><i></i><i class="b">4</i><i></i><i></i><i class="c">8</i><i></i><i class="a">2</i><i class="b">4</i><i></i><i class="d">64</i><i></i><i class="c">8</i><i class="d">64</i><i></i><i class="e">2048</i></div></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/2048.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/2048.svg" alt=""> 2048</b>
       <span><span data-en="Slide the tiles and join equal numbers to reach 2048. Save your score to the leaderboard.">Trượt các ô, ghép số giống nhau để đạt 2048. Lưu điểm lên bảng xếp hạng.</span></span>
       <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="Leaderboard">Bảng xếp hạng</span></i><i><span data-en="Swipe">Vuốt</span></i></div>
     </a>
     <a class="game" href="/tetris/">
-      <div class="thumb tt"><div><i></i><i></i><i></i><i class="T"></i><i class="T"></i><i class="T"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="T"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="I"></i><i class="L"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="Z"></i><i class="Z"></i><i class="I"></i><i class="L"></i><i class="O"></i><i class="O"></i><i class="S"></i><i class="S"></i><i class="J"></i><i></i><i class="Z"></i><i class="Z"></i><i class="I"></i><i class="L"></i><i class="L"></i><i class="O"></i><i class="O"></i><i class="S"></i><i class="S"></i><i class="J"></i><i class="J"></i><i class="J"></i><i class="I"></i></div></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/tetris.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/tetris.svg" alt=""> <span data-en="Tetris">Xếp gạch</span></b>
       <span><span data-en="Stack the falling blocks and clear full lines. Keep your best score.">Xếp các khối rơi, lấp kín hàng để xoá. Lưu kỷ lục trên máy.</span></span>
       <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="Classic">Cổ điển</span></i><i><span data-en="Swipe">Vuốt</span></i></div>
     </a>
     <a class="game" href="/sudoku/">
-      <div class="thumb sd"><div><i>5</i><i class="u">3</i><i></i><i class="s">6</i><i>7</i><i></i><i></i><i class="u">9</i><i>8</i></div></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/sudoku.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/sudoku.svg" alt=""> Sudoku</b>
       <span><span data-en="Fill the grid so each row, column, and 3×3 box contains the digits 1–9 exactly once.">Điền số 1–9 sao cho mỗi hàng, mỗi cột và mỗi ô vuông 3×3 đều đủ chín số, không trùng nhau.</span></span>
       <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="3 levels">3 mức</span></i><i><span data-en="Notes">Ghi chú</span></i></div>
@@ -333,43 +280,43 @@
   <p class="sub group-sub"><span data-en="Old-school Nokia phone games, green LCD, 2-4-6-8 keys — now multiplayer.">Game điện thoại Nokia ngày xưa, màn LCD xanh, bấm 2-4-6-8 — chơi nhiều người được.</span></p>
   <div class="games" id="nokia">
     <a class="game" href="/nokia/snake/">
-      <div class="thumb nk"><img loading="lazy" src="/logos/snake.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/snake.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/snake.svg" alt=""> <span data-en="Snake">Rắn săn mồi</span></b>
       <span><span data-en="Steer your snake to eat, grow, and score without crashing into walls or snakes.">Lái rắn ăn mồi để dài ra và ghi điểm, tránh đâm vào tường hay thân rắn.</span></span>
       <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Arena">Đấu trường</span></i><i>Nokia 3310</i></div>
     </a>
     <a class="game" href="/nokia/bantumi/">
-      <div class="thumb nk"><img loading="lazy" src="/logos/bantumi.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/bantumi.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/bantumi.svg" alt=""> Bantumi</b>
       <span><span data-en="Take turns sowing seeds around the board to collect more in your store than your opponent.">Lần lượt rải sỏi quanh bàn để gom nhiều sỏi vào kho hơn đối thủ.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Nokia 3310</i></div>
     </a>
     <a class="game" href="/nokia/pairs/">
-      <div class="thumb nk"><img loading="lazy" src="/logos/pairs.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/pairs.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/pairs.svg" alt=""> <span data-en="Pairs">Lật hình</span></b>
       <span><span data-en="Pairs II: flip 2 cards to find a match. Take turns; most pairs wins.">Pairs II: lật 2 lá tìm cặp. Cả nhóm thay phiên, ai nhiều cặp nhất thắng.</span></span>
       <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Memory">Trí nhớ</span></i><i>Nokia 3310</i></div>
     </a>
     <a class="game" href="/nokia/logic/">
-      <div class="thumb nk"><img loading="lazy" src="/logos/logic.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/logic.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/logic.svg" alt=""> Logic</b>
       <span><span data-en="Use the feedback after each guess to crack the secret four-shape code.">Dựa vào phản hồi sau mỗi lượt để đoán đúng mã bí mật gồm bốn hình.</span></span>
       <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i><i>Nokia 3210</i></div>
     </a>
     <a class="game" href="/nokia/rapid-roll/">
-      <div class="thumb nk"><img loading="lazy" src="/logos/rapid-roll.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/rapid-roll.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/rapid-roll.svg" alt=""> Rapid Roll</b>
       <span><span data-en="Roll the ball down the platforms, dodge spikes, and survive as far as you can.">Lăn bóng xuống các bệ, tránh gai và cố trụ xa nhất.</span></span>
       <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i><i>Nokia 1110i</i></div>
     </a>
     <a class="game" href="/nokia/space-impact/">
-      <div class="thumb nk"><img loading="lazy" src="/logos/space-impact.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/space-impact.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/space-impact.svg" alt=""> Space Impact</b>
       <span><span data-en="Blast space aliens and beat the boss. Up to 4 ships co-op.">Bắn quái vũ trụ, hạ trùm cuối màn. Tối đa 4 phi thuyền chơi chung.</span></span>
       <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i>Nokia 3310</i></div>
     </a>
     <a class="game" href="/nokia/bounce/">
-      <div class="thumb nk"><img loading="lazy" src="/logos/bounce.svg" alt=""></div>
+      <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/bounce.webp" decoding="async" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/bounce.svg" alt=""> Bounce</b>
       <span><span data-en="Guide the ball through every ring, then reach the exit to clear the level.">Điều khiển bóng qua mọi vòng rồi tới cửa đích để qua màn.</span></span>
       <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-level race">Đua cùng màn</span></i><i>Nokia 6600</i></div>
