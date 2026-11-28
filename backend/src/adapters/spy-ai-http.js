@@ -1,3 +1,4 @@
+import { roomStorageKey } from '../../../shared/page-routes.js';
 import { AI_ACTION, AI_ERROR, AI_GAME, AI_INSTANCE, aiFailure, normalizeAiTopic } from '../application/spy-ai.js';
 
 const ROOM_CODE = /^[A-Z0-9]{4}$/;
@@ -8,7 +9,6 @@ const FIELDS = {
   [AI_ACTION.GENERATE]: new Set(['action', 'topic', 'room', 'deviceId']),
   [AI_ACTION.DEAL]: new Set(['action', 'packId']),
 };
-const ROOM_SEPARATOR = ':';
 
 export async function routeAi(body, env, owner) {
   if (typeof body.action !== 'string') return aiFailure(AI_ERROR.REQUEST);
@@ -21,7 +21,7 @@ export async function routeAi(body, env, owner) {
       if (online) {
         if (typeof body.room !== 'string' || !ROOM_CODE.test(body.room) || typeof body.deviceId !== 'string' || !DEVICE_ID.test(body.deviceId)) return aiFailure(AI_ERROR.REQUEST);
         if (!env.NOKIA) return aiFailure(AI_ERROR.UNAVAILABLE);
-        return await env.NOKIA.get(env.NOKIA.idFromName(AI_GAME + ROOM_SEPARATOR + body.room)).generateSpyAi(topic, body.deviceId, owner);
+        return await env.NOKIA.get(env.NOKIA.idFromName(roomStorageKey(AI_GAME, body.room))).generateSpyAi(topic, body.deviceId, owner);
       }
     }
     if (body.action === AI_ACTION.DEAL && (typeof body.packId !== 'string' || !PACK_ID.test(body.packId))) return aiFailure(AI_ERROR.REQUEST);

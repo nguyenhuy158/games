@@ -20,7 +20,7 @@ const JSON_TYPE = 'application/json';
 const HTTP_OK = 200;
 const HTTP_DENIED = 403;
 const HTTP_UNAVAILABLE = 503;
-const GAME_IDS = ['2048', 'tetris', 'sudoku', 'gian-diep', 'gian-diep-guide', 'loto', 'soi'];
+const GAME_IDS = ['2048', 'tetris', 'sudoku', 'undercover', 'undercover-guide', 'loto', 'soi'];
 const browser = await chromium.launch({ executablePath: findChromium() });
 const failures = [];
 let passed = 0;
@@ -388,7 +388,7 @@ await scenario('history preparation failure preserves solo start controls', '/te
   await page.waitForFunction(() => document.querySelector('#ovStart').hidden);
 }, { api: (url, _request, requests) => url.pathname === '/api/me' && requests.filter((entry) => entry.path === '/api/me').length === 1 ? { status: HTTP_UNAVAILABLE, body: '{}' } : null });
 
-await scenario('spy local roster, settings, privacy and final results', '/gian-diep/?lang=en', async (page) => {
+await scenario('spy local roster, settings, privacy and final results', '/undercover/?lang=en', async (page) => {
   await clickName(page, 'Pass one device');
   const names = page.getByRole('textbox', { name: 'Player names, one per line' });
   for (const [value, error] of [['', 'cannot be empty'], ['Ada\nAda', 'Duplicate'], ['x'.repeat(100), 'characters'], [Array.from({ length: 21 }, (_, i) => `Person ${i}`).join('\n'), 'Up to 20']]) {
@@ -492,12 +492,12 @@ for (const language of ['en', 'vi']) {
   await scenario(`spy AI success, denial, abort and form validation (${language})`, `${HARNESS_PATH}?lang=${language}`, async (page, requests) => {
     const labels = language === 'en' ? { suggest: 'Suggest topics', generate: 'Create secret pack', close: 'Close' } : { suggest: 'Gợi ý chủ đề', generate: 'Tạo bộ từ bí mật', close: 'Đóng' };
     await page.evaluate(async () => {
-      const { aiPicker } = await import('/gian-diep/ai.js');
+      const { aiPicker } = await import('/undercover/ai.js');
       window.openAi = () => aiPicker((result) => { document.querySelector('#fixture').textContent = `${result.packId}:${result.title}`; }, { room: 'TEST', deviceId: 'coverage-player' });
       window.openAi();
     });
     await clickName(page, labels.generate);
-    assert.equal(requests.filter(({ path }) => path === '/api/gian-diep/ai').length, 0);
+    assert.equal(requests.filter(({ path }) => path === '/api/undercover/ai').length, 0);
     await clickName(page, labels.suggest);
     await textIncludes(page, 'dialog [role="status"]', language === 'en' ? 'Denied topic' : 'Từ chối chủ đề');
     await clickName(page, labels.suggest);
@@ -507,7 +507,7 @@ for (const language of ['en', 'vi']) {
     await textIncludes(page, '#fixture', 'aaaaaaaaaaaaaaaa:Street food');
     assert.equal(requests.at(-1).body.topic, 'Street food');
     assert.equal(requests.at(-1).body.room, 'TEST');
-    const pair = await page.evaluate(async () => (await import('/gian-diep/ai.js')).dealAiPair('aaaaaaaaaaaaaaaa'));
+    const pair = await page.evaluate(async () => (await import('/undercover/ai.js')).dealAiPair('aaaaaaaaaaaaaaaa'));
     assert.deepEqual(pair, ['Phở', 'Bún']);
     await page.evaluate(() => window.openAi());
     await page.locator('dialog input').fill('Unavailable');
@@ -517,7 +517,7 @@ for (const language of ['en', 'vi']) {
     await page.evaluate(async () => {
       const original = window.fetch;
       window.fetch = async (url, options) => {
-        if (String(url).includes('/api/gian-diep/ai')) throw new DOMException('Timed out', 'TimeoutError');
+        if (String(url).includes('/api/undercover/ai')) throw new DOMException('Timed out', 'TimeoutError');
         return original(url, options);
       };
       window.openAi();
@@ -539,7 +539,7 @@ for (const language of ['en', 'vi']) {
     await page.waitForFunction(() => window.aiRequestAborted);
     assert.equal(await page.locator('dialog.spy-dialog').count(), 0);
   }, { api: (url, request, requests) => {
-    if (url.pathname !== '/api/gian-diep/ai') return null;
+    if (url.pathname !== '/api/undercover/ai') return null;
     const body = request.postDataJSON();
     if (body.action === 'topics') {
       const count = requests.filter((entry) => entry.body?.action === 'topics').length;
@@ -553,8 +553,8 @@ for (const language of ['en', 'vi']) {
 
 await scenario('spy UI accepts invalid setup input safely and renders ordered rosters', `${HARNESS_PATH}?lang=en`, async (page) => {
   const result = await page.evaluate(async () => {
-    const ui = await import('/gian-diep/ui.js');
-    const roster = await import('/gian-diep/roster.js');
+    const ui = await import('/undercover/ui.js');
+    const roster = await import('/undercover/roster.js');
     const { DEFAULT_CONFIG } = await import('/shared/games/gian-diep/logic.js');
     const root = document.querySelector('#fixture');
     const players = [{ id: 'a', name: 'Ada' }, { id: 'b', name: 'Binh' }, { id: 'c', name: 'Chi' }];
@@ -965,7 +965,7 @@ for (const language of ['en', 'vi']) {
   } });
 }
 
-await scenario('spy online phase privacy, voting, guessing, timeout and results', '/gian-diep/?r=TEST&lang=en', async (page) => {
+await scenario('spy online phase privacy, voting, guessing, timeout and results', '/undercover/?r=TEST&lang=en', async (page) => {
   await page.waitForFunction(() => window.coverageTransport.sockets.length > 0);
   const players = [{ id: PLAYER_ID, name: 'Coverage Player' }, { id: 'other', name: 'Other Player' }, { id: 'third', name: 'Third Player' }, { id: 'fourth', name: 'Fourth Player' }, { id: 'fifth', name: 'Fifth Player' }, { id: 'sixth', name: 'Sixth Player' }];
   const seats = players.map((player) => player.id);
@@ -1099,7 +1099,7 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await clickName(page, 'One device each');
   assert.equal(await page.locator('#home').isVisible(), true);
 }, { protocol: true, clock: true, api: async (url, _request, _requests, page) => {
-  if (url.pathname !== '/api/gian-diep/ai') return null;
+  if (url.pathname !== '/api/undercover/ai') return null;
   const pack = { packId: 'aaaaaaaaaaaaaaaa', title: 'Food' };
   await page.evaluate((pack) => {
     const current = window.coverageTransport.state;
@@ -1128,7 +1128,7 @@ await scenario('tetris clears actual rows and stores difficulty-specific records
   assert.equal(await page.locator('#cells .blk').count(), 4);
 }, { clock: true, storage: { 'tetris.level': 'hard' }, init: () => { Math.random = () => 0.5; } });
 
-await scenario('spy local secret ballot tie and runoff reach a real winner', '/gian-diep/?lang=en', async (page) => {
+await scenario('spy local secret ballot tie and runoff reach a real winner', '/undercover/?lang=en', async (page) => {
   await clickName(page, 'Pass one device');
   await clickName(page, 'Deal secret words');
   const cards = [];
@@ -1215,7 +1215,7 @@ await scenario('penalty settings validate restored lists and edit defaults', `${
   assert.deepEqual(await page.evaluate(() => window.penaltyUpdates.slice(-4).map((change) => change.penalty)), ['off', 'game', 'party', 'both']);
 }, { storage: { 'loto.party': '{bad-json' } });
 
-await scenario('spy local AI denial restores setup and valid deal keeps words private', '/gian-diep/?lang=en', async (page) => {
+await scenario('spy local AI denial restores setup and valid deal keeps words private', '/undercover/?lang=en', async (page) => {
   await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true })));
   await clickName(page, 'Read the rules');
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
@@ -1240,7 +1240,7 @@ await scenario('spy local AI denial restores setup and valid deal keeps words pr
   await clickName(page, 'Reveal card');
   assert(['Phở', 'Bún'].includes(await page.locator('.secret-word').textContent()));
   assert.equal(await page.evaluate(() => !window.dispatchEvent(new Event('beforeunload', { cancelable: true }))), true);
-  await page.locator('[data-help="gian-diep-guide"]').click();
+  await page.locator('[data-help="undercover-guide"]').click();
   assert.equal(await page.locator('.secret-word').count(), 0);
   await clickName(page, 'Got it', page.locator('.help-dlg'));
   await clickName(page, 'Reveal card');
@@ -1250,7 +1250,7 @@ await scenario('spy local AI denial restores setup and valid deal keeps words pr
   await clickName(page, 'Confirm', page.locator('dialog.spy-dialog[open]'));
   assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
 }, { api: (url, request, requests) => {
-  if (url.pathname !== '/api/gian-diep/ai') return null;
+  if (url.pathname !== '/api/undercover/ai') return null;
   if (request.postDataJSON().action === 'deal') {
     const attempts = requests.filter(({ body }) => body?.action === 'deal').length;
     return attempts === 1 ? { status: HTTP_DENIED, body: JSON.stringify({ msg: ['Không được chia', 'Deal denied'] }) } : { body: JSON.stringify({ pair: ['Phở', 'Bún'] }) };
@@ -1367,7 +1367,7 @@ await scenario('sudoku failed reset preserves board and retry completes reset', 
 
 await scenario('spy AI ignores duplicate submissions and late response after close', `${HARNESS_PATH}?lang=en`, async (page) => {
   await page.evaluate(async () => {
-    const { aiPicker } = await import('/gian-diep/ai.js');
+    const { aiPicker } = await import('/undercover/ai.js');
     window.aiRequests = [];
     window.fetch = (_url, options) => {
       window.aiRequests.push(JSON.parse(options.body));
@@ -1412,7 +1412,7 @@ for (const language of ['vi', 'en']) {
   }, { clock: true, protocol: true, init: () => Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: undefined }), storage: { 'loto.music': '0', 'loto.voice': language } });
 }
 
-await scenario('spy invalid setup disables dealing and back restores home', '/gian-diep/?lang=en', async (page) => {
+await scenario('spy invalid setup disables dealing and back restores home', '/undercover/?lang=en', async (page) => {
   assert.equal(await page.getByRole('button', { name: 'Light mode', exact: true }).isVisible(), true);
   await clickName(page, 'Pass one device');
   await clickName(page, 'Remove Player 3');
@@ -1437,7 +1437,7 @@ await scenario('spy invalid setup disables dealing and back restores home', '/gi
 
 await scenario('spy seating restores focus across ordered room updates', `${HARNESS_PATH}?lang=en`, async (page) => {
   await page.evaluate(async () => {
-    const { seatingRoster } = await import('/gian-diep/roster.js');
+    const { seatingRoster } = await import('/undercover/roster.js');
     const root = document.querySelector('#fixture');
     const players = [{ id: 'ada', name: 'Ada' }, { id: 'binh', name: 'Binh' }, { id: 'chi', name: 'Chi' }];
     window.drawSeating = (next, editable = true) => root.replaceChildren(seatingRoster(next, 'ada', editable ? (ordered) => window.drawSeating(ordered) : null, () => 0));
@@ -1527,7 +1527,7 @@ await scenario('2048 legal high-value merges keep rendering beyond the winning t
   assert.equal(await page.locator('#over').isVisible(), false);
 }, { init: () => { Math.random = () => 0; } });
 
-await scenario('spy imported replay handles unknown phases and empty private cards', '/gian-diep/?r=TEST&replay=spy-legacy&lang=en', async (page) => {
+await scenario('spy imported replay handles unknown phases and empty private cards', '/undercover/?r=TEST&replay=spy-legacy&lang=en', async (page) => {
   await textIncludes(page, '.rp-tag', 'Replay');
   await page.waitForSelector('.phase-panel');
   assert.equal(await page.locator('.phase-panel > .sub').textContent(), '');
@@ -1541,7 +1541,7 @@ await scenario('spy imported replay handles unknown phases and empty private car
   await page.clock.runFor(1);
   await page.waitForFunction(() => document.querySelector('.board-stage').hidden);
   await page.locator('#room header > button').first().click();
-  await page.waitForURL(new URL('/gian-diep/', BASE).href);
+  await page.waitForURL(new URL('/undercover/', BASE).href);
   assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
 }, { clock: true, api: (url) => {
   if (url.pathname !== '/api/replay/spy-legacy') return null;
@@ -1549,7 +1549,7 @@ await scenario('spy imported replay handles unknown phases and empty private car
   const cfg = { spies: 1, whites: 0, seconds: 5, pack: 'food' };
   const view = { phase: 'archived-phase', deadline: null, round: 1, cfg, speaker: null, candidates: [], pendingGuess: null, lastEliminated: null, winner: null, players: players.map(({ id }) => ({ id, alive: true })), card: {}, voteCount: 0, voteTotal: 3, voted: false, tally: null, dealId: 'legacy-deal' };
   const initial = room(view, { players, seats: players.map(({ id }) => id), cfg, now: CLOCK_START.getTime() });
-  return { body: JSON.stringify({ game: 'gian-diep', page: '/gian-diep/', frames: [[0, initial], [SECOND_MS, { ...initial, status: 'lobby', view: null, now: CLOCK_START.getTime() + SECOND_MS }]] }) };
+  return { body: JSON.stringify({ game: 'undercover', page: '/undercover/', frames: [[0, initial], [SECOND_MS, { ...initial, status: 'lobby', view: null, now: CLOCK_START.getTime() + SECOND_MS }]] }) };
 } });
 
 let loadLegacyLotoReplay;
@@ -1603,7 +1603,7 @@ await scenario('werewolf replay rewind tolerates a hide click before the first r
   game: 'soi', page: '/soi/', frames: [[0, { t: 'notice', text: 'Recorded prelude' }], [SECOND_MS, room({ round: 1, role: 'wolf' }, { now: CLOCK_START.getTime() + SECOND_MS })]],
 }) } : null });
 
-await scenario('spy local normalized-empty guess is rejected without consuming the valid guess', '/gian-diep/?lang=en', async (page) => {
+await scenario('spy local normalized-empty guess is rejected without consuming the valid guess', '/undercover/?lang=en', async (page) => {
   const COMBINING_ACUTE = '\u0301';
   const PLAYER_COUNT = 6;
   await clickName(page, 'Pass one device');
@@ -1684,7 +1684,7 @@ await scenario('loto incomplete server snapshot ignores controls and recovers wi
   assert.deepEqual(errors, []);
 }, { protocol: true, clock: true, storage: { 'loto.voice': 'off', 'loto.music': '0' } });
 
-await scenario('spy queued setup and ballot controls cannot change a later screen', '/gian-diep/?lang=en', async (page) => {
+await scenario('spy queued setup and ballot controls cannot change a later screen', '/undercover/?lang=en', async (page) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const PLAYER_COUNT = 3;
@@ -1738,14 +1738,14 @@ await scenario('spy queued setup and ballot controls cannot change a later scree
 
 let finishNavigatedAi;
 const navigatedAiResponse = new Promise((resolve) => { finishNavigatedAi = resolve; });
-await scenario('spy pending AI response preserves home after a queued back action', '/gian-diep/?lang=en', async (page) => {
+await scenario('spy pending AI response preserves home after a queued back action', '/undercover/?lang=en', async (page) => {
   const title = 'Late kitchen pack';
   await clickName(page, 'Pass one device');
   const queuedBack = await page.getByRole('button', { name: 'Back', exact: true }).elementHandle();
   await clickName(page, 'Settings');
   await clickName(page, 'Create AI pack', page.locator('dialog[open]'));
   await page.locator('dialog input').fill(title);
-  const pending = page.waitForRequest((request) => new URL(request.url()).pathname === '/api/gian-diep/ai');
+  const pending = page.waitForRequest((request) => new URL(request.url()).pathname === '/api/undercover/ai');
   await clickName(page, 'Create secret pack', page.locator('dialog[open]'));
   await pending;
   await textIncludes(page, 'dialog [role="status"]', 'AI is preparing');
@@ -1761,11 +1761,11 @@ await scenario('spy pending AI response preserves home after a queued back actio
   await clickName(page, 'Reveal card');
   assert(['Phở', 'Bún'].includes(await page.locator('.secret-word').textContent()));
 }, { api: (url, request) => {
-  if (url.pathname !== '/api/gian-diep/ai') return null;
+  if (url.pathname !== '/api/undercover/ai') return null;
   return request.postDataJSON().action === 'deal' ? { body: JSON.stringify({ pair: ['Phở', 'Bún'] }) } : navigatedAiResponse;
 } });
 
-await scenario('spy queued online reorder respects host loss and game start', '/gian-diep/?r=TEST&lang=en', async (page) => {
+await scenario('spy queued online reorder respects host loss and game start', '/undercover/?r=TEST&lang=en', async (page) => {
   const players = [{ id: PLAYER_ID, name: 'Coverage Player' }, { id: 'other', name: 'Other Player' }, { id: 'third', name: 'Third Player' }];
   const seats = players.map(({ id }) => id);
   const cfg = { spies: 1, whites: 0, seconds: 5, pack: 'food' };

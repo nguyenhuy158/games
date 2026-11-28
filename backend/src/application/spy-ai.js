@@ -1,7 +1,10 @@
 import { AI_TOPIC_LIMIT } from '../../../shared/games/gian-diep/logic.js';
+import { LEGACY_UNDERCOVER_ID, UNDERCOVER_ID } from '../../../shared/page-routes.js';
 
-export const AI_PATH = '/api/gian-diep/ai';
-export const AI_GAME = 'gian-diep';
+export const AI_GAME = UNDERCOVER_ID;
+export const AI_PATH = `/api/${AI_GAME}/ai`;
+const LEGACY_AI_PATH = `/api/${LEGACY_UNDERCOVER_ID}/ai`;
+export const isSpyAiPath = (path) => path === AI_PATH || path === LEGACY_AI_PATH;
 export const AI_INSTANCE = 'global';
 export const AI_ACTION = { TOPICS: 'topics', GENERATE: 'generate', DEAL: 'deal' };
 export const AI_LIMIT = { GLOBAL: 60, GUEST: 5, TOPIC: AI_TOPIC_LIMIT, TITLE: 60, WORD: 48, MIN_PAIRS: 10, PAIRS: 12, MIN_TOPICS: 3, TOPICS: 5, TOKENS: 1_400, TOPIC_TOKENS: 240, TIMEOUT: 20_000, TTL: 86_400_000, BODY: 2_048, GRANTS: 1_000 };

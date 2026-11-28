@@ -374,7 +374,7 @@ try {
     ] },
     "/api/me/history/claim": { status: ERROR_STATUS },
     "/api/me/history": Array.from({ length: 30 }, (_, index) => {
-      const games = ["dao-vang", "do-min", "bau-cua", "co-caro", "noi-4", "ban-tau", "snake", "bantumi", "rapid-roll", "bounce", "space-impact", "logic", "o-an-quan", "co-ganh", "co-tuong", "loto", "sudoku", "gian-diep", "2048", "tetris", "pairs", "unknown"];
+      const games = ["dao-vang", "do-min", "bau-cua", "co-caro", "noi-4", "ban-tau", "snake", "bantumi", "rapid-roll", "bounce", "space-impact", "logic", "o-an-quan", "co-ganh", "co-tuong", "loto", "sudoku", "undercover", "2048", "tetris", "pairs", "unknown"];
       const details = [{ vs: "Rival", rp: "core-replay" }, { with: ["One", "Two"] }, { rank: 2, of: 4 }, { size: "9x9", opened: 12, booms: 1 }, {}];
       return { game: index === 29 ? "sudoku" : games[index % games.length], mode: index % 2 ? "solo" : "custom", score: index === 11 ? 0 : index === 24 ? -10 : index % 3 ? 65 : 0, won: index % 2, level: index === 29 ? 99 : index % 4 + 1, at: NOW - (index === 1 ? 120000 : index * 3700000), detail: index === 29 ? "malformed" : JSON.stringify(details[index % details.length]) };
     }),
@@ -1220,7 +1220,7 @@ try {
   }, { clock: true });
 
   await scenario("spy theme changes survive the required page reload", async ({ page }) => {
-    await navigate(page, "/gian-diep/?lang=en");
+    await navigate(page, "/undercover/?lang=en");
     await page.locator("dialog[open] .help-ok").click();
     await page.locator(".sb-settings-btn").click();
     await Promise.all([

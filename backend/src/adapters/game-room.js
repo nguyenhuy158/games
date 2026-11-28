@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { uniqueName, otherNames } from '../domain/names.js';
+import { canonicalGameId, roomStorageKey } from '../../../shared/page-routes.js';
 import { Tape } from '../../../shared/tape.js';
 import { replayId } from './top.js';
 import { GUEST_HEADER, USER_HEADER } from './guest.js';
@@ -37,7 +38,10 @@ export function gameRoom(games) {
       ctx.blockConcurrencyWhile(async () => {
         this.s = (await ctx.storage.get('s')) ?? null;
         // DO bị tạo lại giữa ván (bị dừng / deploy): trạng thái lạ thì bỏ; game nhịp đều thì bật lại nhịp.
-        if (this.s && !games[this.s.game]) this.s = null;
+        if (this.s) {
+          this.s.game = canonicalGameId(this.s.game);
+          if (!Object.hasOwn(games, this.s.game)) this.s = null;
+        }
         if (this.s?.status === 'playing') this.arm();
         // Bản xem lại đang ghi của game theo lượt (DO ngủ đông giữa các nước đi làm mất biến trong bộ nhớ).
         const tape = this.s?.status === 'playing' && (await ctx.storage.get('tape'));
@@ -289,7 +293,7 @@ export function gameRoom(games) {
       // Game không có sảnh (Bầu cua): còn chỗ là người vào chơi được ngay -> "đang chờ", không phải "vào xem".
       const playing = s.status === 'playing' && !(this.mod.autostart && players < cap);
       const row = {
-        key: `${s.game}:${s.code}`, game: this.slug, code: s.code, path: this.mod.page, players, cap,
+        key: roomStorageKey(s.game, s.code), game: this.slug, code: s.code, path: this.mod.page, players, cap,
         status: playing ? 'playing' : 'waiting', host,
       };
       const sig = JSON.stringify(row);
@@ -299,7 +303,7 @@ export function gameRoom(games) {
     }
     unlist() {
       this.listed = null;
-      if (this.s?.code && this.recorder()) this.io(this.recorder().roomDrop(`${this.s.game}:${this.s.code}`));
+      if (this.s?.code && this.recorder()) this.io(this.recorder().roomDrop(roomStorageKey(this.s.game, this.s.code)));
     }
 
     save() {

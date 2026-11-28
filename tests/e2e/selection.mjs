@@ -1,4 +1,6 @@
-const GAME_ROOTS = ['public', 'frontend/src', 'shared/games'];
+import { canonicalPagePath } from '../../shared/page-routes.js';
+
+const PAGE_ROOTS = ['public', 'frontend/src'];
 const APPLICATION_PREFIX = 'backend/src/application/games';
 const JS_SUFFIX = '.js';
 const TEST_SUFFIX = '.test.mjs';
@@ -19,7 +21,7 @@ const GAME_SMOKES = {
   'co-ganh': ['co-ganh'],
   'co-tuong': ['co-tuong'],
   soi: ['soi'],
-  'gian-diep': ['gian-diep'],
+  'gian-diep': ['undercover'],
   loto: ['loto'],
   bantumi: ['bantumi'],
   bounce: ['bounce'],
@@ -30,9 +32,10 @@ const GAME_SMOKES = {
   'space-impact': ['space-impact'],
 };
 const KNOWN_GAMES = new Set([...Object.keys(GAME_SMOKES), ...SOLO_GAMES]);
+const pageOf = (game) => canonicalPagePath(`/${NOKIA_GAMES.has(game) ? NOKIA_PREFIX : ''}${game}/`);
 const GAME_PATHS = [...KNOWN_GAMES].map((game) => ({
   game,
-  directories: GAME_ROOTS.map((root) => `${root}/${NOKIA_GAMES.has(game) ? NOKIA_PREFIX : ''}${game}/`),
+  directories: [...PAGE_ROOTS.map((root) => `${root}${pageOf(game)}`), `shared/games/${NOKIA_GAMES.has(game) ? NOKIA_PREFIX : ''}${game}/`],
   application: `${APPLICATION_PREFIX}/${game}${JS_SUFFIX}`,
   test: `${UNIT_TEST_ROOT}/${NOKIA_GAMES.has(game) ? 'nokia-' : ''}${game}${TEST_SUFFIX}`,
 }));
@@ -48,7 +51,7 @@ export function selectGames(paths) {
   }
   if (!games.size) return null;
   return {
-    routes: [...games].map((game) => `/${NOKIA_GAMES.has(game) ? NOKIA_PREFIX : ''}${game}/`),
+    routes: [...games].map(pageOf),
     games: [...games].flatMap((game) => GAME_SMOKES[game] ?? []),
   };
 }

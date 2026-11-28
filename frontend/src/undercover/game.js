@@ -11,8 +11,8 @@ import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { rosterDraft, rosterHasDraft, rosterEditor, seatingRoster, orderedPlayers } from './roster.js';
 import { aiPicker, dealAiPair } from './ai.js';
 
-const GAME = 'gian-diep';
-const GAME_PATH = '/gian-diep/';
+const GAME = 'undercover';
+const GAME_PATH = '/undercover/';
 const TITLE = t('Ai là gián điệp?', 'Who is the spy?');
 const MODE = Object.freeze({ HOME: 'home', LOCAL: 'local', ONLINE: 'online' });
 const LOCAL_STEP = Object.freeze({ SETUP: 'setup', REVEAL: 'reveal', READY: 'ready', PLAY: 'play' });
@@ -140,7 +140,7 @@ function showHome() {
   backButton.ariaLabel = t('Các trò chơi khác', 'More games');
   backButton.title = backButton.ariaLabel;
   content.replaceChildren(el('div', { className: 'entry' },
-    el('img', { className: 'entry-logo', src: '/logos/gian-diep.svg', alt: '' }),
+    el('img', { className: 'entry-logo', src: '/logos/undercover.svg', alt: '' }),
     el('h2', {}, t('Cùng một nhóm. Khác một từ.', 'One group. A different word.')),
     el('div', { className: 'entry-facts' }, indicator('users', t('3–20 người', '3–20 players')), indicator('crown', t('Chủ phòng cùng chơi', 'Host plays too'))),
     el('div', { className: 'mode-choices' },
@@ -509,7 +509,7 @@ function enterOnline() {
     hideSecrets();
     confirmAction(t('Rời phòng?', 'Leave the room?'), t('Ván vẫn tiếp tục cho những người còn lại. Có thể dùng mã phòng để quay lại.', 'The game continues for everyone else. Use the room code to reconnect.'), () => { leave.dataset.confirmed = 'yes'; leave.click(); });
   }, true);
-  for (const helpControl of document.querySelectorAll('[data-help="gian-diep"]')) helpControl.addEventListener('click', hideSecrets, true);
+  for (const helpControl of document.querySelectorAll('[data-help="undercover"]')) helpControl.addEventListener('click', hideSecrets, true);
 }
 
 function enhanceRoomShell(room = app?.room) {

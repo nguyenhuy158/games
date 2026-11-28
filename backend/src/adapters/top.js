@@ -1,3 +1,4 @@
+import { LEGACY_UNDERCOVER_ID, UNDERCOVER_ID, canonicalGameId } from '../../../shared/page-routes.js';
 import { DurableObject } from 'cloudflare:workers';
 import { MAX_SCORE as MAX_2048 } from '../../../shared/games/2048/logic.js';
 
@@ -119,7 +120,7 @@ export class Top extends DurableObject {
 
   replay(id) {
     const row = this.ctx.storage.sql.exec('SELECT game, page, data, at FROM replays WHERE id = ?', id).toArray()[0];
-    return row ? { game: row.game, page: row.page, at: row.at, frames: JSON.parse(row.data) } : null;
+    return row ? { game: canonicalGameId(row.game), page: row.page, at: row.at, frames: JSON.parse(row.data) } : null;
   }
 
   replayPage(id) {
@@ -205,7 +206,7 @@ export class Top extends DurableObject {
   history(sub, before = Number.MAX_SAFE_INTEGER) {
     return this.cached(JSON.stringify([SNAPSHOT_KIND.HISTORY, sub, before]), () => this.ctx.storage.sql
       .exec('SELECT game, mode, score, level, won, detail, at FROM plays WHERE sub = ? AND at < ? ORDER BY at DESC, id DESC LIMIT ?', sub, before, HISTORY_LIMIT)
-      .toArray());
+      .toArray().map((row) => ({ ...row, game: canonicalGameId(row.game) })));
   }
 
   // Bảng xếp hạng "cho vui" (icon mỗi hạng mục chọn ở client theo key, xem public/me.js) giữa người đã đăng nhập, top 5 mỗi hạng mục.
@@ -224,7 +225,7 @@ export class Top extends DurableObject {
 
   stats(sub) {
     return this.cached(JSON.stringify([SNAPSHOT_KIND.STATS, sub]), () => this.ctx.storage.sql
-      .exec('SELECT game, COUNT(*) AS plays, SUM(won) AS wins, MAX(score) AS best, MIN(CASE WHEN won = 1 THEN score END) AS fastest, MAX(level) AS maxLevel FROM plays WHERE sub = ? GROUP BY game', sub)
+      .exec('SELECT CASE game WHEN ? THEN ? ELSE game END AS game, COUNT(*) AS plays, SUM(won) AS wins, MAX(score) AS best, MIN(CASE WHEN won = 1 THEN score END) AS fastest, MAX(level) AS maxLevel FROM plays WHERE sub = ? GROUP BY 1', LEGACY_UNDERCOVER_ID, UNDERCOVER_ID, sub)
       .toArray());
   }
 

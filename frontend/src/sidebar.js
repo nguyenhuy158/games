@@ -10,7 +10,7 @@ const HOME = '/';
 const ROOMS = '/phong/';
 const THEME_KEY = 'theme';
 const SPY_THEME_KEY = 'gian-diep.theme';
-const SPY_PATH = '/gian-diep/';
+const SPY_PATH = '/undercover/';
 const DARK = 'dark';
 const LIGHT = 'light';
 const SOUND_ON = 'on';
@@ -24,7 +24,7 @@ const GROUPS = [
   { icon: 'users', vi: 'Chơi đông người', en: 'Party games', games: [
     ['/pikachu/', 'pikachu', 'Pikachu nối thú', 'Pikachu Onet'], ['/do-min/', 'do-min', 'Dò mìn', 'Minesweeper'], ['/bau-cua/', 'bau-cua', 'Bầu cua', 'Bau Cua'],
     ['/dao-vang/', 'dao-vang', 'Đào Vàng', 'Gold Miner'], ['/loto/', 'loto', 'Lô tô', 'Lo To'], ['/soi/', 'soi', 'Sói', 'Werewolf'],
-    ['/gian-diep/', 'gian-diep', 'Ai là gián điệp', 'Undercover'],
+    ['/undercover/', 'undercover', 'Ai là gián điệp', 'Undercover'],
   ] },
   { icon: 'puzzle', vi: 'Giải đố & một mình', en: 'Puzzles & solo', games: [
     ['/2048/', '2048', '2048', '2048'], ['/tetris/', 'tetris', 'Xếp gạch', 'Tetris'], ['/sudoku/', 'sudoku', 'Sudoku', 'Sudoku'],

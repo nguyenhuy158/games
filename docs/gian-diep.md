@@ -1,6 +1,6 @@
 # Ai là gián điệp
 
-Mở `/gian-diep/`, chọn **Chuyền một máy** hoặc **Mỗi người một máy**. Host cũng chơi; thẻ của host không có đặc quyền xem từ hay vai người khác. Thảo luận trực tiếp hoặc qua cuộc gọi riêng, không tích hợp thoại/chat.
+Mở `/undercover/`, chọn **Chuyền một máy** hoặc **Mỗi người một máy**. Host cũng chơi; thẻ của host không có đặc quyền xem từ hay vai người khác. Thảo luận trực tiếp hoặc qua cuộc gọi riêng, không tích hợp thoại/chat.
 
 ## Nhập nhóm và thứ tự
 
@@ -29,7 +29,9 @@ Không bật biến thể hai gián điệp biết nhau vì trái với luật �
 
 **Một máy:** nhập tên nhóm, lần lượt mở thẻ rồi ẩn trước khi chuyển máy; phiếu cũng chuyền từng người. Ván chỉ nằm trong bộ nhớ trang, tải lại hoặc rời trang sẽ mất ván. Đây là cơ chế riêng tư khi chuyền máy, không bảo vệ trước người dùng DevTools trên máy đó.
 
-**Nhiều máy:** dùng phòng `NokiaRoom`, WebSocket `/api/nk/gian-diep/room/CODE`. Server lưu trạng thái qua mất kết nối, gửi mỗi người đúng thẻ của họ; người vào giữa ván chỉ xem. Cùng thiết bị vào lại bằng mã phòng để tiếp tục. Đợi người đang mất mạng quay lại bỏ phiếu/đoán, hoặc host loại trực tiếp khi luật cho phép. Không ghi replay chứa từ bí mật. Thẻ đang mở tự che khi chuyển tab, ẩn trang hoặc bấm Escape.
+**Nhiều máy:** dùng phòng `NokiaRoom`, WebSocket `/api/nk/undercover/room/CODE`. Server lưu trạng thái qua mất kết nối, gửi mỗi người đúng thẻ của họ; người vào giữa ván chỉ xem. Cùng thiết bị vào lại bằng mã phòng để tiếp tục. Đợi người đang mất mạng quay lại bỏ phiếu/đoán, hoặc host loại trực tiếp khi luật cho phép. Không ghi replay chứa từ bí mật. Thẻ đang mở tự che khi chuyển tab, ẩn trang hoặc bấm Escape.
+
+ID game là `undercover`. Link và API cũ dùng `gian-diep` vẫn vào đúng phòng; lịch sử cũ được gộp vào cùng ID.
 
 Luật dùng chung trong `shared/games/gian-diep/logic.js`; server điều phối thời gian, quyền, kết quả và lưu trạng thái qua `backend/src/application/games/gian-diep.js`.
 
@@ -37,7 +39,7 @@ Luật dùng chung trong `shared/games/gian-diep/logic.js`; server điều phố
 
 Vào **Cài đặt → Tạo bộ từ AI**, nhập chủ đề tiếng Việt tối đa 100 ký tự hoặc chọn một trong 3–5 gợi ý AI. Sau khi tạo chỉ hiện chủ đề và số cặp từ, không có xem trước từ. Chọn lại bộ từ có sẵn nếu không muốn dùng AI; lỗi AI không tự thay bằng bộ từ cố định.
 
-- **Một máy:** `POST /api/gian-diep/ai` với `{action:"generate",topic}` trả `{packId,title,count}`. Khi chia thẻ, `{action:"deal",packId}` chỉ trả một cặp ngẫu nhiên cho đúng chủ cookie đã tạo bộ từ. Trình duyệt giữ cặp vừa chia như chế độ một máy hiện có, không nhận toàn bộ bộ từ.
+- **Một máy:** `POST /api/undercover/ai` với `{action:"generate",topic}` trả `{packId,title,count}`. Khi chia thẻ, `{action:"deal",packId}` chỉ trả một cặp ngẫu nhiên cho đúng chủ cookie đã tạo bộ từ. Trình duyệt giữ cặp vừa chia như chế độ một máy hiện có, không nhận toàn bộ bộ từ.
 - **Nhiều máy:** thêm `room` (mã 4 ký tự) và `deviceId` vào yêu cầu tạo. Server kiểm tra chủ phòng đang trực tuyến, cookie trùng người chơi và phòng ở sảnh/đã kết thúc **trước** khi gọi AI; sau khi chờ AI còn kiểm tra lại chủ phòng, trạng thái, cấu hình và ván. Bộ từ nằm riêng trong `keep.aiPack`; WebSocket chỉ phát metadata `cfg.pack`, `cfg.aiPackId`, `cfg.aiTopic`. Endpoint chia cặp một máy không đọc được bộ từ phòng.
 - Mọi yêu cầu phải là POST JSON cùng origin, body tối đa 2.048 byte. Owner là cookie bearer ngẫu nhiên 256-bit `__Host-games_guest` hiện có (`HttpOnly`, `Secure`, `SameSite=Lax`), **không phải cookie có chữ ký**. Không tin header `X-Guest` từ client; không gửi tên người chơi cho model.
 
@@ -66,7 +68,7 @@ Dùng đường tích hợp DOM tĩnh chính thức của [nguyenhuy158/ui-kit](
 
 - `src/dom/feedback.mjs` và `feedback.css` → `frontend/src/ui/`: nút, trạng thái chờ, khóa thao tác và toast dùng chung toàn bộ game; không giữ bản sao riêng cho Gián điệp.
 - `src/ui/Listbox.tsx` (React, chưa có bản `src/dom/`) → chép hành vi sang `frontend/src/ui/listbox.mjs`: `listbox(select)` bọc một `<select>` có sẵn thành nút + danh sách kiểu ui-kit (bàn phím ↑ ↓ Home End Enter Esc, dấu ✓, mục tắt mờ, mở trong dialog không bị cắt). `<select>` vẫn giữ giá trị và phát `change`, nên code gán `.value` / `.disabled` / thay `<option>` không đổi. Dùng ở Gián điệp (cách thêm tên, Cài đặt ván) và Sudoku (độ khó). Khi ui-kit có `src/dom/listbox`, thay file này bằng bản chép.
-- `src/styles/tokens.css` → `frontend/src/gian-diep/ui-kit/tokens.css`: giữ token, base CSS, màu sáng/tối và chuyển động; bỏ `@import tailwindcss`, `@custom-variant`, `@theme` vì trang không biên dịch CSS bằng Tailwind.
+- `src/styles/tokens.css` → `frontend/src/undercover/ui-kit/tokens.css`: giữ token, base CSS, màu sáng/tối và chuyển động; bỏ `@import tailwindcss`, `@custom-variant`, `@theme` vì trang không biên dịch CSS bằng Tailwind.
 - UI riêng dùng biến `--ui-*`, danh sách thiết lập cuộn bên trong và danh sách trong ván chia trang, khu vực chạm 44px và input 16px. Không tải CSS Nokia, React hay CDN runtime. Không lấy thay đổi chưa commit từ checkout UI kit.
 
 Trang tải `frontend/src/ui-kit.css` dùng chung trước token sáng/tối của game. Icon dùng cùng Lucide 0.468.0 như UI kit qua `frontend/src/icons.js`; nút phụ dùng icon kèm nhãn truy cập, luật đầy đủ nằm trong Cách chơi.
@@ -84,7 +86,7 @@ Kit pin `v0.5.0` cho config, SSO, E2E và reusable CI. `pnpm lint` và `pnpm che
 pnpm test
 pnpm check
 pnpm exec wrangler dev --local --ip 127.0.0.1 --port 8797
-node tests/smoke.mjs http://127.0.0.1:8797 gian-diep soi
+node tests/smoke.mjs http://127.0.0.1:8797 undercover soi
 ```
 
 `tests/unit/gian-diep.test.mjs` kiểm parser tên, trùng/giới hạn, thứ tự/ID/chủ phòng, thành viên vào/rời giữa cấu hình và chia bài, giới hạn mọi quy mô, phân vai, quyền, dữ liệu riêng, đồng hồ, hòa, lượt đoán và kết quả. Smoke WebSocket thật chơi sáu người: Mũ Trắng đoán sai, hòa và bầu lại dân thắng, ván tiếp Mũ Trắng đoán đúng thắng ngay. Chỉ chạy smoke tạo phòng trên local; production để CI post-deploy kiểm theo quy ước repo.
