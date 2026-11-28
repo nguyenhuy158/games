@@ -5,7 +5,7 @@ const ROOM_CODE = /^[A-Z0-9]{4}$/;
 const DEVICE_ID = /^[\w-]{8,64}$/;
 const PACK_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FIELDS = {
-  [AI_ACTION.TOPICS]: new Set(['action']),
+  [AI_ACTION.TOPICS]: new Set(['action', 'refresh']),
   [AI_ACTION.GENERATE]: new Set(['action', 'topic', 'room', 'deviceId']),
   [AI_ACTION.DEAL]: new Set(['action', 'packId']),
 };
@@ -27,7 +27,10 @@ export async function routeAi(body, env, owner) {
     if (body.action === AI_ACTION.DEAL && (typeof body.packId !== 'string' || !PACK_ID.test(body.packId))) return aiFailure(AI_ERROR.REQUEST);
     const service = env.SPY_AI?.get(env.SPY_AI.idFromName(AI_INSTANCE));
     if (!service) return aiFailure(AI_ERROR.UNAVAILABLE);
-    if (body.action === AI_ACTION.TOPICS) return await service.topics(owner);
+    if (body.action === AI_ACTION.TOPICS) {
+      if (Object.hasOwn(body, 'refresh') && typeof body.refresh !== 'boolean') return aiFailure(AI_ERROR.REQUEST);
+      return await service.topics(owner, body.refresh);
+    }
     if (body.action === AI_ACTION.DEAL) return await service.deal(owner, body.packId);
     return await service.generate(owner, body.topic);
   } catch (error) { return aiFailure(error.code ?? AI_ERROR.UNAVAILABLE); }

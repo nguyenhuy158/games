@@ -69,15 +69,19 @@ assert.throws(() => parseAiOutput({ response: { topics: ['Ẩm thực', 'ẩm th
   assert.equal(ai.calls.length, 1);
   assert.equal((await service.deal(OWNER, second.packId)).error, AI_ERROR.EXPIRED);
   const resumed = new SpyAiService(store, ai);
-  assert.ok((await resumed.deal(OWNER, first.packId)).pair);
+  const next = await resumed.deal(OWNER, first.packId);
   assert.equal((await resumed.generate(OWNER, 'Ẩm thực')).packId, first.packId);
   assert.equal(ai.calls.length, 1);
   assert.equal(store.reads, 2);
-  for (let i = 0; i < 10; i++) await resumed.deal(OWNER, first.packId);
+  const remaining = await Promise.all(PAIRS.slice(2).map(() => resumed.deal(OWNER, first.packId)));
+  const cycle = [dealt, next, ...remaining].map(({ pair }) => JSON.stringify(pair));
+  assert.equal(new Set(cycle).size, PAIRS.length);
+  assert.notEqual(JSON.stringify((await resumed.deal(OWNER, first.packId)).pair), cycle.at(-1));
   assert.equal(store.reads, 2);
   const online = await service.generate(OWNER, 'Ẩm thực', true);
   assert.equal((await service.deal(OWNER, online.packId)).error, AI_ERROR.EXPIRED);
   const ctx = { cfg: { pack: 'ai', aiPackId: online.packId }, keep: { aiPack: online }, now: Date.now, rand: () => 0 };
+  for (const pair of PAIRS) assert.deepEqual(resolveAiPair(ctx), pair);
   assert.deepEqual(resolveAiPair(ctx), PAIRS[0]);
   assert.throws(() => resolveAiPair({ ...ctx, cfg: { pack: 'ai', aiPackId: crypto.randomUUID() } }), RangeError);
   assert.throws(() => resolveAiPair({ ...ctx, now: () => online.expires }), RangeError);
@@ -105,6 +109,18 @@ assert.throws(() => parseAiOutput({ response: { topics: ['Ẩm thực', 'ẩm th
   assert.equal(results.filter((result) => result.packId).length, AI_LIMIT.GUEST);
   assert.equal(results.filter((result) => result.error === AI_ERROR.QUOTA).length, 1);
   assert.equal(ai.calls.length, AI_LIMIT.GUEST, 'concurrent reservations cannot overspend a guest budget');
+}
+
+{
+  const freshTopics = ['Bầu trời', 'Nhạc cụ', 'Cây cảnh'];
+  const batches = [TOPICS, [...freshTopics, TOPICS[0]], freshTopics];
+  const ai = provider(() => ({ response: { topics: batches.shift() } }));
+  const service = new SpyAiService(storage(), ai);
+  assert.deepEqual((await service.topics(OWNER)).topics, TOPICS);
+  assert.deepEqual((await service.topics(OWNER, true)).topics, freshTopics);
+  assert.equal((await service.topics(OWNER, true)).error, AI_ERROR.OUTPUT);
+  assert.deepEqual((await service.topics(OTHER)).topics, freshTopics);
+  assert.equal(ai.calls.length, 3);
 }
 
 {
