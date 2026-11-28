@@ -20,6 +20,7 @@ const JSON_TYPE = 'application/json';
 const HTTP_OK = 200;
 const HTTP_DENIED = 403;
 const HTTP_UNAVAILABLE = 503;
+const QUICK_RULE_SELECTOR = '.help-quick';
 const GAME_IDS = ['2048', 'tetris', 'sudoku', 'undercover', 'undercover-guide', 'loto', 'soi'];
 const browser = await chromium.launch({ executablePath: findChromium() });
 const failures = [];
@@ -1219,7 +1220,7 @@ await scenario('spy local AI denial restores setup and valid deal keeps words pr
   await page.evaluate(() => window.dispatchEvent(new Event('beforeunload', { cancelable: true })));
   await clickName(page, 'Read the rules');
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-  await textIncludes(page, '.help-body', 'Recorded replays are disabled');
+  await textIncludes(page, QUICK_RULE_SELECTOR, 'Civilians share a word');
   await clickName(page, 'Got it', page.locator('.help-dlg'));
   await clickName(page, 'Pass one device');
   await clickName(page, 'Settings');

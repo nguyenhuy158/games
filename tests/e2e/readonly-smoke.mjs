@@ -24,7 +24,7 @@ const BOARDS = {
   "/sudoku/": ["#grid > div", 81],
   "/loto/": ["#home button.primary", 1],
 };
-const MIN_HELP_CHARS = 100;
+const MAX_QUICK_RULE_CHARS = 150;
 const CLI_ARGUMENT_OFFSET = 2;
 const REQUESTED_ROUTES = [...new Set(process.argv.slice(CLI_ARGUMENT_OFFSET))];
 const PAGE_CONCURRENCY_LIMIT = 3;
@@ -39,7 +39,9 @@ const ROUTE_SEPARATOR = ", ";
 const PAGE_EVENTS = { ERROR: "pageerror", RESPONSE: "response" };
 const HELP_DIALOG_SELECTOR = "dialog.help-dlg";
 const HELP_BUTTON_SELECTOR = "[data-help]:visible";
+const QUICK_RULE_SELECTOR = ".help-quick";
 const HELP_BODY_SELECTOR = ".help-body";
+const HELP_DISCLOSURE_SELECTOR = "details, summary";
 const ESCAPE_KEY = "Escape";
 const NAVIGATION_OPTIONS = { waitUntil: "load" };
 const HIDDEN_WAIT = { state: "hidden", ...WAIT };
@@ -193,9 +195,12 @@ async function checkGame(link) {
       throw new Error(`${link}: không có nút hướng dẫn (i) đang hiện`);
     });
     await help.waitFor(WAIT);
-    const text = (await help.locator(HELP_BODY_SELECTOR).innerText()).trim();
-    if (text.length < MIN_HELP_CHARS)
-      throw new Error(`${link}: hướng dẫn quá ngắn (${text.length} ký tự)`);
+    const text = (await help.locator(QUICK_RULE_SELECTOR).innerText()).trim();
+    if (!text || text.length > MAX_QUICK_RULE_CHARS)
+      throw new Error(`${link}: tóm tắt hướng dẫn không hợp lệ (${text.length} ký tự)`);
+    const bodyText = (await help.locator(HELP_BODY_SELECTOR).innerText()).trim();
+    if (bodyText !== text || await help.locator(HELP_DISCLOSURE_SELECTOR).count())
+      throw new Error(`${link}: chỉ được hiển thị tóm tắt hướng dẫn`);
     await gamePage.keyboard.press(ESCAPE_KEY);
     await help.waitFor(HIDDEN_WAIT);
 

@@ -35,7 +35,6 @@ const WIN_LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5,
 const OUTCOME = { WIN: ["Bạn thắng!", "You win!"], DRAW: ["Hoà!", "Draw!"] };
 const SELECTOR = {
   HELP: "dialog.help-dlg",
-  HELP_BODY: ".help-body",
   HELP_CLOSE: ".help-ok",
   HELP_OPEN: "#btnHelpHome",
   NAME: "#name",
@@ -149,7 +148,6 @@ try {
   assert.equal(new URL(page.url()).origin, BASE_URL.origin, "Refusing to create a room after an external redirect");
   const help = page.locator(SELECTOR.HELP);
   await help.waitFor(WAIT);
-  assert.match(await help.locator(SELECTOR.HELP_BODY).innerText(), SIZE_LABEL);
   await help.locator(SELECTOR.HELP_CLOSE).click();
   await help.waitFor(HIDDEN);
   await page.locator(SELECTOR.HELP_OPEN).click();
