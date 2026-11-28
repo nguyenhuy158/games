@@ -4,10 +4,6 @@ import { t } from '../i18n.js';
 import { el } from '../dom.js';
 import { MIN_PLAYERS, WOLF } from '../../../shared/games/soi/logic.js';
 
-const INTRO_VIDEO_URL = 'https://www.youtube-nocookie.com/embed/Mzjtwf0FbW0?start=4353&end=4404&rel=0';
-const INTRO_SOURCE_URL = 'https://www.youtube.com/watch?v=Mzjtwf0FbW0&t=4353s';
-const INTRO_DIALOG_SELECTOR = '.help-dlg';
-const INTRO_BODY_SELECTOR = '.help-body';
 
 // Thẻ vai úp: chạm mới lật (tránh người bên cạnh liếc màn hình), sang ván mới thì úp lại.
 // Server chỉ gửi vai của chính mình; chủ phòng lật bài thì ván kết thúc và bảng kết quả nêu tên Sói.
@@ -71,24 +67,6 @@ const app = nokiaApp({
     paint(r, v);
   },
 });
-
-const introVideo = el('iframe', {
-  className: 'soi-intro-video',
-  src: INTRO_VIDEO_URL,
-  title: t('Giới thiệu Bắt Sói — 1:12:33 đến 1:13:24', 'Catch the Wolf introduction — 1:12:33 to 1:13:24'),
-  allow: 'encrypted-media; picture-in-picture; fullscreen',
-  allowFullscreen: true,
-  referrerPolicy: 'strict-origin-when-cross-origin',
-});
-const introDialog = document.querySelector(INTRO_DIALOG_SELECTOR);
-introDialog.querySelector(INTRO_BODY_SELECTOR).prepend(
-  el('figure', { className: 'soi-intro' }, introVideo,
-    el('figcaption', {}, el('a', {
-      href: INTRO_SOURCE_URL, target: '_blank', rel: 'noopener noreferrer',
-      textContent: t('Xem trên YouTube · 1:12:33–1:13:24', 'Watch on YouTube · 1:12:33–1:13:24'),
-    }))),
-);
-introDialog.addEventListener('close', () => { introVideo.src = INTRO_VIDEO_URL; });
 
 function flip(on) {
   shown = on;
