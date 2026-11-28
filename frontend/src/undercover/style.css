@@ -80,6 +80,8 @@ h3 { font-size: 1rem; }
 .settings-summary { display: flex; align-items: center; gap: .75rem; justify-content: space-between; padding: 1rem 0; border-block: 1px solid var(--ui-border); }
 .settings-summary .ui-button { flex: none; }
 .player-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.spy-content:has(.game-layout) { align-items: safe center; overflow: auto; }
+.local-play-roster { max-height: min(58dvh, 32rem); overflow: auto; overscroll-behavior: contain; }
 .player-grid > .ui-button { justify-content: flex-start; min-width: 0; overflow-wrap: anywhere; text-align: left; }
 .player-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-width: 0; min-height: 44px; padding: .5rem .75rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); font-size: .875rem; }
 .player-row > strong { font-size: .75rem; white-space: nowrap; }
@@ -184,6 +186,7 @@ body .help-dlg .help-x { color: var(--ui-fg); background: var(--ui-surface); bor
 body .help-dlg .help-ok { background: var(--ui-primary); color: var(--ui-primary-fg); border-radius: var(--ui-radius); box-shadow: none; font-weight: 600; }
 body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { outline-color: var(--ui-ring); }
 @media (max-width: 700px) {
+  .local-play-roster { grid-template-columns: minmax(0, 1fr); }
   .setup { min-height: 100%; grid-template-rows: 1fr auto; }
   .setup-fields { align-self: center; }
   .count-label .ic { display: none; }

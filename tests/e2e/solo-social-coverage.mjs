@@ -434,7 +434,8 @@ await scenario('spy local handoff names, privacy and final results', '/undercove
   await clickName(page, 'Continue');
   await textIncludes(page, '.handoff [role="alert"]', 'This name is already taken.');
   for (const player of players.slice(1)) cards.push(await revealLocalCard(page, player));
-  assert.equal(await page.locator('.player-name').first().textContent(), `1. ${players[0]}`);
+  assert.deepEqual(await page.locator('.local-play-roster .player-name').allTextContents(), players.map((player, index) => `${index + 1}. ${player}`));
+  assert.equal(await page.locator('.game-sidebar .pagination').count(), 0);
   assert.equal(await page.locator('.phase-panel h2').textContent(), 'Give a clue');
   await clickName(page, 'Back');
   await clickName(page, 'Cancel', page.locator('dialog.spy-dialog[open]'));
