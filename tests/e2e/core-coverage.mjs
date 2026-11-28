@@ -265,7 +265,7 @@ try {
     assert.equal(await page.locator(".sb-settings-btn").getAttribute("aria-expanded"), "false");
     assert.equal(await page.locator(".sb-settings-btn").evaluate((node) => node === document.activeElement), true);
     await page.locator(".sb-settings-btn").click();
-    await page.locator("h1").click();
+    await page.mouse.click(1, 1);
     assert.equal(await page.locator("#sbSettings").isVisible(), false);
     await page.clock.runFor(ROOM_POLL_MS);
     await textContains(page, 'a.game[href="/co-caro/"] .live', "2 rooms · 3 players");
@@ -296,26 +296,19 @@ try {
     });
   }, { initScript: () => { Reflect.deleteProperty(window, "IntersectionObserver"); } });
 
-  await scenario("sidebar mobile navigation, language persistence and initial theme", async ({ page }) => {
+  await scenario("mobile navigation, settings popup and language persistence", async ({ page }) => {
     assert.equal(await page.locator("html").getAttribute("data-theme"), "light");
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForFunction(() => document.querySelector("#sidebar").inert);
-    await page.evaluate(() => {
-      const home = document.createElement("a");
-      home.id = "coreHome";
-      home.href = "/";
-      home.textContent = "Open game menu";
-      document.body.append(home);
-    });
-    await page.locator("#coreHome").click();
-    assert.equal(await page.locator("#sidebar").evaluate((node) => node.inert), false);
+    await navigate(page, "/co-caro/?lang=en");
+    if (await page.locator("dialog[open] .help-ok").count()) await page.locator("dialog[open] .help-ok").click();
+    assert.equal(await page.locator("#sidebar").isVisible(), false);
+    await Promise.all([page.waitForURL((url) => url.pathname === "/"), page.locator('a.back[href="/"]').click()]);
+    assert.equal(await page.locator("#sidebar").isVisible(), false);
+    await page.locator("#mobileSettings").click();
+    assert.equal(await page.locator("#sbSettings:modal").count(), 1);
     await page.keyboard.press("Escape");
-    assert.equal(await page.locator("#sidebar").evaluate((node) => node.inert), true);
-    await page.locator("#coreHome").click();
-    await page.locator("#sidebarBackdrop").click({ position: { x: 350, y: 300 } });
-    assert.equal(await page.locator("#sidebar").evaluate((node) => node.inert), true);
-    await page.setViewportSize(VIEWPORT);
-    await page.locator(".sb-settings-btn").click();
+    assert.equal(await page.locator("#sbSettings").isVisible(), false);
+    await page.locator("#mobileSettings").click();
     await saveCoverage(page);
     await Promise.all([page.waitForURL((url) => !url.searchParams.has("lang")), page.locator('#sbSettings button[data-value="vi"]').click()]);
     await page.waitForFunction(() => document.documentElement.lang === "vi");

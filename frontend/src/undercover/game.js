@@ -145,7 +145,7 @@ function showHome() {
       button(t('Chuyền một máy', 'Pass one device'), startLocalSetup, true, 'smartphone'),
       button(t('Mỗi người một máy', 'One device each'), enterOnline, false, 'users')),
     note(t('Nói gợi ý trực tiếp hoặc qua cuộc gọi riêng.', 'Give clues out loud in person or on your own call.')),
-    el('div', { className: 'entry-footer' }, button(t('Luật chơi', 'Read the rules'), () => help.open(), false, 'info'))));
+    el('div', { className: 'entry-footer' }, el('button', { type: 'button', ariaLabel: t('Luật chơi', 'Read the rules'), title: t('Luật chơi', 'Read the rules'), onclick: () => help.open() }, iconEl('info')))));
 }
 
 function goBack() {
