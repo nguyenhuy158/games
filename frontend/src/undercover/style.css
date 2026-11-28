@@ -40,7 +40,7 @@ h3 { font-size: 1rem; }
 .sub { font-size: .875rem; line-height: 1.5; max-width: 68ch; }
 .muted, .progress-label, .round-status, .page-status { font-size: .75rem; }
 .stack { display: grid; gap: 1rem; }
-.actions, .entry-footer, .header-actions, .host-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.actions, .header-actions, .host-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
 .spy-shell, #room { display: flex; flex-direction: column; height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
 .spy-header, #room > header { min-height: 64px; display: flex; align-items: center; gap: .75rem; padding: max(.5rem, env(safe-area-inset-top)) var(--ui-grid-margin) .5rem; background: var(--ui-surface); border-bottom: 1px solid var(--ui-border); }
 .spy-header h1 { flex: 1; min-width: 0; }
@@ -53,7 +53,7 @@ h3 { font-size: 1rem; }
 .entry .sub { max-width: 54ch; }
 .mode-choices { width: min(100%, 440px); display: grid; gap: .75rem; }
 .mode-choices .ui-button { min-height: 56px; font-size: 1rem; }
-.entry-footer { justify-content: center; }
+
 .setup { max-width: 480px; }
 .spy-content:has(.setup) { overflow: auto; overscroll-behavior: contain; }
 .local-counts { display: grid; gap: .75rem; }
@@ -164,7 +164,7 @@ input.code { text-transform: uppercase; letter-spacing: .15em; }
 #room > header { flex-wrap: nowrap; }
 #room header .grow { flex: 1; }
 #room header button { min-width: 44px; }
-#room header .room-theme { font-size: .75rem; }
+#room header .spy-settings { font-size: .75rem; }
 #room > #players { display: none; }
 .dot { height: 8px; width: 8px; flex: none; border-radius: 50%; background: var(--ui-danger); }
 .dot.on { background: var(--ui-success); }
@@ -199,7 +199,7 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
   .game-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .game-main, .game-sidebar, .phase-panel { gap: .75rem; }
   .host-controls > .ui-button { flex: 1; }
-  #room header .lbl, #room header .room-theme > span, #room header > .grow { display: none; }
+  #room header .lbl, #room header > .grow { display: none; }
   #room header { justify-content: space-between; gap: .25rem; padding-inline: .5rem; }
   #room header button { padding-inline: .625rem; }
   .card { padding: 1rem; gap: .75rem; }
@@ -228,3 +228,6 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
   #overlay .card > h2 { grid-column: 1; }
   #overlay .card > .cfg { grid-column: 2; grid-row: 1 / span 4; }
 }
+
+.spy-settings > span { display: none; }
+@media (min-width: 1024px) { .spy-settings.ui-button { display: none; } }

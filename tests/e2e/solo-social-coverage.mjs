@@ -961,8 +961,12 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await state(page, room(null, { players, seats, cfg: { ...cfg, order: ['other', PLAYER_ID, 'third', 'fourth', 'fifth', 'sixth'] }, status: 'waiting' }));
   await clickName(page, 'Shuffle order');
   assert.deepEqual(new Set(await page.evaluate(() => window.coverageTransport.sent.at(-1).cfg.order)), new Set(seats));
-  await page.locator('#room .room-theme').click();
-  assert.equal(await page.locator('#room .room-theme').getAttribute('aria-label'), await page.locator('#home .room-theme').getAttribute('aria-label'));
+  const settings = page.locator('#sbSettings');
+  const roomSettings = page.locator('#room .spy-settings');
+  await (await roomSettings.isVisible() ? roomSettings : page.locator('.sb-settings-btn')).click();
+  await clickName(page, 'Light', settings);
+  assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
+  await clickName(page, 'Close', settings);
   await clickName(page, 'Game settings');
   await clickName(page, 'Create AI pack', page.locator('dialog[open]'));
   await page.locator('dialog input').fill('Food');

@@ -1226,15 +1226,14 @@ try {
     await textContains(page, "#playing", "No games in progress");
   }, { clock: true });
 
-  await scenario("spy theme changes survive the required page reload", async ({ page }) => {
+  await scenario("spy theme changes apply without reloading and survive navigation", async ({ page }) => {
     await navigate(page, "/undercover/?lang=en");
     await page.locator("dialog[open] .help-ok").click();
     await page.locator(".sb-settings-btn").click();
-    await Promise.all([
-      page.waitForEvent("load"),
-      page.locator('#sbSettings button[data-value="light"]').click(),
-    ]);
-    assert.equal(await page.evaluate(() => localStorage.getItem("gian-diep.theme")), "light");
+    await page.locator('#sbSettings button[data-value="light"]').click();
+    assert.equal(await page.locator("html").getAttribute("data-theme"), "light");
+    assert.equal(await page.locator("#sbSettings").isVisible(), true);
+    await navigate(page, "/undercover/?lang=en");
     await page.locator(".sb-settings-btn").click();
     assert.equal(await page.locator('#sbSettings button[data-value="light"]').getAttribute("aria-pressed"), "true");
   });

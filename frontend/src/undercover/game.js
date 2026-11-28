@@ -2,6 +2,7 @@ import { nokiaApp } from '../nokia/room.js';
 import { el, store } from '../dom.js';
 import { t } from '../i18n.js';
 import { iconEl } from '../icons.js';
+import { openSettings } from '../sidebar.js';
 import { mountHelp } from '../help.js';
 import { isSoundOn } from '../sound.js';
 import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, ROLE, HIDDEN_TEAM, createGame, act, advance, view, validateSetup } from '../../../shared/games/gian-diep/logic.js';
@@ -22,9 +23,6 @@ const MS_PER_SECOND = 1000;
 const CLOCK_INTERVAL_MS = 200;
 const ACTION_TIMEOUT_MS = 6000;
 const GUESS_LIMIT = 120;
-const THEME_KEY = 'gian-diep.theme';
-const THEME_DARK = 'dark';
-const THEME_LIGHT = 'light';
 const LOCAL_ID_PREFIX = 'local-';
 const RANDOM_RANGE = 0x100000000;
 const ENDING_MELODIES = new Map([
@@ -83,12 +81,16 @@ let guessOpen = false;
 const localNamesById = new Map();
 
 const main = el('section', { className: 'spy-shell', id: 'spy-local' });
-const themeButton = iconButton('', toggleTheme, 'moon');
+function settingsControl() {
+  const control = iconButton(t('Cài đặt', 'Settings'), openSettings, 'settings');
+  control.classList.add('spy-settings');
+  return control;
+}
 const helpButton = iconButton(t('Cách chơi', 'How to play'), () => {}, 'info');
 const backButton = iconButton(t('Quay lại', 'Back'), goBack, 'arrow-left');
 const heading = el('h1', {}, TITLE);
 const content = el('main', { className: 'spy-content' });
-main.append(el('header', { className: 'spy-header' }, backButton, heading, el('div', { className: 'header-actions' }, helpButton, themeButton)), content);
+main.append(el('header', { className: 'spy-header' }, backButton, heading, el('div', { className: 'header-actions' }, helpButton, settingsControl())), content);
 document.body.append(main);
 const ROOM_HELP_SEEN_KEY = `help.seen.${GAME}`;
 const HELP_SEEN_VALUE = '1';
@@ -100,7 +102,6 @@ const help = mountHelp({
   onOpen: hideSecrets,
   onClose: () => store.set(ROOM_HELP_SEEN_KEY, HELP_SEEN_VALUE),
 });
-applyTheme(store.get(THEME_KEY) ?? (matchMedia('(prefers-color-scheme: dark)').matches ? THEME_DARK : THEME_LIGHT));
 
 function defaultName(index) {
   return t(`Người chơi ${index + 1}`, `Player ${index + 1}`);
@@ -114,24 +115,6 @@ function random() {
 function playerName(id) {
   if (mode === MODE.LOCAL) return localNamesById.get(id);
   return app?.room?.players.find((player) => player.id === id)?.name ?? t('Người đã rời phòng', 'Disconnected player');
-}
-
-function applyTheme(theme) {
-  document.documentElement.classList.toggle(THEME_DARK, theme === THEME_DARK);
-  themeButton.lastChild.textContent = theme === THEME_DARK ? t('Chế độ sáng', 'Light mode') : t('Chế độ tối', 'Dark mode');
-  themeButton.ariaLabel = themeButton.textContent;
-  themeButton.title = themeButton.ariaLabel;
-  for (const control of document.querySelectorAll('.room-theme')) {
-    control.lastChild.textContent = themeButton.textContent;
-    control.ariaLabel = themeButton.textContent;
-    control.title = control.ariaLabel;
-  }
-}
-
-function toggleTheme() {
-  const next = document.documentElement.classList.contains(THEME_DARK) ? THEME_LIGHT : THEME_DARK;
-  store.set(THEME_KEY, next);
-  applyTheme(next);
 }
 
 function focusMain() {
@@ -156,8 +139,7 @@ function showHome() {
     el('div', { className: 'mode-choices' },
       button(t('Chuyền một máy', 'Pass one device'), startLocalSetup, true, 'smartphone'),
       button(t('Mỗi người một máy', 'One device each'), enterOnline, false, 'users')),
-    note(t('Nói gợi ý trực tiếp hoặc qua cuộc gọi riêng.', 'Give clues out loud in person or on your own call.')),
-    el('div', { className: 'entry-footer' }, el('button', { type: 'button', ariaLabel: t('Luật chơi', 'Read the rules'), title: t('Luật chơi', 'Read the rules'), onclick: () => help.open() }, iconEl('info')))));
+    note(t('Nói gợi ý trực tiếp hoặc qua cuộc gọi riêng.', 'Give clues out loud in person or on your own call.'))));
 }
 
 function goBack() {
@@ -608,14 +590,8 @@ function enterOnline() {
   const back = button(t('Chọn cách chơi khác', 'Choose another mode'), () => { home.hidden = true; showHome(); }, false, 'arrow-left');
   home.querySelector('.card').append(back);
   const room = document.getElementById('room');
-  const toggle = iconButton(themeButton.textContent, toggleTheme, 'moon');
-  toggle.classList.add('room-theme');
-  toggle.ariaLabel = themeButton.textContent;
-  room.querySelector('header').append(toggle);
-  const homeTheme = iconButton(themeButton.textContent, toggleTheme, 'moon');
-  homeTheme.classList.add('room-theme');
-  homeTheme.ariaLabel = themeButton.textContent;
-  home.querySelector('.lang').append(homeTheme);
+  room.querySelector('header').append(settingsControl());
+  home.querySelector('.lang').append(settingsControl());
   const leave = room.querySelector('header button');
   leave.addEventListener('click', (event) => {
     if (app.room?.status !== ROOM_STATUS.PLAYING) return;
