@@ -471,10 +471,13 @@ function paintBoard(target, v, actor, isLocal) {
   const rosterPlayers = v.phase === PHASE.TIE ? v.players.filter((player) => v.candidates.includes(player.id)) : v.players;
   const showLocalOrder = isLocal && v.phase === PHASE.DESCRIBE;
   const orderedRoster = showLocalOrder ? orderedPlayers(rosterPlayers, localGame.turnOrder) : rosterPlayers;
-  const roster = paginated(orderedRoster, (player) => {
+  const renderPlayer = (player) => {
     const suffix = player.id === v.speaker ? t('Đang nói', 'Speaking') : player.alive ? t('Còn chơi', 'Alive') : t('Đã loại', 'Out');
     return el('div', { className: `player-row${player.id === v.speaker ? ' speaking' : ''}` }, el('span', { className: 'player-name' }, showLocalOrder && player.alive ? `${localGame.turnOrder.indexOf(player.id) + 1}. ${playerName(player.id)}` : playerName(player.id)), indicator(player.id === v.speaker ? 'megaphone' : player.alive ? 'circle-check' : 'circle-x', '', suffix));
-  });
+  };
+  const roster = isLocal
+    ? el('div', { className: 'player-grid local-play-roster', role: 'region', ariaLabel: t('Người chơi', 'Players'), tabIndex: 0 }, ...orderedRoster.map(renderPlayer))
+    : paginated(orderedRoster, renderPlayer);
   if (v.phase === PHASE.VOTE) renderVoting(work, v, actor, isLocal);
   if (v.phase === PHASE.GUESS) renderGuess(work, v, actor, isLocal);
   if (v.phase === PHASE.TIE) work.append(indicator('swords', t(`${v.candidates.length} người bầu lại`, `${v.candidates.length} runoff candidates`)));
@@ -491,7 +494,14 @@ function paintBoard(target, v, actor, isLocal) {
   if (!isLocal && v.card) info.append(button(t('Mở thẻ riêng của bạn', 'Your private card'), () => openOwnCard(v.card), false, 'eye'));
   if (!isLocal && seated && !v.players.find((player) => player.id === actor)?.alive && v.pendingGuess !== actor) info.append(note(host ? t('Bạn đã bị loại: vẫn điều hành, không bỏ phiếu.', 'You are out: you can still moderate, but not vote.') : t('Bạn đã bị loại. Không gợi ý hoặc bỏ phiếu nữa.', 'You are out. Do not give clues or vote.')));
   if (![PHASE.VOTE, PHASE.GUESS].includes(v.phase)) info.append(roster);
+  const previousRoster = target.querySelector('.local-play-roster');
+  const rosterScroll = previousRoster?.scrollTop ?? 0;
+  const rosterWasFocused = previousRoster && document.activeElement === previousRoster;
   target.replaceChildren(el('div', { className: 'game-layout' }, el('div', { className: 'game-main' }, status, work, controls), info));
+  if (isLocal) {
+    roster.scrollTop = rosterScroll;
+    if (rosterWasFocused && roster.isConnected) roster.focus({ preventScroll: true });
+  }
   updateClock();
 }
 
