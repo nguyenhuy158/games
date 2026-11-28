@@ -72,6 +72,7 @@ kbd { padding: 1px 6px; border-radius: var(--ui-radius); border: 1px solid var(-
 @media not ((hover: hover) and (pointer: fine)) { .mouse-only { display: none !important; } }
 /* Màn hẹp: bảng phụ thành hộp nổi, mở bằng nút trên thanh trên. */
 @media (max-width: 760px) {
+  main.play { align-items: safe center; overflow: auto; }
   .side { position: fixed; inset: 56px 12px auto; width: auto; max-height: calc(100dvh - 80px); z-index: 20; padding: 0; box-shadow: var(--ui-shadow-lg); border-radius: var(--ui-radius); }
   .side:not(.open) { display: none; }
 }

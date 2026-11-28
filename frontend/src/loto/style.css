@@ -85,7 +85,7 @@ header .music-vol { width: 56px; accent-color: var(--ui-primary); }
 .tabs button.on { opacity: 1; border-color: #ffd23f; box-shadow: 0 0 0 2px #ffd23f; }
 .tabs button small { font-size: 9px; font-weight: 900; color: #ffd23f; }
 .tabs button.win { background: #ffd23f; color: #5a0f12; }
-.wrap { grid-row: 2; min-height: 0; container-type: size; display: grid; place-items: start center; touch-action: none; }
+.wrap { grid-row: 2; min-height: 0; container-type: size; display: grid; place-items: safe center; touch-action: none; }
 .ticket {
   --tc: #c62828; width: min(100cqw, calc((100cqh - 14px) / 1.07)); container-type: inline-size; padding: 4px; border-radius: 10px;
   background: var(--tc); box-shadow: 0 10px 24px #0007, inset 0 0 0 1px #fff3;

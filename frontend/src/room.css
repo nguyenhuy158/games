@@ -71,5 +71,5 @@ header button { min-width: 44px; min-height: 44px; }
 .hint { color: var(--muted); font-size: 12px; text-align: center; }
 /* Điện thoại xoay ngang: không đủ cao cho dòng gợi ý. */
 @media (orientation: landscape) and (max-height: 560px) and (pointer: coarse) { .hint { display: none; } }
-#overlay { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in oklab, var(--ui-bg) 75%, transparent); z-index: 5; }
+#overlay { position: absolute; inset: 0; display: grid; place-items: safe center; overflow: auto; background: color-mix(in oklab, var(--ui-bg) 75%, transparent); z-index: 5; }
 .lang { display: flex; justify-content: center; align-items: center; gap: 8px; }
