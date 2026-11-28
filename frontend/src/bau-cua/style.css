@@ -82,7 +82,7 @@ header .grow { flex: 1; }
 #players .d { font-weight: 800; }
 .up { color: var(--good); } .down { color: var(--bad); }
 
-main { flex: 1; display: grid; gap: 10px; justify-items: center; align-content: start; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); }
+main { flex: 1; display: grid; gap: 10px; justify-items: center; align-content: center; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); }
 #plate {
   position: relative; width: 190px; height: 110px; margin-top: 20px; border-radius: 50%; display: grid; place-items: center;
   background: radial-gradient(circle at 50% 40%, #fff, #e9dcc6 70%, #b99f7c); box-shadow: 0 8px 24px #0008, inset 0 -6px #0002;

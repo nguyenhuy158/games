@@ -188,7 +188,7 @@ body .help-dlg .help-x { color: var(--ui-fg); background: var(--ui-surface); bor
 body .help-dlg .help-ok { background: var(--ui-primary); color: var(--ui-primary-fg); border-radius: var(--ui-radius); box-shadow: none; font-weight: 600; }
 body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { outline-color: var(--ui-ring); }
 @media (max-width: 700px) {
-  .stage:has(.board-stage:not([hidden])) { align-items: start; }
+  #overlay { align-items: safe center; }
   .play-roster { grid-template-columns: minmax(0, 1fr); }
   .setup { min-height: 100%; grid-template-rows: 1fr auto; }
   .setup-fields { align-self: center; }
