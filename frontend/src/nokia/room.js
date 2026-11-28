@@ -49,7 +49,7 @@ export function nokiaApp(opt) {
   const canvas = el('canvas');
   const pad = el('div', { className: 'pad' });
   const ov = el('div', { id: 'overlay', hidden: true });
-  const btnLeave = el('button', { title: t('Rời phòng', 'Leave room'), innerHTML: icon('arrow-left'), onclick: () => leave() });
+  const btnLeave = el('button', { className: 'room-leave', title: t('Rời phòng', 'Leave room'), innerHTML: icon('arrow-left'), onclick: () => leave() });
   // Cách chơi (opt.help): nút (i) trên thanh trên trong phòng + nút ở trang vào phòng, cùng một hộp (public/help.js).
   const btnHelp = el('button', { innerHTML: icon('info') });
   const btnInvite = el('button', { title: t('Mời bạn: mã QR / link', 'Invite: QR code / link'), onclick: () => invite(`${location.origin}${opt.path ?? `/nokia/${opt.game}/`}?r=${code}`, code) },

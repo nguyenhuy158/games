@@ -51,11 +51,22 @@ const CSS = `
 #sidebar .ic { width: 18px; height: 18px; flex: none; }
 #sidebar h2 { display: flex; align-items: center; gap: 8px; margin: 14px 10px 4px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ui-fg-muted); }
 #sidebar h2 .ic { width: 14px; height: 14px; }
-#mobileSettings { display: none; }
+#mobileSettings, .room-leave > .leave-arrow { display: none; }
 @media ${WIDE_QUERY} { html { padding-left: ${SIDEBAR_WIDTH}; } }
 @media not ${WIDE_QUERY} {
   #sidebar { display: none; }
   #mobileSettings { display: inline-flex; }
+  :is(a.back[href="/"], #hud .btn[href="/"], #btnLeave, .room-leave):not([hidden]) {
+    box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+    flex: 0 0 auto; width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0;
+    border: 1px solid var(--ui-border); border-radius: var(--ui-radius);
+    background: var(--ui-surface); color: var(--ui-fg); text-decoration: none; box-shadow: none;
+  }
+  :is(a.back[href="/"], #hud .btn[href="/"], #btnLeave, .room-leave) > .ic { width: 18px; height: 18px; flex: none; }
+  :is(a.back[href="/"], #hud .btn[href="/"], #btnLeave, .room-leave):focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 2px; }
+  .room-leave > span { display: none; }
+  .room-leave > .ic.leave-arrow { display: inline-block; }
+
 }
 #sidebar .sb-settings { position: sticky; bottom: calc(-1 * max(16px, env(safe-area-inset-bottom))); margin: auto -10px calc(-1 * max(16px, env(safe-area-inset-bottom))); padding: 8px 10px max(16px, env(safe-area-inset-bottom)); background: var(--ui-surface); border-top: 1px solid var(--ui-border); }
 #sidebar .sb-settings-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 36px; padding: 6px 10px; border: 0; border-radius: var(--ui-radius); background: none; box-shadow: none; color: inherit; font: inherit; font-weight: 500; text-align: left; cursor: pointer; }
