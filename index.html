@@ -73,12 +73,12 @@
     #account a.primary:hover { background: var(--ui-primary-hover); border-color: var(--ui-primary-hover); }
     #account small { color: var(--muted); }
     body { position: relative; }
-    .hub-actions, .stats-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .hub-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .hub-actions .btn, .stats-close { min-width: 44px; min-height: 44px; justify-content: center; }
-    .stats-actions { justify-content: flex-start; }
-    #homeStats { width: min(760px, calc(100% - 32px)); max-height: 90dvh; padding: 16px; border: 1px solid var(--line); border-radius: var(--ui-radius); background: var(--panel); color: var(--text); overflow: auto; }
-    #homeStats::backdrop { background: rgb(0 0 0 / 55%); }
-    #homeStats > section { margin-top: 16px; }
+    .stats-actions { display: flex; justify-content: flex-end; }
+    .home-stats { width: min(760px, calc(100% - 32px)); max-height: 90dvh; padding: 16px; border: 1px solid var(--line); border-radius: var(--ui-radius); background: var(--panel); color: var(--text); overflow: auto; }
+    .home-stats::backdrop { background: rgb(0 0 0 / 55%); }
+    .home-stats > section { margin-top: 16px; }
     .account-menu { position: relative; }
     .account-menu > summary { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px; }
     .account-actions { position: absolute; z-index: 3; inset-inline-end: 0; min-width: max-content; display: grid; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: var(--ui-radius); background: var(--panel); box-shadow: var(--ui-shadow-sm); }
@@ -155,7 +155,8 @@
   <!-- Hiện khi server đã có /api/rooms (danh sách phòng công khai của mọi game). -->
   <div class="hub-actions">
     <a id="roomsLink" class="btn" href="/phong/" aria-label="Phòng đang mở" data-en-aria-label="Open rooms" title="Phòng đang mở" data-en-title="Open rooms" hidden><i data-icon="users"></i> <b id="roomsCount"></b></a>
-    <button id="openHomeStats" class="btn" aria-haspopup="dialog" aria-label="BXH và thành tích" data-en-aria-label="Leaderboards and achievements" title="BXH và thành tích" data-en-title="Leaderboards and achievements"><i data-icon="trophy"></i></button>
+    <button id="openLeaderboard" class="btn" aria-haspopup="dialog" aria-controls="leaderboardDialog" aria-label="Bảng xếp hạng" data-en-aria-label="Leaderboard" title="Bảng xếp hạng" data-en-title="Leaderboard"><i data-icon="trophy"></i></button>
+    <button id="openAchievements" class="btn" aria-haspopup="dialog" aria-controls="achievementsDialog" aria-label="Thành tích" data-en-aria-label="Achievements" title="Thành tích" data-en-title="Achievements"><i data-icon="medal"></i></button>
     <button id="mobileSettings" class="btn" aria-haspopup="dialog" aria-label="Cài đặt" data-en-aria-label="Settings" title="Cài đặt" data-en-title="Settings"><i data-icon="settings"></i></button>
   </div>
   <script type="module">
@@ -365,15 +366,11 @@
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
   </div>
-  <dialog id="homeStats" aria-label="BXH và thành tích" data-en-aria-label="Leaderboards and achievements">
-    <div class="stats-actions">
-      <a class="btn" href="#fun"><span data-en="Leaderboards">BXH</span></a>
-      <a class="btn" href="#me"><span data-en="Achievements">Thành tích</span></a>
-      <form method="dialog"><button class="btn stats-close" aria-label="Đóng" data-en-aria-label="Close" title="Đóng" data-en-title="Close" autofocus><i data-icon="x"></i></button></form>
-    </div>
+  <dialog id="leaderboardDialog" class="home-stats" aria-labelledby="leaderboardTitle">
+    <form class="stats-actions" method="dialog"><button class="btn stats-close" aria-label="Đóng" data-en-aria-label="Close" title="Đóng" data-en-title="Close" autofocus><i data-icon="x"></i></button></form>
     <section id="fun">
       <div class="fun-head">
-        <h2><i data-icon="medal"></i> <span data-en="Fun leaderboards">Bảng xếp hạng vui</span></h2>
+        <h2 id="leaderboardTitle"><i data-icon="trophy"></i> <span data-en="Fun leaderboards">Bảng xếp hạng vui</span></h2>
         <div class="seg" id="funPeriod">
           <button data-period="week" class="on"><span data-en="This week">Tuần này</span></button>
           <button data-period="all"><span data-en="All time">Mọi lúc</span></button>
@@ -382,6 +379,9 @@
       <div id="funList" class="fun-grid"></div>
       <p class="sub hint" id="funHint"><span data-en="Sign in with Google to get on the boards — guests can still play, just not ranked.">Đăng nhập Google để có tên trên bảng — khách vẫn chơi được, chỉ không được xếp hạng.</span></p>
     </section>
+  </dialog>
+  <dialog id="achievementsDialog" class="home-stats" aria-labelledby="meTitle">
+    <form class="stats-actions" method="dialog"><button class="btn stats-close" aria-label="Đóng" data-en-aria-label="Close" title="Đóng" data-en-title="Close" autofocus><i data-icon="x"></i></button></form>
     <section id="me" aria-labelledby="meTitle">
       <h2 id="meTitle"><span data-en="Your stats">Thành tích của bạn</span></h2>
       <p id="meNotice" class="sub hint" role="status"></p>
