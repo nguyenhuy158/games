@@ -24,3 +24,9 @@ forest with warm lantern and full moon.
 1. Xuất WebP rộng 480 px, giữ tỷ lệ khung hình, mục tiêu khoảng 10 KB. Xem lại chất lượng sau nén.
 2. Lưu tại `public/covers-v2/<game>.webp`. Dùng `data-preview-src="/covers-v2/<game>.webp"` trên `img.thumb-cover` trong thẻ `.thumb` để dùng lazy-load hiện tại. Tránh preload hoặc precache ảnh bìa.
 3. Mở trang chủ local ở mobile và desktop với cache tắt. Kiểm tra ảnh đang thấy hiển thị và thẻ ngoài khung nhìn chỉ yêu cầu ảnh khi cuộn tới.
+
+## Icon trên thẻ game
+
+Dùng ảnh bìa V2 làm ảnh tham chiếu. Giữ chủ thể, chất liệu đất sét 3D và bảng màu của ảnh bìa. Dùng khung vuông, chủ thể lớn ở giữa, nền gọn và không thêm chữ. Kiểm tra hình ở cỡ 24 px và 32 px.
+
+Xuất WebP vuông 96 px tại `public/card-icons-v2/<game>.webp`. Gắn vào `img.logo` trên thẻ tương ứng với `loading="lazy"`, `decoding="async"` và `alt=""`.

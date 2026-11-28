@@ -34,7 +34,7 @@
     h1 { margin: 0; font-size: 26px; display: flex; align-items: center; gap: 10px; }
     h1 .logo { width: 44px; height: 44px; }
     .game b { display: flex; align-items: center; gap: 8px; }
-    .game .logo { width: 32px; height: 32px; }
+    .game .logo { width: 32px; height: 32px; flex: none; }
     .sub { margin: -12px 0 0; color: var(--muted); }
     .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; width: min(760px, 100%); }
     .game {
@@ -131,6 +131,7 @@
     .recent a { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: var(--ui-radius); background: var(--panel); border: 1px solid var(--line); color: inherit; text-decoration: none; font-weight: 500; font-size: 14px; }
     .recent a:hover { border-color: var(--accent); }
     .recent img { width: 28px; height: 28px; }
+    img[src^="/card-icons-v2/"] { border-radius: 25%; }
     /* Điện thoại: thẻ 2 cột gọn (ảnh thấp, bỏ mô tả + nhãn) cho đỡ phải cuộn. */
     @media (max-width: 560px) {
       .games { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -193,14 +194,14 @@
   <div class="games">
     <a class="game" href="/soi/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/soi.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/soi.svg" alt=""> <span data-en="Werewolf">Sói</span></b>
+      <b><img class="logo" src="/card-icons-v2/soi.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Werewolf">Sói</span></b>
       <span><span data-en="Play face to face: the Wolf quietly winks players out while the villagers try to identify the Wolf.">Chơi trực tiếp cùng nhóm: Sói bí mật nháy mắt loại dân, còn dân tìm ra Sói.</span></span>
       <div class="tags"><i><span data-en="3–12 players">3–12 người</span></i><i><span data-en="Secret roles">Vai bí mật</span></i><i><span data-en="Party game">Chơi nhóm</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-11-14">14/11/2026</time></span><span class="game-badge" data-en="Featured">Nổi bật</span></div>
     </a>
     <a class="game" href="/undercover/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/undercover.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/undercover.svg" alt=""> <span data-en="Undercover">Ai là gián điệp</span></b>
+      <b><img class="logo" src="/card-icons-v2/undercover.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Undercover">Ai là gián điệp</span></b>
       <span data-en="Most players get the same word, while the spies get a similar one. Take turns giving clues, then vote to find the spies.">Đa số nhận cùng một từ, còn gián điệp nhận từ tương tự. Lần lượt đưa gợi ý rồi bỏ phiếu tìm gián điệp.</span>
       <div class="tags"><i data-en="3–20 players">3–20 người</i><i data-en="Two modes">Hai chế độ</i><i data-en="Mr. White">Mũ Trắng</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-11-25">25/11/2026</time></span><span class="game-badge" data-en="New · Featured">Mới · Nổi bật</span></div>
@@ -210,42 +211,42 @@
   <div class="games">
     <a class="game" href="/co-caro/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/co-caro.webp" decoding="async" alt=""></div>
-      <b><img class="logo" src="/logos/co-caro.svg" alt=""> <span data-en="Gomoku">Cờ caro</span></b>
+      <b><img class="logo" src="/card-icons-v2/co-caro.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Gomoku">Cờ caro</span></b>
       <span><span data-en="Five in a row wins, or tic-tac-toe 3×3. Play 1v1 with friends or vs the bot.">Nối 5 quân là thắng, hoặc XO 3×3 nối 3. Đấu 1v1 với bạn bè hoặc với máy.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Tic-tac-toe">XO 3×3</span></i><i><span data-en="Blocked ends">Chặn 2 đầu</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/noi-4/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/noi-4.webp" decoding="async" alt=""></div>
-      <b><img class="logo" src="/logos/noi-4.svg" alt=""> <span data-en="Connect 4">Nối 4</span></b>
+      <b><img class="logo" src="/card-icons-v2/noi-4.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Connect 4">Nối 4</span></b>
       <span><span data-en="Drop discs into columns; 4 in a row horizontally, vertically or diagonally wins.">Thả quân vào cột, nối 4 quân liền ngang, dọc hoặc chéo là thắng.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Connect 4</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/ban-tau/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/ban-tau.webp" decoding="async" alt=""></div>
-      <b><img class="logo" src="/logos/ban-tau.svg" alt=""> <span data-en="Battleship">Bắn tàu</span></b>
+      <b><img class="logo" src="/card-icons-v2/ban-tau.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Battleship">Bắn tàu</span></b>
       <span><span data-en="Hide 5 ships and take turns firing at the enemy sea. Sink their whole fleet to win.">Giấu 5 chiếc tàu, thay phiên bắn vào biển đối thủ. Chìm hết tàu bên kia là thắng.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Battleship</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/o-an-quan/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/o-an-quan.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/o-an-quan.svg" alt=""> <span data-en="O An Quan">Ô ăn quan</span></b>
+      <b><img class="logo" src="/card-icons-v2/o-an-quan.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="O An Quan">Ô ăn quan</span></b>
       <span><span data-en="Sow pebbles and capture pieces to finish with the most points.">Rải sỏi và thu quân để có nhiều điểm nhất khi hết ván.</span></span>
       <div class="tags"><i><span data-en="2–5 players">2–5 người</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/co-tuong/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/co-tuong.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/co-tuong.svg" alt=""> <span data-en="Xiangqi">Cờ tướng</span></b>
+      <b><img class="logo" src="/card-icons-v2/co-tuong.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Xiangqi">Cờ tướng</span></b>
       <span><span data-en="Move your pieces to checkmate the opposing general.">Di chuyển quân để chiếu bí tướng đối phương.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Xiangqi</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-29">29/09/2026</time></span></div>
     </a>
     <a class="game" href="/co-ganh/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/co-ganh.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/co-ganh.svg" alt=""> <span data-en="Co Ganh">Cờ gánh</span></b>
+      <b><img class="logo" src="/card-icons-v2/co-ganh.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Co Ganh">Cờ gánh</span></b>
       <span><span data-en="Move between two opposing pieces or surround a group to turn them into your own.">Xen giữa hai quân đối phương hoặc vây kín một nhóm để đổi chúng thành quân mình.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-29">29/09/2026</time></span></div>
@@ -255,35 +256,35 @@
   <div class="games">
     <a class="game" href="/pikachu/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/pikachu.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/pikachu.svg" alt=""> <span data-en="Pikachu Onet">Pikachu nối thú</span></b>
+      <b><img class="logo" src="/card-icons-v2/pikachu.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Pikachu Onet">Pikachu nối thú</span></b>
       <span><span data-en="Clear the board by linking matching tiles with up to three straight segments.">Dọn bàn bằng cách nối từng cặp hình giống nhau bằng tối đa ba đoạn thẳng.</span></span>
       <div class="tags"><i><span data-en="Multiplayer">Nhiều người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i><span data-en="Race">Đua</span></i><i><span data-en="Team 2v2">Đội 2v2</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-27">27/09/2026</time></span></div>
     </a>
     <a class="game" href="/do-min/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/do-min.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/do-min.svg" alt=""> <span data-en="Minesweeper">Dò mìn</span></b>
+      <b><img class="logo" src="/card-icons-v2/do-min.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Minesweeper">Dò mìn</span></b>
       <span><span data-en="Use the numbers as clues to uncover every safe square while avoiding mines.">Dựa vào các con số để mở hết ô an toàn mà tránh mìn.</span></span>
       <div class="tags"><i><span data-en="Multiplayer">Nhiều người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/bau-cua/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/bau-cua.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/bau-cua.svg" alt=""> <span data-en="Bau Cua">Bầu cua</span></b>
+      <b><img class="logo" src="/card-icons-v2/bau-cua.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Bau Cua">Bầu cua</span></b>
       <span><span data-en="Bet virtual coins on the animals you think will appear on the three dice.">Đặt xu ảo vào con vật bạn đoán sẽ xuất hiện trên ba viên xúc xắc.</span></span>
       <div class="tags"><i><span data-en="2–10 players">2–10 người</span></i><i><span data-en="Dealer">Làm cái</span></i><i><span data-en="Virtual coins">Xu ảo</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/dao-vang/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/dao-vang.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/dao-vang.svg" alt=""> <span data-en="Gold Miner">Đào Vàng</span></b>
+      <b><img class="logo" src="/card-icons-v2/dao-vang.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Gold Miner">Đào Vàng</span></b>
       <span><span data-en="Swing the claw to grab gold and diamonds. Hit the target before time runs out.">Thả móc gắp vàng, kim cương. Đủ tiền trước khi hết giờ để qua màn.</span></span>
       <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Shared mine">Chung mỏ</span></i><i><span data-en="Gold rush">Tranh vàng</span></i><i><span data-en="Shop">Tiệm đồ</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-27">27/09/2026</time></span></div>
     </a>
     <a class="game" href="/loto/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/loto.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/loto.svg" alt=""> <span data-en="Lo To">Lô tô</span></b>
+      <b><img class="logo" src="/card-icons-v2/loto.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Lo To">Lô tô</span></b>
       <span><span data-en="Mark the numbers the host calls and shout KINH when all five numbers in a row are marked.">Dò số chủ phòng gọi và hô KINH khi đủ năm số trên một hàng.</span></span>
       <div class="tags"><i><span data-en="1–12 players">1–12 người</span></i><i><span data-en="Host calls">Chủ phòng gọi số</span></i><i><span data-en="Folk game">Dân gian</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-10-03">03/10/2026</time></span></div>
@@ -293,21 +294,21 @@
   <div class="games">
     <a class="game" href="/2048/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/2048.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/2048.svg" alt=""> 2048</b>
+      <b><img class="logo" src="/card-icons-v2/2048.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> 2048</b>
       <span><span data-en="Slide the tiles and join equal numbers to reach 2048. Save your score to the leaderboard.">Trượt các ô, ghép số giống nhau để đạt 2048. Lưu điểm lên bảng xếp hạng.</span></span>
       <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="Leaderboard">Bảng xếp hạng</span></i><i><span data-en="Swipe">Vuốt</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-10-03">03/10/2026</time></span></div>
     </a>
     <a class="game" href="/tetris/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/tetris.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/tetris.svg" alt=""> <span data-en="Tetris">Xếp gạch</span></b>
+      <b><img class="logo" src="/card-icons-v2/tetris.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Tetris">Xếp gạch</span></b>
       <span><span data-en="Stack the falling blocks and clear full lines. Keep your best score.">Xếp các khối rơi, lấp kín hàng để xoá. Lưu kỷ lục trên máy.</span></span>
       <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="Classic">Cổ điển</span></i><i><span data-en="Swipe">Vuốt</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-10-03">03/10/2026</time></span></div>
     </a>
     <a class="game" href="/sudoku/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/sudoku.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/sudoku.svg" alt=""> Sudoku</b>
+      <b><img class="logo" src="/card-icons-v2/sudoku.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> Sudoku</b>
       <span><span data-en="Fill the grid so each row, column, and 3×3 box contains the digits 1–9 exactly once.">Điền số 1–9 sao cho mỗi hàng, mỗi cột và mỗi ô vuông 3×3 đều đủ chín số, không trùng nhau.</span></span>
       <div class="tags"><i><span data-en="1 player">1 người</span></i><i><span data-en="3 levels">3 mức</span></i><i><span data-en="Notes">Ghi chú</span></i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-10-03">03/10/2026</time></span></div>
@@ -318,49 +319,49 @@
   <div class="games" id="nokia">
     <a class="game" href="/nokia/snake/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/snake.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/snake.svg" alt=""> <span data-en="Snake">Rắn săn mồi</span></b>
+      <b><img class="logo" src="/card-icons-v2/snake.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Snake">Rắn săn mồi</span></b>
       <span><span data-en="Steer your snake to eat, grow, and score without crashing into walls or snakes.">Lái rắn ăn mồi để dài ra và ghi điểm, tránh đâm vào tường hay thân rắn.</span></span>
       <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Arena">Đấu trường</span></i><i>Nokia 3310</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/nokia/bantumi/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/bantumi.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/bantumi.svg" alt=""> Bantumi</b>
+      <b><img class="logo" src="/card-icons-v2/bantumi.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> Bantumi</b>
       <span><span data-en="Take turns sowing seeds around the board to collect more in your store than your opponent.">Lần lượt rải sỏi quanh bàn để gom nhiều sỏi vào kho hơn đối thủ.</span></span>
       <div class="tags"><i><span data-en="1v1">1v1</span></i><i><span data-en="Vs bot">Đánh với máy</span></i><i>Nokia 3310</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/nokia/pairs/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/pairs.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/pairs.svg" alt=""> <span data-en="Pairs">Lật hình</span></b>
+      <b><img class="logo" src="/card-icons-v2/pairs.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> <span data-en="Pairs">Lật hình</span></b>
       <span><span data-en="Pairs II: flip 2 cards to find a match. Take turns; most pairs wins.">Pairs II: lật 2 lá tìm cặp. Cả nhóm thay phiên, ai nhiều cặp nhất thắng.</span></span>
       <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Memory">Trí nhớ</span></i><i>Nokia 3310</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/nokia/logic/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/logic.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/logic.svg" alt=""> Logic</b>
+      <b><img class="logo" src="/card-icons-v2/logic.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> Logic</b>
       <span><span data-en="Use the feedback after each guess to crack the secret four-shape code.">Dựa vào phản hồi sau mỗi lượt để đoán đúng mã bí mật gồm bốn hình.</span></span>
       <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i><i>Nokia 3210</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/nokia/rapid-roll/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/rapid-roll.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/rapid-roll.svg" alt=""> Rapid Roll</b>
+      <b><img class="logo" src="/card-icons-v2/rapid-roll.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> Rapid Roll</b>
       <span><span data-en="Roll the ball down the platforms, dodge spikes, and survive as far as you can.">Lăn bóng xuống các bệ, tránh gai và cố trụ xa nhất.</span></span>
       <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-board race">Đua cùng đề</span></i><i>Nokia 1110i</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/nokia/space-impact/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/space-impact.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/space-impact.svg" alt=""> Space Impact</b>
+      <b><img class="logo" src="/card-icons-v2/space-impact.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> Space Impact</b>
       <span><span data-en="Blast space aliens and beat the boss. Up to 4 ships co-op.">Bắn quái vũ trụ, hạ trùm cuối màn. Tối đa 4 phi thuyền chơi chung.</span></span>
       <div class="tags"><i><span data-en="1–4 players">1–4 người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i>Nokia 3310</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
     </a>
     <a class="game" href="/nokia/bounce/">
       <div class="thumb"><img class="thumb-cover" data-preview-src="/covers-v2/bounce.webp" decoding="async" alt=""></div>
-      <b><img loading="lazy" class="logo" src="/logos/bounce.svg" alt=""> Bounce</b>
+      <b><img class="logo" src="/card-icons-v2/bounce.webp" width="32" height="32" loading="lazy" decoding="async" alt=""> Bounce</b>
       <span><span data-en="Guide the ball through every ring, then reach the exit to clear the level.">Điều khiển bóng qua mọi vòng rồi tới cửa đích để qua màn.</span></span>
       <div class="tags"><i><span data-en="1–6 players">1–6 người</span></i><i><span data-en="Same-level race">Đua cùng màn</span></i><i>Nokia 6600</i></div>
       <div class="game-meta"><span><span data-en="Added">Có từ</span> <time datetime="2026-09-28">28/09/2026</time></span></div>
