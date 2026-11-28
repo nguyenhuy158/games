@@ -200,7 +200,7 @@ function packProgress(progress) {
   const label = t(`Đã dùng ${used ?? 0}/${count} cặp`, `${used ?? 0}/${count} pairs used`);
   return el('div', { className: 'pack-progress' },
     el('progress', { value: used ?? 0, max: count, ariaLabel: label }),
-    note(packExhausted(progress) ? t(`Đã dùng hết ${count} cặp`, `All ${count} pairs used`) : label));
+    el('span', { ariaHidden: 'true' }, `${used ?? 0}/${count}`));
 }
 
 function expandPackButton(packId, roomContext, apply) {
