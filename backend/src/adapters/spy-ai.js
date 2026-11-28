@@ -10,5 +10,6 @@ export class SpyAi extends DurableObject {
 
   topics(owner, refresh) { return this.service.topics(owner, refresh); }
   generate(owner, topic, online = false) { return this.service.generate(owner, topic, online); }
+  extend(owner, packId, roomPack) { return this.service.extend(owner, packId, roomPack); }
   deal(owner, packId) { return this.service.deal(owner, packId); }
 }

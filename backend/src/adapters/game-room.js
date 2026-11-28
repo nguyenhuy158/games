@@ -350,7 +350,7 @@ export function gameRoom(games) {
       this.list(false, except);
     }
     stateFor(base, ctx, id) {
-      return this.mod.flat ? { ...base, ...this.mod.view(ctx, id) } : { ...base, view: this.s.g ? this.mod.view(ctx, id) : null };
+      return this.mod.flat ? { ...base, ...this.mod.view(ctx, id) } : { ...base, ...this.mod.lobbyState?.(ctx), view: this.s.g ? this.mod.view(ctx, id) : null };
     }
   };
 }
