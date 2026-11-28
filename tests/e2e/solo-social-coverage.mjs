@@ -1667,6 +1667,53 @@ await scenario('spy queued setup and ballot controls cannot change a later scree
   assert.deepEqual(errors, []);
 }, { clock: true });
 
+await scenario('spy room plays one team sound per ending and respects mute', '/undercover/?r=TEST&lang=en', async (page) => {
+  const playing = room({
+    phase: 'deal', deadline: null, round: 1, speaker: null, candidates: [],
+    pendingGuess: null, lastEliminated: null, winner: null,
+    players: [{ id: PLAYER_ID, alive: true }, { id: 'other', alive: true }],
+    card: null, cfg: { spies: 1, whites: 0, seconds: 15, pack: 'food' },
+  });
+  const ending = (winner) => ({
+    ...playing,
+    status: 'ended',
+    view: { ...playing.view, phase: 'ended', winner, reveal: {
+      civilianWord: 'Phở', spyWord: 'Bún', roles: { [PLAYER_ID]: 'civilian', other: 'spy' },
+    } },
+    result: { title: ['Kết quả', 'Results'], ranks: [{ id: PLAYER_ID, name: 'Coverage Player', won: true }] },
+  });
+  const civilian = ending('civilian');
+  await state(page, playing);
+  await page.evaluate(() => { window.endingNotes.length = 0; });
+  await state(page, civilian);
+  await state(page, civilian);
+  const notes = await page.evaluate(() => window.endingNotes);
+  assert.equal(notes.length, 4);
+  assert(notes[0] < notes.at(-1));
+  await state(page, playing);
+  await page.evaluate(() => { window.endingNotes.length = 0; });
+  await state(page, ending('hidden'));
+  const hiddenNotes = await page.evaluate(() => window.endingNotes);
+  assert.equal(hiddenNotes.length, 4);
+  assert(hiddenNotes[0] > hiddenNotes.at(-1));
+  await page.evaluate(async () => (await import('/sound.js')).setSoundOn(false));
+  await state(page, playing);
+  await state(page, civilian);
+  assert.deepEqual(await page.evaluate(() => window.endingNotes), hiddenNotes);
+}, { protocol: true, init: () => {
+  window.endingNotes = [];
+  const createOscillator = AudioContext.prototype.createOscillator;
+  AudioContext.prototype.createOscillator = function () {
+    const oscillator = createOscillator.call(this);
+    const start = oscillator.start.bind(oscillator);
+    oscillator.start = (...args) => {
+      window.endingNotes.push(oscillator.frequency.value);
+      start(...args);
+    };
+    return oscillator;
+  };
+} });
+
 await scenario('spy queued online reorder respects host loss and game start', '/undercover/?r=TEST&lang=en', async (page) => {
   const players = [{ id: PLAYER_ID, name: 'Coverage Player' }, { id: 'other', name: 'Other Player' }, { id: 'third', name: 'Third Player' }];
   const seats = players.map(({ id }) => id);
