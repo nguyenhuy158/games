@@ -1750,7 +1750,7 @@ await scenario('spy pending AI response preserves home after a queued back actio
   await pending;
   await textIncludes(page, 'dialog [role="status"]', 'AI is preparing');
   await queuedBack.evaluate((node) => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-  await textIncludes(page, '.entry', 'One group. A different word.');
+  await page.getByRole('button', { name: 'Pass one device', exact: true }).waitFor({ state: 'visible' });
   finishNavigatedAi({ body: JSON.stringify({ packId: '12345678-1234-4234-8234-123456789abc', title }) });
   await page.waitForSelector('dialog[open]', { state: 'detached' });
   assert.equal(await page.getByRole('button', { name: 'Pass one device', exact: true }).isVisible(), true);
