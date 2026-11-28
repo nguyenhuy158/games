@@ -445,6 +445,7 @@ export function view(g, id) {
   return {
     phase: g?.phase ?? PHASE.ENDED, deadline: g?.deadline ?? 0, round: g?.round ?? 0,
     cfg: { ...(g?.cfg ?? DEFAULT_CONFIG) }, speaker: g?.speaker ?? null, candidates: [...(g?.candidates ?? [])],
+    turnOrder: [...(g?.turnOrder ?? [])],
     pendingGuess: g?.pendingGuess ?? null, lastEliminated: g?.lastEliminated ?? null, winner: g?.winner ?? null,
     players: players.map((player) => ({ id: player.id, alive: player.alive, ...(ended ? { role: player.role } : {}) })),
     card: !mine ? null : mine.role === ROLE.WHITE ? { white: true } : { word: mine.word },

@@ -7,7 +7,7 @@ import { mountHelp } from '../help.js';
 import { isSoundOn } from '../sound.js';
 import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, ROLE, HIDDEN_TEAM, createGame, act, advance, view, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 import { HELP } from './help.js';
-import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results } from './ui.js';
+import { button, iconButton, indicator, note, dialog, confirmAction, settings, countRow, configBadges, setupWarning, paginated, results } from './ui.js';
 import { setButtonPending } from '../ui/feedback.mjs';
 import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { seatingRoster, orderedPlayers } from './roster.js';
@@ -164,26 +164,9 @@ function startLocalSetup() {
   focusMain();
 }
 
-function countRow(label, icon, min, max, value, change) {
-  const name = el('span', { className: 'count-label' }, iconEl(icon), label);
-  const number = el('output', { textContent: value, ariaLabel: label, tabIndex: -1 });
-  const step = (delta, glyph, action) => {
-    const control = button(glyph, () => {
-      if (!control.isConnected || control.disabled) return;
-      change(value + delta);
-      paintSetup();
-      const next = [...content.querySelectorAll('.count-controls button')].find((item) => item.ariaLabel === action);
-      if (next.disabled) next.closest('.count-controls').querySelector('output').focus();
-      else next.focus();
-    });
-    control.ariaLabel = action;
-    control.disabled = delta < 0 ? value <= min : value >= max;
-    return control;
-  };
-  return el('div', { className: 'count-row' }, name, el('div', { className: 'count-controls' },
-    step(-1, '−', t(`Giảm ${label}`, `Decrease ${label}`)),
-    number,
-    step(1, '+', t(`Tăng ${label}`, `Increase ${label}`))));
+function repaintLocalCounts() {
+  paintSetup();
+  return content;
 }
 
 function paintSetup() {
@@ -196,12 +179,12 @@ function paintSetup() {
           localPlayerCount = count;
           localConfig.spies = Math.min(localConfig.spies, limits(count).spies);
           localConfig.whites = Math.min(localConfig.whites, limits(count, localConfig.spies).whites);
-        }),
+        }, repaintLocalCounts),
         countRow(t('Gián điệp', 'Spies'), 'eye', DEFAULT_CONFIG.spies, roleLimits.spies, localConfig.spies, (count) => {
           localConfig.spies = count;
           localConfig.whites = Math.min(localConfig.whites, limits(localPlayerCount, count).whites);
-        }),
-        countRow(t('Mũ Trắng', 'Mr. White'), 'layers', DEFAULT_CONFIG.whites, roleLimits.whites, localConfig.whites, (count) => { localConfig.whites = count; })),
+        }, repaintLocalCounts),
+        countRow(t('Mũ Trắng', 'Mr. White'), 'layers', DEFAULT_CONFIG.whites, roleLimits.whites, localConfig.whites, (count) => { localConfig.whites = count; }, repaintLocalCounts)),
       localPackControls()),
     button(t('Bắt đầu', 'Start game'), dealLocal, true, 'play')));
 }
@@ -279,9 +262,7 @@ function paintReveal() {
       } else paintReveal();
       focusMain();
     }, true, 'arrow-right');
-    const face = secretCard(view(localGame, player.id).card, true, null);
-    const back = el('div', { className: 'secret-card secret-flip-back', ariaHidden: 'true' }, iconEl('layers'));
-    step.append(el('div', { className: 'secret-flip' }, back, face), done);
+    step.append(flippedCard(view(localGame, player.id).card), done);
   } else if (revealName) {
     const reveal = button(t('Xem từ khóa', 'View keyword'), () => {
       if (!reveal.isConnected) return;
@@ -289,10 +270,7 @@ function paintReveal() {
       paintReveal();
       focusMain();
     }, true, 'eye');
-    step.append(el('section', { className: 'secret-card secret-covered' },
-      iconEl('layers'),
-      el('h3', {}, t('Thẻ đang úp', 'Card face down')),
-      note(t('Chỉ mở khi mình bạn nhìn màn hình.', 'Open it when only you can see the screen.'))), reveal);
+    step.append(coveredCard(), reveal);
   } else {
     const input = el('input', { type: 'text', ariaLabel: t('Tên của bạn', 'Your name'), placeholder: t('Tên của bạn', 'Your name'), maxLength: NAME_LIMIT, autocomplete: 'off' });
     const error = el('p', { className: 'warning', role: 'alert', hidden: true });
@@ -321,17 +299,20 @@ function paintReveal() {
   content.replaceChildren(step);
 }
 
-function secretCard(card, visible, toggle) {
-  const node = el('section', { className: 'secret-card', ariaLabel: t('Thẻ bí mật', 'Secret card') });
-  if (!visible) {
-    node.append(iconEl('hand'), el('h3', {}, t('Chỉ mình bạn xem', 'For your eyes only')), note(t('Che màn hình trước khi mở thẻ.', 'Keep the screen private before revealing.')), button(t('Xem thẻ', 'Reveal card'), toggle, true, 'eye'));
-  } else {
-    node.append(el('p', { className: 'sub' }, card?.white ? t('Bạn là Mũ Trắng', 'You are Mr. White') : t('Từ bí mật của bạn', 'Your secret word')),
-      el('strong', { className: 'secret-word', textContent: card?.white ? t('Không có từ', 'No word') : card?.word ?? '' }),
-      note(card?.white ? t('Nghe gợi ý và hòa nhập. Khi bị loại, bạn có một lần đoán từ của dân.', 'Listen to clues and blend in. If eliminated, you get one guess at the civilian word.') : t('Ghi nhớ từ. Không nói nguyên từ hoặc cho người khác xem.', 'Remember it. Do not say the word or show it to anyone.')),
-      toggle ? button(t('Ẩn thẻ', 'Hide card'), toggle, false, 'eye') : '');
-  }
-  return node;
+function coveredCard() {
+  return el('section', { className: 'secret-card secret-covered' },
+    iconEl('layers'),
+    el('h3', {}, t('Thẻ đang úp', 'Card face down')),
+    note(t('Chỉ mở khi mình bạn nhìn màn hình.', 'Open it when only you can see the screen.')));
+}
+
+function flippedCard(card) {
+  const back = el('div', { className: 'secret-card secret-flip-back', ariaHidden: 'true' }, iconEl('layers'));
+  const face = el('section', { className: 'secret-card', ariaLabel: t('Thẻ bí mật', 'Secret card') },
+    el('p', { className: 'sub' }, card.white ? t('Bạn là Mũ Trắng', 'You are Mr. White') : t('Từ bí mật của bạn', 'Your secret word')),
+    el('strong', { className: 'secret-word', textContent: card.white ? t('Không có từ', 'No word') : card.word ?? '' }),
+    note(card.white ? t('Nghe gợi ý và hòa nhập. Khi bị loại, bạn có một lần đoán từ của dân.', 'Listen to clues and blend in. If eliminated, you get one guess at the civilian word.') : t('Ghi nhớ từ. Không nói nguyên từ hoặc cho người khác xem.', 'Remember it. Do not say the word or show it to anyone.')));
+  return el('div', { className: 'secret-flip' }, back, face);
 }
 
 function unlockEndingAudio() {
@@ -451,15 +432,14 @@ function paintBoard(target, v, actor, isLocal) {
   const work = el('div', { className: 'phase-work' });
   const controls = el('div', { className: 'host-controls' });
   const rosterPlayers = v.phase === PHASE.TIE ? v.players.filter((player) => v.candidates.includes(player.id)) : v.players;
-  const showLocalOrder = isLocal && v.phase === PHASE.DESCRIBE;
-  const orderedRoster = showLocalOrder ? orderedPlayers(rosterPlayers, localGame.turnOrder) : rosterPlayers;
+  const turnOrder = v.turnOrder ?? [];
+  const showOrder = v.phase === PHASE.DESCRIBE && turnOrder.length > 0;
+  const orderedRoster = showOrder ? orderedPlayers(rosterPlayers, turnOrder) : rosterPlayers;
   const renderPlayer = (player) => {
     const suffix = player.id === v.speaker ? t('Đang nói', 'Speaking') : player.alive ? t('Còn chơi', 'Alive') : t('Đã loại', 'Out');
-    return el('div', { className: `player-row${player.id === v.speaker ? ' speaking' : ''}` }, el('span', { className: 'player-name' }, showLocalOrder && player.alive ? `${localGame.turnOrder.indexOf(player.id) + 1}. ${playerName(player.id)}` : playerName(player.id)), indicator(player.id === v.speaker ? 'megaphone' : player.alive ? 'circle-check' : 'circle-x', '', suffix));
+    return el('div', { className: `player-row${player.id === v.speaker ? ' speaking' : ''}` }, el('span', { className: 'player-name' }, showOrder && player.alive ? `${turnOrder.indexOf(player.id) + 1}. ${playerName(player.id)}` : playerName(player.id)), indicator(player.id === v.speaker ? 'megaphone' : player.alive ? 'circle-check' : 'circle-x', '', suffix));
   };
-  const roster = isLocal
-    ? el('div', { className: 'player-grid local-play-roster', role: 'region', ariaLabel: t('Người chơi', 'Players'), tabIndex: 0 }, ...orderedRoster.map(renderPlayer))
-    : paginated(orderedRoster, renderPlayer);
+  const roster = el('div', { className: 'player-grid play-roster', role: 'region', ariaLabel: t('Người chơi', 'Players'), tabIndex: 0 }, ...orderedRoster.map(renderPlayer));
   if (v.phase === PHASE.VOTE) renderVoting(work, v, actor, isLocal);
   if (v.phase === PHASE.GUESS) renderGuess(work, v, actor, isLocal);
   if (v.phase === PHASE.TIE) work.append(indicator('swords', t(`${v.candidates.length} người bầu lại`, `${v.candidates.length} runoff candidates`)));
@@ -476,23 +456,24 @@ function paintBoard(target, v, actor, isLocal) {
   if (!isLocal && v.card) info.append(button(t('Mở thẻ riêng của bạn', 'Your private card'), () => openOwnCard(v.card), false, 'eye'));
   if (!isLocal && seated && !v.players.find((player) => player.id === actor)?.alive && v.pendingGuess !== actor) info.append(note(host ? t('Bạn đã bị loại: vẫn điều hành, không bỏ phiếu.', 'You are out: you can still moderate, but not vote.') : t('Bạn đã bị loại. Không gợi ý hoặc bỏ phiếu nữa.', 'You are out. Do not give clues or vote.')));
   if (![PHASE.VOTE, PHASE.GUESS].includes(v.phase)) info.append(roster);
-  const previousRoster = target.querySelector('.local-play-roster');
+  const previousRoster = target.querySelector('.play-roster');
   const rosterScroll = previousRoster?.scrollTop ?? 0;
   const rosterWasFocused = previousRoster && document.activeElement === previousRoster;
   target.replaceChildren(el('div', { className: 'game-layout' }, el('div', { className: 'game-main' }, status, work, controls), info));
-  if (isLocal) {
-    roster.scrollTop = rosterScroll;
-    if (rosterWasFocused && roster.isConnected) roster.focus({ preventScroll: true });
-  }
+  roster.scrollTop = rosterScroll;
+  if (rosterWasFocused && roster.isConnected) roster.focus({ preventScroll: true });
   updateClock();
 }
 
 function openOwnCard(card) {
-  shown = false;
-  const holder = el('div');
-  const paint = () => holder.replaceChildren(secretCard(shown ? card : null, shown, () => { shown = !shown; paint(); }));
-  paint();
-  const modal = dialog(t('Thẻ riêng', 'Private card'), holder, () => { shown = false; });
+  const holder = el('div', { className: 'handoff stack' });
+  const done = button(t('Đã xem', 'Done viewing'), () => modal.close(), true, 'arrow-right');
+  const reveal = button(t('Xem từ khóa', 'View keyword'), () => {
+    holder.replaceChildren(flippedCard(card), done);
+    done.focus();
+  }, true, 'eye');
+  holder.append(coveredCard(), reveal);
+  const modal = dialog(t('Thẻ riêng', 'Private card'), holder);
   modal.classList.add('secret-dialog');
 }
 
@@ -565,7 +546,7 @@ function enterOnline() {
         setConfig({ order: next.map((player) => player.id) });
       } : null;
       box.append(seatingRoster(players, room.host, changeOrder, random));
-      box.append(el('div', { className: 'settings-summary' }, configBadges(cfg), host ? iconButton(t('Cài đặt ván', 'Game settings'), () => settings(room.players.length, cfg, setConfig, () => aiPicker(() => notifications.show(TOAST_TONE.SUCCESS, t('Bộ từ AI đã sẵn sàng.', 'AI pack is ready.')), { room: new URLSearchParams(location.search).get('r'), deviceId: app.id })), 'gauge') : ''));
+      box.append(el('div', { className: 'settings-summary stack' }, configBadges(cfg), host ? button(t('Thiết lập ván', 'Game setup'), () => settings(room.players.length, cfg, setConfig, () => aiPicker(() => notifications.show(TOAST_TONE.SUCCESS, t('Bộ từ AI đã sẵn sàng.', 'AI pack is ready.')), { room: new URLSearchParams(location.search).get('r'), deviceId: app.id })), false, 'gauge') : ''));
     },
     mount(stage) {
       onlineBoard = stage;

@@ -434,7 +434,7 @@ await scenario('spy local handoff names, privacy and final results', '/undercove
   await clickName(page, 'Continue');
   await textIncludes(page, '.handoff [role="alert"]', 'This name is already taken.');
   for (const player of players.slice(1)) cards.push(await revealLocalCard(page, player));
-  assert.deepEqual(await page.locator('.local-play-roster .player-name').allTextContents(), players.map((player, index) => `${index + 1}. ${player}`));
+  assert.deepEqual(await page.locator('.play-roster .player-name').allTextContents(), players.map((player, index) => `${index + 1}. ${player}`));
   assert.equal(await page.locator('.game-sidebar .pagination').count(), 0);
   assert.equal(await page.locator('.phase-panel h2').textContent(), 'Give a clue');
   await clickName(page, 'Back');
@@ -967,7 +967,11 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await clickName(page, 'Light', settings);
   assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
   await clickName(page, 'Close', settings);
-  await clickName(page, 'Game settings');
+  await clickName(page, 'Game setup');
+  await clickName(page, 'Decrease Mr. White', page.locator('dialog[open]'));
+  await clickName(page, 'Save settings', page.locator('dialog[open]'));
+  assert.equal(await page.evaluate(() => window.coverageTransport.sent.at(-1).cfg.whites), 0);
+  await clickName(page, 'Game setup');
   await clickName(page, 'Create AI pack', page.locator('dialog[open]'));
   await page.locator('dialog input').fill('Food');
   await clickName(page, 'Create secret pack', page.locator('dialog[open]'));
@@ -975,18 +979,20 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await textIncludes(page, 'body', 'AI pack is ready');
   await textIncludes(page, '.settings-summary', 'Food');
   const view = {
-    phase: 'deal', deadline: null, round: 1, cfg, speaker: PLAYER_ID, candidates: seats,
+    phase: 'deal', deadline: null, round: 1, cfg, speaker: PLAYER_ID, candidates: seats, turnOrder: seats,
     pendingGuess: null, lastEliminated: null, winner: null,
     players: players.map(({ id }) => ({ id, alive: true })),
     card: { word: 'Phở' }, voteCount: 0, voteTotal: players.length, voted: false, tally: null, dealId: 'coverage-deal',
   };
   await state(page, room(view, { players, seats, cfg }));
   await clickName(page, 'Your private card');
-  await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
+  await clickName(page, 'View keyword', page.locator('.secret-dialog'));
   await textIncludes(page, '.secret-word', 'Phở');
-  await clickName(page, 'Hide card', page.locator('.secret-dialog'));
+  await clickName(page, 'Done viewing', page.locator('.secret-dialog'));
+  await page.waitForSelector('.secret-dialog', { state: 'detached' });
   assert.equal(await page.locator('.secret-word').count(), 0);
-  await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
+  await clickName(page, 'Your private card');
+  await clickName(page, 'View keyword', page.locator('.secret-dialog'));
   await page.keyboard.press('Escape');
   await page.waitForSelector('.secret-dialog', { state: 'detached' });
   const startClues = await page.getByRole('button', { name: 'Start giving clues', exact: true }).elementHandle();
@@ -997,7 +1003,7 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await startClues.dispatchEvent('click');
   assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sentBeforeDuplicate);
   await clickName(page, 'Your private card');
-  await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
+  await clickName(page, 'View keyword', page.locator('.secret-dialog'));
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true });
     document.dispatchEvent(new Event('visibilitychange'));
@@ -1017,7 +1023,7 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   for (const phase of ['describe', 'discuss', 'countdown', 'tie']) {
     if (phase === 'describe') {
       await clickName(page, 'Your private card');
-      await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
+      await clickName(page, 'View keyword', page.locator('.secret-dialog'));
     }
     await state(page, room({ ...view, phase, deadline: phase === 'countdown' ? CLOCK_START.getTime() + SECOND_MS * 10 : null, tally: { [PLAYER_ID]: 2, other: 2 }, candidates: [PLAYER_ID, 'other'] }, { players, seats, cfg }));
     assert.equal(await page.locator('.phase-panel h2').textContent(), { describe: 'Give a clue', discuss: 'Discussion', countdown: 'Get ready to vote', tie: 'Tied vote' }[phase]);
@@ -1025,7 +1031,10 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
     await clickName(page, 'View vote totals');
     await textIncludes(page, 'dialog[open]', '2 votes');
     await clickName(page, 'Close', page.locator('dialog[open]'));
-    if (phase === 'describe') await clickName(page, 'Next speaker');
+    if (phase === 'describe') {
+      assert.deepEqual(await page.locator('.play-roster .player-name').allTextContents(), players.map((player, index) => `${index + 1}. ${player.name}`));
+      await clickName(page, 'Next speaker');
+    }
     if (phase === 'describe') {
       const sent = await page.evaluate(() => window.coverageTransport.sent.length);
       await clickName(page, 'Eliminate directly');
@@ -1075,7 +1084,7 @@ await scenario('spy online phase privacy, voting, guessing, timeout and results'
   await state(page, room(ending, { players, seats, cfg, status: 'ended', result: { title: ['Kết quả', 'Results'], ranks: [{ id: PLAYER_ID, name: 'Coverage Player', score: 1, won: true }] } }));
   assert.equal(await page.locator('#overlay .results .word-pair').count(), 1);
   await state(page, room(ending, { players, seats, cfg, host: 'other', status: 'ended' }));
-  assert.equal(await page.getByRole('button', { name: 'Game settings', exact: true }).count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'Game setup', exact: true }).count(), 0);
   await state(page, room(view, { players, seats, cfg }));
   await page.locator('#room header > button').first().click();
   await clickName(page, 'Cancel', page.locator('dialog[open]'));
@@ -1493,7 +1502,7 @@ await scenario('spy imported replay handles unknown phases and empty private car
   await page.waitForSelector('.phase-panel');
   assert.equal(await page.locator('.phase-panel > .sub').textContent(), '');
   await clickName(page, 'Your private card');
-  await clickName(page, 'Reveal card', page.locator('.secret-dialog'));
+  await clickName(page, 'View keyword', page.locator('.secret-dialog'));
   assert.equal(await page.locator('.secret-word').textContent(), '');
   await textIncludes(page, '.secret-card', 'Your secret word');
   await page.keyboard.press('Escape');
@@ -1733,7 +1742,7 @@ await scenario('spy queued online reorder respects host loss and game start', '/
   assert.equal(await page.evaluate(() => window.coverageTransport.sent.length), sentBeforeHostLoss);
   await state(page, waiting);
   const stalePlayingReorder = await page.getByRole('button', { name: 'Move Coverage Player down', exact: true }).elementHandle();
-  const view = { phase: 'deal', deadline: null, round: 1, cfg, speaker: PLAYER_ID, candidates: seats, pendingGuess: null, lastEliminated: null, winner: null, players: seats.map((id) => ({ id, alive: true })), card: { word: 'Phở' }, voteCount: 0, voteTotal: seats.length, voted: false, tally: null, dealId: 'queued-order-deal' };
+  const view = { phase: 'deal', deadline: null, round: 1, cfg, speaker: PLAYER_ID, candidates: seats, turnOrder: seats, pendingGuess: null, lastEliminated: null, winner: null, players: seats.map((id) => ({ id, alive: true })), card: { word: 'Phở' }, voteCount: 0, voteTotal: seats.length, voted: false, tally: null, dealId: 'queued-order-deal' };
   await state(page, room(view, { players, seats, cfg }));
   await page.waitForSelector('.phase-panel');
   const board = await page.locator('.phase-panel').innerText();
