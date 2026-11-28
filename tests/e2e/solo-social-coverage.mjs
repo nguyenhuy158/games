@@ -17,10 +17,13 @@ const CLOCK_START = new Date('2026-11-26T12:00:00.000Z');
 const VIEWPORT = { width: 720, height: 1000 };
 const VIDEO_DIRECTORY = process.env.E2E_VIDEO_DIR;
 const VIDEO_ONLY_FLAG = '--undercover-round-video';
-const videoOnly = process.argv.includes(VIDEO_ONLY_FLAG);
+const SOI_VIDEO_FLAG = '--soi-round-video';
 const VIDEO_STEP_MS = 600;
 const VIDEO_RESULT_MS = 2000;
 const UNDERCOVER_ROUND_VIDEO = 'undercover-pass-one-device-round.webm';
+const SOI_ROUND_VIDEO = 'soi-full-round.webm';
+const videoTarget = process.argv.includes(SOI_VIDEO_FLAG) ? SOI_ROUND_VIDEO
+  : process.argv.includes(VIDEO_ONLY_FLAG) ? UNDERCOVER_ROUND_VIDEO : null;
 const PLAYER_ID = 'coverage-player';
 const HARNESS_PATH = '/solo-social-coverage-harness';
 const NAVIGATION_COVERAGE_KEY = 'solo-social.navigation-coverage';
@@ -35,7 +38,7 @@ const failures = [];
 let passed = 0;
 
 async function scenario(name, route, run, options = {}) {
-  if (videoOnly && options.video !== UNDERCOVER_ROUND_VIDEO) return;
+  if (videoTarget && options.video !== videoTarget) return;
   const recordVideo = VIDEO_DIRECTORY && options.video ? { dir: VIDEO_DIRECTORY, size: VIEWPORT } : null;
   const context = await browser.newContext({
     serviceWorkers: 'block', viewport: VIEWPORT, hasTouch: true, colorScheme: options.colorScheme ?? 'light',
@@ -63,7 +66,7 @@ async function scenario(name, route, run, options = {}) {
     const url = new URL(request.request().url());
     if (url.origin !== BASE_URL.origin) return request.abort();
     if (url.pathname === HARNESS_PATH) return request.fulfill({ contentType: 'text/html', body: '<!doctype html><html><head></head><body><main id="fixture"></main></body></html>' });
-    if (url.pathname.startsWith('/api/')) {
+    if (!options.live && url.pathname.startsWith('/api/')) {
       const body = request.request().postDataJSON();
       requests.push({ path: url.pathname, method: request.request().method(), body });
       const reply = await options.api?.(url, request.request(), requests, page);
@@ -622,6 +625,52 @@ for (const language of ['en', 'vi']) {
     await page.waitForFunction(() => !document.querySelector('.help-dlg').open);
     assert.match(await page.locator('.soi-intro-video').getAttribute('src'), /start=4353/);
   }, { protocol: true });
+}
+
+if (videoTarget === SOI_ROUND_VIDEO) {
+  await scenario('Sói full round with three browser players', '/soi/?lang=en', async (host) => {
+    const players = ['Host', 'Guest A', 'Guest B'];
+    const guests = [];
+    try {
+      await host.getByLabel('Your name').fill(players[0]);
+      await clickName(host, 'Create room');
+      const code = new URL(host.url()).searchParams.get('r');
+      assert(code);
+
+      for (const name of players.slice(1)) {
+        const context = await browser.newContext({ serviceWorkers: 'block' });
+        guests.push(context);
+        const guest = await context.newPage();
+        guest.setDefaultTimeout(WAIT_MS);
+        await guest.goto(new URL('/soi/?lang=en', BASE_URL).href);
+        await guest.locator('.help-dlg[open] .help-ok').click();
+        await guest.getByLabel('Your name').fill(name);
+        await guest.getByPlaceholder('ROOM CODE').fill(code);
+        await clickName(guest, 'Join');
+      }
+
+      await textIncludes(host, '#overlay', 'Enough players');
+      await clickName(host, 'Start');
+      const pages = [host, ...guests.flatMap((context) => context.pages())];
+      const roles = await Promise.all(pages.map(async (page) => {
+        await page.waitForFunction(() => Boolean(window.nk?.room?.view?.role));
+        return page.evaluate(() => window.nk.room.view);
+      }));
+      const wolfIndex = roles.findIndex(({ role }) => role === 'wolf');
+      assert(wolfIndex >= 0);
+      assert.equal(roles.filter(({ role }) => role === 'villager').length, players.length - 1);
+      assert(roles.every(({ wolf }) => wolf === null));
+
+      await host.bringToFront();
+      await clickName(host, 'Tap to see your role');
+      await textIncludes(host, '.role h2', wolfIndex === 0 ? 'WOLF' : 'VILLAGER');
+      await clickName(host, 'Hide');
+      await clickName(host, 'Reveal: who is the wolf?');
+      for (const page of pages) await textIncludes(page, '#overlay', `The wolf is ${players[wolfIndex]}`);
+    } finally {
+      await Promise.all(guests.map((context) => context.close()));
+    }
+  }, { live: true, video: SOI_ROUND_VIDEO });
 }
 
 await scenario('loto buying, marking, calls, penalties, winner and spectator', '/loto/?r=TEST&lang=en', async (page) => {
