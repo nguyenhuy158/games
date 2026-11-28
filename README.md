@@ -15,7 +15,7 @@ make lint
 make build
 ```
 
-`make dev` phục vụ tại http://localhost:8787. Build ghép HTML/CSS/ES modules và static assets vào `dist/`; Wrangler tự chạy build khi dev/deploy.
+`make dev` phục vụ tại http://localhost:8787 ở chế độ local của Wrangler. Build ghép HTML/CSS/ES modules và static assets vào `dist/`; Wrangler tự chạy build khi dev/deploy.
 
 ```bash
 node tests/smoke.mjs http://localhost:8787

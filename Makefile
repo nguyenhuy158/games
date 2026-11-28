@@ -6,7 +6,7 @@ install:
 	pnpm install --frozen-lockfile
 
 dev:
-	pnpm dev
+	pnpm dev --local
 
 build:
 	pnpm build
