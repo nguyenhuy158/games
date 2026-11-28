@@ -289,6 +289,13 @@ try {
     assert.ok(recent.length <= 4);
   }, { clock: true, path: "/", storage: { lang: "en", "hub.recent": '["/co-caro/","/missing/","/2048/"]' }, state: { routes: { "/api/rooms": { rooms: [{ path: "/co-caro/", players: 2 }, { path: "/co-caro/", players: 1 }, { path: "/noi-4/", players: 1 }] } } } });
 
+  await scenario("hub artwork loads without IntersectionObserver", async ({ page }) => {
+    await page.waitForFunction(() => {
+      const previews = [...document.querySelectorAll("img[data-preview-src]")];
+      return previews.length > 0 && previews.every((preview) => preview.naturalWidth > 0);
+    });
+  }, { initScript: () => { Reflect.deleteProperty(window, "IntersectionObserver"); } });
+
   await scenario("sidebar mobile navigation, language persistence and initial theme", async ({ page }) => {
     assert.equal(await page.locator("html").getAttribute("data-theme"), "light");
     await page.setViewportSize({ width: 390, height: 844 });
