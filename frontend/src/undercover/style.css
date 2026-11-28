@@ -53,6 +53,8 @@ h3 { font-size: 1rem; }
 .entry .sub { max-width: 54ch; }
 .mode-choices { width: min(100%, 440px); display: grid; gap: .75rem; }
 .mode-choices .ui-button { min-height: 56px; font-size: 1rem; }
+.pack-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem; color: var(--ui-fg-muted); font-size: .875rem; }
+.pack-summary > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pack-progress { display: flex; align-items: center; gap: .5rem; color: var(--ui-fg-muted); font-size: .875rem; font-variant-numeric: tabular-nums; }
 .pack-progress progress { width: 5rem; height: .625rem; accent-color: var(--ui-primary); }
 .setup { max-width: 480px; }

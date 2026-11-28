@@ -223,8 +223,9 @@ function localPackControls() {
     paintSetup();
   });
   return el('div', { className: 'stack' },
-    note(t(`Bộ từ AI: ${localConfig.aiTopic}`, `AI pack: ${localConfig.aiTopic}`)),
-    packProgress(localAiProgress),
+    el('div', { className: 'pack-summary' },
+      el('span', { title: localConfig.aiTopic }, t(`Bộ từ AI: ${localConfig.aiTopic}`, `AI pack: ${localConfig.aiTopic}`)),
+      packProgress(localAiProgress)),
     el('div', { className: 'actions' },
       packExhausted(localAiProgress) ? expandPackButton(localConfig.aiPackId, {}, (progress) => {
         if (mode !== MODE.LOCAL || localStep !== LOCAL_STEP.SETUP || localConfig.aiPackId !== progress.packId) return;
