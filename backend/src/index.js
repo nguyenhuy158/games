@@ -29,7 +29,7 @@ export { Top } from './adapters/top.js';
 // /api/nk/<game>/room/CODE -> DO "<game>:<CODE>" (ngoài game Nokia còn Ô ăn quan, Cờ gánh, Cờ tướng, Lô tô, Sói: class này là phòng dùng chung).
 export const NOKIA_GAMES = { snake, bantumi, pairs, logic, 'rapid-roll': rapidRoll, 'space-impact': spaceImpact, bounce, 'o-an-quan': oAnQuan, 'co-ganh': coGanh, 'co-tuong': coTuong, loto, soi, undercover };
 export class NokiaRoom extends gameRoom(NOKIA_GAMES) {
-  generateSpyAi(topic, deviceId, guestId) { return generateRoomAi(this, topic, deviceId, guestId); }
+  generateSpyAi(topic, deviceId, guestId, packId) { return generateRoomAi(this, topic, deviceId, guestId, packId); }
 }
 // /api/room/CODE (Pikachu), /api/cc|c4/room/CODE (Cờ caro / Nối 4 chung class), /api/bt/room/CODE, /api/bc/room/CODE, /api/ms/room/CODE, /api/dv/room/CODE.
 export class CaroRoom extends gameRoom({ caro, c4 }) {}

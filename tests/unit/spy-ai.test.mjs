@@ -54,7 +54,7 @@ assert.throws(() => parseAiOutput({ response: { topics: ['Ẩm thực', 'ẩm th
 {
   const store = storage(), ai = provider(), service = new SpyAiService(store, ai);
   const first = await service.generate(OWNER, 'Ẩm thực');
-  assert.deepEqual(Object.keys(first).sort(), ['count', 'packId', 'title']);
+  assert.deepEqual(Object.keys(first).sort(), ['count', 'packId', 'title', 'used']);
   assert.equal(first.count, 12);
   assert.equal(ai.calls[0].model, AI_MODEL);
   assert.equal(ai.calls[0].input.max_tokens, AI_LIMIT.TOKENS);
@@ -62,7 +62,7 @@ assert.throws(() => parseAiOutput({ response: { topics: ['Ẩm thực', 'ẩm th
   assert.ok(ai.calls[0].input.messages.every((message) => !message.content.includes(OWNER)));
   assert.equal((await service.deal(OTHER, first.packId)).error, AI_ERROR.EXPIRED);
   const dealt = await service.deal(OWNER, first.packId);
-  assert.deepEqual(Object.keys(dealt), ['pair']);
+  assert.deepEqual(Object.keys(dealt).sort(), ['count', 'pair', 'used']);
   assert.ok(PAIRS.some((pair) => JSON.stringify(pair) === JSON.stringify(dealt.pair)));
   const second = await service.generate(OTHER, 'ẩm thực');
   assert.notEqual(second.packId, first.packId);
@@ -85,6 +85,25 @@ assert.throws(() => parseAiOutput({ response: { topics: ['Ẩm thực', 'ẩm th
   assert.deepEqual(resolveAiPair(ctx), PAIRS[0]);
   assert.throws(() => resolveAiPair({ ...ctx, cfg: { pack: 'ai', aiPackId: crypto.randomUUID() } }), RangeError);
   assert.throws(() => resolveAiPair({ ...ctx, now: () => online.expires }), RangeError);
+}
+
+{
+  const fresh = ['Súp', 'Cháo'];
+  let response = output();
+  const ai = provider(() => response);
+  const service = new SpyAiService(storage(), ai);
+  const pack = await service.generate(OWNER, 'Ẩm thực');
+  assert.equal(pack.used, 0);
+  assert.equal((await service.extend(OTHER, pack.packId)).error, AI_ERROR.EXPIRED);
+  assert.equal((await service.extend(OWNER, pack.packId)).error, AI_ERROR.INCOMPLETE);
+  for (let index = 1; index <= pack.count; index++) {
+    assert.equal((await service.deal(OWNER, pack.packId)).used, index);
+  }
+  assert.equal((await service.extend(OWNER, pack.packId)).error, AI_ERROR.OUTPUT);
+  response = { response: { pairs: [fresh, ...PAIRS.slice(1)] } };
+  assert.deepEqual(await service.extend(OWNER, pack.packId), { ...pack, used: pack.count, count: pack.count + 1 });
+  assert.deepEqual((await service.deal(OWNER, pack.packId)).pair, fresh);
+  assert.ok(ai.calls.at(-1).input.messages.at(-1).content.includes(PAIRS[0][0]));
 }
 
 {
@@ -198,7 +217,7 @@ function roomFixture(service) {
   assert.equal(ai.calls.length, 0);
   room.s.status = 'lobby';
   const result = await room.generateSpyAi('Ẩm thực', 'host-device', OWNER);
-  assert.deepEqual(Object.keys(result).sort(), ['count', 'packId', 'title']);
+  assert.deepEqual(Object.keys(result).sort(), ['count', 'packId', 'title', 'used']);
   assert.equal(saved[0].keep.aiPack.pairs.length, PAIRS.length);
   assert.equal(room.s.cfg.aiPackId, result.packId);
   assert.equal(frames.length, 2);
@@ -208,9 +227,28 @@ function roomFixture(service) {
     assert.equal(frame.keep, undefined);
     assert.equal(frame.pairs, undefined);
     assert.equal(frame.view, null);
+    assert.deepEqual(frame.aiProgress, { used: 0, count: PAIRS.length });
     for (const word of PAIRS.flat()) assert.ok(!JSON.stringify(frame).includes(word));
   }
   assert.ok(ai.calls[0].input.messages.every((message) => !message.content.includes('private name')));
+}
+
+{
+  const fresh = ['Súp', 'Cháo'];
+  let response = output();
+  const service = new SpyAiService(storage(), provider(() => response));
+  const { room, frames } = roomFixture(service);
+  const pack = await room.generateSpyAi('Ẩm thực', 'host-device', OWNER);
+  assert.equal((await room.generateSpyAi(null, 'guest-device', OTHER, pack.packId)).error, AI_ERROR.FORBIDDEN);
+  assert.equal((await room.generateSpyAi(null, 'host-device', OWNER, pack.packId)).error, AI_ERROR.INCOMPLETE);
+  const active = room.s.keep.aiPack;
+  active.usedPairIndices = PAIRS.map((_, index) => index);
+  response = { response: { pairs: [fresh, ...PAIRS.slice(1)] } };
+  assert.deepEqual(await room.generateSpyAi(null, 'host-device', OWNER, pack.packId), { ...pack, used: PAIRS.length, count: PAIRS.length + 1 });
+  assert.deepEqual(frames.at(-1).aiProgress, { used: PAIRS.length, count: PAIRS.length + 1 });
+  assert.ok(!JSON.stringify(frames.at(-1)).includes(fresh[0]));
+  const reselected = await room.generateSpyAi('Ẩm thực', 'host-device', OWNER);
+  assert.equal(reselected.count, PAIRS.length + 1);
 }
 
 for (const change of [
@@ -260,12 +298,12 @@ for (const change of [
   const response = await post({ action: 'generate', topic: 'Ẩm thực' });
   assert.equal(response.headers.get('Cache-Control'), 'private, no-store');
   const pack = await response.json();
-  assert.deepEqual(Object.keys(pack).sort(), ['count', 'packId', 'title']);
+  assert.deepEqual(Object.keys(pack).sort(), ['count', 'packId', 'title', 'used']);
   assert.equal((await post({ action: 'deal', packId: pack.packId }, OTHER, { 'X-Guest': OWNER })).status, 404);
   const deal = await (await post({ action: 'deal', packId: pack.packId }, OWNER, {}, '/api/gian-diep/ai')).json();
   assert.ok(PAIRS.some((pair) => JSON.stringify(pair) === JSON.stringify(deal.pair)));
   const online = await (await post({ action: 'generate', topic: 'Ẩm thực', room: 'ABCD', deviceId: 'host-device' })).json();
-  assert.deepEqual(Object.keys(online).sort(), ['count', 'packId', 'title']);
+  assert.deepEqual(Object.keys(online).sort(), ['count', 'packId', 'title', 'used']);
   assert.equal((await post({ action: 'deal', packId: online.packId })).status, 404);
   assert.equal(ai.calls.length, 1);
 }

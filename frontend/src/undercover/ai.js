@@ -7,7 +7,7 @@ const AI_ENDPOINT = '/api/undercover/ai';
 const AI_TIMEOUT_MS = 45000;
 const HTTP_POST = 'POST';
 const JSON_HEADERS = Object.freeze({ 'Content-Type': 'application/json' });
-const ACTION = Object.freeze({ TOPICS: 'topics', GENERATE: 'generate', DEAL: 'deal' });
+const ACTION = Object.freeze({ TOPICS: 'topics', GENERATE: 'generate', DEAL: 'deal', EXTEND: 'extend' });
 
 async function request(payload, signal) {
   const response = await fetch(AI_ENDPOINT, {
@@ -21,8 +21,13 @@ async function request(payload, signal) {
   return result;
 }
 
-export async function dealAiPair(packId) {
+export function extendAiPack(packId, roomContext = {}) {
+  return request({ action: ACTION.EXTEND, packId, ...roomContext });
+}
+
+export async function dealAiPair(packId, updateProgress) {
   const result = await request({ action: ACTION.DEAL, packId });
+  if (Number.isInteger(result.used)) updateProgress?.({ used: result.used, count: result.count });
   return result.pair;
 }
 

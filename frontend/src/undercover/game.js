@@ -11,7 +11,7 @@ import { button, iconButton, indicator, note, dialog, confirmAction, settings, c
 import { setButtonPending } from '../ui/feedback.mjs';
 import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { seatingRoster, orderedPlayers } from './roster.js';
-import { aiPicker, dealAiPair } from './ai.js';
+import { aiPicker, dealAiPair, extendAiPack } from './ai.js';
 
 const GAME = 'undercover';
 const GAME_PATH = '/undercover/';
@@ -69,6 +69,7 @@ let guessDraft = '';
 let guessOwner = null;
 let localConfig = { ...DEFAULT_CONFIG };
 let localDealing = false;
+let localAiProgress;
 let localPlayerCount = MIN_PLAYERS;
 const localHostId = `${LOCAL_ID_PREFIX}1`;
 let localGame = null;
@@ -186,7 +187,29 @@ function paintSetup() {
         }, repaintLocalCounts),
         countRow(t('Mũ Trắng', 'Mr. White'), 'layers', DEFAULT_CONFIG.whites, roleLimits.whites, localConfig.whites, (count) => { localConfig.whites = count; }, repaintLocalCounts)),
       localPackControls()),
-    button(t('Bắt đầu', 'Start game'), dealLocal, true, 'play')));
+    button(packExhausted(localAiProgress) ? t('Chơi lại bộ này', 'Replay this pack') : t('Bắt đầu', 'Start game'), dealLocal, !packExhausted(localAiProgress), 'play')));
+}
+
+function packExhausted(progress) {
+  return progress?.count > 0 && progress.used >= progress.count;
+}
+
+function packProgress(progress) {
+  if (!progress?.count) return '';
+  const { used, count } = progress;
+  const label = t(`Đã dùng ${used ?? 0}/${count} cặp`, `${used ?? 0}/${count} pairs used`);
+  return el('div', { className: 'pack-progress' },
+    el('progress', { value: used ?? 0, max: count, ariaLabel: label }),
+    note(packExhausted(progress) ? t(`Đã dùng hết ${count} cặp`, `All ${count} pairs used`) : label));
+}
+
+function expandPackButton(packId, roomContext, apply) {
+  return button(t('Tạo thêm cặp từ', 'Add more word pairs'), async (event) => {
+    const restore = setButtonPending(event.currentTarget, t('AI đang tạo thêm…', 'AI is adding pairs…'));
+    try { apply(await extendAiPack(packId, roomContext)); }
+    catch (error) { notifications.show(TOAST_TONE.ERROR, error.message); }
+    finally { restore(); }
+  }, true, 'sparkles');
 }
 
 function localPackControls() {
@@ -196,15 +219,24 @@ function localPackControls() {
   const reset = button(t('Dùng bộ mặc định', 'Use default pack'), () => {
     const { spies, whites } = localConfig;
     localConfig = { ...DEFAULT_CONFIG, spies, whites };
+    localAiProgress = undefined;
     paintSetup();
   });
   return el('div', { className: 'stack' },
     note(t(`Bộ từ AI: ${localConfig.aiTopic}`, `AI pack: ${localConfig.aiTopic}`)),
-    el('div', { className: 'actions' }, choose, reset));
+    packProgress(localAiProgress),
+    el('div', { className: 'actions' },
+      packExhausted(localAiProgress) ? expandPackButton(localConfig.aiPackId, {}, (progress) => {
+        if (mode !== MODE.LOCAL || localStep !== LOCAL_STEP.SETUP || localConfig.aiPackId !== progress.packId) return;
+        localAiProgress = progress;
+        paintSetup();
+      }) : '',
+      choose, reset));
 }
 
 function openLocalAi() {
-  aiPicker(({ packId, title }) => {
+  aiPicker(({ packId, title, used, count }) => {
+    localAiProgress = { used, count };
     localConfig = { ...localConfig, pack: AI_PACK, aiPackId: packId, aiTopic: title };
     if (mode === MODE.LOCAL && localStep === LOCAL_STEP.SETUP) paintSetup();
   });
@@ -215,9 +247,9 @@ async function dealLocal(event) {
   localDealing = true;
   content.inert = true;
   backButton.disabled = true;
-  const restore = setButtonPending(content.querySelector('[data-variant="primary"]'), t('Đang chia từ…', 'Dealing…'));
+  const restore = setButtonPending(event.currentTarget, t('Đang chia từ…', 'Dealing…'));
   try {
-    const pair = localConfig.pack === AI_PACK ? await dealAiPair(localConfig.aiPackId) : undefined;
+    const pair = localConfig.pack === AI_PACK ? await dealAiPair(localConfig.aiPackId, (progress) => { localAiProgress = progress; }) : undefined;
     localNamesById.clear();
     const ids = Array.from({ length: localPlayerCount }, (_, index) => `${LOCAL_ID_PREFIX}${index + 1}`);
     localGame = createGame(ids, localConfig, random, Date.now(), pair);
@@ -546,7 +578,14 @@ function enterOnline() {
         setConfig({ order: next.map((player) => player.id) });
       } : null;
       box.append(seatingRoster(players, room.host, changeOrder, random));
-      box.append(el('div', { className: 'settings-summary stack' }, configBadges(cfg), host ? button(t('Thiết lập ván', 'Game setup'), () => settings(room.players.length, cfg, setConfig, () => aiPicker(() => notifications.show(TOAST_TONE.SUCCESS, t('Bộ từ AI đã sẵn sàng.', 'AI pack is ready.')), { room: new URLSearchParams(location.search).get('r'), deviceId: app.id })), false, 'gauge') : ''));
+      const roomContext = { room: new URLSearchParams(location.search).get('r'), deviceId: app.id };
+      const ready = () => notifications.show(TOAST_TONE.SUCCESS, t('Bộ từ AI đã sẵn sàng.', 'AI pack is ready.'));
+      const chooseAi = () => aiPicker(ready, roomContext);
+      box.append(el('div', { className: 'settings-summary stack' }, configBadges(cfg), host ? button(t('Thiết lập ván', 'Game setup'), () => settings(room.players.length, cfg, setConfig, chooseAi), false, 'gauge') : ''));
+      if (room.aiProgress) box.append(packProgress(room.aiProgress));
+      if (host && packExhausted(room.aiProgress)) box.append(el('div', { className: 'actions' },
+        expandPackButton(cfg.aiPackId, roomContext, ready),
+        button(t('Đổi chủ đề AI', 'Change AI topic'), chooseAi)));
     },
     mount(stage) {
       onlineBoard = stage;

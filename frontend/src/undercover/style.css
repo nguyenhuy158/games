@@ -53,7 +53,8 @@ h3 { font-size: 1rem; }
 .entry .sub { max-width: 54ch; }
 .mode-choices { width: min(100%, 440px); display: grid; gap: .75rem; }
 .mode-choices .ui-button { min-height: 56px; font-size: 1rem; }
-
+.pack-progress progress { width: 100%; accent-color: var(--ui-primary); }
+.pack-progress p { margin: 0; }
 .setup { max-width: 480px; }
 .spy-content:has(.setup) { overflow: auto; overscroll-behavior: contain; }
 .local-counts { display: grid; gap: .75rem; }

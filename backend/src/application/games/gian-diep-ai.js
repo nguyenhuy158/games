@@ -1,5 +1,9 @@
 import { AI_PACK } from '../../../../shared/games/gian-diep/logic.js';
 
+export function aiPackProgress(pack) {
+  return { used: pack.usedPairIndices?.length ?? 0, count: pack.pairs.length };
+}
+
 export function drawAiPair(pack, random) {
   const used = pack.usedPairIndices ?? [];
   const indices = pack.pairs.map((_, index) => index);

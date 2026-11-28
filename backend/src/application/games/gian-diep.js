@@ -1,6 +1,6 @@
 import { UNDERCOVER_ID } from '../../../../shared/page-routes.js';
 import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, DEFAULT_CONFIG, PHASE, ROLE, normalizeConfig, validateSetup, createGame, act, advance, view, resultTitle } from '../../../../shared/games/gian-diep/logic.js';
-import { resolveAiPair } from './gian-diep-ai.js';
+import { aiPackProgress, resolveAiPair } from './gian-diep-ai.js';
 
 const GAME_PAGE = '/undercover/';
 const HIDDEN_TEAM = 'hidden';
@@ -66,6 +66,10 @@ export default {
     if (!advance(ctx.g, ctx.now())) return false;
     publish(ctx);
     return true;
+  },
+  lobbyState(ctx) {
+    const pack = ctx.keep.aiPack;
+    return ctx.cfg.pack === AI_PACK && pack?.packId === ctx.cfg.aiPackId ? { aiProgress: aiPackProgress(pack) } : {};
   },
   view(ctx, id) {
     return { ...view(ctx.g, id), dealId: ctx.g?.dealId ?? 0 };
