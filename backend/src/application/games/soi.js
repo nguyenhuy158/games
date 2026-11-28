@@ -19,7 +19,8 @@ export default {
       ctx.end({ title: [`Cần ít nhất ${MIN_PLAYERS} người`, `Need at least ${MIN_PLAYERS} players`], ranks: [] });
       return;
     }
-    g.wolf = pickWolf(ctx.seats, ctx.rand);
+    g.wolf = pickWolf(ctx.seats, ctx.rand, ctx.keep.lastWolf);
+    ctx.keep.lastWolf = g.wolf;
     // Hẹn giờ hết hạn: nhờ persist, cả phòng rớt mạng vẫn giữ ván; hết hạn thì ván tự kết thúc và adapter dọn phòng.
     ctx.wakeAt(ctx.now() + ROUND_TTL_MS);
   },

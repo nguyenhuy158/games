@@ -11,6 +11,10 @@ const seats = ['a', 'b', 'c', 'd', 'e'];
   assert.equal(pickWolf(seats, () => 1), 'e', 'rand = 1 do làm tròn vẫn không vượt ghế');
   assert.equal(pickWolf(seats, () => 0.5), 'c');
   assert.equal(pickWolf(['x'], () => 0.7), 'x');
+  assert.equal(pickWolf(seats, () => 0, 'a'), 'b');
+  assert.equal(pickWolf(seats, () => 0.5, 'a'), 'd');
+  assert.equal(pickWolf(seats, () => 1, 'a'), 'a');
+  assert.equal(pickWolf(seats, () => 0, 'departed'), 'a');
 }
 // Phân bố: ai cũng có thể làm Sói (12 ghế, 1200 lần)
 {
@@ -106,10 +110,10 @@ assert.equal(soi.replay, false, 'không ghi bản xem lại (vai bí mật)');
   assert.equal(ctx.g.round, 1);
   assert.equal(ctx.g.wolf, 'a');
   ctx.g = {};
-  ctx.rand = () => 0.99;
+  ctx.rand = () => 0;
   soi.start(ctx);
   assert.equal(ctx.g.round, 2);
-  assert.equal(ctx.g.wolf, 'e');
+  assert.equal(ctx.g.wolf, 'b');
   assert.equal(ctx.g.done, undefined, 'ván mới chưa lật');
 }
 console.log('soi ok');

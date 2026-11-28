@@ -8,8 +8,15 @@ export const WOLF = 'wolf';
 export const VILLAGER = 'villager';
 
 // rand() trả số thực trong [0, 1) (ctx.rand của phòng, dựa trên crypto). Kẹp lại phòng khi rand() = 1 do làm tròn.
-export function pickWolf(seats, rand) {
-  return seats[Math.min(seats.length - 1, Math.floor(rand() * seats.length))];
+const NEW_WOLF_WEIGHT = 4;
+
+export function pickWolf(seats, rand, previousWolf) {
+  const others = seats.filter((id) => id !== previousWolf);
+  if (others.length === seats.length) {
+    return seats[Math.min(seats.length - 1, Math.floor(rand() * seats.length))];
+  }
+  const draw = rand() * (others.length * NEW_WOLF_WEIGHT + 1);
+  return others[Math.floor(draw / NEW_WOLF_WEIGHT)] ?? previousWolf;
 }
 
 // Vai của người `id`. Người xem (không có ghế) hoặc ván chưa chọn Sói thì chưa có vai (null).

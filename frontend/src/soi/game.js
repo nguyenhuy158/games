@@ -51,9 +51,15 @@ const app = nokiaApp({
       ],
     },
   },
+  minPlayers: MIN_PLAYERS,
+  lobbyHeading: (r) => r.players.length < MIN_PLAYERS
+    ? t('Chờ người chơi', 'Waiting for players')
+    : t('Sẵn sàng chia vai', 'Ready to deal roles'),
   lobbyText: (r) => (r.players.length < MIN_PLAYERS
     ? t(`Cần thêm ${MIN_PLAYERS - r.players.length} người (tối thiểu ${MIN_PLAYERS}).`, `Need ${MIN_PLAYERS - r.players.length} more (minimum ${MIN_PLAYERS}).`)
-    : t('Đủ người: chủ phòng bấm Bắt đầu để chọn Sói.', 'Enough players: the host starts to pick the wolf.')),
+    : r.status === 'ended'
+      ? t('Có thể chia vai ván mới.', 'Ready for another round.')
+      : t('Đủ người: chủ phòng bấm Bắt đầu để chọn Sói.', 'Enough players: the host starts to pick the wolf.')),
   badge: (p, r) => (r.view?.wolf === p.id ? t('Sói', 'Wolf') : ''),
   mount(stage) {
     card = el('div', { className: 'role' });
