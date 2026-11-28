@@ -1,6 +1,6 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v62';
+const CACHE = 'games-v64';
 const CORE = [
   '/ui-kit.css', '/ui/feedback.css', '/ui/feedback.mjs', '/ui/notifications.js', '/ui/listbox.mjs', '/sidebar.js', '/logos/hub-192.png', '/theme.js', '/sound.js', '/account.js',
   '/', '/index.html', '/me.js', '/history.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/nozoom.js', '/bfcache.js', '/public-switch.js', '/room-client.js', '/replay.js', '/shared/tape.js', '/help.js', '/phong/', '/phong/index.html', '/phong/phong.js', '/i18n.js', '/names.js', '/dom.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png', '/favicon.svg', '/favicon-32.png', '/apple-touch-icon.png',
@@ -18,7 +18,7 @@ const CORE = [
   '/soi/', '/soi/index.html', '/soi/style.css', '/soi/game.js', '/shared/games/soi/logic.js', '/logos/soi.svg',
   '/undercover/', '/undercover/index.html', '/undercover/style.css', '/undercover/game.js', '/shared/games/gian-diep/logic.js', '/logos/undercover.svg',
   '/undercover/ui.js', '/undercover/roster.js', '/undercover/help.js', '/undercover/ui-kit/tokens.css',
-  '/undercover/ai.js',
+  '/undercover/ai.js', '/fonts/be-vietnam-pro/font.css',
   '/solo.css', '/swipe.js',
   '/2048/', '/2048/index.html', '/2048/style.css', '/2048/game.js', '/shared/games/2048/logic.js', '/logos/2048.svg',
   '/tetris/', '/tetris/index.html', '/tetris/style.css', '/tetris/game.js', '/shared/games/tetris/logic.js', '/logos/tetris.svg',

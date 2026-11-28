@@ -96,6 +96,11 @@ UI: no emoji in the interface. Icons come from lucide via `frontend/src/icons.js
 bilingual: `t('vi', 'en')` in JS, `data-en*` attributes in HTML, `['vi', 'en']`
 pairs from the server (see `frontend/src/i18n.js`).
 
+Serve webfonts from the Games origin. Copy shared fonts and their license from
+a pinned UI Kit revision into `public/fonts/`. Keep Vietnamese and English
+glyph coverage and use `font-display: swap` with fallback fonts.
+Undercover vendors Be Vietnam Pro from UI Kit commit `b5b19f2c09d414617893e05dd277bb6f370d1fcd`.
+
 Settings live in the sidebar menu (`frontend/src/sidebar.js`) and apply to every game: sound is one
 switch for the whole site (`isSoundOn` / `setSoundOn` / `onSoundChange` in `frontend/src/sound.js`; a
 game's own speaker button calls the same functions), the light theme is `html[data-theme="light"]`
