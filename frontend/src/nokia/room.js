@@ -217,7 +217,7 @@ export function nokiaApp(opt) {
       box,
       pub.el,
       el('p', { className: 'sub', textContent: `${t(`${r.players.length} người trong phòng.`, `${r.players.length} in the room.`)} ${opt.lobbyText?.(r) ?? ''}${isHost ? '' : res ? t(' Chờ chủ phòng chơi lại.', ' Waiting for the host to play again.') : t(' Chờ chủ phòng bắt đầu.', ' Waiting for the host to start.')}` }),
-      isHost ? el('button', { className: 'primary', disabled: opt.minPlayers !== undefined && r.players.length < opt.minPlayers, textContent: res ? t('Chơi lại', 'Play again') : t('Bắt đầu', 'Start'), onclick: () => raw({ t: 'start' }) }) : '',
+      isHost ? el('button', { className: 'primary', disabled: opt.minPlayers !== undefined && r.players.length < opt.minPlayers, textContent: res ? opt.nextRoundLabel ?? t('Chơi lại', 'Play again') : t('Bắt đầu', 'Start'), onclick: () => raw({ t: 'start' }) }) : '',
     ));
   }
 

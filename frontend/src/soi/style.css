@@ -39,3 +39,6 @@
 #players .soi-avatar { margin-inline-end: 4px; vertical-align: middle; }
 .soi-voting button:has(.soi-avatar) { display: flex; align-items: center; justify-content: start; gap: 8px; }
 .soi-voting button[aria-pressed="true"] { border-color: var(--ui-primary); background: var(--ui-primary-soft); }
+
+.soi-round { margin: 0; text-align: center; font-size: 1.25rem; }
+.soi-round-summary { margin: 0 0 8px; }
