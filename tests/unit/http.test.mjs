@@ -47,6 +47,11 @@ for (const path of ['/gian-diep', '/gian-diep/', '/gian-diep/index.html']) {
   assert.equal(r.headers.get('Location'), 'https://games.huyab.cfd/undercover/?r=ABCD&lang=vi');
 }
 {
+  const logo = await get('https://games.huyab.cfd/logos/gian-diep.svg');
+  assert.equal(logo.status, 301);
+  assert.equal(logo.headers.get('Location'), 'https://games.huyab.cfd/logos/undercover.svg');
+}
+{
   const replay = await get('https://games.huyab.cfd/replay/AbCdEf123456');
   assert.equal(replay.headers.get('Location'), 'https://games.huyab.cfd/undercover/?replay=AbCdEf123456');
   const rooms = await get('https://games.huyab.cfd/api/rooms');
