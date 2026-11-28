@@ -156,7 +156,7 @@ export const PACKS = [
   },
 ];
 
-const HIDDEN_TEAM = 'hidden';
+export const HIDDEN_TEAM = 'hidden';
 const MIN_SPIES = 1;
 const MIN_CIVILIANS = 2;
 const HIDDEN_DIVISOR = 3;
