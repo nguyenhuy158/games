@@ -8,10 +8,12 @@ import { PROFILE_API, signInHref, signOutHref } from './account.js';
 
 hydrateIcons();
 
-const HOME_STATS_SELECTOR = '#homeStats';
+const HOME_STATS_DIALOGS = [
+  ['#openLeaderboard', '#leaderboardDialog'],
+  ['#openAchievements', '#achievementsDialog'],
+];
 const ACCOUNT_MENU_SELECTOR = '.account-menu';
 const ESCAPE_KEY = 'Escape';
-const HOME_STATS_TRIGGER = '#openHomeStats';
 const HISTORY_API = '/api/me/history';
 const CLAIM_API = '/api/me/history/claim';
 const HISTORY_PAGE_SIZE = 30;
@@ -209,7 +211,16 @@ document.addEventListener('keydown', (event) => {
   menu.open = false;
   menu.firstElementChild.focus();
 });
-$(HOME_STATS_TRIGGER).onclick = () => $(HOME_STATS_SELECTOR).showModal();
+for (const [triggerSelector, dialogSelector] of HOME_STATS_DIALOGS) {
+  const dialog = $(dialogSelector);
+  $(triggerSelector).onclick = () => dialog.showModal();
+  dialog.addEventListener('click', (event) => {
+    if (event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+  });
+}
 $('#account').replaceChildren(signInLink());
 $('#meRetry').onclick = load;
 $('#historyRetry').onclick = moreHistory;
