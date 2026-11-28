@@ -1,6 +1,6 @@
 
 
-.board-stage { width: 100%; display: grid; place-items: center; }
+.board-stage { width: 100%; min-height: 0; display: grid; place-items: center; }
 .soi { width: min(94vw, 420px); display: grid; gap: 14px; }
 
 .role {
@@ -26,3 +26,11 @@
 }
 #overlay :is(.room-waiting, .room-result) > ol:empty,
 #overlay :is(.room-waiting, .room-result) > .cfg:empty { display: none; }
+
+.soi-voting { display: grid; gap: 8px; }
+.soi-voting:empty { display: none; }
+.soi-voting :is(h2, p), .soi-outcome p { margin: 0; }
+.soi-voting button { min-height: 44px; }
+.soi { align-self: safe center; max-height: 100%; overflow: auto; }
+#overlay .room-result:has(.soi-outcome.correct) > h2 { background: var(--ui-success-soft); color: var(--ui-success-strong); }
+#overlay .room-result:has(.soi-outcome.wrong) > h2 { background: var(--ui-danger-soft); color: var(--ui-danger-strong); }

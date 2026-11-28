@@ -21,3 +21,11 @@ export function pickWolf(seats, rand, previousWolf) {
 
 // Vai của người `id`. Người xem (không có ghế) hoặc ván chưa chọn Sói thì chưa có vai (null).
 export const roleOf = (wolf, seats, id) => (!wolf || !seats.includes(id) ? null : id === wolf ? WOLF : VILLAGER);
+
+export const ACTION = Object.freeze({
+  REVEAL: 'reveal',
+  OPEN_VOTE: 'openVote',
+  VOTE: 'vote',
+  FINISH_VOTE: 'finishVote',
+});
+export const OUTCOME = Object.freeze({ CORRECT: 'correct', WRONG: 'wrong' });

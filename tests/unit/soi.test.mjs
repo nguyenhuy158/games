@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { MIN_PLAYERS, MAX_PLAYERS, ROUND_TTL_MS, WOLF, VILLAGER, pickWolf, roleOf } from '../../shared/games/soi/logic.js';
+import { ACTION, OUTCOME, MIN_PLAYERS, MAX_PLAYERS, ROUND_TTL_MS, WOLF, VILLAGER, pickWolf, roleOf } from '../../shared/games/soi/logic.js';
 import soi from '../../backend/src/application/games/soi.js';
 
 const seats = ['a', 'b', 'c', 'd', 'e'];
@@ -37,7 +37,7 @@ function room(ids, { rand = Math.random, host = ids[0] } = {}) {
   const ended = [], wakes = [];
   const ctx = {
     g: {}, keep: {}, seats: ids, rand, host: () => host, now: () => 1_000,
-    name: (id) => `Tên ${id}`, end: (r) => ended.push(r), wakeAt: (at) => wakes.push(at),
+    name: (id) => `Tên ${id}`, online: () => new Set(ids), end: (r) => ended.push(r), wakeAt: (at) => wakes.push(at),
   };
   return { ctx, ended, wakes };
 }
@@ -69,7 +69,8 @@ assert.equal(soi.replay, false, 'không ghi bản xem lại (vai bí mật)');
   assert.equal(soi.view(ctx, 'c').role, WOLF);
   for (const v of views) {
     assert.equal(v.wolf, null, 'chưa lật bài: không lộ Sói');
-    assert.equal(JSON.stringify(v).includes('"c"'), false, 'view không chứa id người khác');
+    assert.deepEqual(v.roster, seats.map((id) => ({ id, name: ctx.name(id) })));
+    assert.equal(v.ballot, undefined);
   }
   assert.equal(soi.view(ctx, 'watcher').role, null, 'người xem không có vai');
 }
@@ -116,4 +117,40 @@ assert.equal(soi.replay, false, 'không ghi bản xem lại (vai bí mật)');
   assert.equal(ctx.g.wolf, 'b');
   assert.equal(ctx.g.done, undefined, 'ván mới chưa lật');
 }
+for (const suspect of ['b', 'c']) {
+  const { ctx, ended } = room(['a', 'b', 'c'], { rand: () => 0.5 });
+  soi.start(ctx);
+  const send = (id, a, target) => soi.msg(ctx, { id }, { a, target });
+  assert.equal(send('b', ACTION.OPEN_VOTE), false);
+  assert.equal(send('a', ACTION.OPEN_VOTE), true);
+  assert.equal(send('a', ACTION.VOTE, 'a'), false);
+  assert.equal(send('watcher', ACTION.VOTE, suspect), false);
+  assert.equal(send('a', ACTION.VOTE, suspect), true);
+  assert.equal(send('a', ACTION.VOTE, 'c'), false);
+  assert.equal(send('a', ACTION.FINISH_VOTE), false);
+  assert.deepEqual(soi.view(ctx, 'b').ballot, { voted: false, count: 1, canFinish: false, tied: false });
+
+  ctx.online = () => new Set(['a']);
+  assert.equal(soi.view(ctx, 'a').roster.length, 3);
+  assert.equal(send('a', ACTION.FINISH_VOTE), true);
+  assert.equal(ended[0].outcome, suspect === 'b' ? OUTCOME.CORRECT : OUTCOME.WRONG);
+  assert.equal(ended[0].wolf, 'Tên b');
+  assert.equal(soi.view(ctx, 'a').ballot, undefined);
+}
+
+{
+  const { ctx, ended } = room(['a', 'b', 'c']);
+  soi.start(ctx);
+  soi.msg(ctx, { id: 'a' }, { a: ACTION.OPEN_VOTE });
+  for (const [id, target] of [['a', 'b'], ['b', 'c'], ['c', 'a']]) {
+    assert.equal(soi.msg(ctx, { id }, { a: ACTION.VOTE, target }), true);
+  }
+  assert.equal(soi.view(ctx, 'a').ballot.tied, true);
+  assert.equal(soi.msg(ctx, { id: 'a' }, { a: ACTION.FINISH_VOTE }), false);
+  assert.equal(soi.msg(ctx, { id: 'a' }, { a: ACTION.OPEN_VOTE }), true);
+  assert.equal(soi.view(ctx, 'a').ballot.count, 0);
+  assert.equal(soi.msg(ctx, { id: 'a' }, { a: ACTION.REVEAL }), true);
+  assert.equal(ended[0].outcome, undefined);
+}
+
 console.log('soi ok');

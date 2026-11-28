@@ -2,13 +2,18 @@ import { nokiaApp } from '../nokia/room.js';
 import { iconEl } from '../icons.js';
 import { t } from '../i18n.js';
 import { el } from '../dom.js';
-import { MIN_PLAYERS, WOLF } from '../../../shared/games/soi/logic.js';
+import { ACTION, MIN_PLAYERS, OUTCOME, WOLF } from '../../../shared/games/soi/logic.js';
 
 
 // Thẻ vai úp: chạm mới lật (tránh người bên cạnh liếc màn hình), sang ván mới thì úp lại.
 // Server chỉ gửi vai của chính mình; chủ phòng lật bài thì ván kết thúc và bảng kết quả nêu tên Sói.
 let shown = false, round = -1;
-let card, revealBtn;
+let card, revealBtn, voting;
+const ENDING_TONES = {
+  [OUTCOME.CORRECT]: [523.25, 659.25, 783.99],
+  [OUTCOME.WRONG]: [392, 329.63, 261.63],
+};
+const NOTE_MS = 170;
 
 const app = nokiaApp({
   game: 'soi',
@@ -60,11 +65,37 @@ const app = nokiaApp({
     : r.status === 'ended'
       ? t('Có thể chia vai ván mới.', 'Ready for another round.')
       : t('Đủ người: chủ phòng bấm Bắt đầu để chọn Sói.', 'Enough players: the host starts to pick the wolf.')),
-  badge: (p, r) => (r.view?.wolf === p.id ? t('Sói', 'Wolf') : ''),
+  roster: (r) => {
+    const online = new Set(r.players.map(({ id }) => id));
+    const offline = (r.view?.roster ?? []).filter(({ id }) => !online.has(id)).map((p) => ({ ...p, offline: true }));
+    return [...r.players, ...offline];
+  },
+  badge: (p, r) => [
+    r.view?.wolf === p.id ? t('Sói', 'Wolf') : '',
+    p.offline ? t('Ngoại tuyến', 'Offline') : '',
+  ].filter(Boolean).join(' · '),
+  lobby(box, r) {
+    if (!r.result?.outcome) return;
+    const { outcome, suspect, wolf } = r.result;
+    box.append(el('div', { className: `soi-outcome ${outcome}` },
+      el('p', { textContent: t(`Cả phòng chọn: ${suspect}`, `The room chose: ${suspect}`) }),
+      el('p', { textContent: t(`Sói thật: ${wolf}`, `The wolf was: ${wolf}`) })));
+  },
+  onState(r, previous, roomApp) {
+    if (r.status !== 'ended' || previous?.status !== 'playing') return;
+    ENDING_TONES[r.result?.outcome]?.forEach((frequency, index) => {
+      setTimeout(() => {
+        if (roomApp.room?.status === 'ended' && roomApp.room.view?.round === r.view?.round) {
+          roomApp.beep(frequency, NOTE_MS, 'sine');
+        }
+      }, index * NOTE_MS);
+    });
+  },
   mount(stage) {
     card = el('div', { className: 'role' });
-    revealBtn = el('button', { className: 'primary', onclick: () => app.send({ a: 'reveal' }) }, iconEl('eye'), ' ', t('Lật bài: ai là Sói?', 'Reveal: who is the wolf?'));
-    stage.append(el('div', { className: 'soi' }, card, revealBtn));
+    revealBtn = el('button', { className: 'primary', onclick: () => app.send({ a: ACTION.REVEAL }) });
+    voting = el('div', { className: 'soi-voting' });
+    stage.append(el('div', { className: 'soi' }, card, voting, revealBtn));
   },
   render(r) {
     const v = r.view;
@@ -81,6 +112,11 @@ function flip(on) {
 
 function paint(r, v) {
   revealBtn.hidden = r.host !== app.id;
+  revealBtn.classList.toggle('primary', !v.ballot);
+  revealBtn.replaceChildren(iconEl('eye'), ' ', v.ballot
+    ? t('Lật bài trực tiếp', 'Reveal directly')
+    : t('Lật bài: ai là Sói?', 'Reveal: who is the wolf?'));
+  paintVote(r, v);
   card.className = `role${v.role && shown ? ` ${v.role}` : ''}${v.role ? '' : ' watching'}`;
   if (!v.role) {
     card.replaceChildren(iconEl('eye'), el('h2', {}, t('Bạn đang xem', 'You are watching')), el('p', {}, t('Chờ ván sau để được chia vai.', 'Wait for the next round to get a role.')));
@@ -93,4 +129,32 @@ function paint(r, v) {
       el('p', {}, wolf ? t('Giữ bí mật, đừng để bị phát hiện.', 'Keep it secret, do not get caught.') : t('Tìm ra ai là Sói trong phòng.', 'Find out who the wolf is.')),
       el('button', { onclick: () => flip(false) }, t('Ẩn vai', 'Hide')));
   }
+}
+
+
+function voteButton(label, action, props = {}) {
+  return el('button', { type: 'button', onclick: () => { app.unlockSound(); app.send(action); }, ...props }, label);
+}
+
+function paintVote(r, v) {
+  const isHost = r.host === app.id;
+  const ballot = v.ballot;
+  if (!ballot) {
+    voting.replaceChildren(...(isHost ? [voteButton(t('Mở bỏ phiếu', 'Open voting'), { a: ACTION.OPEN_VOTE })] : []));
+    return;
+  }
+  const progress = ballot.tied ? t('Hòa phiếu. Chủ phòng có thể mở lại.', 'Tie. The host can reopen voting.')
+    : t(`Đã nhận ${ballot.count} phiếu`, `${ballot.count} votes received`);
+  const choices = v.role && !ballot.voted
+    ? (v.roster ?? r.players).filter(({ id }) => id !== app.id && r.seats.includes(id))
+      .map(({ id, name }) => voteButton(name, { a: ACTION.VOTE, target: id }))
+    : [];
+  voting.replaceChildren(
+    el('h2', { textContent: t('Ai là Sói?', 'Who is the wolf?') }),
+    el('p', { role: 'status', textContent: progress }),
+    ...(ballot.voted ? [el('p', { textContent: t('Đã gửi phiếu kín.', 'Secret vote submitted.') })] : choices),
+    ...(isHost ? [ballot.tied
+      ? voteButton(t('Bầu lại', 'Vote again'), { a: ACTION.OPEN_VOTE })
+      : voteButton(t('Chốt phiếu', 'Finish voting'), { a: ACTION.FINISH_VOTE }, { disabled: !ballot.canFinish, className: 'primary' })] : []),
+  );
 }
