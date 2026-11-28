@@ -2,13 +2,13 @@ import { el } from '../dom.js';
 import { t, tx } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { listbox } from '../ui/listbox.mjs';
-import { AI_PACK, DEFAULT_CONFIG, DURATIONS, PACKS, MIN_PLAYERS, MAX_PLAYERS, ROLE, limits, validateSetup } from '../../../shared/games/gian-diep/logic.js';
+import { AI_PACK, DEFAULT_CONFIG, DURATIONS, PACKS, MIN_PLAYERS, MAX_PLAYERS, ROLE, HIDDEN_TEAM, limits, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 
 export const PAGE_SIZE = 4;
 const MIN_SPIES = 1;
 const LIGHTNING_SECONDS = 5;
 const SETTING_ICONS = Object.freeze({ spies: 'eye', whites: 'layers', seconds: 'timer', pack: 'grid-3x3' });
-const ROLE_ICONS = Object.freeze({ [ROLE.CIVILIAN]: 'users', [ROLE.SPY]: 'eye', [ROLE.WHITE]: 'layers' });
+const ROLE_ICONS = Object.freeze({ [ROLE.CIVILIAN]: 'users', [ROLE.SPY]: 'swords', [ROLE.WHITE]: 'layers' });
 export function button(label, onclick, primary = false, icon) {
   const node = el('button', { type: 'button', className: 'ui-button', ariaLabel: label, onclick }, ...(icon ? [iconEl(icon)] : []), el('span', {}, label));
   if (primary) node.dataset.variant = 'primary';
@@ -124,8 +124,19 @@ export function paginated(items, renderItem, label = t('Người chơi', 'Player
 export function results(view, playerName) {
   if (!view.reveal) return el('div');
   const reveal = view.reveal;
-  return el('div', { className: 'results stack' },
+  const team = view.winner === ROLE.CIVILIAN || view.winner === HIDDEN_TEAM ? view.winner : ROLE.WHITE;
+  const panel = el('div', { className: 'results stack' },
+    el('h2', { className: 'result-banner' }, iconEl(team === HIDDEN_TEAM ? ROLE_ICONS[ROLE.SPY] : 'trophy'), tx(resultTitle(view.winner))),
     view.players.some((player) => player.id === view.winner) ? note(t(`${playerName(view.winner)} đoán đúng và thắng một mình.`, `${playerName(view.winner)} guessed correctly and wins alone.`)) : '',
-    el('dl', { className: 'word-pair' }, el('div', {}, el('dt', {}, indicator('users', t('Từ của dân', 'Civilian word'))), el('dd', {}, reveal.civilianWord)), el('div', {}, el('dt', {}, indicator('eye', t('Từ gián điệp', 'Spy word'))), el('dd', {}, reveal.spyWord))),
-    paginated(view.players, (player) => el('div', { className: 'player-row' }, el('span', { className: 'player-name' }, playerName(player.id)), el('strong', {}, indicator(ROLE_ICONS[reveal.roles[player.id]], roleLabel(reveal.roles[player.id]))))));
+    el('dl', { className: 'word-pair' },
+      el('div', {}, el('dt', {}, indicator(ROLE_ICONS[ROLE.CIVILIAN], t('Từ của dân', 'Civilian word'))), el('dd', {}, reveal.civilianWord)),
+      el('div', {}, el('dt', {}, indicator(ROLE_ICONS[ROLE.SPY], t('Từ gián điệp', 'Spy word'))), el('dd', {}, reveal.spyWord))),
+    paginated(view.players, (player) => {
+      const role = reveal.roles[player.id];
+      const row = el('div', { className: 'player-row' }, el('span', { className: 'player-name' }, playerName(player.id)), el('strong', {}, indicator(ROLE_ICONS[role], roleLabel(role))));
+      row.dataset.role = role;
+      return row;
+    }));
+  panel.dataset.winner = team;
+  return panel;
 }

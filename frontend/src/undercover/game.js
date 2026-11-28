@@ -1,9 +1,9 @@
 import { nokiaApp } from '../nokia/room.js';
 import { el, store } from '../dom.js';
-import { t, tx } from '../i18n.js';
+import { t } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
-import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
+import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 import { HELP } from './help.js';
 import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results } from './ui.js';
 import { setButtonPending } from '../ui/feedback.mjs';
@@ -406,7 +406,7 @@ function paintBoard(target, v, actor, isLocal) {
   currentView = v;
   if (guessOwner !== v.pendingGuess) { guessOwner = v.pendingGuess; guessDraft = ''; }
   if (v.phase === PHASE.ENDED) {
-    target.replaceChildren(el('div', { className: 'game-result stack' }, el('h2', {}, tx(resultTitle(v.winner))), results(v, playerName), isLocal ? button(t('Chơi ván mới', 'Play a new game'), startLocalSetup, true, 'rotate-ccw') : ''));
+    target.replaceChildren(el('div', { className: 'game-result stack' }, results(v, playerName), isLocal ? button(t('Chơi ván mới', 'Play a new game'), startLocalSetup, true, 'rotate-ccw') : ''));
     return;
   }
   const seated = v.players.some((player) => player.id === actor);
