@@ -3,13 +3,13 @@ import { el, store } from '../dom.js';
 import { t, tx } from '../i18n.js';
 import { iconEl } from '../icons.js';
 import { mountHelp } from '../help.js';
-import { MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
+import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, NAME_LIMIT, NAME_ERROR, limits, parseNames, DEFAULT_CONFIG, PHASE, ACTION, createGame, act, advance, view, resultTitle, validateSetup } from '../../../shared/games/gian-diep/logic.js';
 import { HELP } from './help.js';
 import { button, iconButton, indicator, note, dialog, confirmAction, settings, configBadges, setupWarning, paginated, results } from './ui.js';
 import { setButtonPending } from '../ui/feedback.mjs';
 import { notifications, TOAST_TONE } from '../ui/notifications.js';
 import { seatingRoster, orderedPlayers } from './roster.js';
-import { aiPicker } from './ai.js';
+import { aiPicker, dealAiPair } from './ai.js';
 
 const GAME = 'undercover';
 const GAME_PATH = '/undercover/';
@@ -57,7 +57,8 @@ let currentView = null;
 let pendingOnline = null;
 let guessDraft = '';
 let guessOwner = null;
-const localConfig = { ...DEFAULT_CONFIG };
+let localConfig = { ...DEFAULT_CONFIG };
+let localDealing = false;
 let localPlayerCount = MIN_PLAYERS;
 const localHostId = `${LOCAL_ID_PREFIX}1`;
 let localGame = null;
@@ -206,15 +207,52 @@ function paintSetup() {
           localConfig.spies = count;
           localConfig.whites = Math.min(localConfig.whites, limits(localPlayerCount, count).whites);
         }),
-        countRow(t('Mũ Trắng', 'Mr. White'), 'layers', DEFAULT_CONFIG.whites, roleLimits.whites, localConfig.whites, (count) => { localConfig.whites = count; }))),
+        countRow(t('Mũ Trắng', 'Mr. White'), 'layers', DEFAULT_CONFIG.whites, roleLimits.whites, localConfig.whites, (count) => { localConfig.whites = count; })),
+      localPackControls()),
     button(t('Bắt đầu', 'Start game'), dealLocal, true, 'play')));
 }
 
-function dealLocal(event) {
-  if (!event.currentTarget.isConnected) return;
-  localNamesById.clear();
-  const ids = Array.from({ length: localPlayerCount }, (_, index) => `${LOCAL_ID_PREFIX}${index + 1}`);
-  localGame = createGame(ids, localConfig, random, Date.now());
+function localPackControls() {
+  const selected = localConfig.pack === AI_PACK;
+  const choose = button(selected ? t('Đổi chủ đề AI', 'Change AI topic') : t('Tạo bộ từ AI', 'Create AI pack'), openLocalAi, false, 'sparkles');
+  if (!selected) return choose;
+  const reset = button(t('Dùng bộ mặc định', 'Use default pack'), () => {
+    const { spies, whites } = localConfig;
+    localConfig = { ...DEFAULT_CONFIG, spies, whites };
+    paintSetup();
+  });
+  return el('div', { className: 'stack' },
+    note(t(`Bộ từ AI: ${localConfig.aiTopic}`, `AI pack: ${localConfig.aiTopic}`)),
+    el('div', { className: 'actions' }, choose, reset));
+}
+
+function openLocalAi() {
+  aiPicker(({ packId, title }) => {
+    localConfig = { ...localConfig, pack: AI_PACK, aiPackId: packId, aiTopic: title };
+    if (mode === MODE.LOCAL && localStep === LOCAL_STEP.SETUP) paintSetup();
+  });
+}
+
+async function dealLocal(event) {
+  if (!event.currentTarget.isConnected || localDealing) return;
+  localDealing = true;
+  content.inert = true;
+  backButton.disabled = true;
+  const restore = setButtonPending(content.querySelector('[data-variant="primary"]'), t('Đang chia từ…', 'Dealing…'));
+  try {
+    const pair = localConfig.pack === AI_PACK ? await dealAiPair(localConfig.aiPackId) : undefined;
+    localNamesById.clear();
+    const ids = Array.from({ length: localPlayerCount }, (_, index) => `${LOCAL_ID_PREFIX}${index + 1}`);
+    localGame = createGame(ids, localConfig, random, Date.now(), pair);
+  } catch (error) {
+    notifications.show(TOAST_TONE.ERROR, error.message);
+    return;
+  } finally {
+    restore();
+    localDealing = false;
+    content.inert = false;
+    backButton.disabled = false;
+  }
   localStep = LOCAL_STEP.REVEAL;
   revealIndex = 0;
   revealName = '';
