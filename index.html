@@ -42,9 +42,8 @@
       color: inherit; text-decoration: none; box-shadow: var(--ui-shadow-sm); transition: transform var(--ui-dur-fast) var(--ui-ease-out), border-color var(--ui-dur-fast) var(--ui-ease-out);
     }
     .game:hover { transform: translateY(-3px); border-color: var(--accent); }
-    .thumb-strip { position: absolute; top: 20%; left: 0; height: 60%; }
+    .thumb-strip { position: absolute; top: 20%; left: 0; max-width: 100%; height: 60%; object-fit: cover; object-position: left center; }
     .thumb-cover { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
-    .thumb-crop { overflow: hidden; }
     .thumb { position: relative; height: 120px; border-radius: 10px; background: #0a1724 center / contain no-repeat; }
     /* Nhãn "đang chơi" trên thẻ game: số phòng công khai / người trong đó (cập nhật từ /api/rooms). */
     .live {
@@ -267,7 +266,7 @@
   <h2 class="group"><i data-icon="users"></i> <span data-en="Party games">Chơi đông người</span></h2>
   <div class="games">
     <a class="game" href="/pikachu/">
-      <div class="thumb thumb-crop"><img class="thumb-strip" data-preview-src="pikachu/images/thumb.webp" alt=""></div>
+      <div class="thumb"><img class="thumb-strip" data-preview-src="pikachu/images/thumb.webp" alt=""></div>
       <b><img loading="lazy" class="logo" src="/logos/pikachu.svg" alt=""> <span data-en="Pikachu Onet">Pikachu nối thú</span></b>
       <span><span data-en="Clear the board by linking matching tiles with up to three straight segments.">Dọn bàn bằng cách nối từng cặp hình giống nhau bằng tối đa ba đoạn thẳng.</span></span>
       <div class="tags"><i><span data-en="Multiplayer">Nhiều người</span></i><i><span data-en="Co-op">Chơi chung</span></i><i><span data-en="Race">Đua</span></i><i><span data-en="Team 2v2">Đội 2v2</span></i></div>
