@@ -95,6 +95,22 @@ h3 { font-size: 1rem; }
 .secret-card { width: 100%; display: grid; justify-items: center; text-align: center; gap: 1rem; padding: 1.5rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface); box-shadow: var(--ui-shadow-md); }
 .secret-card > .ic { width: 40px; height: 40px; color: var(--ui-primary); }
 .secret-card .secret-word { font-size: clamp(1.5rem, 6vw, 2.5rem); line-height: 1.25; color: var(--ui-fg); overflow-wrap: anywhere; animation: ui-fade-in var(--ui-dur) var(--ui-ease-out); }
+.handoff .secret-covered, .secret-flip-back { background: var(--ui-primary-soft); place-content: center; }
+.handoff .secret-covered, .handoff .secret-flip .secret-card { min-height: 12rem; }
+.secret-flip { width: 100%; display: grid; transform-style: preserve-3d; }
+.secret-flip > .secret-card { grid-area: 1 / 1; backface-visibility: hidden; }
+.secret-flip-back { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: no-preference) {
+  .secret-flip { animation: undercover-card-flip .38s var(--ui-ease-out) both; }
+}
+@keyframes undercover-card-flip {
+  from { transform: perspective(900px) rotateY(180deg); }
+  to { transform: perspective(900px) rotateY(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .secret-flip-back { display: none; }
+  .secret-flip .secret-word { animation: none; }
+}
 .secret-card > .ui-button { width: 100%; }
 .game-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 2rem; align-items: start; }
 .game-main, .game-sidebar { display: grid; gap: 1rem; min-width: 0; }
