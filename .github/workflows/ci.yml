@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      record_video:
+        description: Record an Undercover pass-one-device round
+        type: boolean
+        default: false
 
 # PR: bản mới huỷ bản cũ. main: không huỷ để smoke-prod của từng deploy chạy hết.
 concurrency:
@@ -21,8 +27,6 @@ jobs:
     name: E2E smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      E2E_VIDEO_DIR: e2e-videos
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -47,16 +51,29 @@ jobs:
         if: steps.chromium-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright-core install chromium
       - name: Install video encoder
+        if: inputs.record_video
         run: pnpm exec playwright-core install ffmpeg
       - name: E2E
+        if: '!inputs.record_video'
         run: pnpm e2e
-      - name: Upload E2E videos and round evidence
-        if: always()
+      - name: E2E video
+        if: inputs.record_video
+        run: pnpm e2e:video
+      - name: Upload E2E videos
+        if: always() && inputs.record_video
         uses: actions/upload-artifact@v4
         with:
           name: e2e-videos-${{ github.sha }}
           path: e2e-videos/
           if-no-files-found: error
+          retention-days: 14
+      - name: Upload round evidence
+        if: always() && !inputs.record_video
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-round-evidence-${{ github.sha }}
+          path: e2e-artifacts/
+          if-no-files-found: warn
           retention-days: 14
       - name: Whole-application coverage gate
         if: github.event_name == 'push'

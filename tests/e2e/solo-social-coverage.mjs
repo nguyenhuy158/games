@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { findChromium } from '@huyab/e2e';
 import { chromium } from 'playwright-core';
 import { saveCoverage, saveCoverageData } from './coverage.mjs';
@@ -13,6 +15,12 @@ const WAIT_MS = 15000;
 const SECOND_MS = 1000;
 const CLOCK_START = new Date('2026-11-26T12:00:00.000Z');
 const VIEWPORT = { width: 720, height: 1000 };
+const VIDEO_DIRECTORY = process.env.E2E_VIDEO_DIR;
+const VIDEO_ONLY_FLAG = '--undercover-round-video';
+const videoOnly = process.argv.includes(VIDEO_ONLY_FLAG);
+const VIDEO_STEP_MS = 600;
+const VIDEO_RESULT_MS = 2000;
+const UNDERCOVER_ROUND_VIDEO = 'undercover-pass-one-device-round.webm';
 const PLAYER_ID = 'coverage-player';
 const HARNESS_PATH = '/solo-social-coverage-harness';
 const NAVIGATION_COVERAGE_KEY = 'solo-social.navigation-coverage';
@@ -27,8 +35,14 @@ const failures = [];
 let passed = 0;
 
 async function scenario(name, route, run, options = {}) {
-  const context = await browser.newContext({ serviceWorkers: 'block', viewport: VIEWPORT, hasTouch: true, colorScheme: options.colorScheme ?? 'light' });
+  if (videoOnly && options.video !== UNDERCOVER_ROUND_VIDEO) return;
+  const recordVideo = VIDEO_DIRECTORY && options.video ? { dir: VIDEO_DIRECTORY, size: VIEWPORT } : null;
+  const context = await browser.newContext({
+    serviceWorkers: 'block', viewport: VIEWPORT, hasTouch: true, colorScheme: options.colorScheme ?? 'light',
+    ...(recordVideo ? { recordVideo } : {}),
+  });
   const page = await context.newPage();
+  const video = page.video();
   page.setDefaultTimeout(WAIT_MS);
   const requests = [];
   await context.addInitScript(({ games, player, storage }) => {
@@ -80,7 +94,12 @@ async function scenario(name, route, run, options = {}) {
     await saveCoverage(page);
     const snapshots = await page.evaluate((coverageKey) => JSON.parse(sessionStorage.getItem(coverageKey) || '[]'), NAVIGATION_COVERAGE_KEY);
     for (const snapshot of snapshots) await saveCoverageData(snapshot.coverage, snapshot.url);
+    if (video) await delay(VIDEO_RESULT_MS);
     await context.close();
+    if (video) {
+      await video.saveAs(resolve(VIDEO_DIRECTORY, options.video));
+      await video.delete();
+    }
   }
 }
 
@@ -143,6 +162,7 @@ function room(view = null, overrides = {}) {
 
 async function clickName(page, name, scope = page) {
   await scope.getByRole('button', { name, exact: true }).click();
+  if (page.video()) await delay(VIDEO_STEP_MS);
 }
 
 async function textIncludes(page, selector, text) {
@@ -1163,7 +1183,7 @@ await scenario('spy local secret ballot tie and runoff reach a real winner', '/u
   }
   await textIncludes(page, '.game-result', 'Civilian');
   assert.equal(await page.locator('.results .player-row').count(), 3);
-}, { clock: true });
+}, { clock: true, video: UNDERCOVER_ROUND_VIDEO });
 
 await scenario('penalty settings validate restored lists and edit defaults', `${HARNESS_PATH}?lang=en`, async (page) => {
   await page.evaluate(async () => {
