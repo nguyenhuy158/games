@@ -56,24 +56,20 @@ h3 { font-size: 1rem; }
 .entry-footer { justify-content: center; }
 .setup { max-width: 640px; }
 .spy-content:has(.setup) { align-items: start; overflow: auto; overscroll-behavior: contain; }
-.setup-options { min-width: 0; }
+.local-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.local-advanced { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.local-advanced > .ui-button { margin-inline-start: auto; border-color: transparent; }
 .roster-editor { display: grid; gap: .5rem; min-width: 0; }
 .roster-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
 .roster-heading h3 { font-size: .875rem; }
 .roster-heading > .ui-button { font-size: .8125rem; padding-inline: .75rem; }
-.roster-add { display: flex; align-items: center; gap: .5rem; min-width: 0; }
-.roster-add > .ui-listbox { flex: 1; }
-.roster-add > .ui-button { flex: none; padding-inline: .75rem; }
 .roster-list { display: grid; align-content: start; gap: .25rem; max-height: min(30dvh, 18rem); min-height: 3rem; margin: 0; padding: .25rem; list-style: none; overflow: auto; overscroll-behavior: contain; border-block: 1px solid var(--ui-border); scrollbar-gutter: stable; }
 .roster-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .25rem .5rem; min-width: 0; padding-block: .25rem; }
 .roster-row + .roster-row { border-top: 1px solid var(--ui-border); }
 .roster-person { display: flex; align-items: center; gap: .375rem; flex: 1; min-width: 8rem; }
 .roster-position { flex: none; min-width: 1.25rem; font-size: .75rem; color: var(--ui-fg-muted); font-variant-numeric: tabular-nums; }
 .roster-name { min-width: 0; overflow-wrap: anywhere; font-size: .875rem; }
-.roster-edit-name { justify-content: flex-start; text-align: left; border-color: transparent; padding-inline: .25rem; min-width: 0; overflow-wrap: anywhere; font-size: .875rem; }
 .roster-actions { display: flex; gap: .25rem; margin-left: auto; }
-.roster-rename { display: flex; align-items: center; gap: .25rem; width: 100%; min-width: 0; }
-.roster-rename input { flex: 1; }
 .section-heading, .phase-heading, .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 .settings-summary { display: flex; align-items: center; gap: .75rem; justify-content: space-between; padding: 1rem 0; border-block: 1px solid var(--ui-border); }
 .settings-summary .ui-button { flex: none; }
@@ -184,19 +180,10 @@ body .help-dlg .help-x:focus-visible, body .help-dlg .help-ok:focus-visible { ou
 @media (orientation: landscape) and (max-height: 540px) {
   .spy-header, #room > header { min-height: 52px; }
   .game-layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
-  .setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; max-width: 800px; gap: .75rem 1.5rem; }
-  .setup > .section-heading { grid-column: 1 / -1; }
-  .setup > .roster-editor { grid-column: 1; grid-row: 2; }
-  .setup > .setup-options { grid-column: 2; grid-row: 2; }
-  .setup .settings-summary { padding-block: .5rem; }
-  .setup-options > .sub, .setup-options > .notice { font-size: .75rem; }
   .entry-logo { display: none; }
   .entry { gap: .75rem; }
   .mode-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
-  .handoff { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); max-width: 800px; gap: .75rem; }
-  .handoff .secret-card { grid-column: 2; grid-row: 1 / span 3; }
-  .handoff > h2 { font-size: 1.25rem; }
-  .handoff > .ui-button { grid-column: 1; }
+
   #home .card { grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 800px); }
   #home .card h1, #home .card > .sub { grid-column: 1 / -1; }
   #overlay .card { width: min(100%, 800px); grid-template-columns: repeat(2, minmax(0, 1fr)); }
