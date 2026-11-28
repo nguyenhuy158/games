@@ -1,9 +1,10 @@
+import { canonicalGameId, canonicalPagePath, roomStorageKey } from '../../../shared/page-routes.js';
 import { userFrom } from './sso.js';
 import { REPLAY_ID, REPLAY_MAX, replayId, BOARDS } from './top.js';
 import { SIZES } from '../../../shared/games/pikachu/logic.js';
 import { MODES } from '../application/games/pikachu.js';
 import { GUEST_HEADER, USER_HEADER, GAME_HEADER, ROOM_HEADER, PRIVATE_CACHE, guestSession, resultOwner, withGuestCookie } from './guest.js';
-import { AI_PATH, AI_ERROR, AI_STATUS, AI_LIMIT, aiFailure } from '../application/spy-ai.js';
+import { isSpyAiPath, AI_ERROR, AI_STATUS, AI_LIMIT, aiFailure } from '../application/spy-ai.js';
 import { routeAi } from './spy-ai-http.js';
 
 const METHOD = { GET: 'GET', POST: 'POST' };
@@ -97,11 +98,13 @@ async function route(req, env, guest) {
     // Domain cũ: đổi sang domain mới, giữ nguyên đường dẫn + query (hub tự đưa ?r= cũ về /pikachu/).
     // /api/* vẫn phục vụ để tab đang mở không rớt WebSocket.
     if (OLD_HOSTS.includes(url.hostname) && !api) {
+      url.pathname = canonicalPagePath(url.pathname);
       url.hostname = HOME;
       return Response.redirect(url.toString(), 301);
     }
     if (GAME_HOSTS[url.hostname] && !api) {
       if (url.pathname === '/') url.pathname = GAME_HOSTS[url.hostname];
+      url.pathname = canonicalPagePath(url.pathname);
       url.hostname = HOME;
       return Response.redirect(url.toString(), 302);
     }
@@ -110,11 +113,16 @@ async function route(req, env, guest) {
     if (short) {
       const page = await env.TOP.get(env.TOP.idFromName('global')).replayPage(short[1]);
       if (!page) return new Response('Không tìm thấy bản xem lại (có thể đã hết hạn) · Replay not found', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
-      return Response.redirect(`${url.origin}${page}?replay=${short[1]}`, 302);
+      return Response.redirect(`${url.origin}${canonicalPagePath(page)}?replay=${short[1]}`, 302);
     }
-    if (!api) return env.ASSETS.fetch(req);
+    if (!api) {
+      const path = canonicalPagePath(url.pathname);
+      if (path === url.pathname) return env.ASSETS.fetch(req);
+      url.pathname = path;
+      return Response.redirect(url.toString(), 301);
+    }
     const top = () => env.TOP.get(env.TOP.idFromName('global'));
-    if (url.pathname === AI_PATH) {
+    if (isSpyAiPath(url.pathname)) {
       const respond = (result) => {
         const { status = AI_STATUS.OK, ...body } = result;
         return privateJson(body, status);
@@ -201,7 +209,8 @@ async function route(req, env, guest) {
     }
     // Phòng đang mở mà chủ phòng bật "Công khai" (trang /phong/).
     if (url.pathname === '/api/rooms') {
-      return Response.json({ rooms: await top().rooms(), now: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
+      const rooms = (await top().rooms()).map((room) => ({ ...room, game: canonicalGameId(room.game), path: canonicalPagePath(room.path) }));
+      return Response.json({ rooms, now: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
     }
     if (url.pathname === '/api/top') {
       const mode = url.searchParams.get('mode');
@@ -212,7 +221,10 @@ async function route(req, env, guest) {
     }
     // /api/nk/<game>/room/CODE = các game Nokia: một class NokiaRoom, mỗi phòng là DO tên "<game>:<CODE>" (adapter worker/adapters/game-room.js).
     const nk = url.pathname.match(/^\/api\/nk\/([a-z-]+)\/room\/([A-Z0-9]{4})$/);
-    if (nk && req.headers.get(HEADER.UPGRADE) === WEBSOCKET) return forward(req, env.NOKIA, `${nk[1]}:${nk[2]}`, nk[1], nk[2], guest);
+    if (nk && req.headers.get(HEADER.UPGRADE) === WEBSOCKET) {
+      const game = canonicalGameId(nk[1]);
+      return forward(req, env.NOKIA, roomStorageKey(game, nk[2]), game, nk[2], guest);
+    }
     // /api/room/CODE = Pikachu, /api/dv/room/CODE = Đào Vàng, /api/ms/room/CODE = Dò mìn, /api/bc/room/CODE = Bầu cua,
     // /api/cc/room/CODE = Cờ caro, /api/c4/room/CODE = Nối 4 (chung class phòng với caro), /api/bt/room/CODE = Bắn tàu.
     const m = url.pathname.match(/^\/api\/(dv\/|ms\/|bc\/|cc\/|c4\/|bt\/)?room\/([A-Z0-9]{4})$/);
@@ -224,7 +236,7 @@ async function route(req, env, guest) {
 export const http = {
   async fetch(req, env) {
     const url = new URL(req.url);
-    const privatePath = [ME_PATH, HISTORY_PATH, CLAIM_PATH, AI_PATH].includes(url.pathname);
+    const privatePath = [ME_PATH, HISTORY_PATH, CLAIM_PATH].includes(url.pathname) || isSpyAiPath(url.pathname);
     const websocket = req.headers.get(HEADER.UPGRADE) === WEBSOCKET;
     let guest = privatePath || websocket ? guestSession(req) : null;
     const response = await route(req, env, guest);

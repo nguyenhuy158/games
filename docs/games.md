@@ -15,7 +15,7 @@ Bộ game cổ điển chơi trên trình duyệt. https://games.huyab.cfd — m
 | Cờ gánh | `/co-ganh/` | Cờ dân gian 5×5: gánh (đi vào giữa 2 quân địch), vây và mở (bắt buộc vào gánh); 1v1 hoặc với máy (3 mức), người khác xem |
 | Dò mìn | `/do-min/` | Nhiều người: chơi chung một bàn (3 mạng, thấy chuột, ping) hoặc đua cùng đề; mìn chỉ ở server |
 | Sói | `/soi/` | 3–12 người, chia vai bí mật và lật bài. Cách chơi nhúng [video Bắt Sói 1:12:33–1:13:24](https://www.youtube.com/watch?v=Mzjtwf0FbW0&t=4353s), không tự phát, dừng khi đóng hướng dẫn; có luật chữ song ngữ. Nháy mắt, loại dân, đoán Sói và ghi điểm thực hiện trực tiếp, web chưa tự xử lý. Hướng dẫn tự mở lần đầu, mở lại bằng Cách chơi. |
-| Ai là gián điệp | `/gian-diep/` | 3–20 người; chuyền một thiết bị hoặc vào phòng riêng, bỏ phiếu kín và Mũ Trắng. [Luật, UI kit và kiểm thử](gian-diep.md). |
+| Ai là gián điệp | `/undercover/` | 3–20 người; chuyền một thiết bị hoặc vào phòng riêng, bỏ phiếu kín và Mũ Trắng. [Luật, UI kit và kiểm thử](gian-diep.md). |
 | Lô tô | `/loto/` | 1–12 người, lô tô hội chợ: tờ dò 9×9 (3 khối, mỗi hàng 5 số, cột theo chục, có màu; chỉ chủ tờ thấy, không trùng tờ nào trong phòng); đầu ván mua 1–6 tờ theo màu, đổi tờ khác (tab / vuốt giữa các tờ); chủ phòng bắt đầu hô rồi server tự hô 3/5/8 giây (alarm, tắt được), bảng 90 số đã hô; tự dò hoặc bật "Tự dò"; hàng thiếu 1 số hiện CHỜ; số mới hiện bóng số to + câu vè, đọc số bằng giọng của máy (Tiếng Việt / English / tắt, Web Speech); bấm KINH, server kiểm số đã hô — sai là "kinh láo": phạt trong game (khoá KINH 30s, mất 1 hạt, đóng băng Tự dò, nhãn "Kinh láo", chờ 3 số) và/hoặc vòng quay phạt vui (chủ phòng chọn kiểu phạt, sửa danh sách); kinh cùng lúc thì chia giải; vào giữa ván vẫn có tờ |
 | 2048 | `/2048/` | 1 người, chạy hết ở client: phím mũi tên / vuốt / phím trên màn; bảng xếp hạng tên + điểm (top 10, `/api/board?game=2048`) |
 | Xếp gạch | `/tetris/` | 1 người, chạy hết ở client: phím / vuốt / chạm / 4 nút; tạm dừng (P); kỷ lục lưu trên máy |
@@ -27,7 +27,7 @@ Kiểm tra nhiều người qua WebSocket thật (bot chơi từng game): `node 
 Sảnh `/phong/` được kiểm trong trang browser riêng, không dùng response `/api/rooms` từ polling của hub trước khi chuyển trang.
 Smoke Dò mìn chỉ bắt đầu mở ô sau khi cả hai client nhận đủ grid riêng và state `playing`; grid có thể đến trước state trên mạng thật. `node tests/unit/smoke-start.test.mjs` kiểm thứ tự đến lệch này mà không tăng timeout hoặc bỏ kiểm tra riêng tư.
 
-Local mặc định full: `pnpm e2e`; thử PR nhanh: `E2E_SMOKE_MODE=fast pnpm e2e`. Kiểm riêng trang: `E2E_BASE_URL=http://localhost:8789 node tests/e2e/readonly-smoke.mjs /soi/ /gian-diep/`. CI cache pnpm và Chromium theo OS/kiến trúc/phiên bản; cache hit vẫn cài thư viện hệ thống cần thiết.
+Local mặc định full: `pnpm e2e`; thử PR nhanh: `E2E_SMOKE_MODE=fast pnpm e2e`. Kiểm riêng trang: `E2E_BASE_URL=http://localhost:8789 node tests/e2e/readonly-smoke.mjs /soi/ /undercover/`. CI cache pnpm và Chromium theo OS/kiến trúc/phiên bản; cache hit vẫn cài thư viện hệ thống cần thiết.
 
 `pnpm e2e` còn chơi trọn một ván Cờ caro 3×3 với máy bằng thao tác UI trong context mới. Kết quả hiển thị, bàn cờ, lịch sử khách và từng nước đi trong replay phải khớp cùng ID ván; không chấp nhận hết giờ thay cho kết thúc ván. Bài kiểm tra chỉ cho phép server loopback, không ghi production. Có thể chạy riêng khi dev server đang mở: `E2E_BASE_URL=http://127.0.0.1:8789 node tests/e2e/round-evidence.mjs`.
 

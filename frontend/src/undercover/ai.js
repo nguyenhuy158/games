@@ -3,7 +3,7 @@ import { t } from '../i18n.js';
 import { AI_TOPIC_LIMIT } from '../../../shared/games/gian-diep/logic.js';
 import { button, dialog, note } from './ui.js';
 
-const AI_ENDPOINT = '/api/gian-diep/ai';
+const AI_ENDPOINT = '/api/undercover/ai';
 const AI_TIMEOUT_MS = 45000;
 const HTTP_POST = 'POST';
 const JSON_HEADERS = Object.freeze({ 'Content-Type': 'application/json' });

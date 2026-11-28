@@ -1,8 +1,8 @@
+import { UNDERCOVER_ID } from '../../../../shared/page-routes.js';
 import { AI_PACK, MIN_PLAYERS, MAX_PLAYERS, DEFAULT_CONFIG, PHASE, ROLE, normalizeConfig, validateSetup, createGame, act, advance, view, resultTitle } from '../../../../shared/games/gian-diep/logic.js';
 import { resolveAiPair } from './gian-diep-ai.js';
 
-const GAME_SLUG = 'gian-diep';
-const GAME_PAGE = '/gian-diep/';
+const GAME_PAGE = '/undercover/';
 const HIDDEN_TEAM = 'hidden';
 const MULTIPLAYER = 'multi';
 const WIN_SCORE = 1;
@@ -23,7 +23,7 @@ function publish(ctx) {
 }
 
 export default {
-  slug: GAME_SLUG,
+  slug: UNDERCOVER_ID,
   page: GAME_PAGE,
   max: MAX_PLAYERS,
   maxOnline: MAX_PLAYERS,

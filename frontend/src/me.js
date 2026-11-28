@@ -22,7 +22,7 @@ const TETRIS_LEVELS = [t('Thường', 'Normal'), t('Khó', 'Hard'), t('Siêu kh�
 const GAMES = en
   ? { pikachu: 'Pikachu', 'dao-vang': 'Gold Miner', 'do-min': 'Minesweeper', 'bau-cua': 'Bau Cua', 'co-caro': 'Gomoku', 'noi-4': 'Connect 4', 'ban-tau': 'Battleship', snake: 'Snake', bantumi: 'Bantumi', pairs: 'Pairs', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'O An Quan', 'co-ganh': 'Co Ganh', 'co-tuong': 'Xiangqi', loto: 'Lo To' }
   : { pikachu: 'Pikachu', 'dao-vang': 'Đào Vàng', 'do-min': 'Dò mìn', 'bau-cua': 'Bầu cua', 'co-caro': 'Cờ caro', 'noi-4': 'Nối 4', 'ban-tau': 'Bắn tàu', snake: 'Rắn săn mồi', bantumi: 'Bantumi', pairs: 'Lật hình', logic: 'Logic', 'rapid-roll': 'Rapid Roll', 'space-impact': 'Space Impact', bounce: 'Bounce', 'o-an-quan': 'Ô ăn quan', 'co-ganh': 'Cờ gánh', 'co-tuong': 'Cờ tướng', loto: 'Lô tô' };
-GAMES['gian-diep'] = t('Ai là gián điệp', 'Undercover');
+GAMES['undercover'] = t('Ai là gián điệp', 'Undercover');
 Object.assign(GAMES, { '2048': '2048', tetris: t('Xếp gạch', 'Tetris'), sudoku: 'Sudoku' });
 const MODES = en
   ? { coop: 'Co-op', race: 'Race', team: 'Team 2v2', versus: 'Gold rush', solo: 'Solo', rotate: 'Rotating dealer', house: 'Bot dealer', pvp: 'PvP', bot: 'Vs bot', multi: 'Multiplayer' }
@@ -35,7 +35,7 @@ const SCORE = {
   'ban-tau': (v) => t(`${v} phát`, `${v} shots`), snake: (v) => t(`${v} điểm`, `${v} pts`), bantumi: (v) => t(`${v} sỏi`, `${v} seeds`), 'rapid-roll': (v) => `${v} m`, bounce: (v) => t(`${v} giây`, `${v} s`), 'space-impact': (v) => t(`${v} điểm`, `${v} pts`), logic: (v) => (v ? t(`${v} lượt`, `${v} guesses`) : t('chưa giải', 'unsolved')), 'o-an-quan': (v) => t(`${v} điểm`, `${v} pts`), 'co-ganh': (v) => t(`${v} quân`, `${v} pieces`), 'co-tuong': moves,
   loto: (v) => t(`${v} số đã dò`, `${v} marked`),
   sudoku: mmss,
-  'gian-diep': (v) => t(`${v} điểm`, `${v} points`),
+  'undercover': (v) => t(`${v} điểm`, `${v} points`),
 };
 const scoreText = (game, v) => (SCORE[game] ?? String)(v);
 // "level" mỗi game mang nghĩa khác nhau.
@@ -45,7 +45,7 @@ const LEVEL = { 'do-min': () => '', 'bau-cua': (l) => t(` · ${l} ván`, ` · ${
   '2048': () => '',
   sudoku: (l) => ` · ${SUDOKU_LEVELS[l - 1] ?? l}`,
   tetris: (l) => ` · ${TETRIS_LEVELS[l - 1] ?? l}` };
-LEVEL['gian-diep'] = () => '';
+LEVEL['undercover'] = () => '';
 const levelText = (game, l) => (LEVEL[game] ?? ((x) => t(` · màn ${x}`, ` · level ${x}`)))(l);
 
 const ago = (at) => {

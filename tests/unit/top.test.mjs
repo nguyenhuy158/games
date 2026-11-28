@@ -88,5 +88,9 @@ assert.equal(b2048.length, 10);
 assert.deepEqual(b2048.slice(0, 3).map((r) => [r.name, r.score]), [['P12', 1200], ['Late', 1200], ['P11', 1100]]);
 assert.equal(b2048.at(-1).score, 400, 'lowest scores dropped');
 assert.deepEqual(top.board('other'), []);
+play('spy', 'Spy', 'gian-diep', 'multi', 0, 1, false, noon - H);
+play('spy', 'Spy', 'undercover', 'multi', 1, 1, true, noon);
+assert.deepEqual(top.history('spy').map((row) => row.game), ['undercover', 'undercover']);
+assert.deepEqual(top.stats('spy'), [{ game: 'undercover', plays: 2, wins: 1, best: 1, fastest: 1, maxLevel: 1 }]);
 console.log('top ok');
 }

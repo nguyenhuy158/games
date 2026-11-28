@@ -12,7 +12,7 @@ const { http } = await import('../../backend/src/adapters/http.js');
 
 const env = {
   ASSETS: { fetch: async () => new Response('asset') },
-  TOP: { idFromName: (name) => name, get: () => ({ profile: () => ({ stats: [], guestPending: false }) }) },
+  TOP: { idFromName: (name) => name, get: () => ({ profile: () => ({ stats: [], guestPending: false }), replayPage: () => '/gian-diep/', rooms: () => [{ game: 'gian-diep', path: '/gian-diep/' }] }) },
 };
 const get = (url) => http.fetch(new Request(url), env);
 
@@ -39,5 +39,35 @@ const get = (url) => http.fetch(new Request(url), env);
   const r = await get('https://games.huyab.cfd/soi/');
   assert.equal(r.status, 200);
   assert.equal(await r.text(), 'asset');
+}
+// Link phòng cũ giữ nguyên mã phòng và ngôn ngữ.
+for (const path of ['/gian-diep', '/gian-diep/', '/gian-diep/index.html']) {
+  const r = await get(`https://games.huyab.cfd${path}?r=ABCD&lang=vi`);
+  assert.equal(r.status, 301);
+  assert.equal(r.headers.get('Location'), 'https://games.huyab.cfd/undercover/?r=ABCD&lang=vi');
+}
+{
+  const replay = await get('https://games.huyab.cfd/replay/AbCdEf123456');
+  assert.equal(replay.headers.get('Location'), 'https://games.huyab.cfd/undercover/?replay=AbCdEf123456');
+  const rooms = await get('https://games.huyab.cfd/api/rooms');
+  assert.deepEqual((await rooms.json()).rooms, [{ game: 'undercover', path: '/undercover/' }]);
+}
+{
+  const forwarded = [];
+  const nokia = {
+    idFromName: (name) => name,
+    get: (name) => ({ fetch: (req) => {
+      forwarded.push([name, req.headers.get('X-Game'), req.headers.get('X-Room')]);
+      return new Response('room');
+    } }),
+  };
+  for (const id of ['undercover', 'gian-diep']) {
+    const request = new Request(`https://games.huyab.cfd/api/nk/${id}/room/ABCD`, { headers: { Upgrade: 'websocket' } });
+    assert.equal(await (await http.fetch(request, { ...env, NOKIA: nokia })).text(), 'room');
+  }
+  assert.deepEqual(forwarded, [
+    ['gian-diep:ABCD', 'undercover', 'ABCD'],
+    ['gian-diep:ABCD', 'undercover', 'ABCD'],
+  ]);
 }
 console.log('http ok');

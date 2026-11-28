@@ -343,8 +343,8 @@ const GAMES = {
     r.close();
     return JSON.stringify(r.socks[0].last.result.title);
   },
-  async 'gian-diep'() {
-    const r = await nokia('gian-diep', 6, () => {}, { spies: 1, whites: 1, seconds: 15, pack: 'food' });
+  async 'undercover'() {
+    const r = await nokia('undercover', 6, () => {}, { spies: 1, whites: 1, seconds: 15, pack: 'food' });
     const phase = () => r.host().last.view?.phase;
     const send = (ws, a, extra = {}) => r.send(ws, { t: 'g', a, ...extra });
     try {

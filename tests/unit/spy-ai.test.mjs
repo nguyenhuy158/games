@@ -164,7 +164,7 @@ function roomFixture(service) {
   const frames = [], saved = [];
   const room = Object.create(NokiaRoom.prototype);
   room.env = { SPY_AI: namespace(service) };
-  room.s = { game: 'gian-diep', status: 'lobby', order: ['host-device', 'guest-device'], players: {
+  room.s = { game: 'undercover', status: 'lobby', order: ['host-device', 'guest-device'], players: {
     'host-device': { id: 'host-device', guest: OWNER, name: 'Host private name' },
     'guest-device': { id: 'guest-device', guest: OTHER, name: 'Guest private name' },
   }, cfg: { spies: 1, whites: 0, pack: 'everyday' }, seats: [], g: null, pub: false };
@@ -219,9 +219,12 @@ for (const change of [
 
 {
   const ai = provider(), service = new SpyAiService(storage(), ai), fixture = roomFixture(service);
-  const env = { SPY_AI: namespace(service), NOKIA: namespace(fixture.room) };
+  const env = { SPY_AI: namespace(service), NOKIA: { ...namespace(fixture.room), idFromName(name) {
+    assert.equal(name, 'gian-diep:ABCD');
+    return name;
+  } } };
   const origin = 'https://games.huyab.cfd';
-  const post = (body, owner = OWNER, headers = {}) => http.fetch(new Request(origin + AI_PATH, {
+  const post = (body, owner = OWNER, headers = {}, path = AI_PATH) => http.fetch(new Request(origin + path, {
     method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', Cookie: `${GUEST_COOKIE}=${owner}`, ...headers }, body: JSON.stringify(body),
   }), env);
   for (const body of [
@@ -243,7 +246,7 @@ for (const change of [
   const pack = await response.json();
   assert.deepEqual(Object.keys(pack).sort(), ['count', 'packId', 'title']);
   assert.equal((await post({ action: 'deal', packId: pack.packId }, OTHER, { 'X-Guest': OWNER })).status, 404);
-  const deal = await (await post({ action: 'deal', packId: pack.packId })).json();
+  const deal = await (await post({ action: 'deal', packId: pack.packId }, OWNER, {}, '/api/gian-diep/ai')).json();
   assert.ok(PAIRS.some((pair) => JSON.stringify(pair) === JSON.stringify(deal.pair)));
   const online = await (await post({ action: 'generate', topic: 'Ẩm thực', room: 'ABCD', deviceId: 'host-device' })).json();
   assert.deepEqual(Object.keys(online).sort(), ['count', 'packId', 'title']);

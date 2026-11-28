@@ -12,7 +12,7 @@ const GAMES = {
   'dao-vang': ['Đào Vàng', 'Gold Miner'], snake: ['Rắn săn mồi', 'Snake'], bantumi: ['Bantumi', 'Bantumi'], pairs: ['Lật hình', 'Pairs'],
   logic: ['Logic', 'Logic'], 'rapid-roll': ['Rapid Roll', 'Rapid Roll'], 'space-impact': ['Space Impact', 'Space Impact'], bounce: ['Bounce', 'Bounce'],
   loto: ['Lô tô', 'Lo To'],
-  'gian-diep': ['Ai là gián điệp', 'Undercover'],
+  undercover: ['Ai là gián điệp', 'Undercover'],
 };
 const title = (g) => (GAMES[g] ? GAMES[g][en ? 1 : 0] : g);
 let filter = new URLSearchParams(location.search).get('game') || '';
