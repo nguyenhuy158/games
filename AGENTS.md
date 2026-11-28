@@ -156,7 +156,8 @@ assumptions.
 Design UI/UX to fit inside a single viewport by default. Avoid page-level
 scrolling; use compact layouts, tabs, panes, or contained internal lists when
 content can overflow.
-Adding a game: create `frontend/src/<game>/` and `shared/games/<game>/`, add its card to `index.html`
+Adding a game: use the [V2 cover art prompt](docs/game-cover-art.md) for its homepage cover.
+Create `frontend/src/<game>/` and `shared/games/<game>/`, add its card to `index.html`
 and its link to `GROUPS` in `frontend/src/sidebar.js`, load `/theme.js` and `<script type="module" src="/sidebar.js">`
 in the page `<head>`, add its files to `CORE` in `frontend/src/sw.js` (and bump `CACHE`), add
 `tests/unit/<game>.test.mjs` and import it from `tests/unit/logic.test.mjs`. Every game needs a "Cách chơi"
