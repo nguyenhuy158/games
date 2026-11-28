@@ -62,7 +62,7 @@
   --ui-shadow-xl: 0 0 8px rgb(0 0 0 / 12%), 0 14px 28px rgb(0 0 0 / 14%);
 }
 
-.dark {
+:root:not([data-theme="light"]) {
   color-scheme: dark;
 
   --ui-bg: oklch(16% 0.008 280);
@@ -192,7 +192,7 @@ textarea {
 
 @media print {
   :root,
-  .dark {
+  :root:not([data-theme="light"]) {
     color-scheme: light;
     --ui-bg: oklch(100% 0 0);
     --ui-surface: oklch(100% 0 0);

@@ -146,13 +146,13 @@ async function loadAccount(box) {
   }
 }
 
-function applyTheme(theme) {
-  store.set(THEME_KEY, theme);
-  store.set(SPY_THEME_KEY, theme);
+function renderTheme(theme) {
   if (theme === LIGHT) document.documentElement.dataset.theme = LIGHT;
   else delete document.documentElement.dataset.theme;
-  if (location.pathname.startsWith(SPY_PATH)) location.reload();
 }
+
+const savedTheme = store.get(THEME_KEY) ?? (location.pathname.startsWith(SPY_PATH) ? store.get(SPY_THEME_KEY) : null);
+renderTheme(savedTheme);
 
 const settingsLabel = t('Cài đặt', 'Settings');
 const closeLabel = t('Đóng', 'Close');
@@ -162,7 +162,7 @@ settingsButton.setAttribute('aria-controls', SETTINGS_ID);
 settingsButton.setAttribute('aria-haspopup', 'dialog');
 
 const language = segmented(t('Ngôn ngữ', 'Language'), [['vi', 'Tiếng Việt'], ['en', 'English']], lang, (value) => { if (value !== lang) setLang(value); });
-const theme = segmented(t('Giao diện', 'Theme'), [[DARK, t('Tối', 'Dark'), 'moon'], [LIGHT, t('Sáng', 'Light'), 'lightbulb']], store.get(THEME_KEY) === LIGHT ? LIGHT : DARK, (value) => { applyTheme(value); theme.render(value); });
+const theme = segmented(t('Giao diện', 'Theme'), [[DARK, t('Tối', 'Dark'), 'moon'], [LIGHT, t('Sáng', 'Light'), 'lightbulb']], savedTheme === LIGHT ? LIGHT : DARK, (value) => { store.set(THEME_KEY, value); renderTheme(value); theme.render(value); });
 const sound = segmented(t('Âm thanh', 'Sound'), [[SOUND_ON, t('Bật', 'On'), 'volume-2'], [SOUND_OFF, t('Tắt', 'Off'), 'volume-x']], isSoundOn() ? SOUND_ON : SOUND_OFF, (value) => setSoundOn(value === SOUND_ON));
 onSoundChange(() => sound.render(isSoundOn() ? SOUND_ON : SOUND_OFF));
 const account = el('div', { className: 'sb-account' });
