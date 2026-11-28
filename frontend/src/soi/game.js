@@ -9,7 +9,7 @@ import { ACTION, MIN_PLAYERS, OUTCOME, WOLF } from '../../../shared/games/soi/lo
 // Thẻ vai úp: chạm mới lật (tránh người bên cạnh liếc màn hình), sang ván mới thì úp lại.
 // Server chỉ gửi vai của chính mình; chủ phòng lật bài thì ván kết thúc và bảng kết quả nêu tên Sói.
 let shown = false, round = -1;
-let card, revealBtn, voting;
+let card, revealBtn, voting, roundHeading;
 let voteOpen = false;
 let selectedSuspect = null;
 const ENDING_TONES = {
@@ -64,6 +64,7 @@ const app = nokiaApp({
     },
   },
   minPlayers: MIN_PLAYERS,
+  nextRoundLabel: t('Bắt đầu ván mới', 'Start new round'),
   lobbyHeading: (r) => r.players.length < MIN_PLAYERS
     ? t('Chờ người chơi', 'Waiting for players')
     : t('Sẵn sàng chia vai', 'Ready to deal roles'),
@@ -83,6 +84,10 @@ const app = nokiaApp({
     p.offline ? t('Ngoại tuyến', 'Offline') : '',
   ].filter(Boolean).join(' · '),
   lobby(box, r) {
+    if (r.status === 'ended' && r.view?.round) {
+      const number = r.view.round;
+      box.append(el('p', { className: 'sub soi-round-summary', textContent: t(`Ván ${number} đã kết thúc`, `Round ${number} ended`) }));
+    }
     if (!r.result?.outcome) return;
     const { outcome, suspect, wolf } = r.result;
     box.append(el('div', { className: `soi-outcome ${outcome}` },
@@ -100,10 +105,11 @@ const app = nokiaApp({
     });
   },
   mount(stage) {
+    roundHeading = el('h2', { className: 'soi-round', role: 'status' });
     card = el('div', { className: 'role' });
     revealBtn = el('button', { className: 'primary', onclick: () => app.send({ a: ACTION.REVEAL }) });
     voting = el('div', { className: 'soi-voting' });
-    stage.append(el('div', { className: 'soi' }, card, voting, revealBtn));
+    stage.append(el('div', { className: 'soi' }, roundHeading, card, voting, revealBtn));
   },
   render(r) {
     const v = r.view;
@@ -123,6 +129,8 @@ function flip(on) {
 }
 
 function paint(r, v) {
+  const roundLabel = t(`Ván ${v.round}`, `Round ${v.round}`);
+  if (roundHeading.textContent !== roundLabel) roundHeading.textContent = roundLabel;
   revealBtn.hidden = r.host !== app.id;
   revealBtn.classList.toggle('primary', !voteOpen);
   revealBtn.replaceChildren(iconEl('eye'), ' ', voteOpen

@@ -666,7 +666,15 @@ if (videoTarget === SOI_ROUND_VIDEO) {
       await textIncludes(host, '.role h2', wolfIndex === 0 ? 'WOLF' : 'VILLAGER');
       await clickName(host, 'Hide');
       await clickName(host, 'Reveal: who is the wolf?');
-      for (const page of pages) await textIncludes(page, '#overlay', `The wolf is ${players[wolfIndex]}`);
+      for (const page of pages) {
+        await textIncludes(page, '#overlay', `The wolf is ${players[wolfIndex]}`);
+        await textIncludes(page, '.soi-round-summary', 'Round 1 ended');
+      }
+      await clickName(host, 'Start new round');
+      for (const page of pages) {
+        await textIncludes(page, '.soi-round', 'Round 2');
+        assert.equal(await page.getByRole('button', { name: 'Tap to see your role', exact: true }).isVisible(), true);
+      }
     } finally {
       await Promise.all(guests.map((context) => context.close()));
     }
