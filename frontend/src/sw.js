@@ -1,6 +1,6 @@
 // Network-first: có mạng thì luôn lấy bản mới (deploy lên là thấy ngay),
 // mất mạng thì trả bản đã cache để app vẫn mở được. /api/* không cache.
-const CACHE = 'games-v73';
+const CACHE = 'games-v74';
 const CORE = [
   '/ui-kit.css', '/ui/feedback.css', '/ui/feedback.mjs', '/ui/notifications.js', '/ui/listbox.mjs', '/sidebar.js', '/logos/hub-192.png', '/theme.js', '/sound.js', '/account.js',
   '/', '/index.html', '/me.js', '/history.js', '/icons.js', '/panel.js', '/panel.css', '/invite.js', '/nozoom.js', '/bfcache.js', '/public-switch.js', '/room-client.js', '/replay.js', '/shared/tape.js', '/help.js', '/phong/', '/phong/index.html', '/phong/phong.js', '/i18n.js', '/names.js', '/dom.js', '/vendor/qrcode.mjs', '/manifest.webmanifest', '/pwa-192.png', '/favicon-v2-16.png', '/favicon-v2-32.png', '/apple-touch-icon.png',
@@ -15,7 +15,7 @@ const CORE = [
   '/co-ganh/', '/co-ganh/index.html', '/co-ganh/style.css', '/co-ganh/game.js', '/shared/games/co-ganh/logic.js', '/logos/co-ganh.svg',
   '/co-tuong/', '/co-tuong/index.html', '/co-tuong/style.css', '/co-tuong/game.js', '/shared/games/co-tuong/logic.js', '/logos/co-tuong.svg',
   '/loto/', '/loto/index.html', '/loto/style.css', '/loto/game.js', '/shared/games/loto/logic.js', '/loto/voice.js', '/loto/penalty.js', '/loto/music.js', '/logos/loto.svg',
-  '/soi/', '/soi/index.html', '/soi/style.css', '/soi/game.js', '/shared/games/soi/logic.js', '/logos/soi.svg',
+  '/soi/', '/soi/index.html', '/soi/style.css', '/soi/game.js', '/soi/avatar.js', '/shared/games/soi/logic.js', '/logos/soi.svg',
   '/undercover/', '/undercover/index.html', '/undercover/style.css', '/undercover/game.js', '/shared/games/gian-diep/logic.js', '/logos/undercover.svg',
   '/undercover/ui.js', '/undercover/roster.js', '/undercover/help.js', '/undercover/ui-kit/tokens.css',
   '/undercover/ai.js', '/fonts/be-vietnam-pro/font.css',

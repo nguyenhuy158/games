@@ -188,7 +188,7 @@ export function nokiaApp(opt) {
     players.replaceChildren(...roomPlayers.map((p) => {
       const li = el('li', { className: p.id === deviceId ? 'me' : '' });
       li.style.setProperty('--c', r.seats.includes(p.id) ? colorOf(p.id) : 'transparent');
-      li.append(p.id === r.host ? iconEl('crown') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`);
+      li.append(opt.avatar?.(p) ?? '', p.id === r.host ? iconEl('crown') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`);
       const b = opt.badge?.(p, r);
       if (b != null && b !== '') li.append(' · ', el('b', { textContent: b }));
       if (r.status === 'playing' && !r.seats.includes(p.id)) li.append(' ', iconEl('eye'));
