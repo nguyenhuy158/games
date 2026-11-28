@@ -175,7 +175,7 @@ function countSelect(label, min, max, value, change) {
   for (let count = min; count <= max; count++) select.append(el('option', { value: count, textContent: count }));
   select.value = value;
   select.addEventListener('change', () => {
-    if (!select.isConnected || localStep !== LOCAL_STEP.SETUP) return;
+    if (!select.isConnected) return;
     change(Number(select.value));
     paintSetup();
     content.querySelectorAll('select').forEach((control) => {
@@ -214,8 +214,7 @@ function localAiPicker() {
 }
 
 async function dealLocal(event) {
-  if (!event.currentTarget.isConnected || localDealing || localGame || localStep !== LOCAL_STEP.SETUP) return;
-  if (!validateSetup(localPlayerCount, localConfig)) { notifications.show(TOAST_TONE.ERROR, setupWarning(localPlayerCount, localConfig)); return; }
+  if (!event.currentTarget.isConnected || localDealing) return;
   localDealing = true;
   content.inert = true;
   backButton.disabled = true;

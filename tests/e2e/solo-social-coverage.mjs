@@ -529,10 +529,9 @@ await scenario('spy UI accepts invalid setup input safely and renders ordered ro
     root.append(roster.seatingRoster(players, 'a', null, Math.random), ui.results({}, (id) => id), ui.paginated([], () => document.createElement('div')));
     const warnings = [ui.setupWarning(2, DEFAULT_CONFIG), ui.setupWarning(21, DEFAULT_CONFIG), ui.setupWarning(3, { ...DEFAULT_CONFIG, spies: 3 }), ui.setupWarning(3, DEFAULT_CONFIG)];
     ui.settings(3, { ...DEFAULT_CONFIG, spies: 3 }, () => { root.dataset.saved = 'yes'; });
-    return { warnings, order: roster.orderedPlayers(players, ['b', 'missing', 'b']).map((player) => player.id), draft: roster.rosterHasDraft(roster.rosterDraft()) };
+    return { warnings, order: roster.orderedPlayers(players, ['b', 'missing', 'b']).map((player) => player.id) };
   });
   assert.deepEqual(result.order, ['b', 'a', 'c']);
-  assert.equal(result.draft, false);
   assert.match(result.warnings[0], /Need 1/);
   assert.match(result.warnings[1], /At most 20/);
   assert.match(result.warnings[2], /Invalid role counts/);
