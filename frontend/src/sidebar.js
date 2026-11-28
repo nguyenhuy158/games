@@ -86,11 +86,11 @@ const CSS = `
 @media not ${WIDE_QUERY} {
   @media (orientation: portrait) {
     [data-game-entry] #home:not(:has(> .spy-header)) {
-      align-content: start; align-items: start; grid-template-columns: minmax(0, 1fr);
+      align-content: safe center; align-items: start; grid-template-columns: minmax(0, 1fr);
       padding: 16px 16px max(16px, env(safe-area-inset-bottom)); overflow-y: auto;
     }
-    [data-game-entry] #overlay:has(> .card.menu) { align-items: start; }
-    [data-game-entry] .spy-content:has(> .entry) { align-items: start; overflow-y: auto; }
+    [data-game-entry] #overlay:has(> .card.menu) { align-items: safe center; }
+    [data-game-entry] .spy-content:has(> .entry) { align-items: safe center; overflow-y: auto; }
     ${ENTRY_CARD} {
       --entry-padding: 16px;
       box-sizing: border-box; width: min(100%, 460px); max-width: none; min-width: 0;
@@ -104,7 +104,7 @@ const CSS = `
       aspect-ratio: 5 / 2; border-radius: var(--ui-radius) var(--ui-radius) 0 0;
       background: var(--ui-surface-muted) var(--entry-cover) center / cover no-repeat;
     }
-    [data-game-entry] #home:has(> .spy-header) > .card { margin-block: 16px; width: min(calc(100% - 32px), 460px); }
+    [data-game-entry] #home:has(> .spy-header) > .card { margin-block: auto; width: min(calc(100% - 32px), 460px); }
     ${ENTRY_CARD} > :is(.entry-logo, .sprite, .link, .lang, .row:has(> #btnHelpHome)) { display: none; }
     ${ENTRY_CARD} > :is(.sub, .muted) { margin: 0; }
     ${ENTRY_CARD} > .join,
