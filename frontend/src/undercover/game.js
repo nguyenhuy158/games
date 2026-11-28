@@ -1,3 +1,4 @@
+import { playerAvatar } from '../player-avatar.js';
 import { nokiaApp } from '../nokia/room.js';
 import { el, store } from '../dom.js';
 import { t } from '../i18n.js';
@@ -470,7 +471,7 @@ function paintBoard(target, v, actor, isLocal) {
   const orderedRoster = showOrder ? orderedPlayers(rosterPlayers, turnOrder) : rosterPlayers;
   const renderPlayer = (player) => {
     const suffix = player.id === v.speaker ? t('Đang nói', 'Speaking') : player.alive ? t('Còn chơi', 'Alive') : t('Đã loại', 'Out');
-    return el('div', { className: `player-row${player.id === v.speaker ? ' speaking' : ''}` }, el('span', { className: 'player-name' }, showOrder && player.alive ? `${turnOrder.indexOf(player.id) + 1}. ${playerName(player.id)}` : playerName(player.id)), indicator(player.id === v.speaker ? 'megaphone' : player.alive ? 'circle-check' : 'circle-x', '', suffix));
+    return el('div', { className: `player-row${player.id === v.speaker ? ' speaking' : ''}` }, el('span', { className: 'player-name' }, isLocal ? '' : playerAvatar(player), showOrder && player.alive ? `${turnOrder.indexOf(player.id) + 1}. ${playerName(player.id)}` : playerName(player.id)), indicator(player.id === v.speaker ? 'megaphone' : player.alive ? 'circle-check' : 'circle-x', '', suffix));
   };
   const roster = el('div', { className: 'player-grid play-roster', role: 'region', ariaLabel: t('Người chơi', 'Players'), tabIndex: 0 }, ...orderedRoster.map(renderPlayer));
   if (v.phase === PHASE.VOTE) renderVoting(work, v, actor, isLocal);

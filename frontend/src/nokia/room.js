@@ -1,3 +1,4 @@
+import { playerAvatar } from '../player-avatar.js';
 // Khung chung cho các game Nokia: trang vào phòng, header (mời QR, âm thanh), máy Nokia (LCD + bàn phím),
 // sảnh chờ / kết quả. Mỗi game chỉ cần vẽ LCD và xử lý phím:
 //   nokiaApp({ game, title, sub, help: { vi, en } (nội dung mountHelp, xem public/help.js), lobby?(box, room, isHost, setCfg), draw(lcd, room, now), onKey?(k, down, room),
@@ -188,7 +189,7 @@ export function nokiaApp(opt) {
     players.replaceChildren(...roomPlayers.map((p) => {
       const li = el('li', { className: p.id === deviceId ? 'me' : '' });
       li.style.setProperty('--c', r.seats.includes(p.id) ? colorOf(p.id) : 'transparent');
-      li.append(opt.avatar?.(p) ?? '', p.id === r.host ? iconEl('crown') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`);
+      li.append(playerAvatar(p), p.id === r.host ? iconEl('crown') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`);
       const b = opt.badge?.(p, r);
       if (b != null && b !== '') li.append(' · ', el('b', { textContent: b }));
       if (r.status === 'playing' && !r.seats.includes(p.id)) li.append(' ', iconEl('eye'));

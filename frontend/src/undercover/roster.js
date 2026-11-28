@@ -1,3 +1,4 @@
+import { playerAvatar } from '../player-avatar.js';
 import { el } from '../dom.js';
 import { t } from '../i18n.js';
 import { movePlayer, shufflePlayers, orderedIds } from '../../../shared/games/gian-diep/logic.js';
@@ -29,7 +30,7 @@ export function seatingRoster(players, host, change, rand) {
   });
   for (const [index, player] of players.entries()) {
     const row = el('li', { className: 'roster-row', tabIndex: -1 },
-      el('div', { className: 'roster-person' }, el('span', { className: 'roster-position' }, String(index + 1)), el('span', { className: 'roster-name' }, player.name), player.id === host ? indicator('crown', '', t('Chủ phòng', 'Host')) : ''),
+      el('div', { className: 'roster-person' }, el('span', { className: 'roster-position' }, String(index + 1)), playerAvatar(player), el('span', { className: 'roster-name' }, player.name), player.id === host ? indicator('crown', '', t('Chủ phòng', 'Host')) : ''),
       change ? orderControls(players, player, index, change) : '');
     row.dataset.player = player.id;
     list.append(row);

@@ -1,3 +1,4 @@
+import { playerAvatar } from '../player-avatar.js';
 import { SIZES, HIDDEN, FLAG, BOOM, LIVES } from '../../../shared/games/do-min/logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
@@ -380,6 +381,7 @@ function render() {
     const li = el('li', { className: `${p.id === deviceId ? 'me' : ''} ${p.online ? '' : 'off'}` });
     li.style.setProperty('--c', colorOf(p.id));
     if (p.id === r.host) li.innerHTML = icon('crown');
+    li.prepend(playerAvatar(p));
     li.append(`${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''} · `, el('b', { textContent: t(`mở ${p.opened}`, `opened ${p.opened}`) }), p.booms ? t(` · nổ ${p.booms}`, ` · boom ${p.booms}`) : '');
     return li;
   }));

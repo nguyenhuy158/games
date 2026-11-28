@@ -1,3 +1,4 @@
+import { playerAvatar } from '../player-avatar.js';
 import { SYMBOLS, CHIPS, betTotal } from '../../../shared/games/bau-cua/logic.js';
 import { icon, iconEl, hydrateIcons } from '../icons.js';
 import { invite } from '../invite.js';
@@ -168,7 +169,7 @@ function render() {
     const li = el('li', { className: [p.id === deviceId && 'me', p.id === r.dealer && 'dealer'].filter(Boolean).join(' ') });
     li.style.setProperty('--c', colorOf(p.id));
     const d = open ? r.deltas?.[p.id] : 0;
-    li.append(p.id === r.dealer ? iconEl('crown') : '', `${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''} · `, el('b', { textContent: xu(coinsOf(p)) }));
+    li.append(playerAvatar(p), p.id === r.dealer ? iconEl('crown') : '', `${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''} · `, el('b', { textContent: xu(coinsOf(p)) }));
     if (d) li.append(' ', el('span', { className: `d ${d > 0 ? 'up' : 'down'}`, textContent: signed(d) }));
     return li;
   }));

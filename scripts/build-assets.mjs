@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createAvatar } from '@dicebear/core';
 import * as funEmoji from '@dicebear/fun-emoji';
-import { AVATAR_COUNT, AVATAR_DIRECTORY, AVATAR_SIZE } from '../frontend/src/soi/avatar.js';
+import { AVATAR_COUNT, AVATAR_DIRECTORY, AVATAR_SIZE } from '../frontend/src/player-avatar.js';
 import { execFileSync } from 'node:child_process';
 
 const REPO_ROOT = fileURLToPath(new URL('../', import.meta.url));

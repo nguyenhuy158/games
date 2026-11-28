@@ -1,3 +1,4 @@
+import { playerAvatar } from '../player-avatar.js';
 import {
   W, H, GROUND, PIVOT, LEVEL_TIME, ITEMS, SHOP,
   targetOf, shopOffer, createWorld, step, shoot, dynamite, tipOf, mouseX, mouseDir, snapOf,
@@ -609,7 +610,7 @@ const net = {
     pub.update(r, isHost);
     const players = r.players.filter((p) => !p.spec);
     const playerList = el('ul', { className: 'plist' }, ...r.players.map((p) => el('li', { className: p.online ? '' : 'off' },
-      p.id === r.host ? iconEl('crown') : '', p.spec ? iconEl('eye') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`)));
+      playerAvatar(p), p.id === r.host ? iconEl('crown') : '', p.spec ? iconEl('eye') : '', ` ${p.name}${p.id === deviceId ? t(' (bạn)', ' (you)') : ''}`)));
     const copy = el('button', {
       onclick: () => invite(`${location.origin}/dao-vang/?r=${this.code}`, this.code),
     }, iconEl('qr-code'), t(` Mời: phòng ${this.code}`, ` Invite: room ${this.code}`));

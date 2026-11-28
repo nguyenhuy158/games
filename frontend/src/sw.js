@@ -15,7 +15,7 @@ const CORE = [
   '/co-ganh/', '/co-ganh/index.html', '/co-ganh/style.css', '/co-ganh/game.js', '/shared/games/co-ganh/logic.js', '/logos/co-ganh.svg',
   '/co-tuong/', '/co-tuong/index.html', '/co-tuong/style.css', '/co-tuong/game.js', '/shared/games/co-tuong/logic.js', '/logos/co-tuong.svg',
   '/loto/', '/loto/index.html', '/loto/style.css', '/loto/game.js', '/shared/games/loto/logic.js', '/loto/voice.js', '/loto/penalty.js', '/loto/music.js', '/logos/loto.svg',
-  '/soi/', '/soi/index.html', '/soi/style.css', '/soi/game.js', '/soi/avatar.js', '/shared/games/soi/logic.js', '/logos/soi.svg',
+  '/soi/', '/soi/index.html', '/soi/style.css', '/soi/game.js', '/player-avatar.js', '/shared/games/soi/logic.js', '/logos/soi.svg',
   '/undercover/', '/undercover/index.html', '/undercover/style.css', '/undercover/game.js', '/shared/games/gian-diep/logic.js', '/logos/undercover.svg',
   '/undercover/ui.js', '/undercover/roster.js', '/undercover/help.js', '/undercover/ui-kit/tokens.css',
   '/undercover/ai.js', '/fonts/be-vietnam-pro/font.css',

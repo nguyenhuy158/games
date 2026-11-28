@@ -115,3 +115,6 @@ button:disabled {
     --ui-space-section: 2rem;
   }
 }
+
+.player-avatar { flex: none; border-radius: 50%; background: var(--ui-surface-muted); vertical-align: middle; }
+#players .player-avatar, .side .player-avatar, .plist .player-avatar { margin-inline-end: 4px; }

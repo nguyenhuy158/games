@@ -2,7 +2,7 @@ import { nokiaApp } from '../nokia/room.js';
 import { iconEl } from '../icons.js';
 import { t } from '../i18n.js';
 import { el } from '../dom.js';
-import { AVATAR_SIZE, avatarSource } from './avatar.js';
+import { playerAvatar } from '../player-avatar.js';
 import { ACTION, MIN_PLAYERS, OUTCOME, WOLF } from '../../../shared/games/soi/logic.js';
 
 
@@ -17,10 +17,6 @@ const ENDING_TONES = {
   [OUTCOME.WRONG]: [392, 329.63, 261.63],
 };
 const NOTE_MS = 170;
-
-function avatar({ id }) {
-  return el('img', { className: 'soi-avatar', src: avatarSource(id), alt: '', width: AVATAR_SIZE, height: AVATAR_SIZE });
-}
 
 const app = nokiaApp({
   game: 'soi',
@@ -73,7 +69,6 @@ const app = nokiaApp({
     : r.status === 'ended'
       ? t('Có thể chia vai ván mới.', 'Ready for another round.')
       : t('Đủ người: chủ phòng bấm Bắt đầu để chọn Sói.', 'Enough players: the host starts to pick the wolf.')),
-  avatar,
   roster: (r) => {
     const online = new Set(r.players.map(({ id }) => id));
     const offline = (r.view?.roster ?? []).filter(({ id }) => !online.has(id)).map((p) => ({ ...p, offline: true }));
@@ -176,7 +171,7 @@ function paintVote(r, v) {
       selectedSuspect = player.id;
       paintVote(r, v);
     },
-  }, avatar(player), player.name));
+  }, playerAvatar(player), player.name));
 
   voting.replaceChildren(
     el('h2', { textContent: t('Cả nhóm nghi ai?', 'Who does the group suspect?') }),
