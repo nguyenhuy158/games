@@ -15,6 +15,7 @@
     "test": "node tests/unit/logic.test.mjs",
     "test:coverage": "node tests/coverage.mjs",
     "e2e": "node tests/e2e/run.mjs",
+    "e2e:video": "E2E_VIDEO_DIR=e2e-videos node tests/e2e/run.mjs --undercover-round-video",
     "e2e:prod": "E2E_BASE_URL=https://games.huyab.cfd node tests/e2e/readonly-smoke.mjs && E2E_BASE_URL=https://games.huyab.cfd node tests/e2e/layout-check.mjs",
     "deploy": "pnpm test && wrangler deploy",
     "icons": "node scripts/icons.mjs"

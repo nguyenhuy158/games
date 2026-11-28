@@ -23,7 +23,8 @@ const NULL_SEPARATOR = "\0";
 const GIT_TIMEOUT_MS = 60000;
 const GIT_OPTIONS = { encoding: UTF8, timeout: GIT_TIMEOUT_MS };
 const SHA_PATTERN = /^[a-f0-9]{40}$/;
-const manualGames = process.argv.slice(2);
+const videoOnly = process.argv.includes(UNDERCOVER_ROUND_VIDEO_FLAG);
+const manualGames = process.argv.slice(2).filter((arg) => arg !== UNDERCOVER_ROUND_VIDEO_FLAG);
 
 function pullRequestSelection() {
   if (process.env.GITHUB_EVENT_NAME !== PR_EVENT || manualGames.length) return null;
@@ -44,8 +45,8 @@ function pullRequestSelection() {
 
 const selection = pullRequestSelection();
 const gameArgs = manualGames.length ? manualGames : selection?.games ?? [];
-console.log(selection ? `Selected routes: ${selection.routes.join(", ")}` : "Running full page suite");
-console.log(`WebSocket coverage: ${smokeMode}; at most 3 games and 1 browser page concurrently`);
+if (!videoOnly) console.log(selection ? `Selected routes: ${selection.routes.join(", ")}` : "Running full page suite");
+if (!videoOnly) console.log(`WebSocket coverage: ${smokeMode}; at most 3 games and 1 browser page concurrently`);
 
 const server = await startServer({
   command: "pnpm",
@@ -53,10 +54,8 @@ const server = await startServer({
   readyUrl: `${BASE}/api/version`,
 });
 
-let failed = false;
-try {
-  console.log(`\nServer sẵn sàng tại ${BASE}\n`);
-  let pageChecks = run("node", [READONLY_SMOKE_PATH, ...(selection?.routes ?? [])], {
+async function runPageAndGameChecks() {
+  const pageChecks = run("node", [READONLY_SMOKE_PATH, ...(selection?.routes ?? [])], {
     label: "read-only smoke",
     env: SMOKE_ENV,
   }).then(() => run("node", [LAYOUT_CHECK_PATH, ...(selection?.routes ?? [])], {
@@ -66,12 +65,6 @@ try {
     label: "complete UI round and persisted result",
     env: SMOKE_ENV,
   }));
-  if (process.env.E2E_VIDEO_DIR) {
-    pageChecks = pageChecks.then(() => run("node", [SOLO_SOCIAL_PATH, UNDERCOVER_ROUND_VIDEO_FLAG], {
-      label: "Undercover pass-one-device round video",
-      env: SMOKE_ENV,
-    }));
-  }
   const checks = [pageChecks];
   if (!selection || gameArgs.length) {
     checks.push(run("node", [GAME_SMOKE_PATH, BASE, ...gameArgs], {
@@ -82,6 +75,19 @@ try {
   const results = await Promise.allSettled(checks);
   const errors = results.filter((result) => result.status === "rejected").map((result) => result.reason);
   if (errors.length) throw new AggregateError(errors, errors.map((error) => error.message).join("; "));
+}
+
+let failed = false;
+try {
+  console.log(`\nServer sẵn sàng tại ${BASE}\n`);
+  if (videoOnly) {
+    await run("node", [SOLO_SOCIAL_PATH, UNDERCOVER_ROUND_VIDEO_FLAG], {
+      label: "Undercover pass-one-device round video",
+      env: SMOKE_ENV,
+    });
+  } else {
+    await runPageAndGameChecks();
+  }
 } catch (error) {
   failed = true;
   console.error("E2E FAIL:", error.message);
