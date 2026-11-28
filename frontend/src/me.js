@@ -89,6 +89,7 @@ function renderAccount(user) {
   const settings = el('button', { type: 'button', className: 'btn', onclick: (event) => {
     event.stopPropagation();
     menu.open = false;
+    menu.firstElementChild.focus();
     openSettings();
   } }, iconEl('settings'), t('Cài đặt', 'Settings'));
   menu.append(

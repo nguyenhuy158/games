@@ -29,7 +29,6 @@ const SETTLE_MS = 300;
 const NAVIGATION = { waitUntil: "load", timeout: 15000 };
 const SIDEBAR_SELECTOR = "#sidebar";
 const SETTINGS_BUTTON = ".sb-settings-btn";
-const DRAWER_OPEN_CLASS = "sb-open";
 const OPEN_DIALOG = "dialog[open]";
 const ESCAPE_KEY = "Escape";
 const FAILURE_SCREENSHOT_PATH = "e2e-failure-layout.png";
@@ -82,10 +81,7 @@ function findOverflow({ frames, scrollers, clippers, tolerance }) {
 const scan = (page) => page.evaluate(findOverflow, { frames: FRAMES, scrollers: SCROLLERS, clippers: CLIPPERS, tolerance: TOLERANCE_PX });
 
 async function openSettings(page) {
-  await page.evaluate(({ drawerClass, button }) => {
-    document.documentElement.classList.add(drawerClass);
-    document.querySelector(button)?.click();
-  }, { drawerClass: DRAWER_OPEN_CLASS, button: SETTINGS_BUTTON });
+  await page.locator(SETTINGS_BUTTON).evaluate((button) => button.click());
   await page.waitForTimeout(SETTLE_MS);
 }
 

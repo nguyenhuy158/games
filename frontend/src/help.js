@@ -160,6 +160,7 @@ export function mountHelp({ game, button, content, auto = true, onOpen, onClose 
   };
   const btns = typeof button === 'string' ? document.querySelectorAll(button) : [button].flat();
   for (const b of btns) {
+    b.replaceChildren(iconEl('info'));
     b.classList.add('help-btn');
     b.dataset.help = game;
     b.title = title;

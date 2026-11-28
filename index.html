@@ -74,6 +74,7 @@
     #account small { color: var(--muted); }
     body { position: relative; }
     .hub-actions, .stats-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .hub-actions .btn, .stats-close { min-width: 44px; min-height: 44px; justify-content: center; }
     .stats-actions { justify-content: flex-start; }
     #homeStats { width: min(760px, calc(100% - 32px)); max-height: 90dvh; padding: 16px; border: 1px solid var(--line); border-radius: var(--ui-radius); background: var(--panel); color: var(--text); overflow: auto; }
     #homeStats::backdrop { background: rgb(0 0 0 / 55%); }
@@ -150,11 +151,12 @@
 <body>
   <div id="account"></div>
   <h1><img class="logo" src="/logos/hub-192.png" alt=""> <span data-en="Classic Games">Game Cổ Điển</span></h1>
-  <p class="sub"><span data-en="Play without signing up. Your guest history stays with this browser; sign in here to keep it in your account.">Chơi không cần đăng ký. Lịch sử khách gắn với trình duyệt này; đăng nhập tại đây để giữ trong tài khoản.</span></p>
+  <p class="sub"><span data-en="Play as a guest or sign in to save your history.">Chơi ngay hoặc đăng nhập để lưu lịch sử.</span></p>
   <!-- Hiện khi server đã có /api/rooms (danh sách phòng công khai của mọi game). -->
   <div class="hub-actions">
-    <a id="roomsLink" class="btn" href="/phong/" hidden><i data-icon="users"></i> <span data-en="Open rooms">Phòng đang mở</span> <b id="roomsCount"></b></a>
-    <button id="openHomeStats" class="btn" aria-haspopup="dialog"><i data-icon="trophy"></i> <span data-en="Leaderboards and achievements">BXH và thành tích</span></button>
+    <a id="roomsLink" class="btn" href="/phong/" aria-label="Phòng đang mở" data-en-aria-label="Open rooms" title="Phòng đang mở" data-en-title="Open rooms" hidden><i data-icon="users"></i> <b id="roomsCount"></b></a>
+    <button id="openHomeStats" class="btn" aria-haspopup="dialog" aria-label="BXH và thành tích" data-en-aria-label="Leaderboards and achievements" title="BXH và thành tích" data-en-title="Leaderboards and achievements"><i data-icon="trophy"></i></button>
+    <button id="mobileSettings" class="btn" aria-haspopup="dialog" aria-label="Cài đặt" data-en-aria-label="Settings" title="Cài đặt" data-en-title="Settings"><i data-icon="settings"></i></button>
   </div>
   <script type="module">
     // Phòng công khai đang mở (/api/rooms): tổng trên nút "Phòng đang mở" + nhãn số phòng / người trên thẻ từng game.
@@ -367,7 +369,7 @@
     <div class="stats-actions">
       <a class="btn" href="#fun"><span data-en="Leaderboards">BXH</span></a>
       <a class="btn" href="#me"><span data-en="Achievements">Thành tích</span></a>
-      <form method="dialog"><button class="btn" autofocus><span data-en="Close">Đóng</span></button></form>
+      <form method="dialog"><button class="btn stats-close" aria-label="Đóng" data-en-aria-label="Close" title="Đóng" data-en-title="Close" autofocus><i data-icon="x"></i></button></form>
     </div>
     <section id="fun">
       <div class="fun-head">

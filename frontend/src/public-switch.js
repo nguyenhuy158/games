@@ -15,16 +15,13 @@ export function publicSwitch(send) {
         box-shadow: inset 0 1px 2px #0002; transition: background-position .2s, background-color .2s; }
       .pub-switch input:checked { --off: var(--accent, #ffd23f); background-position: right 2px center, 0 0; }
       .pub-switch input:focus-visible { outline: 2px solid var(--accent, #ffd23f); outline-offset: 2px; }
-      .pub-switch small { opacity: .7; }
-      .pub-switch:has(input:disabled) { cursor: default; opacity: .75; }
-      header .pub-switch small { display: none; }` }));
+      .pub-switch:has(input:disabled) { cursor: default; opacity: .75; }` }));
   }
   const box = Object.assign(document.createElement('input'), { type: 'checkbox', role: 'switch' });
-  const note = document.createElement('small');
   const label = document.createElement('label');
   label.className = 'pub-switch';
   label.hidden = true;
-  label.append(box, t('Công khai', 'Public'), note);
+  label.append(box, t('Công khai', 'Public'));
   box.onchange = () => send({ t: 'public', on: box.checked });
   return {
     el: label,
@@ -33,7 +30,6 @@ export function publicSwitch(send) {
       if (label.hidden) return;
       box.checked = !!room.pub;
       box.disabled = !isHost;
-      note.textContent = room.pub ? t('— hiện ở trang Phòng đang mở', '— listed on Open rooms') : '';
     },
   };
 }
