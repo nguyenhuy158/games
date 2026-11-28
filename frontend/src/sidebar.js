@@ -162,7 +162,7 @@ settingsButton.setAttribute('aria-controls', SETTINGS_ID);
 settingsButton.setAttribute('aria-haspopup', 'dialog');
 
 const language = segmented(t('Ngôn ngữ', 'Language'), [['vi', 'Tiếng Việt'], ['en', 'English']], lang, (value) => { if (value !== lang) setLang(value); });
-const theme = segmented(t('Giao diện', 'Theme'), [[DARK, t('Tối', 'Dark'), 'moon'], [LIGHT, t('Sáng', 'Light'), 'lightbulb']], savedTheme === LIGHT ? LIGHT : DARK, (value) => { store.set(THEME_KEY, value); renderTheme(value); theme.render(value); });
+const theme = segmented(t('Giao diện', 'Theme'), [[DARK, t('Tối', 'Dark'), 'moon'], [LIGHT, t('Sáng', 'Light'), 'lightbulb']], savedTheme === LIGHT ? LIGHT : DARK, (value) => { store.set(THEME_KEY, value); store.set(SPY_THEME_KEY, value); renderTheme(value); theme.render(value); });
 const sound = segmented(t('Âm thanh', 'Sound'), [[SOUND_ON, t('Bật', 'On'), 'volume-2'], [SOUND_OFF, t('Tắt', 'Off'), 'volume-x']], isSoundOn() ? SOUND_ON : SOUND_OFF, (value) => setSoundOn(value === SOUND_ON));
 onSoundChange(() => sound.render(isSoundOn() ? SOUND_ON : SOUND_OFF));
 const account = el('div', { className: 'sb-account' });
