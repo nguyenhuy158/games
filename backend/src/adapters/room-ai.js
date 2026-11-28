@@ -18,6 +18,10 @@ export async function generateRoomAi(room, topic, deviceId, guestId) {
   if (pack.error) return pack;
   if (!authorized() || room.aiRequest !== requestId || s.runId !== runId || s.keep?.dealId !== dealId || s.cfg !== cfg) return aiFailure(AI_ERROR.CHANGED);
   s.keep ??= {};
+  const previous = s.keep.aiPack;
+  if (previous?.title === pack.title && previous.expires === pack.expires && previous.usedPairIndices) {
+    pack.usedPairIndices = previous.usedPairIndices;
+  }
   s.keep.aiPack = pack;
   s.cfg = { ...s.cfg, pack: AI_PACK, aiPackId: pack.packId, aiTopic: pack.title };
   await room.save();

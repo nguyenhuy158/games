@@ -33,6 +33,7 @@ export function aiPicker(save, roomContext = {}) {
   const status = note('');
   status.setAttribute('role', 'status');
   const suggestions = el('div', { className: 'actions' });
+  let hasSuggestions = false;
   const run = async (action) => {
     if (busy) return;
     if (action === ACTION.GENERATE && !topic.value.trim()) { topic.reportValidity(); return; }
@@ -42,9 +43,13 @@ export function aiPicker(save, roomContext = {}) {
     topic.disabled = true;
     status.textContent = t('AI đang chuẩn bị…', 'AI is preparing…');
     try {
-      const result = await request(action === ACTION.TOPICS ? { action } : { action, topic: topic.value.trim(), ...roomContext }, controller.signal);
+      const result = await request(action === ACTION.TOPICS ? { action, refresh: hasSuggestions } : { action, topic: topic.value.trim(), ...roomContext }, controller.signal);
       if (controller.signal.aborted) return;
       if (action === ACTION.TOPICS) {
+        hasSuggestions = true;
+        const refreshLabel = t('Gợi ý mới', 'New suggestions');
+        suggest.ariaLabel = refreshLabel;
+        suggest.querySelector('span').textContent = refreshLabel;
         suggestions.replaceChildren(...result.topics.map((title) => button(title, () => { topic.value = title; topic.focus(); })));
         status.textContent = t('Chọn chủ đề hoặc nhập ý tưởng riêng.', 'Choose a topic or enter your own.');
       } else {

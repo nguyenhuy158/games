@@ -8,7 +8,7 @@ export class SpyAi extends DurableObject {
     ctx.blockConcurrencyWhile(() => this.service.ready);
   }
 
-  topics(owner) { return this.service.topics(owner); }
+  topics(owner, refresh) { return this.service.topics(owner, refresh); }
   generate(owner, topic, online = false) { return this.service.generate(owner, topic, online); }
   deal(owner, packId) { return this.service.deal(owner, packId); }
 }
