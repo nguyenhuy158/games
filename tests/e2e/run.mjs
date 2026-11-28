@@ -8,6 +8,8 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const READONLY_SMOKE_PATH = "tests/e2e/readonly-smoke.mjs";
 const LAYOUT_CHECK_PATH = "tests/e2e/layout-check.mjs";
 const ROUND_EVIDENCE_PATH = "tests/e2e/round-evidence.mjs";
+const SOLO_SOCIAL_PATH = "tests/e2e/solo-social-coverage.mjs";
+const UNDERCOVER_ROUND_VIDEO_FLAG = "--undercover-round-video";
 const GAME_SMOKE_PATH = "tests/smoke.mjs";
 const smokeMode = smokeModeForEvent(process.env.GITHUB_EVENT_NAME, process.env.E2E_SMOKE_MODE);
 const SMOKE_ENV = {
@@ -54,7 +56,7 @@ const server = await startServer({
 let failed = false;
 try {
   console.log(`\nServer sẵn sàng tại ${BASE}\n`);
-  const checks = [run("node", [READONLY_SMOKE_PATH, ...(selection?.routes ?? [])], {
+  let pageChecks = run("node", [READONLY_SMOKE_PATH, ...(selection?.routes ?? [])], {
     label: "read-only smoke",
     env: SMOKE_ENV,
   }).then(() => run("node", [LAYOUT_CHECK_PATH, ...(selection?.routes ?? [])], {
@@ -63,7 +65,14 @@ try {
   })).then(() => run("node", [ROUND_EVIDENCE_PATH], {
     label: "complete UI round and persisted result",
     env: SMOKE_ENV,
-  }))];
+  }));
+  if (process.env.E2E_VIDEO_DIR) {
+    pageChecks = pageChecks.then(() => run("node", [SOLO_SOCIAL_PATH, UNDERCOVER_ROUND_VIDEO_FLAG], {
+      label: "Undercover pass-one-device round video",
+      env: SMOKE_ENV,
+    }));
+  }
+  const checks = [pageChecks];
   if (!selection || gameArgs.length) {
     checks.push(run("node", [GAME_SMOKE_PATH, BASE, ...gameArgs], {
       label: "game smoke",
