@@ -94,11 +94,6 @@ async function scenario(name, run, options = {}) {
   try {
     await page.goto(new URL(options.path ?? "/?lang=en", BASE).href);
     await page.waitForSelector("#account");
-    const statsSummary = page.locator("#homeStats > summary");
-    if (await statsSummary.count()) {
-      assert.equal(await page.locator("#fun").isVisible(), false);
-      await statsSummary.click();
-    }
     await run({ page, state, requests, context });
     completed += 1;
     console.log(`PASS core: ${name}`);
@@ -335,6 +330,7 @@ try {
     await page.keyboard.press("Escape");
     state.routes["/api/me"] = DEFAULT_PROFILE;
     state.routes["/api/me/history"] = { unexpected: true };
+    await page.locator("#openHomeStats").click();
     await page.locator("#meRetry").click();
     await textContains(page, "#historyError", "Could not load recent games");
     state.routes["/api/me/history"] = [];
@@ -351,11 +347,13 @@ try {
     await textContains(page, "#meError", "Could not save guest history");
     assert.equal(await page.locator("#account span").textContent(), "Coverage Player");
     assert.equal(await page.locator("#account img").count(), 1);
-    await page.locator(".sb-settings-btn").click();
+    await page.locator("#account summary").click();
+    await page.locator("#account").getByRole("button", { name: "Settings", exact: true }).click();
     await textContains(page, ".sb-account", "Coverage Player");
     assert.match(await page.locator(".sb-account a").getAttribute("href"), /\/logout\?/);
     await page.keyboard.press("Escape");
     state.routes["/api/me/history/claim"] = { ok: true };
+    await page.locator("#openHomeStats").click();
     await page.locator("#meRetry").click();
     await textContains(page, "#meNotice", "Guest history is now kept");
     await page.waitForFunction(() => document.querySelectorAll("#history li").length === 30);
@@ -1367,6 +1365,7 @@ try {
   await scenario("account retry does not duplicate an already pending history page", async ({ page, state, requests }) => {
     await textContains(page, "#meError", "Could not save guest history");
     await page.waitForFunction(() => document.querySelectorAll("#history li").length === 30);
+    await page.locator("#openHomeStats").click();
     let releaseHistory;
     const historyPending = new Promise((resolve) => { releaseHistory = resolve; });
     state.routes["/api/me/history"] = () => historyPending;
@@ -1397,6 +1396,7 @@ try {
 
   await scenario("late account retry events cannot duplicate an in-flight profile request", async ({ page, state, requests }) => {
     await textContains(page, "#meError", "Could not load your account");
+    await page.locator("#openHomeStats").click();
     let releaseProfile;
     const pendingProfile = new Promise((resolve) => { releaseProfile = resolve; });
     state.routes["/api/me"] = () => pendingProfile;
