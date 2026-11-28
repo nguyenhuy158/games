@@ -613,7 +613,10 @@ const net = {
     const copy = el('button', {
       onclick: () => invite(`${location.origin}/dao-vang/?r=${this.code}`, this.code),
     }, iconEl('qr-code'), t(` Mời: phòng ${this.code}`, ` Invite: room ${this.code}`));
-    const leave = el('button', { textContent: t('Rời phòng', 'Leave room'), onclick: () => this.leave() });
+    const leaveLabel = t('Rời phòng', 'Leave room');
+    const leaveArrow = iconEl('arrow-left');
+    leaveArrow.classList.add('leave-arrow');
+    const leave = el('button', { className: 'room-leave', ariaLabel: leaveLabel, title: leaveLabel, onclick: () => this.leave() }, leaveArrow, el('span', {}, leaveLabel));
 
     if (r.status === 'playing') return showOverlay(null);
     if (r.status === 'lobby' || r.status === 'ended') {
