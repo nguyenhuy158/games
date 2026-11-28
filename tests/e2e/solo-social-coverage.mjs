@@ -391,6 +391,8 @@ await scenario('history preparation failure preserves solo start controls', '/te
 
 async function revealLocalCard(page, player) {
   await page.getByRole('textbox', { name: 'Your name' }).fill(player);
+  await clickName(page, 'Continue');
+  assert.equal(await page.locator('.secret-word').count(), 0);
   await clickName(page, 'View keyword');
   const word = await page.locator('.secret-word').textContent();
   await clickName(page, 'Done viewing');
@@ -409,12 +411,17 @@ await scenario('spy local handoff names, privacy and final results', '/undercove
   const staleCount = await page.getByRole('button', { name: 'Increase Players' }).elementHandle();
   await clickName(page, 'Start game');
   await staleCount.evaluate((node) => node.click());
-  await clickName(page, 'View keyword');
+  await clickName(page, 'Continue');
   await textIncludes(page, '.handoff [role="alert"]', 'Enter your name.');
   const staleForm = await page.locator('.handoff form').elementHandle();
-  await page.getByRole('textbox', { name: 'Your name' }).fill(players[0]);
+  const nameInput = page.getByRole('textbox', { name: 'Your name' });
+  await nameInput.fill(players[0]);
+  await nameInput.press('Enter');
+  assert.equal(await page.locator('.secret-word').count(), 0);
+  const staleReveal = await page.getByRole('button', { name: 'View keyword' }).elementHandle();
   await clickName(page, 'View keyword');
   await page.keyboard.press('Escape');
+  await staleReveal.evaluate((node) => node.click());
   assert.equal(await page.locator('.secret-word').count(), 0);
   await clickName(page, 'View keyword');
   const staleDone = await page.getByRole('button', { name: 'Done viewing', exact: true }).elementHandle();
@@ -424,7 +431,7 @@ await scenario('spy local handoff names, privacy and final results', '/undercove
   await staleForm.evaluate((node) => node.dispatchEvent(new Event('submit', { cancelable: true })));
   assert.equal(await page.locator('.handoff h2').textContent(), 'Player 2');
   await page.getByRole('textbox', { name: 'Your name' }).fill(players[0]);
-  await clickName(page, 'View keyword');
+  await clickName(page, 'Continue');
   await textIncludes(page, '.handoff [role="alert"]', 'This name is already taken.');
   for (const player of players.slice(1)) cards.push(await revealLocalCard(page, player));
   assert.equal(await page.locator('.player-name').first().textContent(), `1. ${players[0]}`);
@@ -1192,6 +1199,7 @@ await scenario('spy local help and page hide keep words private', '/undercover/?
   await clickName(page, 'Pass one device');
   await clickName(page, 'Start game');
   await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
+  await clickName(page, 'Continue');
   await clickName(page, 'View keyword');
   assert.equal(await page.evaluate(() => !window.dispatchEvent(new Event('beforeunload', { cancelable: true }))), true);
   await page.locator('[data-help="undercover-guide"]').click();
@@ -1653,6 +1661,7 @@ await scenario('spy queued setup and ballot controls cannot change a later scree
   await clickName(page, 'Start game');
   await textIncludes(page, '.handoff h2', 'Player 1');
   await page.getByRole('textbox', { name: 'Your name' }).fill('Player 1');
+  await clickName(page, 'Continue');
   await clickName(page, 'View keyword');
   assert.notEqual(await page.locator('.secret-word').textContent(), '');
   assert.deepEqual(errors, []);

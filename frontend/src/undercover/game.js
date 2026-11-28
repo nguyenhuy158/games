@@ -230,7 +230,7 @@ function dealLocal(event) {
 function paintReveal() {
   const player = localGame.players[revealIndex];
   const index = revealIndex;
-  const heading = el('h2', {}, defaultName(index));
+  const heading = el('h2', {}, revealName || defaultName(index));
   const step = el('div', { className: 'handoff stack' },
     el('p', { className: 'progress-label' }, t(`Nhận thẻ ${index + 1}/${localPlayerCount}`, `Card ${index + 1}/${localPlayerCount}`)),
     heading);
@@ -247,14 +247,27 @@ function paintReveal() {
       } else paintReveal();
       focusMain();
     }, true, 'arrow-right');
-    step.append(secretCard(view(localGame, player.id).card, true, null), done);
+    const face = secretCard(view(localGame, player.id).card, true, null);
+    const back = el('div', { className: 'secret-card secret-flip-back', ariaHidden: 'true' }, iconEl('layers'));
+    step.append(el('div', { className: 'secret-flip' }, back, face), done);
+  } else if (revealName) {
+    const reveal = button(t('Xem từ khóa', 'View keyword'), () => {
+      if (!reveal.isConnected) return;
+      shown = true;
+      paintReveal();
+      focusMain();
+    }, true, 'eye');
+    step.append(el('section', { className: 'secret-card secret-covered' },
+      iconEl('layers'),
+      el('h3', {}, t('Thẻ đang úp', 'Card face down')),
+      note(t('Chỉ mở khi mình bạn nhìn màn hình.', 'Open it when only you can see the screen.'))), reveal);
   } else {
-    const input = el('input', { type: 'text', ariaLabel: t('Tên của bạn', 'Your name'), placeholder: t('Tên của bạn', 'Your name'), value: revealName, maxLength: NAME_LIMIT, autocomplete: 'off' });
+    const input = el('input', { type: 'text', ariaLabel: t('Tên của bạn', 'Your name'), placeholder: t('Tên của bạn', 'Your name'), maxLength: NAME_LIMIT, autocomplete: 'off' });
     const error = el('p', { className: 'warning', role: 'alert', hidden: true });
     const form = el('form', { className: 'stack' }, note(t(`Chuyền máy cho người chơi ${index + 1} để nhập tên và xem từ.`, `Pass the device to player ${index + 1} to enter their name and see their word.`)), input, error);
-    const reveal = button(t('Xem từ khóa', 'View keyword'), null, true, 'eye');
-    reveal.type = 'submit';
-    form.append(reveal);
+    const next = button(t('Tiếp tục', 'Continue'), null, true, 'arrow-right');
+    next.type = 'submit';
+    form.append(next);
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       if (!form.isConnected) return;
@@ -268,7 +281,6 @@ function paintReveal() {
         return;
       }
       [revealName] = result.names;
-      shown = true;
       paintReveal();
       focusMain();
     });
