@@ -9,7 +9,7 @@ const READONLY_SMOKE_PATH = "tests/e2e/readonly-smoke.mjs";
 const LAYOUT_CHECK_PATH = "tests/e2e/layout-check.mjs";
 const ROUND_EVIDENCE_PATH = "tests/e2e/round-evidence.mjs";
 const SOLO_SOCIAL_PATH = "tests/e2e/solo-social-coverage.mjs";
-const UNDERCOVER_ROUND_VIDEO_FLAG = "--undercover-round-video";
+const VIDEO_FLAGS = new Set(["--undercover-round-video", "--soi-round-video"]);
 const GAME_SMOKE_PATH = "tests/smoke.mjs";
 const smokeMode = smokeModeForEvent(process.env.GITHUB_EVENT_NAME, process.env.E2E_SMOKE_MODE);
 const SMOKE_ENV = {
@@ -23,8 +23,8 @@ const NULL_SEPARATOR = "\0";
 const GIT_TIMEOUT_MS = 60000;
 const GIT_OPTIONS = { encoding: UTF8, timeout: GIT_TIMEOUT_MS };
 const SHA_PATTERN = /^[a-f0-9]{40}$/;
-const videoOnly = process.argv.includes(UNDERCOVER_ROUND_VIDEO_FLAG);
-const manualGames = process.argv.slice(2).filter((arg) => arg !== UNDERCOVER_ROUND_VIDEO_FLAG);
+const videoOnly = process.argv.find((arg) => VIDEO_FLAGS.has(arg));
+const manualGames = process.argv.slice(2).filter((arg) => !VIDEO_FLAGS.has(arg));
 
 function pullRequestSelection() {
   if (process.env.GITHUB_EVENT_NAME !== PR_EVENT || manualGames.length) return null;
@@ -81,8 +81,8 @@ let failed = false;
 try {
   console.log(`\nServer sẵn sàng tại ${BASE}\n`);
   if (videoOnly) {
-    await run("node", [SOLO_SOCIAL_PATH, UNDERCOVER_ROUND_VIDEO_FLAG], {
-      label: "Undercover pass-one-device round video",
+    await run("node", [SOLO_SOCIAL_PATH, videoOnly], {
+      label: "Full-round video",
       env: SMOKE_ENV,
     });
   } else {

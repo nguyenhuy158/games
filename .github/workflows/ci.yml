@@ -7,9 +7,16 @@ on:
   workflow_dispatch:
     inputs:
       record_video:
-        description: Record an Undercover pass-one-device round
+        description: Record a full game round
         type: boolean
         default: false
+      video_game:
+        description: Game to record
+        type: choice
+        options:
+          - undercover
+          - soi
+        default: undercover
 
 # PR: bản mới huỷ bản cũ. main: không huỷ để smoke-prod của từng deploy chạy hết.
 concurrency:
@@ -56,9 +63,12 @@ jobs:
       - name: E2E
         if: '!inputs.record_video'
         run: pnpm e2e
-      - name: E2E video
-        if: inputs.record_video
+      - name: Undercover E2E video
+        if: inputs.record_video && inputs.video_game == 'undercover'
         run: pnpm e2e:video
+      - name: Sói E2E video
+        if: inputs.record_video && inputs.video_game == 'soi'
+        run: pnpm e2e:video:soi
       - name: Upload E2E videos
         if: always() && inputs.record_video
         uses: actions/upload-artifact@v4
