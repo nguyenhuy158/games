@@ -38,6 +38,10 @@ const GROUPS = [
   ] },
 ];
 
+const MOBILE_GAME_HEADER = 'mobile-game-header';
+const GAME_BACK = 'a.back[href="/"], #hud .btn[href="/"]';
+const ROOM_LEAVE = '#btnLeave, .room-leave';
+
 const CSS = `
 #sidebar { position: fixed; inset: 0 auto 0 0; z-index: 900; width: ${SIDEBAR_WIDTH}; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain;
   display: flex; flex-direction: column; gap: 2px; padding: 16px 10px max(16px, env(safe-area-inset-bottom));
@@ -51,6 +55,33 @@ const CSS = `
 #sidebar .ic { width: 18px; height: 18px; flex: none; }
 #sidebar h2 { display: flex; align-items: center; gap: 8px; margin: 14px 10px 4px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ui-fg-muted); }
 #sidebar h2 .ic { width: 14px; height: 14px; }
+.${MOBILE_GAME_HEADER} { display: none; }
+@media not ${WIDE_QUERY} {
+  html:has(.${MOBILE_GAME_HEADER}) {
+    --mobile-game-header-height: calc(60px + env(safe-area-inset-top));
+    box-sizing: border-box;
+    padding-top: var(--mobile-game-header-height);
+  }
+  .${MOBILE_GAME_HEADER} {
+    position: fixed; inset: 0 0 auto; z-index: 900;
+    height: var(--mobile-game-header-height); box-sizing: border-box;
+    padding: env(safe-area-inset-top) 12px 0;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--ui-fg); background: var(--ui-surface); border-bottom: 1px solid var(--ui-border);
+  }
+  .${MOBILE_GAME_HEADER} > h1 { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; margin: 0; font: inherit; font-weight: 700; }
+  .${MOBILE_GAME_HEADER} > h1 > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .${MOBILE_GAME_HEADER} > h1 > img { height: 24px; width: 24px; flex: none; }
+  .${MOBILE_GAME_HEADER} > button {
+    box-sizing: border-box; display: grid; place-items: center; flex: none;
+    width: 44px; height: 44px; min-width: 44px; min-height: 44px; margin: 0; padding: 0;
+    border: 1px solid var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-surface);
+    color: inherit; box-shadow: none;
+  }
+  .${MOBILE_GAME_HEADER} > button:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 2px; }
+  html:has(.${MOBILE_GAME_HEADER}) :is(#home h1:has(a.back), header.bar:has(a.back) > :is(h1, img.logo)),
+  html:has(.${MOBILE_GAME_HEADER}) :is(${GAME_BACK}, ${ROOM_LEAVE}, [data-help]:not(.${MOBILE_GAME_HEADER} > *)) { display: none !important; }
+}
 #mobileSettings, .room-leave > .leave-arrow { display: none; }
 @media ${WIDE_QUERY} { html { padding-left: ${SIDEBAR_WIDTH}; } }
 @media not ${WIDE_QUERY} {
@@ -190,4 +221,27 @@ export function openSettings() {
   if (accountLoaded) return;
   accountLoaded = true;
   loadAccount(account);
+}
+
+
+export function mountMobileGameHeader(gameId, helpLabel, openHelp) {
+  const game = GROUPS.flatMap(({ games }) => games).find(([path]) => path === here);
+  if (!game || here === SPY_PATH) return;
+
+  const backLabel = t('Quay lại', 'Back');
+  const back = el('button', { type: 'button', ariaLabel: backLabel, title: backLabel, onclick: () => {
+    const leave = [...document.querySelectorAll(ROOM_LEAVE)].find((control) =>
+      !control.closest('[hidden]') && control.parentElement.getClientRects().length);
+    if (leave) leave.click();
+    else location.assign(HOME);
+  } }, iconEl('arrow-left'));
+  const help = el('button', { type: 'button', ariaLabel: helpLabel, title: helpLabel, onclick: openHelp }, iconEl('info'));
+  help.dataset.help = gameId;
+  help.setAttribute('aria-haspopup', 'dialog');
+  const settings = el('button', { type: 'button', ariaLabel: settingsLabel, title: settingsLabel, onclick: openSettings }, iconEl('settings'));
+  settings.setAttribute('aria-haspopup', 'dialog');
+  settings.setAttribute('aria-controls', SETTINGS_ID);
+  const [, logo, vi, en] = game;
+  const title = el('h1', {}, el('img', { src: `/logos/${logo}.svg`, alt: '' }), el('span', {}, t(vi, en)));
+  document.body.prepend(el('header', { className: MOBILE_GAME_HEADER }, back, title, help, settings));
 }

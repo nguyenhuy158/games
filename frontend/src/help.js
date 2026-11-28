@@ -7,6 +7,7 @@
 import { t, en } from './i18n.js';
 import { iconEl } from './icons.js';
 import { el, store } from './dom.js';
+import { mountMobileGameHeader } from './sidebar.js';
 
 const SEEN_KEY = 'help.seen.';
 const QUICK_RULES = {
@@ -168,6 +169,7 @@ export function mountHelp({ game, button, content, auto = true, onOpen, onClose 
     b.setAttribute('aria-haspopup', 'dialog');
     b.addEventListener('click', open);
   }
+  mountMobileGameHeader(game, title, open);
   if (auto && !store.get(SEEN_KEY + game)) open();
   return { open, close: () => dlg.close(), isOpen: () => dlg.open };
 }
