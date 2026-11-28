@@ -32,7 +32,7 @@ export function nokiaApp(opt) {
   const codeIn = el('input', { maxLength: 4, placeholder: t('MÃ PHÒNG', 'ROOM CODE'), autocomplete: 'off', className: 'code' });
   const home = el('section', { id: 'home' }, el('div', { className: 'card' },
     el('h1', {}, el('a', { href: '/', className: 'back', title: t('Các game khác', 'More games'), innerHTML: icon('arrow-left') }),
-      el('img', { className: 'logo', src: `/logos/${opt.game}.svg`, alt: '' }), opt.title),
+      el('img', { className: 'logo', src: `/card-icons-v2/${opt.game}.webp`, alt: '' }), opt.title),
     el('p', { className: 'sub', textContent: opt.sub }),
     el('label', {}, t('Tên của bạn', 'Your name'), name),
     el('button', { className: 'primary', textContent: t('Tạo phòng mới', 'Create room'), onclick: () => enter(newRoomCode()) }),

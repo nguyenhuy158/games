@@ -15,6 +15,7 @@ import { aiPicker, dealAiPair, extendAiPack } from './ai.js';
 
 const GAME = 'undercover';
 const GAME_PATH = '/undercover/';
+const GAME_ICON = '/card-icons-v2/undercover.webp';
 const TITLE = t('Ai là gián điệp?', 'Who is the spy?');
 const MODE = Object.freeze({ HOME: 'home', LOCAL: 'local', ONLINE: 'online' });
 const LOCAL_STEP = Object.freeze({ SETUP: 'setup', REVEAL: 'reveal', PLAY: 'play' });
@@ -91,7 +92,7 @@ const helpButton = iconButton(t('Cách chơi', 'How to play'), () => {}, 'info')
 const backButton = iconButton(t('Quay lại', 'Back'), goBack, 'arrow-left');
 const heading = el('h1', {}, TITLE);
 const content = el('main', { className: 'spy-content' });
-main.append(el('header', { className: 'spy-header' }, backButton, heading, el('div', { className: 'header-actions' }, helpButton, settingsControl())), content);
+main.append(el('header', { className: 'spy-header' }, backButton, el('img', { src: GAME_ICON, alt: '' }), heading, el('div', { className: 'header-actions' }, helpButton, settingsControl())), content);
 document.body.append(main);
 const ROOM_HELP_SEEN_KEY = `help.seen.${GAME}`;
 const HELP_SEEN_VALUE = '1';
@@ -134,7 +135,6 @@ function showHome() {
   backButton.ariaLabel = t('Các trò chơi khác', 'More games');
   backButton.title = backButton.ariaLabel;
   content.replaceChildren(el('div', { className: 'entry' },
-    el('img', { className: 'entry-logo', src: '/logos/undercover.svg', alt: '' }),
     el('div', { className: 'entry-facts' }, indicator('users', t('3–20 người', '3–20 players')), indicator('crown', t('Chủ phòng cùng chơi', 'Host plays too'))),
     note(t('Đa số nhận cùng một từ, còn gián điệp nhận từ tương tự. Lần lượt đưa gợi ý rồi bỏ phiếu tìm gián điệp.', 'Most players get the same word, while the spies get a similar one. Take turns giving clues, then vote to find the spies.')),
     el('div', { className: 'mode-choices' },
@@ -615,7 +615,7 @@ function enterOnline() {
   controls.append(settingsControl());
   const heading = el('h1', {}, t('Mỗi người một máy', 'One device each'));
   form.querySelector('h1').remove();
-  home.prepend(el('header', { className: 'spy-header' }, back, heading, controls));
+  home.prepend(el('header', { className: 'spy-header' }, back, el('img', { src: GAME_ICON, alt: '' }), heading, controls));
   const room = document.getElementById('room');
   room.querySelector('header').append(settingsControl());
   const leave = room.querySelector('header button');

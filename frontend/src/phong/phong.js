@@ -42,7 +42,7 @@ function card(r) {
   const watch = r.status === 'playing' || full;
   const who = [r.host && t(`Chủ phòng ${r.host}`, `Host ${r.host}`), r.mode].filter(Boolean).join(' · ');
   return el('a', { className: `room${watch ? ' watch' : ''}`, href: `${r.path}?r=${encodeURIComponent(r.code)}` },
-    el('img', { src: `/logos/${r.game}.svg`, alt: '' }),
+    el('img', { src: `/card-icons-v2/${r.game}.webp`, alt: '' }),
     el('div', {},
       el('b', { textContent: `${title(r.game)} · ${r.code}` }),
       el('span', { textContent: `${r.players}${r.cap ? `/${r.cap}` : ''} ${t('người', 'players')}${who ? ` · ${who}` : ''}` })),
