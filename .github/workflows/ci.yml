@@ -59,9 +59,10 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Whole-application coverage gate
+        if: github.event_name == 'push'
         run: pnpm test:coverage
       - name: Upload application coverage
-        if: always()
+        if: always() && github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ github.sha }}
